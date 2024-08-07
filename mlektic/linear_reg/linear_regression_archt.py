@@ -207,8 +207,6 @@ class LinearRegressionArcht:
                 self._train_mini_batch(x_train, y_train)
             else:
                 raise ValueError(f"Unsupported method '{self.method}'. Supported methods are 'batch', 'stochastic', 'mini-batch'.")
-        
-        return self
 
     def get_parameters(self) -> np.ndarray:
         """

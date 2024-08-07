@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mlektic"
-version = "0.0.1"
+version = "0.0.9"
 description = "A python machine learning library to use and visualize gradient descent for linear regression and logistic regression optimization."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -19,7 +19,8 @@ dependencies = [
     "tensorflow>=2.17.0",
     "matplotlib>=3.7.1",
     "ipython>=7.34.0",
-    "jedi==0.17.2"
+    "jedi==0.17.2",
+    "bottleneck>=1.3.6"
 ]
 
 classifiers = [
