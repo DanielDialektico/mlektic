@@ -1,1 +1,1 @@
-from .plot_utils import plot_dynamic_cost
+from .plot_utils import plot_dynamic_cost, plot_cost
