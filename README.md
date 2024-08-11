@@ -2,14 +2,14 @@
 
 Mlektic is a Python library built on top of TensorFlow, designed to simplify the implementation and experimentation with linear and logistic regression models. By providing a variety of gradient descent algorithms and regularization techniques, Mlektic enables both beginners and experienced practitioners to efficiently build, train, and evaluate regression models with minimal code.
 <p align="center">
-  <img src="files/desc-1.jpg" alt="mlektic" width="200">
+  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-1.jpg" alt="mlektic" width="200">
 </p>
 
 ## Why Mlektic?
 
 Mlektic aims to bridge the gap between ease of use and powerful functionality. Whether you are a student learning the basics of machine learning or a data scientist looking for a streamlined tool to handle regression tasks, Mlektic offers a flexible and user-friendly solution that integrates smoothly with popular data processing libraries like Pandas and Polars.
 <p align="center">
-  <img src="files/desc-3.jpg" alt="mlektic" width="300">
+  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-3.jpg" alt="mlektic" width="300">
 </p>
 
 
@@ -30,7 +30,7 @@ Mlektic aims to bridge the gap between ease of use and powerful functionality. W
 - **Prototyping and Experimentation**: Quickly prototype regression models and experiment with different optimization techniques without the overhead of more complex machine learning frameworks.
 - **Small to Medium Scale Projects**: Perfect for small to medium-sized projects where ease of use and quick iteration are more important than handling large-scale data.
 <p align="center">
-  <img src="files/desc-2.jpg" alt="mlektic" width="200">
+  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-2.jpg" alt="mlektic" width="200">
 </p>
 
 ## Installation
@@ -100,7 +100,7 @@ The cost evolution can be plotted with:
 ```
 
 <p>
-  <img src="files/plot.jpg" alt="cost plot" width="500">
+  <img src="fhttps://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/plot.jpg" alt="cost plot" width="500">
 </p>
 <br><br/>
 
