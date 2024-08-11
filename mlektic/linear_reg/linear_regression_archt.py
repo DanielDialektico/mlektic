@@ -123,11 +123,11 @@ class LinearRegressionArcht:
                 cost = self._cost_function(x_train, y_train)
             gradients = tape.gradient(cost, [self.weights])
             self.optimizer.apply_gradients(zip(gradients, [self.weights]))
-            self.cost_history.append(cost)
+            
+            self.cost_history.append(cost.numpy().item())
+
             if self.verbose and (i + 1) % (self.iterations // 10) == 0:
-                print(f'Epoch {i + 1}, Loss: {cost}')
-        if self.verbose:
-            print('\n')
+                print(f'Epoch {i + 1}, Loss: {cost.numpy().item()}')
 
     def _train_stochastic(self, x_train: tf.Tensor, y_train: tf.Tensor) -> None:
         """

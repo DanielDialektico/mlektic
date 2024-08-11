@@ -19,10 +19,12 @@ def plot_dynamic_cost(cost_history: List[Union[float, int]], title: str = "Train
         point_color (str, optional): Color of the points. Default is 'blue'.
         line_color (str, optional): Color of the line. Default is 'black'.
         pause_time (float, optional): Pause time between updates in seconds. Default is 0.1.
+        dim (Tuple, optional): Dimensions of the plot (width, height). Default is (10, 6).
 
     Returns:
         None
     """
+
     plt.figure(figsize=dim)
     plt.style.use(style)
     
@@ -62,17 +64,17 @@ def plot_cost(cost_history: List[Union[float, int]], epoch_points: bool = False,
         style (str, optional): Style of the plot. Default is 'bmh'.
         point_color (str, optional): Color of the points. Default is 'blue'.
         line_color (str, optional): Color of the line. Default is 'black'.
+        dim (Tuple, optional): Dimensions of the plot (width, height). Default is (7, 5).
 
     Returns:
         None
     """
+
     plt.figure(figsize=dim)
     plt.style.use(style)
 
-    # Plot the main cost curve
     plt.plot(range(len(cost_history)), cost_history, color=line_color, linewidth=2, label='Cost')
     
-    # Optionally add points at each epoch
     if epoch_points:
         plt.plot(range(len(cost_history)), cost_history, marker='o', color=point_color, linestyle='', markersize=5)
 

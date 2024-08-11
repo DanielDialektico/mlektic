@@ -175,12 +175,13 @@ class LogisticRegressionArcht:
                 metric_value = self._compute_metric(x_train, y_train)
             gradients = tape.gradient(cost, [self.weights])
             self.optimizer.apply_gradients(zip(gradients, [self.weights]))
-            self.cost_history.append(cost.numpy())
-            self.metric_history.append(metric_value.numpy())
+            
+            self.cost_history.append(cost.numpy().item())
+            self.metric_history.append(metric_value.numpy().item())
+
             if self.verbose and (i + 1) % (self.iterations // 10) == 0:
-                print(f'Epoch {i + 1}, Loss: {cost.numpy()}, {self.metric.capitalize()}: {metric_value.numpy()}')
-        if self.verbose:
-            print('\n')
+                print(f'Epoch {i + 1}, Loss: {cost.numpy().item()}, {self.metric.capitalize()}: {metric_value.numpy().item()}')
+
 
     def _train_stochastic(self, x_train: tf.Tensor, y_train: tf.Tensor) -> None:
         """
@@ -254,7 +255,6 @@ class LogisticRegressionArcht:
         # Automatically detect the number of classes
         self.num_classes = len(np.unique(y_train))
         
-        # One-hot encoding for y_train
         y_train = tf.keras.utils.to_categorical(y_train, num_classes=self.num_classes)
         
         if self.use_intercept:
@@ -374,7 +374,6 @@ class LogisticRegressionArcht:
         x_test = x_test.astype(np.float32)
         y_test = y_test.astype(np.float32)
         
-        # One-hot encoding for y_test
         y_test = tf.keras.utils.to_categorical(y_test, num_classes=self.num_classes)
         
         if self.use_intercept:
