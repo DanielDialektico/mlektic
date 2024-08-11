@@ -176,12 +176,17 @@ class LogisticRegressionArcht:
             gradients = tape.gradient(cost, [self.weights])
             self.optimizer.apply_gradients(zip(gradients, [self.weights]))
             
-            self.cost_history.append(cost.numpy().item())
-            self.metric_history.append(metric_value.numpy().item())
+            # If cost or metric_value is an array, reduce it to a single value (mean)
+            cost_value = np.mean(cost.numpy())
+            metric_value_scalar = np.mean(metric_value.numpy())
+            
+            self.cost_history.append(cost_value)
+            self.metric_history.append(metric_value_scalar)
 
             if self.verbose and (i + 1) % (self.iterations // 10) == 0:
-                print(f'Epoch {i + 1}, Loss: {cost.numpy().item()}, {self.metric.capitalize()}: {metric_value.numpy().item()}')
-
+                print(f'Epoch {i + 1}, Loss: {cost_value}, {self.metric.capitalize()}: {metric_value_scalar}')
+        if self.verbose:
+            print('\n')
 
     def _train_stochastic(self, x_train: tf.Tensor, y_train: tf.Tensor) -> None:
         """
