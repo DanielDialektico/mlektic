@@ -325,7 +325,7 @@ class LogisticRegressionArcht:
         """
         return self.metric_history
     
-    def predict(self, input_new: Union[np.ndarray, list, float]) -> np.ndarray:
+    def predict_prob(self, input_new: Union[np.ndarray, list, float]) -> np.ndarray:
         """
         Predicts output for new input data.
 
@@ -360,6 +360,48 @@ class LogisticRegressionArcht:
         
         input_new = tf.convert_to_tensor(input_new, dtype=tf.float32)
         return self._predict(input_new).numpy()
+
+    def predict_class(self, input_new: Union[np.ndarray, list, float]) -> np.ndarray:
+        """
+        Predicts the class for new input data.
+
+        Args:
+            input_new (Union[np.ndarray, list, float]): New input data for prediction.
+
+        Returns:
+            np.ndarray: Predicted class(es).
+        
+        Raises:
+            ValueError: If the input does not have the expected number of features.
+        """
+        if self.use_intercept:
+            if isinstance(input_new, float):
+                input_new = np.array([[1] + [input_new] * (self.n_features - 1)], dtype=np.float32)
+            elif isinstance(input_new, list):
+                input_new = np.array([[1] + input_new], dtype=np.float32)
+            elif isinstance(input_new, np.ndarray) and (input_new.ndim == 1):
+                input_new = np.c_[np.ones((1, 1), dtype=np.float32), input_new.reshape(1, -1)]
+            else:
+                input_new = np.c_[np.ones((input_new.shape[0], 1), dtype=np.float32), input_new]
+        else:
+            if isinstance(input_new, float):
+                input_new = np.array([[input_new] * self.n_features], dtype=np.float32)
+            elif isinstance(input_new, list):
+                input_new = np.array([input_new], dtype=np.float32)
+            elif isinstance(input_new, np.ndarray) and (input_new.ndim == 1):
+                input_new = input_new.reshape(1, -1).astype(np.float32)
+
+        if input_new.shape[1] != self.n_features:
+            raise ValueError(f"Expected input with {self.n_features} features, but got {input_new.shape[1]} features")
+
+        input_new = tf.convert_to_tensor(input_new, dtype=tf.float32)
+        probabilities = self._predict(input_new).numpy()
+
+        # Predice la clase con la mayor probabilidad
+        predicted_classes = np.argmax(probabilities, axis=1)
+
+        return predicted_classes
+
 
     def eval(self, test_set: Tuple[np.ndarray, np.ndarray], metric: str) -> float:
         """
