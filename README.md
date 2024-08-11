@@ -1,17 +1,9 @@
 # Mlektic: A Simple and Efficient Machine Learning Library
 
-Mlektic is a Python library built on top of TensorFlow, designed to simplify the implementation and experimentation with linear and logistic regression models. By providing a variety of gradient descent algorithms and regularization techniques, Mlektic enables both beginners and experienced practitioners to efficiently build, train, and evaluate regression models with minimal code.
+Mlektic is a Python library built on top of TensorFlow, designed to simplify the implementation and experimentation with univariate/multivariate linear and logistic regression models. By providing a variety of gradient descent algorithms and regularization techniques, Mlektic enables both beginners and experienced practitioners to efficiently build, train, and evaluate regression models with minimal code.
 <p align="center">
   <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-1.jpg" alt="mlektic" width="200">
 </p>
-
-## Why Mlektic?
-
-Mlektic aims to bridge the gap between ease of use and powerful functionality. Whether you are a student learning the basics of machine learning or a data scientist looking for a streamlined tool to handle regression tasks, Mlektic offers a flexible and user-friendly solution that integrates smoothly with popular data processing libraries like Pandas and Polars.
-<p align="center">
-  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-3.jpg" alt="mlektic" width="300">
-</p>
-
 
 ## Key Features
 
