@@ -79,7 +79,7 @@ def test_predict():
     model.train(train_set)
 
     x_new = np.array([0.5, 0.5])
-    prediction = model.predict(x_new)
+    prediction = model.predict_prob(x_new)
     assert prediction.shape == (1, 2)  # As it's a softmax output for binary classification
 
 def test_eval():
