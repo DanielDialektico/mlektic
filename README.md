@@ -91,7 +91,7 @@ The cost evolution can be plotted with:
 ```
 
 <p>
-  <img src="fhttps://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/plot.jpg" alt="cost plot" width="500">
+  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/plot.jpg" alt="cost plot" width="500">
 </p>
 <br><br/>
 

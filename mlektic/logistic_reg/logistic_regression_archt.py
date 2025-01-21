@@ -2,20 +2,20 @@ import tensorflow as tf
 import numpy as np
 import json
 from typing import Union, Tuple, Callable
-from .logreg_utils import calculate_categorical_crossentropy, calculate_accuracy, calculate_precision, calculate_recall, calculate_f1_score, calculate_confusion_matrix
+from .logreg_utils import calculate_categorical_crossentropy, calculate_accuracy, calculate_precision, calculate_recall, calculate_f1_score, calculate_confusion_matrix, calculate_binary_crossentropy
 
 class LogisticRegressionArcht:
     """
-    Logistic Regression model class supporting different training methods including logistic regression, batch gradient descent,
-    stochastic gradient descent, and mini-batch gradient descent.
+    Logistic Regression model class supporting different training methods including Maximum Likelihood Estimation (MLE),
+    batch gradient descent, stochastic gradient descent, and mini-batch gradient descent.
 
     Attributes:
-        iterations (int): Number of training iterations.
+        iterations (int): Number of training iterations (only applicable for gradient descent methods).
         use_intercept (bool): Whether to include an intercept in the model.
         verbose (bool): Whether to print training progress.
         weights (tf.Variable): Model weights.
-        cost_history (list): History of cost values during training.
-        metric_history (list): History of metric values during training.
+        cost_history (list): History of cost values during training (only applicable for gradient descent methods).
+        metric_history (list): History of metric values during training (only applicable for gradient descent methods).
         n_features (int): Number of features in the input data.
         regularizer (callable): Regularization function.
         optimizer (tf.optimizers.Optimizer): Optimizer for gradient descent.
@@ -36,17 +36,17 @@ class LogisticRegressionArcht:
     """
 
     def __init__(self, iterations: int = 50, use_intercept: bool = True, verbose: bool = True, 
-                 regularizer: Callable = None, optimizer: Union[Tuple[tf.optimizers.Optimizer, str, int], None] = None, method: str = 'logistic', metric: str = 'accuracy'):
+                 regularizer: Callable = None, optimizer: Union[Tuple[tf.optimizers.Optimizer, str, int], None] = None, method: str = 'mle', metric: str = 'accuracy'):
         """
         Initializes the LogisticRegressionArcht instance.
 
         Args:
-            iterations (int, optional): Number of training iterations. Default is 50.
+            iterations (int, optional): Number of training iterations (only applicable for gradient descent methods). Default is 50.
             use_intercept (bool, optional): Whether to include an intercept in the model. Default is True.
             verbose (bool, optional): Whether to print training progress. Default is True.
             regularizer (callable, optional): Regularization function. Default is None.
             optimizer (tuple, optional): Tuple containing optimizer instance, method, and batch size. Default is None.
-            method (str, optional): Training method to use. Options are 'logistic', 'batch', 'stochastic', 'mini-batch'. Default is 'logistic'.
+            method (str, optional): Training method to use. Options are 'mle', 'batch', 'stochastic', 'mini-batch'. Default is 'mle'.
             metric (str, optional): Evaluation metric to use. Options are 'accuracy', 'precision', 'recall', 'f1_score'. Default is 'accuracy'.
         
         Raises:
@@ -56,23 +56,22 @@ class LogisticRegressionArcht:
         self.use_intercept = use_intercept
         self.verbose = verbose
         self.weights = None
-        self.cost_history = None
-        self.metric_history = None
+        self.cost_history = []
+        self.metric_history = []
         self.n_features = None
         self.regularizer = regularizer
         self.method = method
         self.metric = metric
-        self.num_classes = None  # Will be automatically detected during training
+        self.num_classes = None
 
         if optimizer:
             self.optimizer, self.method, self.batch_size = optimizer
         else:
             self.optimizer = tf.optimizers.SGD(learning_rate=0.01)
-            self.method = 'logistic' if method == 'logistic' else 'batch'
-            if self.method != 'logistic':
+            self.method = method if method in ['mle', 'batch', 'stochastic', 'mini-batch'] else 'mle'
+            if self.method == 'mini-batch':
                 self.batch_size = 32
 
-        # Validate the metric
         valid_metrics = ['accuracy', 'precision', 'recall', 'f1_score']
         if self.metric not in valid_metrics:
             raise ValueError(f"Unsupported metric '{self.metric}'. Supported metrics are: {valid_metrics}")
@@ -144,22 +143,21 @@ class LogisticRegressionArcht:
         
         return metrics[self.metric](output, predictions)
 
-    def _train_least_squares(self, x_train: tf.Tensor, y_train: tf.Tensor) -> None:
+    def _train_mle(self, x_train: np.ndarray, y_train: np.ndarray) -> None:
         """
-        Trains the model using the least squares method.
+        Trains the model using the Maximum Likelihood Estimation (MLE) method.
 
         Args:
-            x_train (tf.Tensor): Training input data of shape (n_samples, n_features).
-            y_train (tf.Tensor): Training output data of shape (n_samples, num_classes).
+            x_train (np.ndarray): Training input data of shape (n_samples, n_features).
+            y_train (np.ndarray): Training output data of shape (n_samples,).
         """
         x_train_t = tf.transpose(x_train)
         x_train_t_x_train = tf.matmul(x_train_t, x_train)
         x_train_t_y_train = tf.matmul(x_train_t, y_train)
         self.weights = tf.linalg.solve(x_train_t_x_train, x_train_t_y_train)
         self.weights = tf.cast(self.weights, tf.float32)
-        self.cost_history = None
         if self.verbose:
-            print("Model trained using least squares method.")
+            print("Model trained using Maximum Likelihood Estimation (MLE).")
 
     def _train_batch(self, x_train: tf.Tensor, y_train: tf.Tensor) -> None:
         """
@@ -257,31 +255,27 @@ class LogisticRegressionArcht:
         x_train = x_train.astype(np.float32)
         y_train = y_train.astype(np.float32)
         
-        # Automatically detect the number of classes
         self.num_classes = len(np.unique(y_train))
-        
         y_train = tf.keras.utils.to_categorical(y_train, num_classes=self.num_classes)
         
         if self.use_intercept:
             x_train = np.c_[np.ones((x_train.shape[0], 1)), x_train]
         self.n_features = x_train.shape[1]
         
-        self.weights = tf.Variable(tf.zeros([self.n_features, self.num_classes], dtype=tf.float32))
-        self.cost_history = []
-        self.metric_history = []
-        x_train = tf.convert_to_tensor(x_train, dtype=tf.float32)
-        y_train = tf.convert_to_tensor(y_train, dtype=tf.float32)
-        
-        if self.method == 'logistic':
-            self._train_least_squares(x_train, y_train)
-        elif self.method == 'batch':
-            self._train_batch(x_train, y_train)
-        elif self.method == 'stochastic':
-            self._train_stochastic(x_train, y_train)
-        elif self.method == 'mini-batch':
-            self._train_mini_batch(x_train, y_train)
+        if self.method == 'mle':
+            self._train_mle(x_train, y_train)
         else:
-            raise ValueError(f"Unsupported method '{self.method}'. Supported methods are 'logistic', 'batch', 'stochastic', 'mini-batch'.")
+            self.weights = tf.Variable(tf.zeros([self.n_features, self.num_classes], dtype=tf.float32))
+            x_train = tf.convert_to_tensor(x_train, dtype=tf.float32)
+            y_train = tf.convert_to_tensor(y_train, dtype=tf.float32)
+            if self.method == 'batch':
+                self._train_batch(x_train, y_train)
+            elif self.method == 'stochastic':
+                self._train_stochastic(x_train, y_train)
+            elif self.method == 'mini-batch':
+                self._train_mini_batch(x_train, y_train)
+            else:
+                raise ValueError(f"Unsupported method '{self.method}'. Supported methods are 'mle', 'batch', 'stochastic', 'mini-batch'.")
 
     def get_parameters(self) -> np.ndarray:
         """
@@ -409,7 +403,8 @@ class LogisticRegressionArcht:
 
         Args:
             test_set (tuple): Tuple containing test input data (np.ndarray) and output data (np.ndarray).
-            metric (str): Metric to use for evaluation. Options are 'categorical_crossentropy', 'accuracy', 'precision', 'recall', 'f1_score', 'confusion_matrix'.
+            metric (str): Metric to use for evaluation. Options are 'categorical_crossentropy', 'binary_crossentropy',
+                        'accuracy', 'precision', 'recall', 'f1_score', 'confusion_matrix'.
 
         Returns:
             float: Evaluation result.
@@ -421,7 +416,7 @@ class LogisticRegressionArcht:
         x_test = x_test.astype(np.float32)
         y_test = y_test.astype(np.float32)
         
-        y_test = tf.keras.utils.to_categorical(y_test, num_classes=self.num_classes)
+        y_test = tf.keras.utils.to_categorical(y_test, num_classes=self.num_classes) if metric != 'binary_crossentropy' else y_test
         
         if self.use_intercept:
             x_test = np.c_[np.ones((x_test.shape[0], 1)), x_test]
@@ -433,6 +428,7 @@ class LogisticRegressionArcht:
         
         metrics = {
             'categorical_crossentropy': calculate_categorical_crossentropy,
+            'binary_crossentropy': calculate_binary_crossentropy,
             'accuracy': calculate_accuracy,
             'precision': calculate_precision,
             'recall': calculate_recall,
@@ -448,6 +444,7 @@ class LogisticRegressionArcht:
             metric_value = tf.reduce_mean(metric_value)
         
         return metric_value.numpy()
+
     
     def save_model(self, filepath: str) -> None:
         """
