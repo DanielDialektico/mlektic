@@ -6,12 +6,13 @@ def calculate_binary_crossentropy(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Te
 
     Args:
         y_true (tf.Tensor): True labels. Shape should be (n_samples,).
-        y_pred (tf.Tensor): Predicted probabilities. Shape should be (n_samples,).
+        y_pred (tf.Tensor): Predicted probabilities. Shape should be (n_samples, 2).
 
     Returns:
         tf.Tensor: Binary cross-entropy loss.
     """
-    return tf.keras.losses.binary_crossentropy(y_true, y_pred)
+    y_pred_positive = y_pred[:, 1]
+    return tf.keras.losses.binary_crossentropy(y_true, y_pred_positive)
 
 def calculate_categorical_crossentropy(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """

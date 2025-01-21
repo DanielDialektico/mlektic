@@ -99,6 +99,8 @@ class LogisticRegressionArcht:
             tf.Tensor: Predicted probabilities tensor of shape (n_samples, num_classes).
         """
         logits = tf.matmul(input, self.weights)
+        if self.num_classes == 2:
+            return tf.nn.sigmoid(logits)  # Only one value for binary problems.
         return self._softmax(logits)
 
     def _cost_function(self, input: tf.Tensor, output: tf.Tensor) -> tf.Tensor:
@@ -416,7 +418,8 @@ class LogisticRegressionArcht:
         x_test = x_test.astype(np.float32)
         y_test = y_test.astype(np.float32)
         
-        y_test = tf.keras.utils.to_categorical(y_test, num_classes=self.num_classes) if metric != 'binary_crossentropy' else y_test
+        if metric != 'binary_crossentropy':
+            y_test = tf.keras.utils.to_categorical(y_test, num_classes=self.num_classes)
         
         if self.use_intercept:
             x_test = np.c_[np.ones((x_test.shape[0], 1)), x_test]
