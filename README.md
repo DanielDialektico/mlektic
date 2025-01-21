@@ -13,6 +13,7 @@ Mlektic is a Python library built on top of TensorFlow, designed to simplify the
 - **DataFrame Compatibility**: Seamlessly integrate with Pandas and Polars DataFrames, allowing you to preprocess and manage your data effortlessly.
 - **Cost Visualization**: Visualize the evolution of the cost function over time using dynamic or static plots, helping you better understand the training process.
 - **Evaluation Metrics**: Access a range of evaluation metrics to assess the performance of both linear and logistic regression models, ensuring that your models meet your performance criteria.
+- **Model Saving and Loading**: Store the resulting models for reuse, enabling efficient model deployment and sharing across projects.
 - **User-Friendly API**: Designed with simplicity in mind, Mlektic's API is intuitive and easy to use, making it accessible for users with varying levels of expertise.
 
 ## When to Use Mlektic?
