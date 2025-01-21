@@ -1,5 +1,18 @@
 import tensorflow as tf
 
+def calculate_binary_crossentropy(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculates the binary cross-entropy loss between true labels and predicted probabilities.
+
+    Args:
+        y_true (tf.Tensor): True labels. Shape should be (n_samples,).
+        y_pred (tf.Tensor): Predicted probabilities. Shape should be (n_samples,).
+
+    Returns:
+        tf.Tensor: Binary cross-entropy loss.
+    """
+    return tf.keras.losses.binary_crossentropy(y_true, y_pred)
+
 def calculate_categorical_crossentropy(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculates the categorical cross-entropy loss between true labels and predicted probabilities.
