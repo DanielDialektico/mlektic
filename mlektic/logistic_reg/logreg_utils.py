@@ -1,4 +1,5 @@
 import tensorflow as tf
+import pandas as pd
 
 def calculate_binary_crossentropy(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
@@ -91,21 +92,60 @@ def calculate_f1_score(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     recall = calculate_recall(y_true, y_pred)
     return 2 * (precision * recall) / (precision + recall + tf.keras.backend.epsilon())
 
-def calculate_confusion_matrix(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def calculate_confusion_matrix(y_true: tf.Tensor, y_pred: tf.Tensor, to_df: bool = True):
     """
     Calculates the confusion matrix between true labels and predicted probabilities.
 
     Args:
         y_true (tf.Tensor): True labels, one-hot encoded. Shape should be (n_samples, num_classes).
         y_pred (tf.Tensor): Predicted probabilities. Shape should be (n_samples, num_classes).
+        to_df (bool, optional): If True, returns the confusion matrix as a formatted pandas DataFrame.
+                                If False, returns the tensor. Default is True.
 
     Returns:
-        tf.Tensor: Confusion matrix of shape (2, 2).
+        Union[tf.Tensor, pd.DataFrame]: Confusion matrix in tensor form (if to_df=False) or 
+                                        a formatted DataFrame (if to_df=True).
     """
     predictions = tf.argmax(y_pred, axis=1)
     true_labels = tf.argmax(y_true, axis=1)
+    
+    # Calculate components of the confusion matrix
     true_positives = tf.reduce_sum(tf.cast(predictions * true_labels, dtype=tf.float32), axis=0)
     false_positives = tf.reduce_sum(tf.cast(predictions * (1 - true_labels), dtype=tf.float32), axis=0)
     true_negatives = tf.reduce_sum(tf.cast((1 - predictions) * (1 - true_labels), dtype=tf.float32), axis=0)
     false_negatives = tf.reduce_sum(tf.cast((1 - predictions) * true_labels, dtype=tf.float32), axis=0)
-    return tf.convert_to_tensor([[true_positives, false_positives], [false_negatives, true_negatives]], dtype=tf.float32)
+    
+    # Create the confusion matrix as a tensor
+    confusion_matrix = tf.convert_to_tensor(
+        [[true_positives, false_positives], [false_negatives, true_negatives]], 
+        dtype=tf.float32
+    )
+    
+    if not to_df:
+        return confusion_matrix
+    
+    # Create a DataFrame for formatted output
+    etiquetas = ['Predicción Positiva (1)', 'Predicción Negativa (0)']
+    columnas = ['Reales Positivos (1)', 'Reales Negativos (0)']
+    
+    # Convert the tensor to a DataFrame
+    matriz_confusion_df = pd.DataFrame(
+        confusion_matrix.numpy(), 
+        index=etiquetas, 
+        columns=columnas
+    )
+    
+    # Add descriptive labels
+    matriz_confusion_df['Reales Positivos (1)'] = [
+        f"{matriz_confusion_df.loc[etiquetas[0], columnas[0]]:.2f} Verdaderos Positivos (VP)",
+        f"{matriz_confusion_df.loc[etiquetas[1], columnas[0]]:.2f} Falsos Negativos (FN)"
+    ]
+    matriz_confusion_df['Reales Negativos (0)'] = [
+        f"{matriz_confusion_df.loc[etiquetas[0], columnas[1]]:.2f} Falsos Positivos (FP)",
+        f"{matriz_confusion_df.loc[etiquetas[1], columnas[1]]:.2f} Verdaderos Negativos (VN)"
+    ]
+    
+    # Remove duplicate columns
+    matriz_confusion_df = matriz_confusion_df[['Reales Positivos (1)', 'Reales Negativos (0)']]
+    
+    return matriz_confusion_df
