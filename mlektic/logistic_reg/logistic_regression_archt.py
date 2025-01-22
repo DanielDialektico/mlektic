@@ -393,13 +393,12 @@ class LogisticRegressionArcht:
         input_new = tf.convert_to_tensor(input_new, dtype=tf.float32)
         probabilities = self._predict(input_new).numpy()
 
-        # Predice la clase con la mayor probabilidad
         predicted_classes = np.argmax(probabilities, axis=1)
 
         return predicted_classes
 
 
-    def eval(self, test_set: Tuple[np.ndarray, np.ndarray], metric: str) -> float:
+    def eval(self, test_set: Tuple[np.ndarray, np.ndarray], metric: str, to_df: bool = True):
         """
         Evaluates the model on a test set using the specified metric.
 
@@ -407,28 +406,37 @@ class LogisticRegressionArcht:
             test_set (tuple): Tuple containing test input data (np.ndarray) and output data (np.ndarray).
             metric (str): Metric to use for evaluation. Options are 'categorical_crossentropy', 'binary_crossentropy',
                         'accuracy', 'precision', 'recall', 'f1_score', 'confusion_matrix'.
+            to_df (bool, optional): If True and metric is 'confusion_matrix', returns the matrix as a pandas DataFrame.
+                                    If False, returns it as a numpy array. Default is True.
 
         Returns:
-            float: Evaluation result.
-        
+            Union[float, pd.DataFrame, np.ndarray]: The evaluation result. For metrics other than 'confusion_matrix', 
+                                                    returns a float. For 'confusion_matrix', returns either a DataFrame 
+                                                    or a tensor converted to numpy, based on `to_df`.
+
         Raises:
             ValueError: If the specified metric is not supported.
         """
         x_test, y_test = test_set
         x_test = x_test.astype(np.float32)
         y_test = y_test.astype(np.float32)
-        
+
+        # Convert y_test to one-hot encoding for metrics other than binary cross-entropy
         if metric != 'binary_crossentropy':
             y_test = tf.keras.utils.to_categorical(y_test, num_classes=self.num_classes)
-        
+
+        # Add intercept column if needed
         if self.use_intercept:
             x_test = np.c_[np.ones((x_test.shape[0], 1)), x_test]
-        
+
+        # Convert inputs to tensors
         x_test = tf.convert_to_tensor(x_test, dtype=tf.float32)
         y_test = tf.convert_to_tensor(y_test, dtype=tf.float32)
-        
+
+        # Generate predictions
         y_pred = self._predict(x_test)
-        
+
+        # Define the metrics and their corresponding functions
         metrics = {
             'categorical_crossentropy': calculate_categorical_crossentropy,
             'binary_crossentropy': calculate_binary_crossentropy,
@@ -436,17 +444,23 @@ class LogisticRegressionArcht:
             'precision': calculate_precision,
             'recall': calculate_recall,
             'f1_score': calculate_f1_score,
-            'confusion_matrix': calculate_confusion_matrix
+            'confusion_matrix': lambda y_true, y_pred: calculate_confusion_matrix(y_true, y_pred, to_df=to_df)
         }
 
+        # Validate the metric
         if metric not in metrics:
             raise ValueError(f"Unsupported metric '{metric}'. Supported metrics are: {list(metrics.keys())}")
-        
+
+        # Calculate the metric value
         metric_value = metrics[metric](y_test, y_pred)
-        if metric != 'confusion_matrix':
-            metric_value = tf.reduce_mean(metric_value)
-        
-        return metric_value.numpy()
+
+        # Handle 'confusion_matrix' separately to return either a DataFrame or a numpy array
+        if metric == 'confusion_matrix':
+            return metric_value
+
+        # For other metrics, reduce to a single value
+        return tf.reduce_mean(metric_value).numpy()
+
 
     
     def save_model(self, filepath: str) -> None:
