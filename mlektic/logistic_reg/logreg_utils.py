@@ -125,27 +125,27 @@ def calculate_confusion_matrix(y_true: tf.Tensor, y_pred: tf.Tensor, to_df: bool
         return confusion_matrix
     
     # Create a DataFrame for formatted output
-    etiquetas = ['Predicción Positiva (1)', 'Predicción Negativa (0)']
-    columnas = ['Reales Positivos (1)', 'Reales Negativos (0)']
+    labels = ['Predicted Positive (1)', 'Predicted Negative (0)']
+    columns = ['Actual Positive (1)', 'Actual Negative (0)']
     
     # Convert the tensor to a DataFrame
-    matriz_confusion_df = pd.DataFrame(
+    confusion_matrix_df = pd.DataFrame(
         confusion_matrix.numpy(), 
-        index=etiquetas, 
-        columns=columnas
+        index=labels, 
+        columns=columns
     )
     
     # Add descriptive labels
-    matriz_confusion_df['Reales Positivos (1)'] = [
-        f"{matriz_confusion_df.loc[etiquetas[0], columnas[0]]:.2f} Verdaderos Positivos (VP)",
-        f"{matriz_confusion_df.loc[etiquetas[1], columnas[0]]:.2f} Falsos Negativos (FN)"
+    confusion_matrix_df['Actual Positive (1)'] = [
+        f"{confusion_matrix_df.loc[labels[0], columns[0]]:.2f} True Positives (TP)",
+        f"{confusion_matrix_df.loc[labels[1], columns[0]]:.2f} False Negatives (FN)"
     ]
-    matriz_confusion_df['Reales Negativos (0)'] = [
-        f"{matriz_confusion_df.loc[etiquetas[0], columnas[1]]:.2f} Falsos Positivos (FP)",
-        f"{matriz_confusion_df.loc[etiquetas[1], columnas[1]]:.2f} Verdaderos Negativos (VN)"
+    confusion_matrix_df['Actual Negative (0)'] = [
+        f"{confusion_matrix_df.loc[labels[0], columns[1]]:.2f} False Positives (FP)",
+        f"{confusion_matrix_df.loc[labels[1], columns[1]]:.2f} True Negatives (TN)"
     ]
     
     # Remove duplicate columns
-    matriz_confusion_df = matriz_confusion_df[['Reales Positivos (1)', 'Reales Negativos (0)']]
+    confusion_matrix_df = confusion_matrix_df[['Actual Positive (1)', 'Actual Negative (0)']]
     
-    return matriz_confusion_df
+    return confusion_matrix_df
