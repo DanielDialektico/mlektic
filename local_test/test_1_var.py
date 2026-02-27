@@ -1,3 +1,5 @@
+import webbrowser
+
 import numpy as np
 import plotly.io as pio
 from sklearn.datasets import fetch_california_housing
@@ -46,6 +48,11 @@ fig_plain = visualize_lr(
 )
 fig_plain.show()
 
+# Extra: Renderizar en navegador para animación fluida a máxima velocidad
+html_caso1 = "local_test_1v_caso1_plain.html"
+fig_plain.write_html(html_caso1, auto_play=False)
+webbrowser.open(html_caso1)
+
 
 # ============================================================
 # CASO 2: California Housing CON escalado (visualización escalada)
@@ -81,6 +88,11 @@ fig_scaled_theta = visualize_lr(
     display_space="scaled",
 )
 fig_scaled_theta.show()
+
+# Extra: Renderizar en navegador para animación fluida a máxima velocidad
+html_caso2 = "local_test_1v_caso2_scaled.html"
+fig_scaled_theta.write_html(html_caso2, auto_play=False)
+webbrowser.open(html_caso2)
 
 
 # ============================================================
