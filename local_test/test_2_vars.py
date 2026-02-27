@@ -1,37 +1,68 @@
 import numpy as np
+import plotly.io as pio
+from sklearn.datasets import fetch_california_housing
 from sklearn.linear_model import SGDRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from mlektic import visualize_lr
 
-np.random.seed(0)
+pio.renderers.default = "notebook"
 
-# --- 1. Generar datos ---
-n = 100
-X1 = np.random.rand(n) * 10
-X2 = np.random.rand(n) * 5
-y = (3.0 * X1) - (1.5 * X2) + 2.0 + np.random.randn(n) * 2.0
+# ============================================================
+# 1) Cargar datos (2 variables)
+# ============================================================
+data = fetch_california_housing()
+# Usamos MedInc y HouseAge
+X_full = data.data[:, [0, 1]]
+y_full = data.target
 
-X = np.column_stack([X1, X2])
+np.random.seed(7)
+idx = np.random.choice(len(X_full), size=500, replace=False)
+X = X_full[idx]
+y = y_full[idx]
 
-# --- 2. Entrenar modelo ---
-model_2v = SGDRegressor(
-    loss="squared_error",
-    max_iter=50,
-    learning_rate="constant",
-    eta0=0.001,
-    random_state=42,
-    tol=1e-3,
-    shuffle=False,
+model_scaled = Pipeline(
+    [
+        ("scaler", StandardScaler()),
+        (
+            "sgd",
+            SGDRegressor(
+                loss="squared_error",
+                penalty=None,
+                learning_rate="constant",
+                eta0=0.001,  # con escalado puedes subir LR bastante
+                max_iter=2000,
+                tol=1e-6,
+                shuffle=False,
+                random_state=7,
+            ),
+        ),
+    ]
 )
-model_2v.fit(X, y)
 
-# --- 3. Visualizar ---
-fig_2v = visualize_lr(
-    model_2v,
+model_scaled.fit(X, y)
+
+# Visualizar Theta en ESPACIO ESCALADO
+fig_scaled_theta = visualize_lr(
+    model_scaled,
     X,
     y,
-    steps=60,
+    steps=70,
     show_loss=True,
-    title="Local Test: 2 Variabes Unscaled (Plano)",
+    title="California Housing (2 vars) — CON StandardScaler — θ en espacio escalado",
+    display_space="scaled",
 )
-fig_2v.show()
+fig_scaled_theta.show()
+
+# Visualizar Theta en ESPACIO ORIGINAL
+fig_orig_theta = visualize_lr(
+    model_scaled,
+    X,
+    y,
+    steps=70,
+    show_loss=True,
+    title="California Housing (2 vars) — CON StandardScaler — θ en espacio original",
+    display_space="original",
+)
+fig_orig_theta.show()

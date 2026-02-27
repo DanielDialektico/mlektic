@@ -1,33 +1,51 @@
 import numpy as np
+import plotly.io as pio
 from sklearn.linear_model import SGDRegressor
 
 from mlektic import visualize_lr
 
-np.random.seed(42)
+pio.renderers.default = "notebook"
 
-# --- 1. Generar datos (ruidosos para dificultar) ---
-n_samples = 150
-X = np.sort(np.random.rand(n_samples)) * 10
-y = 2.5 * X + 1.0 + np.random.randn(n_samples) * 3
+# -------------------------
+# Data (más "lenta" por escala pequeña)
+# -------------------------
+np.random.seed(7)
+n = 120
 
-X = X.reshape(-1, 1)
+scale_x = 0.2  # << hace X pequeño => gradientes pequeños
+b_small = 0.04  # << intercepto pequeño => residuales pequeños
+noise_std = 0.03  # << ruido pequeño
 
-# --- 2. Entrenar modelo (muy sub-entrenado para ver evolución) ---
-model_1v = SGDRegressor(
+X = scale_x * np.random.normal(0, 1.0, size=(n, 1))
+y = (2.2 * X[:, 0] + b_small) + np.random.normal(0, noise_std, size=n)
+
+# -------------------------
+# Usuario entrena normal (SIN Pipeline)
+# -------------------------
+model = SGDRegressor(
     loss="squared_error",
-    max_iter=50,
+    penalty=None,
     learning_rate="constant",
-    eta0=0.005,
-    random_state=42,
-    tol=None,
+    eta0=0.02,
     shuffle=False,
+    max_iter=1000,
+    tol=1e-6,
+    random_state=7,
 )
-model_1v.fit(X, y.ravel())
 
-# --- 3. Visualizar ---
-fig_1v = visualize_lr(model_1v, X, y, steps=60, show_loss=True, title="Local Test: 1 Var Unscaled")
-fig_1v.show()
+model.fit(X, y)
 
-# Para el test con baseline "mean"
-fig_1v_base = visualize_lr(model_1v, X, y, steps=30, baseline="mean", title="Local Test: 1 Var (baseline='mean')")
-fig_1v_base.show()
+print("Pred (first 5):", model.predict(X[:5]))
+
+# -------------------------
+# Visualización (tu API)
+# -------------------------
+fig = visualize_lr(
+    model,
+    X,
+    y,
+    steps=80,
+    show_loss=True,
+    title="Linear Regression (Simple, 1 variable) - Slow/Smooth Data",
+)
+fig.show()
