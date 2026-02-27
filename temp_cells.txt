@@ -1,0 +1,121 @@
+from sklearn.linear_model import SGDRegressor
+
+# -------------------------
+# Data (más "lenta" por escala pequeña)
+# -------------------------
+np.random.seed(7)
+n = 120
+
+scale_x = 0.2  # << hace X pequeño => gradientes pequeños
+b_small = 0.04  # << intercepto pequeño => residuales pequeños
+noise_std = 0.03  # << ruido pequeño
+
+X = scale_x * np.random.normal(0, 1.0, size=(n, 1))
+y = (2.2 * X[:, 0] + b_small) + np.random.normal(0, noise_std, size=n)
+
+# -------------------------
+# Usuario entrena normal (SIN Pipeline)
+# -------------------------
+model = SGDRegressor(
+    loss="squared_error",
+    penalty=None,
+    learning_rate="constant",
+    eta0=0.02,
+    shuffle=False,
+    max_iter=1000,
+    tol=1e-6,
+    random_state=7,
+)
+
+model.fit(X, y)
+
+print("Pred (first 5):", model.predict(X[:5]))
+
+# -------------------------
+# Visualización (tu API)
+# -------------------------
+fig = visualize_lr(
+    model,
+    X,
+    y,
+    steps=80,
+    show_loss=True,
+    title="Linear Regression (Simple, 1 variable) - Slow/Smooth Data",
+)
+fig.show()
+
+---CELL---
+
+import numpy as np
+from sklearn.datasets import fetch_california_housing
+from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler
+
+# ============================================================
+# 1) Cargar datos reales
+# ============================================================
+data = fetch_california_housing()
+X_full = data.data[:, [0]]  # usamos solo una variable: MedInc (ingreso medio)
+y_full = data.target  # precio medio de vivienda
+
+# Subsample pequeño para animación fluida
+np.random.seed(7)
+idx = np.random.choice(len(X_full), size=300, replace=False)
+X = X_full[idx]
+y = y_full[idx]
+
+model_plain = SGDRegressor(
+    loss="squared_error",
+    learning_rate="constant",
+    eta0=0.0005,  # pequeño porque X está en escala natural
+    max_iter=2000,
+    tol=1e-6,
+    shuffle=False,
+    random_state=7,
+)
+
+model_plain.fit(X, y)
+
+fig_plain = visualize_lr(
+    model_plain,
+    X,
+    y,
+    steps=70,
+    show_loss=True,
+    title="California Housing — SGDRegressor (SIN escalado)",
+    display_space="original",  # aquí scaled == original, no hay scaler
+)
+fig_plain.show()
+
+---CELL---
+
+model_scaled = Pipeline(
+    [
+        ("scaler", StandardScaler()),
+        (
+            "sgd",
+            SGDRegressor(
+                loss="squared_error",
+                learning_rate="constant",
+                eta0=0.001,  # ahora podemos usar lr más grande gracias al escalado
+                max_iter=2000,
+                tol=1e-6,
+                shuffle=False,
+                random_state=7,
+            ),
+        ),
+    ]
+)
+
+model_scaled.fit(X, y)
+
+fig_scaled_theta = visualize_lr(
+    model_scaled,
+    X,
+    y,
+    steps=70,
+    show_loss=True,
+    title="California Housing — SGDRegressor (CON StandardScaler) — θ en espacio escalado",
+    display_space="scaled",
+)
+fig_scaled_theta.show()

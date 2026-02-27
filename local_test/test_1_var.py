@@ -40,6 +40,7 @@ fig_plain = visualize_lr(
     y_cal,
     steps=70,
     show_loss=True,
+    frame_duration=10,
     title="California Housing — SGDRegressor (SIN escalado)",
     display_space="original",  # aquí scaled == original, no hay scaler
 )
@@ -75,6 +76,7 @@ fig_scaled_theta = visualize_lr(
     y_cal,
     steps=70,
     show_loss=True,
+    frame_duration=10,
     title="California Housing — SGDRegressor (CON StandardScaler) — θ en espacio escalado",
     display_space="scaled",
 )
@@ -91,6 +93,7 @@ fig_original_theta = visualize_lr(
     y_cal,
     steps=70,
     show_loss=True,
+    frame_duration=10,
     title="California Housing — SGDRegressor (CON StandardScaler) — θ en espacio original",
     display_space="original",
 )
@@ -130,6 +133,7 @@ fig_sim = visualize_lr(
     y_sim,
     steps=80,
     show_loss=False,
+    frame_duration=10,
     title="Linear Regression (Simple, 1 variable) - Slow/Smooth Data",
 )
 fig_sim.show()
@@ -145,6 +149,7 @@ fig_sim_extra = visualize_lr(
     y_sim,
     steps=50,
     show_loss=True,
+    frame_duration=10,
     smooth="none",
     baseline="zeros",  # Fija la referencia máxima del loss a 0 en la vista original
     title="Variación Extra: smooth='none' y baseline='zeros'",

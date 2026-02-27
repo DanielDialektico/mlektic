@@ -542,6 +542,7 @@ def build_plane_lr_figure(
     title="Linear Regression (2 variables)",
     strict_loss=False,
     dec=4,
+    frame_duration=80,
 ):
     """
     2D (plane) LR visualization.
@@ -905,7 +906,10 @@ def build_plane_lr_figure(
                         dict(
                             label="Play",
                             method="animate",
-                            args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
+                            args=[
+                                None,
+                                {"frame": {"duration": frame_duration, "redraw": True}, "transition": {"duration": 0}},
+                            ],
                         ),
                         dict(
                             label="Pause",
@@ -1046,7 +1050,10 @@ def build_plane_lr_figure(
                     dict(
                         label="Play",
                         method="animate",
-                        args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
+                        args=[
+                            None,
+                            {"frame": {"duration": frame_duration, "redraw": True}, "transition": {"duration": 0}},
+                        ],
                     ),
                     dict(
                         label="Pause",
@@ -1082,6 +1089,7 @@ def build_simple_lr_figure(
     title="Linear Regression (Simple, 1 variable)",
     strict_loss=False,
     dec=4,
+    frame_duration=80,
 ):
     """
     Simple (1D) visualization.
@@ -1407,7 +1415,10 @@ def build_simple_lr_figure(
                         dict(
                             label="Play",
                             method="animate",
-                            args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
+                            args=[
+                                None,
+                                {"frame": {"duration": frame_duration, "redraw": True}, "transition": {"duration": 0}},
+                            ],
                         ),
                         dict(
                             label="Pause",
@@ -1529,7 +1540,10 @@ def build_simple_lr_figure(
                     dict(
                         label="Play",
                         method="animate",
-                        args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
+                        args=[
+                            None,
+                            {"frame": {"duration": frame_duration, "redraw": True}, "transition": {"duration": 0}},
+                        ],
                     ),
                     dict(
                         label="Pause",
@@ -1561,7 +1575,8 @@ def build_lr_figure(
     history_kind="iterative",
     title=None,
     strict_loss=False,
-    dec=4,  # passthrough a figuras (opcional, pero útil)
+    dec=4,
+    frame_duration=80,  # passthrough a figuras (opcional, pero útil)
 ):
     """
     Route to the appropriate visualization figure based on feature dimensions.
@@ -1645,6 +1660,7 @@ def build_lr_figure(
             title=title,
             strict_loss=strict_loss,
             dec=dec,
+            frame_duration=frame_duration,
         )
 
     if d == 2:
@@ -1667,6 +1683,7 @@ def build_lr_figure(
             title=title,
             strict_loss=strict_loss,
             dec=dec,
+            frame_duration=frame_duration,
         )
 
     if d > 2:
@@ -1686,6 +1703,7 @@ def build_lr_figure(
             title=title,
             strict_loss=strict_loss,
             dec=dec,
+            frame_duration=frame_duration,
         )
 
     raise ValueError(f"Unexpected d={d}.")
@@ -1708,7 +1726,8 @@ def visualize_lr(
     strict_loss=False,
     baseline="mean",
     display_space="original",  # <-- NUEVO
-    dec=4,  # passthrough (opcional)
+    dec=4,
+    frame_duration=80,  # passthrough (opcional)
 ):
     """
     Generate an animated visualization for a linear regression model.
@@ -1756,6 +1775,7 @@ def visualize_lr(
         title=title,
         strict_loss=strict_loss,
         dec=dec,
+        frame_duration=frame_duration,
     )
 
 
@@ -1772,6 +1792,7 @@ def build_multivar_lr_figure(
     strict_loss=False,
     terms_per_line=6,
     dec=4,
+    frame_duration=80,
     threshold_dense=100,  # <=100 usa expansión completa; >100 usa vista matricial
 ):
     """
@@ -2035,7 +2056,10 @@ def build_multivar_lr_figure(
                         dict(
                             label="Play",
                             method="animate",
-                            args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
+                            args=[
+                                None,
+                                {"frame": {"duration": frame_duration, "redraw": True}, "transition": {"duration": 0}},
+                            ],
                         ),
                         dict(
                             label="Pause",
@@ -2425,7 +2449,10 @@ def build_multivar_lr_figure(
                     dict(
                         label="Play",
                         method="animate",
-                        args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
+                        args=[
+                            None,
+                            {"frame": {"duration": frame_duration, "redraw": True}, "transition": {"duration": 0}},
+                        ],
                     ),
                     dict(
                         label="Pause",
