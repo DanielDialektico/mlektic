@@ -1,3 +1,10 @@
+"""
+Core module for the mlektic library.
+
+This module provides the main API for extracting training history from scikit-learn
+models and visualizing their parameters and predictions over time.
+"""
+
 import numpy as np
 from sklearn.base import clone
 from sklearn.metrics import mean_squared_error
@@ -8,6 +15,7 @@ from sklearn.pipeline import Pipeline
 # Helpers
 # -------------------------
 def _first_not_none(*args):
+    """Return the first non-None argument from the given list of arguments."""
     for a in args:
         if a is not None:
             return a
@@ -15,6 +23,7 @@ def _first_not_none(*args):
 
 
 def _as_2d(X):
+    """Ensure that the input array X is 2-dimensional."""
     X = np.asarray(X)
     if X.ndim == 1:
         X = X.reshape(-1, 1)
@@ -22,22 +31,26 @@ def _as_2d(X):
 
 
 def _as_1d(y):
+    """Ensure that the input array y is 1-dimensional."""
     return np.asarray(y).ravel()
 
 
 def _get_final_estimator(estimator):
+    """Extract the final estimator from a Pipeline, or return the estimator itself."""
     if isinstance(estimator, Pipeline):
         return estimator.steps[-1][1]
     return estimator
 
 
 def _last_step_prefix(estimator):
+    """Extract the string prefix of the last step in a Pipeline, or None."""
     if isinstance(estimator, Pipeline):
         return estimator.steps[-1][0]
     return None
 
 
 def _try_set_params(estimator, **params):
+    """Safely attempt to set parameters on an estimator, catching any exceptions."""
     try:
         estimator.set_params(**params)
         return True
@@ -46,6 +59,7 @@ def _try_set_params(estimator, **params):
 
 
 def _ema_smooth(arr, beta=0.85):
+    """Apply Exponential Moving Average smoothing to a 1D array."""
     arr = np.asarray(arr, dtype=float)
     if arr.size == 0:
         return arr
@@ -57,6 +71,7 @@ def _ema_smooth(arr, beta=0.85):
 
 
 def _is_iterative(estimator):
+    """Check if the estimator supports iterative training (partial_fit or warm_start)."""
     last = _get_final_estimator(estimator)
     return hasattr(last, "partial_fit") or hasattr(last, "warm_start")
 
@@ -86,8 +101,9 @@ def _extract_theta_as_learned(estimator, d_expected=None):
 
 def _find_standard_scaler(estimator):
     """
-    Si estimator es Pipeline, busca un step tipo StandardScaler (o similar):
-    - tiene mean_ y (scale_ o var_) y transform()
+    Search for a StandardScaler-like step inside a Pipeline estimator.
+
+    Checks if there is a step with `mean_`, `scale_` (or `var_`), and `transform`.
     """
     if not isinstance(estimator, Pipeline):
         return None
@@ -102,6 +118,7 @@ def _find_standard_scaler(estimator):
 
 
 def _safe_get_scale(scaler):
+    """Extract mean and scale properties safely from a scaler object."""
     if scaler is None:
         return None, None, True, True
 
@@ -160,8 +177,9 @@ def _theta_scaled_to_original(w_s, b_s, scaler):
 
 def _transform_up_to_last(pipeline, X):
     """
-    Aplica todos los steps del Pipeline EXCEPTO el último (el estimador final).
-    Devuelve X_transformed.
+    Apply all steps of a Pipeline EXCEPT the final estimator.
+
+    Returns the transformed input matrix X_transformed.
     """
     Xt = X
     for _, step in pipeline.steps[:-1]:
@@ -172,12 +190,10 @@ def _transform_up_to_last(pipeline, X):
 
 def _make_iterative_replay_estimator(estimator):
     """
-    Clona el estimator y trata de "forzarlo" a modo iterativo:
-      - warm_start=True
-      - max_iter=1
-      - tol=None
-      - shuffle=False
-    Todo es best-effort (si un param no existe, se ignora).
+    Clone the estimator and try to force it into iterative training mode.
+
+    Sets warm_start=True, max_iter=1, tol=None, and shuffle=False on a
+    best-effort basis.
     """
     est = clone(estimator)
 
@@ -540,7 +556,6 @@ def build_plane_lr_figure(
       - If z_plane_hist is given, w_hist/b_hist are OPTIONAL and only used for display in the equation text.
       - show_loss is only allowed for iterative histories (same rule as 1D).
     """
-
     # --- enforce inside the library ---
     if show_loss and history_kind != "iterative":
         if strict_loss:
@@ -1077,7 +1092,6 @@ def build_simple_lr_figure(
     Legacy mode:
       - Provide w_hist,b_hist => plot uses y = w*x + b (only correct for pure linear model in original space)
     """
-
     # --- enforce inside the library ---
     if show_loss and history_kind != "iterative":
         if strict_loss:
@@ -1549,6 +1563,33 @@ def build_lr_figure(
     strict_loss=False,
     dec=4,  # passthrough a figuras (opcional, pero útil)
 ):
+    """
+    Route to the appropriate visualization figure based on feature dimensions.
+
+    Depending on the number of features `d` in the dataset `X`, this function delegates
+    the plot creation to the respective builder for 1D, 2D, or multivariable data.
+
+    Args:
+        X (np.ndarray): The feature matrix of shape (n_samples, d).
+        y (np.ndarray): The target vector of shape (n_samples,).
+        w_hist (np.ndarray, optional): History of weights (theta). Defaults to None.
+        b_hist (np.ndarray, optional): History of biases (intercepts). Defaults to None.
+        history (dict, optional): Complete history dictionary returned by `fit_history()`. Defaults to None.
+        y_line_hist (np.ndarray, optional): History of prediction lines (for 1D). Defaults to None.
+        x1_grid (np.ndarray, optional): X-axis grid for 1D predictions. Defaults to None.
+        z_plane_hist (np.ndarray, optional): History of prediction planes (for 2D). Defaults to None.
+        X1g (np.ndarray, optional): Grid for first feature in 2D. Defaults to None.
+        X2g (np.ndarray, optional): Grid for second feature in 2D. Defaults to None.
+        loss_hist (np.ndarray, optional): History of loss values. Defaults to None.
+        show_loss (bool, optional): Whether to display the loss chart. Defaults to False.
+        history_kind (str, optional): The kind of history collected ("iterative" or "auto"). Defaults to "iterative".
+        title (str, optional): The main title of the figure. Defaults to None.
+        strict_loss (bool, optional): If True, strictly enforce loss display rules. Defaults to False.
+        dec (int, optional): Number of decimal places to show for parameters. Defaults to 4.
+
+    Returns:
+        plotly.graph_objects.Figure: The fully constructed Plotly figure.
+    """
     X = np.asarray(X)
     y = np.asarray(y).ravel()
     if X.ndim == 1:
@@ -1669,6 +1710,32 @@ def visualize_lr(
     display_space="original",  # <-- NUEVO
     dec=4,  # passthrough (opcional)
 ):
+    """
+    Generate an animated visualization for a linear regression model.
+
+    This function is the primary public API of the library. It extracts the training
+    history from the provided scikit-learn estimator and creates an interactive
+    Plotly animation that demonstrates the evolution of the model's parameters and
+    predictions across training steps.
+
+    Args:
+        trained_estimator: A fitted scikit-learn estimator or Pipeline.
+        X (np.ndarray): The feature matrix used for training.
+        y (np.ndarray): The target vector.
+        steps (int, optional): The desired number of animation frames. Defaults to 60.
+        mode (str, optional): Method to extract history ("auto", "iterative", "final_interp"). Defaults to "auto".
+        show_loss (bool, optional): Whether to display the loss curve alongside the main plot. Defaults to True.
+        title (str, optional): The title of the plot. Defaults to None.
+        smooth (str, optional): Smoothing method for the loss curve (e.g., "ema" or None). Defaults to "ema".
+        smooth_beta (float, optional): Beta parameter for EMA smoothing. Defaults to 0.85.
+        strict_loss (bool, optional): If True, throw errors if loss cannot be animated cleanly. Defaults to False.
+        baseline (str, optional): Initial reference line for the loss curve ("mean" or "zeros"). Defaults to "mean".
+        display_space (str, optional): The space in which to display the parameters ("original" or "scaled"). Defaults to "original".
+        dec (int, optional): The number of decimal places to format the parameters. Defaults to 4.
+
+    Returns:
+        plotly.graph_objects.Figure: The animated Plotly figure object.
+    """
     hist = fit_history(
         trained_estimator,
         X,
@@ -1710,11 +1777,10 @@ def build_multivar_lr_figure(
     """
     Multivariable visualization for d > 2 (parameter display).
 
-    IMPORTANT:
+    Important:
     - This visualization is inherently tied to showing weights (theta).
     - If the user's model uses arbitrary transforms/pipelines, theta in original space may not be meaningful.
     """
-
     # --- enforce inside the library ---
     if show_loss and history_kind != "iterative":
         if strict_loss:
