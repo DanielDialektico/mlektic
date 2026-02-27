@@ -146,7 +146,7 @@ fig_sim_extra = visualize_lr(
     steps=50,
     show_loss=True,
     smooth="none",
-    baseline=0.0,  # Fija la referencia máxima del loss a 0 en la vista original
-    title="Variación Extra: smooth='none' y baseline=0.0",
+    baseline="zeros",  # Fija la referencia máxima del loss a 0 en la vista original
+    title="Variación Extra: smooth='none' y baseline='zeros'",
 )
 fig_sim_extra.show()
