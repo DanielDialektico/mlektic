@@ -189,10 +189,13 @@ def build_binary_simple_logistic_figure(
             col=1,
         )
 
+        step_axis_list = step_axis.tolist()
+        loss_hist_list = loss_hist.tolist()
+
         fig.add_trace(
             go.Scatter(
-                x=[0],
-                y=[loss_hist[0]],
+                x=[step if i == 0 else None for i, step in enumerate(step_axis_list)],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
                 name="Log-loss",
                 line=dict(width=3),
@@ -212,8 +215,8 @@ def build_binary_simple_logistic_figure(
                     data=[
                         go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=dict(width=4), uid="MODEL_LINE"),
                         go.Scatter(
-                            x=step_axis[: t + 1],
-                            y=loss_hist[: t + 1],
+                            x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
+                            y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
                             mode="lines",
                             line=dict(width=3),
                             uid="LOSS_LINE",

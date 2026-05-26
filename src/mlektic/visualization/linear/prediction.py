@@ -529,9 +529,9 @@ def explain_lr_prediction(
         res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat)}" + r"\end{aligned}$"
         point_tex = (
             r"$\begin{aligned}"
-            rf"(x_1,x_2,\ldots,x_d) &= ({_fmt(x_disp[0])}, {_fmt(x_disp[1])}, \cdots,\ "
+            rf"(x_1,x_2,\ldots,x_d, \hat{{y}}) &= ({_fmt(x_disp[0])}, {_fmt(x_disp[1])}, \cdots,\ "
             r"\\"
-            r"&\qquad\qquad " + rf"{_fmt(x_disp[-1])})"
+            r"&\qquad\qquad " + rf"{_fmt(x_disp[-1])}, {_fmt(yhat)})"
             r"\end{aligned}$"
         )
 
@@ -631,7 +631,7 @@ def explain_lr_prediction(
     model_formula_tex = r"$\hat{y}=\theta_0 + \operatorname{vec}(\boldsymbol{\theta})^\top\operatorname{vec}(\mathbf{x})$"
     subst_eq_tex = r"$\begin{aligned}\hat{y} & = & " + rf"({_fmt(w_disp[0])})\cdot({_fmt(x_disp[0])})" + r" & + \cdots\\      &   &               & + (" + rf"{_fmt(b_disp)}" + r")\end{aligned}$"
     res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat)}" + r"\end{aligned}$"
-    point_tex = r"$\begin{aligned}" + rf"(x_1,\ldots,x_d) &= ({_fmt(x_disp[0])}, \cdots,\ " + r"\\" + r"&\qquad\qquad " + rf"{_fmt(x_disp[-1])})" + r"\end{aligned}$"
+    point_tex = r"$\begin{aligned}" + rf"(x_1,\ldots,x_d, \hat{{y}}) &= ({_fmt(x_disp[0])}, \cdots,\ " + r"\\" + r"&\qquad\qquad " + rf"{_fmt(x_disp[-1])}, {_fmt(yhat)})" + r"\end{aligned}$"
 
     fig = make_subplots(
         rows=1, cols=3, column_widths=[0.33, 0.34, 0.33],

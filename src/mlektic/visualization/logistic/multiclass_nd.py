@@ -69,8 +69,10 @@ def build_multiclass_multivar_logistic_figure(
             raise ValueError("loss_hist must match steps.")
 
     ep = np.arange(steps_n)
+    ep_list = ep.tolist()
 
     if show_loss:
+        loss_hist_list = loss_hist.tolist()
         loss_min, loss_max = float(loss_hist.min()), float(loss_hist.max())
         loss_pad = 0.08 * ((loss_max - loss_min) + 1e-9)
 
@@ -240,10 +242,16 @@ def build_multiclass_multivar_logistic_figure(
         specs=[[{"type": "xy"}, {"type": "xy"}]],
     )
 
-    if show_loss:
-        fig.add_trace(go.Scatter(x=[], y=[], mode="lines", name="Cross-entropy", line=dict(width=3)), row=1, col=1)
-    else:
-        fig.add_trace(go.Scatter(x=[], y=[], mode="lines", name="Cross-entropy", line=dict(width=3)), row=1, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=[step if i == 0 else None for i, step in enumerate(ep_list)] if show_loss else [],
+            y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
+            mode="lines",
+            name="Cross-entropy",
+            line=dict(width=3)
+        ),
+        row=1, col=1
+    )
 
     def make_annotations(t):
         ann = [
@@ -359,7 +367,13 @@ def build_multiclass_multivar_logistic_figure(
 
     frames = []
     for t in range(steps_n):
-        trace = go.Scatter(x=ep[: t + 1], y=loss_hist[: t + 1]) if show_loss else go.Scatter(x=[], y=[])
+        trace = (
+            go.Scatter(
+                x=[step if i <= t else None for i, step in enumerate(ep_list)],
+                y=[val if i <= t else None for i, val in enumerate(loss_hist_list)]
+            )
+            if show_loss else go.Scatter(x=[], y=[])
+        )
         frames.append(
             go.Frame(
                 name=str(t),

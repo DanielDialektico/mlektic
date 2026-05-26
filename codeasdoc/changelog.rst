@@ -37,3 +37,9 @@ Funcionalidades
   con transformación inversa automática de parámetros escalados.
 
 - **Tema visual unificado**: Dark mode con Plotly, botones Play/Pause, slider temporal.
+
+Fixes y Mejoras Recientes
+-------------------------
+
+- **Estabilidad en Exportación HTML**: Corrección del "glitch" de redimensionamiento de arrays de JavaScript en Plotly; los arrays ahora se rellenan con ``None`` para garantizar un trazado de línea constante y evitar que las animaciones HTML se corten.
+- **Formateo Multivariable**: La función ``explain_lr_prediction()`` para 3 o más variables ahora formatea correctamente la coordenada resultante incluyendo ``y_hat`` al final (ej., ``(x_1, \dots, x_d, \hat{y})``), logrando consistencia matemática con las vistas de 1D y 2D.
