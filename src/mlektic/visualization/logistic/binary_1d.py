@@ -1,0 +1,292 @@
+"""Binary logistic-regression (1D) figure builder."""
+
+from __future__ import annotations
+
+import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+from ..theme import (
+    get_base_layout,
+    get_legend_props,
+    get_updatemenus,
+    get_sliders,
+    create_annotation,
+)
+from ...utils.math import _sigmoid
+
+def build_binary_simple_logistic_figure(
+    x1,
+    y,
+    w_hist=None,
+    b_hist=None,
+    *,
+    p_line_hist=None,
+    x1_grid=None,
+    loss_hist=None,
+    show_loss=False,
+    history_kind="iterative",
+    title="Binary Logistic Regression (1 variable)",
+    strict_loss=False,
+    dec=4,
+    jitter=0.03,
+    frame_duration=80,
+    theme=None,
+):
+    """Internal method to build build_binary_simple_logistic_figure."""
+    if show_loss and history_kind != "iterative":
+        if strict_loss:
+            raise ValueError("show_loss=True is only allowed for iterative histories.")
+        show_loss = False
+        loss_hist = None
+
+    x1 = np.asarray(x1).ravel()
+    y = np.asarray(y).ravel().astype(float)
+    y_jitter = y + np.random.uniform(-jitter, jitter, size=y.size)
+
+    use_pred_grid = p_line_hist is not None
+
+    if use_pred_grid:
+        p_line_hist = np.asarray(p_line_hist, dtype=float)
+        if x1_grid is None:
+            raise ValueError("If p_line_hist is provided, x1_grid must be provided.")
+        x1_grid = np.asarray(x1_grid, dtype=float).ravel()
+
+        if p_line_hist.ndim != 2:
+            raise ValueError("p_line_hist must have shape (steps, grid_points).")
+        if p_line_hist.shape[1] != x1_grid.size:
+            raise ValueError("p_line_hist second dim must match x1_grid size.")
+
+        steps_n = int(p_line_hist.shape[0])
+
+        def p_line(t):
+            return p_line_hist[t]
+
+        w_disp = None
+        b_disp = None
+        if w_hist is not None and b_hist is not None:
+            w_arr = np.asarray(w_hist, dtype=float)
+            b_arr = np.asarray(b_hist, dtype=float).ravel()
+            if w_arr.ndim == 2 and w_arr.shape[1] == 1:
+                w_arr = w_arr[:, 0]
+            if w_arr.ndim == 1 and w_arr.size == steps_n and b_arr.size == steps_n:
+                w_disp = w_arr
+                b_disp = b_arr
+
+        def formula_text():
+            return r"$\hat{p}(y=1\mid x)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
+
+        def eq_text(t):
+            if w_disp is None:
+                return r"$\sigma(z)=\dfrac{1}{1+e^{-z}},\;\;\hat{p}(y=1\mid x)=f(x_1)$"
+            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}" + rf",\;\; z=({w_disp[t]:.{dec}f})x_1+({b_disp[t]:.{dec}f})$"
+
+        x_min, x_max = float(x1_grid.min()), float(x1_grid.max())
+
+    else:
+        if w_hist is None or b_hist is None:
+            raise ValueError("Legacy mode requires w_hist and b_hist. Prefer p_line_hist + x1_grid.")
+
+        w_hist = np.asarray(w_hist, dtype=float)
+        b_hist = np.asarray(b_hist, dtype=float).ravel()
+        steps_n = int(b_hist.size)
+
+        if w_hist.ndim == 1:
+            w_hist = w_hist.reshape(-1, 1)
+        if w_hist.shape[0] != steps_n:
+            raise ValueError("w_hist and b_hist must have same number of steps.")
+        if w_hist.shape[1] != 1:
+            raise ValueError(f"Binary 1D logistic expects 1 weight, got d={w_hist.shape[1]}.")
+
+        x_min, x_max = float(x1.min()), float(x1.max())
+        x1_grid = np.linspace(x_min, x_max, 300)
+
+        def p_line(t):
+            w1 = float(w_hist[t, 0])
+            b = float(b_hist[t])
+            return _sigmoid(w1 * x1_grid + b)
+
+        def formula_text():
+            return r"$\hat{p}(y=1\mid x)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
+
+        def eq_text(t):
+            w1 = float(w_hist[t, 0])
+            b = float(b_hist[t])
+            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}" + rf",\;\; z=({w1:.{dec}f})x_1+({b:.{dec}f})$"
+
+    if steps_n < 1:
+        raise ValueError("Need at least 1 step to animate.")
+
+    if show_loss:
+        if loss_hist is None:
+            raise ValueError("show_loss=True requires loss_hist.")
+        loss_hist = np.asarray(loss_hist, dtype=float).ravel()
+        if loss_hist.size != steps_n:
+            raise ValueError("loss_hist must have same length as steps.")
+
+    step_axis = np.arange(steps_n)
+
+    if show_loss:
+        theta_y = 1.18
+        eq_y = 1.10
+        margin_t = 160
+    else:
+        theta_y = 1.15
+        eq_y = 1.05
+        margin_t = 150
+
+    def formula_annotation():
+        return create_annotation(formula_text(), y=theta_y)
+
+    def eq_annotation(t):
+        return create_annotation(eq_text(t), y=eq_y)
+
+    def _pad(lo, hi, frac=0.10):
+        span = (hi - lo) + 1e-9
+        return [lo - frac * span, hi + frac * span]
+
+    x_range = _pad(x_min, x_max)
+
+    if show_loss:
+        lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
+        lpad = 0.10 * (lmax - lmin + 1e-9)
+
+    if show_loss:
+        fig = make_subplots(
+            rows=1,
+            cols=2,
+            column_widths=[0.62, 0.38],
+            horizontal_spacing=0.08,
+            specs=[[{"type": "xy"}, {"type": "xy"}]],
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=x1,
+                y=y_jitter,
+                mode="markers",
+                name="Data",
+                marker=dict(size=7, opacity=0.80),
+                legendgroup="fit",
+                showlegend=True,
+            ),
+            row=1,
+            col=1,
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=x1_grid,
+                y=p_line(0),
+                mode="lines",
+                name="Model",
+                line=dict(width=4),
+                legendgroup="fit",
+                showlegend=True,
+                uid="MODEL_LINE",
+            ),
+            row=1,
+            col=1,
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=[0],
+                y=[loss_hist[0]],
+                mode="lines",
+                name="Log-loss",
+                line=dict(width=3),
+                legendgroup="loss",
+                showlegend=True,
+                uid="LOSS_LINE",
+            ),
+            row=1,
+            col=2,
+        )
+
+        frames = []
+        for t in range(steps_n):
+            frames.append(
+                go.Frame(
+                    name=str(t),
+                    data=[
+                        go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=dict(width=4), uid="MODEL_LINE"),
+                        go.Scatter(
+                            x=step_axis[: t + 1],
+                            y=loss_hist[: t + 1],
+                            mode="lines",
+                            line=dict(width=3),
+                            uid="LOSS_LINE",
+                        ),
+                    ],
+                    traces=[1, 2],
+                    layout=go.Layout(annotations=[formula_annotation(), eq_annotation(t)]),
+                )
+            )
+        fig.frames = frames
+
+        fig.update_layout(
+            **get_base_layout(title=title, margin_t=margin_t, theme=theme),
+            annotations=[formula_annotation(), eq_annotation(0)],
+            legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.985, theme=theme)),
+            sliders=get_sliders(steps_n, theme=theme),
+            updatemenus=get_updatemenus(frame_duration, theme=theme),
+        )
+
+        fig.data[2].update(legend="legend2")
+        fig.update_xaxes(title="x₁", range=x_range, row=1, col=1)
+        fig.update_yaxes(title=r"$\hat{p}(y=1\mid x)$", range=[-0.08, 1.08], row=1, col=1)
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
+        fig.update_yaxes(title="Log-loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
+        return fig
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=x1,
+            y=y_jitter,
+            mode="markers",
+            name="Data",
+            marker=dict(size=7, opacity=0.80),
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=x1_grid,
+            y=p_line(0),
+            mode="lines",
+            name="Model",
+            line=dict(width=4),
+            uid="MODEL_LINE",
+        )
+    )
+
+    frames = []
+    for t in range(steps_n):
+        frames.append(
+            go.Frame(
+                name=str(t),
+                data=[go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=dict(width=4), uid="MODEL_LINE")],
+                traces=[1],
+                layout=go.Layout(annotations=[formula_annotation(), eq_annotation(t)]),
+            )
+        )
+    fig.frames = frames
+
+    fig.update_layout(
+        **get_base_layout(title=title, margin_t=margin_t, theme=theme),
+        annotations=[formula_annotation(), eq_annotation(0)],
+        legend=get_legend_props(theme=theme),
+        xaxis=dict(title="x₁", range=x_range),
+        yaxis=dict(title=r"$\hat{p}(y=1\mid x)$", range=[-0.08, 1.08]),
+        sliders=get_sliders(steps_n, theme=theme),
+        updatemenus=get_updatemenus(frame_duration, theme=theme),
+    )
+
+    return fig
+
+
+__all__ = ["build_binary_simple_logistic_figure"]

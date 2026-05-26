@@ -1,0 +1,219 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uso Avanzado &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="Sistema de Visualización" href="visualization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Uso Avanzado</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#uso-granular-de-la-api">Uso Granular de la API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#exportar-a-html">Exportar a HTML</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuracion-del-renderer">Configuración del Renderer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dimensionalidad-alta">Dimensionalidad Alta</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#directorio-local-test">Directorio <code class="docutils literal notranslate"><span class="pre">local_test/</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Uso Avanzado</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/advanced.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="uso-avanzado">
+<h1>Uso Avanzado<a class="headerlink" href="#uso-avanzado" title="Link to this heading"></a></h1>
+<section id="uso-granular-de-la-api">
+<h2>Uso Granular de la API<a class="headerlink" href="#uso-granular-de-la-api" title="Link to this heading"></a></h2>
+<p>Puedes usar las funciones de bajo nivel por separado para mayor control:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mlektic</span> <span class="kn">import</span> <span class="n">fit_history</span><span class="p">,</span> <span class="n">build_lr_figure</span>
+
+<span class="c1"># Capturar historial</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">fit_history</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
+    <span class="n">smooth</span><span class="o">=</span><span class="s2">&quot;ema&quot;</span><span class="p">,</span>
+    <span class="n">smooth_beta</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;zeros&quot;</span><span class="p">,</span>
+    <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Construir figura con opciones</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">build_lr_figure</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Mi Gráfico Personalizado&quot;</span><span class="p">,</span>
+    <span class="n">dec</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="exportar-a-html">
+<h2>Exportar a HTML<a class="headerlink" href="#exportar-a-html" title="Link to this heading"></a></h2>
+<p>Para compartir animaciones sin depender de Jupyter:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">.</span><span class="n">write_html</span><span class="p">(</span><span class="s2">&quot;mi_animacion.html&quot;</span><span class="p">,</span> <span class="n">auto_play</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>El archivo HTML es autocontenido y puede abrirse en cualquier navegador.</p>
+</section>
+<section id="configuracion-del-renderer">
+<h2>Configuración del Renderer<a class="headerlink" href="#configuracion-del-renderer" title="Link to this heading"></a></h2>
+<p>Plotly requiere configurar el renderer según tu entorno:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="nn">pio</span>
+
+<span class="c1"># Jupyter Notebook / VS Code</span>
+<span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;notebook&quot;</span>
+
+<span class="c1"># Google Colab</span>
+<span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;colab&quot;</span>
+
+<span class="c1"># Abrir en navegador</span>
+<span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;browser&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p>Mlektic establece <code class="docutils literal notranslate"><span class="pre">pio.renderers.default</span> <span class="pre">=</span> <span class="pre">&quot;colab&quot;</span></code> al importar.
+Si usas otro entorno, sobreescríbelo antes de llamar a <code class="docutils literal notranslate"><span class="pre">fig.show()</span></code>.</p>
+</div>
+</section>
+<section id="dimensionalidad-alta">
+<h2>Dimensionalidad Alta<a class="headerlink" href="#dimensionalidad-alta" title="Link to this heading"></a></h2>
+<p>Para datasets con muchas features (d &gt; 2), Mlektic genera una representación
+LaTeX del vector de parámetros. Ejemplo con 150 dimensiones:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">SGDRegressor</span>
+<span class="kn">from</span> <span class="nn">mlektic</span> <span class="kn">import</span> <span class="n">visualize_lr</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
+    <span class="p">(</span><span class="s2">&quot;scaler&quot;</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
+    <span class="p">(</span><span class="s2">&quot;sgd&quot;</span><span class="p">,</span> <span class="n">SGDRegressor</span><span class="p">(</span><span class="n">eta0</span><span class="o">=</span><span class="mf">0.015</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1000</span><span class="p">)),</span>
+<span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_150d</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X_150d</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="directorio-local-test">
+<h2>Directorio <code class="docutils literal notranslate"><span class="pre">local_test/</span></code><a class="headerlink" href="#directorio-local-test" title="Link to this heading"></a></h2>
+<p>Scripts preconfigurados para probar todas las capacidades:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test_1_var.py</span></code> — Regresión lineal 1D con datos reales y sintéticos.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_2_vars.py</span></code> — Regresión lineal 2D con Pipeline.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_multivar_pipeline.py</span></code> — 8, 100 y 150 dimensiones.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_refactor_linear.py</span></code> — Tests con <code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code> (interpolación).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_log_var.py</span></code> — Regresión logística binaria con Breast Cancer.</p></li>
+</ul>
+<p>Ejecución:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>local_test
+python<span class="w"> </span>test_1_var.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="visualization.html" class="btn btn-neutral float-left" title="Sistema de Visualización" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

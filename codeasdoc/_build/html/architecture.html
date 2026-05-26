@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arquitectura del Proyecto &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="Referencia de la API" href="api_reference.html" />
+    <link rel="prev" title="Inicio Rápido" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Arquitectura del Proyecto</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#diagrama-general">Diagrama General</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-api">Módulo <code class="docutils literal notranslate"><span class="pre">api/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-adapters">Módulo <code class="docutils literal notranslate"><span class="pre">adapters/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-domain">Módulo <code class="docutils literal notranslate"><span class="pre">domain/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-history">Módulo <code class="docutils literal notranslate"><span class="pre">history/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-services">Módulo <code class="docutils literal notranslate"><span class="pre">services/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-utils">Módulo <code class="docutils literal notranslate"><span class="pre">utils/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-visualization">Módulo <code class="docutils literal notranslate"><span class="pre">visualization/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#modulo-internal">Módulo <code class="docutils literal notranslate"><span class="pre">_internal/</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Arquitectura del Proyecto</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/architecture.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="arquitectura-del-proyecto">
+<h1>Arquitectura del Proyecto<a class="headerlink" href="#arquitectura-del-proyecto" title="Link to this heading"></a></h1>
+<p>Mlektic sigue una <strong>arquitectura hexagonal</strong> (Ports &amp; Adapters) simplificada, organizada
+en capas con responsabilidades claras.</p>
+<section id="diagrama-general">
+<h2>Diagrama General<a class="headerlink" href="#diagrama-general" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>┌─────────────────────────────────────────────────────────┐
+│                    API Pública                          │
+│        visualize_lr()    visualize_logistic()           │
+└──────────────┬─────────────────────┬────────────────────┘
+               │                     │
+┌──────────────▼─────────────────────▼────────────────────┐
+│                    Services                             │
+│      fit_history()     fit_history_logistic()           │
+└──────────────┬─────────────────────┬────────────────────┘
+               │                     │
+┌──────────────▼─────────────────────▼────────────────────┐
+│                  History Engine                         │
+│    HistoryEngine → Strategy Pattern                     │
+│    ├── IterativeCapture  (partial_fit / warm_start)     │
+│    └── InterpolationCapture  (modelos no iterativos)    │
+└──────────────┬─────────────────────┬────────────────────┘
+               │                     │
+┌──────────────▼──────┐  ┌──────────▼────────────────────┐
+│      Adapters       │  │      Visualization            │
+│  BaseModelAdapter   │  │  Router → Builder por dim.    │
+│  SklearnAdapter     │  │  theme.py (dark mode global)  │
+└─────────────────────┘  └───────────────────────────────┘
+</pre></div>
+</div>
+</section>
+<section id="modulo-api">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">api/</span></code><a class="headerlink" href="#modulo-api" title="Link to this heading"></a></h2>
+<p>Contiene las funciones de alto nivel que el usuario final invoca directamente.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">linear.py</span></code> → <a class="reference internal" href="api_reference.html#mlektic.api.linear.visualize_lr" title="mlektic.api.linear.visualize_lr"><code class="xref py py-func docutils literal notranslate"><span class="pre">mlektic.api.linear.visualize_lr()</span></code></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logistic.py</span></code> → <a class="reference internal" href="api_reference.html#mlektic.api.logistic.visualize_logistic" title="mlektic.api.logistic.visualize_logistic"><code class="xref py py-func docutils literal notranslate"><span class="pre">mlektic.api.logistic.visualize_logistic()</span></code></a></p></li>
+</ul>
+<p>Estas funciones orquestan dos pasos:</p>
+<ol class="arabic simple">
+<li><p><strong>Captura de historial</strong> (<code class="docutils literal notranslate"><span class="pre">fit_history</span></code> / <code class="docutils literal notranslate"><span class="pre">fit_history_logistic</span></code>).</p></li>
+<li><p><strong>Construcción de la figura</strong> (<code class="docutils literal notranslate"><span class="pre">build_lr_figure</span></code> / <code class="docutils literal notranslate"><span class="pre">build_logistic_figure</span></code>).</p></li>
+</ol>
+</section>
+<section id="modulo-adapters">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">adapters/</span></code><a class="headerlink" href="#modulo-adapters" title="Link to this heading"></a></h2>
+<p>Implementa el <strong>patrón Adapter</strong> para abstraer la interacción con diferentes frameworks de ML.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code> — Clase abstracta (ABC) que define el contrato: <code class="docutils literal notranslate"><span class="pre">predict()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>, <code class="docutils literal notranslate"><span class="pre">extract_linear_theta()</span></code>, <code class="docutils literal notranslate"><span class="pre">extract_logistic_theta()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fit()</span></code>, <code class="docutils literal notranslate"><span class="pre">partial_fit()</span></code>, <code class="docutils literal notranslate"><span class="pre">get_scaler_params()</span></code>, <code class="docutils literal notranslate"><span class="pre">transform_X()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SklearnAdapter</span></code> — Implementación concreta para estimadores y <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code> de Scikit-Learn.
+Incluye <code class="docutils literal notranslate"><span class="pre">clone_for_replay()</span></code> para crear copias con <code class="docutils literal notranslate"><span class="pre">warm_start=True</span></code> y <code class="docutils literal notranslate"><span class="pre">max_iter=1</span></code>.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p>El diseño permite añadir adapters para otros frameworks (PyTorch, XGBoost, etc.)
+implementando la interfaz <code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code>.</p>
+</div>
+</section>
+<section id="modulo-domain">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">domain/</span></code><a class="headerlink" href="#modulo-domain" title="Link to this heading"></a></h2>
+<p>Define las <strong>estructuras de datos</strong> y contratos internos:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">config.py</span></code> — <code class="docutils literal notranslate"><span class="pre">LinearHistoryConfig</span></code> y <code class="docutils literal notranslate"><span class="pre">LogisticHistoryConfig</span></code> (dataclasses congelados).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">history.py</span></code> — <code class="docutils literal notranslate"><span class="pre">LinearHistoryPayload</span></code> y <code class="docutils literal notranslate"><span class="pre">LogisticHistoryPayload</span></code> (TypedDicts que
+definen el contrato de los diccionarios de historial).</p></li>
+</ul>
+</section>
+<section id="modulo-history">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">history/</span></code><a class="headerlink" href="#modulo-history" title="Link to this heading"></a></h2>
+<p>Corazón del proceso de captura de entrenamiento.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base.py</span></code> — Define <code class="docutils literal notranslate"><span class="pre">HistoryCaptureStrategy</span></code> (ABC) y las funciones de conversión
+de parámetros entre espacio escalado y original:
+<code class="docutils literal notranslate"><span class="pre">_scale_linear_theta()</span></code>, <code class="docutils literal notranslate"><span class="pre">_scale_logistic_binary_theta()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_scale_logistic_multiclass_theta()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">engine.py</span></code> — <code class="docutils literal notranslate"><span class="pre">HistoryEngine</span></code>: fachada que:</p>
+<ol class="arabic simple">
+<li><p>Selecciona la estrategia (iterativa vs. interpolación) según el modo.</p></li>
+<li><p>Aplica suavizado EMA a las series temporales.</p></li>
+<li><p>Aplica el rescalado de <code class="docutils literal notranslate"><span class="pre">θ</span></code> al espacio de visualización solicitado.</p></li>
+</ol>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">strategy_iterative.py</span></code> — <code class="docutils literal notranslate"><span class="pre">IterativeCapture</span></code>: clona el modelo, configura
+<code class="docutils literal notranslate"><span class="pre">warm_start=True</span></code> y <code class="docutils literal notranslate"><span class="pre">max_iter=1</span></code>, y ejecuta <code class="docutils literal notranslate"><span class="pre">partial_fit()</span></code> paso a paso.
+Captura en cada iteración: predicciones, pesos, pérdida.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">strategy_interp.py</span></code> — <code class="docutils literal notranslate"><span class="pre">InterpolationCapture</span></code>: para modelos que no soportan
+entrenamiento iterativo (e.g. <code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code>). Interpola linealmente entre
+una línea base (media o ceros) y las predicciones finales del modelo.</p></li>
+</ul>
+</section>
+<section id="modulo-services">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">services/</span></code><a class="headerlink" href="#modulo-services" title="Link to this heading"></a></h2>
+<p>Capa de servicio que conecta la API pública con el motor de historial:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">linear_history.py</span></code> — <code class="docutils literal notranslate"><span class="pre">fit_history()</span></code> y <code class="docutils literal notranslate"><span class="pre">fit_history_logistic()</span></code> instancian
+la configuración, crean el <code class="docutils literal notranslate"><span class="pre">HistoryEngine</span></code> y ejecutan la captura.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">logistic_history.py</span></code> — Re-exporta <code class="docutils literal notranslate"><span class="pre">fit_history_logistic</span></code> para mantener
+compatibilidad de imports.</p></li>
+</ul>
+</section>
+<section id="modulo-utils">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">utils/</span></code><a class="headerlink" href="#modulo-utils" title="Link to this heading"></a></h2>
+<p>Funciones matemáticas y de utilidad puras:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">math.py</span></code> — <code class="docutils literal notranslate"><span class="pre">_sigmoid()</span></code>, <code class="docutils literal notranslate"><span class="pre">_softmax()</span></code>, <code class="docutils literal notranslate"><span class="pre">_binary_log_loss_from_p()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_multiclass_cross_entropy()</span></code>, <code class="docutils literal notranslate"><span class="pre">_one_hot()</span></code>, <code class="docutils literal notranslate"><span class="pre">_ema_smooth()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">grids.py</span></code> — <code class="docutils literal notranslate"><span class="pre">build_1d_grid()</span></code> y <code class="docutils literal notranslate"><span class="pre">build_2d_grid()</span></code> para crear los meshgrids
+sobre los cuales se evalúan las predicciones.</p></li>
+</ul>
+</section>
+<section id="modulo-visualization">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">visualization/</span></code><a class="headerlink" href="#modulo-visualization" title="Link to this heading"></a></h2>
+<p>Responsable de traducir el historial capturado en figuras Plotly animadas.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">theme.py</span></code> — Funciones de tema global: <code class="docutils literal notranslate"><span class="pre">get_base_layout()</span></code> (dark mode),
+<code class="docutils literal notranslate"><span class="pre">get_updatemenus()</span></code> (botones Play/Pause), <code class="docutils literal notranslate"><span class="pre">get_sliders()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">get_legend_props()</span></code>, <code class="docutils literal notranslate"><span class="pre">create_annotation()</span></code>.</p></li>
+<li><p><strong>``linear/``</strong>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">router.py</span></code> → <code class="docutils literal notranslate"><span class="pre">build_lr_figure()</span></code>: detecta la dimensionalidad y delega.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">simple.py</span></code> → 1 variable: scatter 2D + recta animada + curva MSE.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">plane.py</span></code> → 2 variables: scatter 3D + plano animado + curva MSE.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multivar.py</span></code> → d &gt; 2: matriz LaTeX con <code class="docutils literal notranslate"><span class="pre">θ</span></code> actualizado por frame + curva MSE.</p></li>
+</ul>
+</li>
+<li><p><strong>``logistic/``</strong>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">router.py</span></code> → <code class="docutils literal notranslate"><span class="pre">build_logistic_figure()</span></code>: detecta dimensión y número de clases.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">binary_1d.py</span></code> → Clasificación binaria 1D: curva sigmoide animada.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">binary_2d.py</span></code> → Clasificación binaria 2D: superficie de probabilidad 3D.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">binary_nd.py</span></code> → Clasificación binaria d &gt; 2: matriz LaTeX de pesos.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multiclass_1d.py</span></code> → Multiclase 1D: curvas de probabilidad por clase.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multiclass_nd.py</span></code> → Multiclase d &gt; 2: matriz de pesos multiclase.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="modulo-internal">
+<h2>Módulo <code class="docutils literal notranslate"><span class="pre">_internal/</span></code><a class="headerlink" href="#modulo-internal" title="Link to this heading"></a></h2>
+<p>Helpers heredados del código original, mantenidos por compatibilidad:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">common.py</span></code> — Funciones como <code class="docutils literal notranslate"><span class="pre">_as_2d()</span></code>, <code class="docutils literal notranslate"><span class="pre">_as_1d()</span></code>, <code class="docutils literal notranslate"><span class="pre">_get_final_estimator()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">_find_standard_scaler()</span></code>, <code class="docutils literal notranslate"><span class="pre">_make_iterative_replay_estimator()</span></code>, etc.
+Muchas de estas funciones están duplicadas en los módulos refactorizados
+(<code class="docutils literal notranslate"><span class="pre">adapters/</span></code>, <code class="docutils literal notranslate"><span class="pre">utils/</span></code>), pero se mantienen para no romper imports internos.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Inicio Rápido" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="Referencia de la API" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

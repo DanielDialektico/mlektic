@@ -1,0 +1,223 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Visualización &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="Uso Avanzado" href="advanced.html" />
+    <link rel="prev" title="Referencia de la API" href="api_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Sistema de Visualización</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tema-visual-global">Tema Visual Global</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#renderizado-por-dimension">Renderizado por Dimensión</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#d-1-regresion-simple-2d">d = 1: Regresión Simple (2D)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#d-2-visualizacion-3d">d = 2: Visualización 3D</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#d-2-matriz-de-parametros-latex">d &gt; 2: Matriz de Parámetros LaTeX</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#estrategias-de-captura">Estrategias de Captura</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#iterativa-mode-iterative">Iterativa (<code class="docutils literal notranslate"><span class="pre">mode=&quot;iterative&quot;</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#interpolacion-mode-final-interp">Interpolación (<code class="docutils literal notranslate"><span class="pre">mode=&quot;final_interp&quot;</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modo-automatico-mode-auto">Modo Automático (<code class="docutils literal notranslate"><span class="pre">mode=&quot;auto&quot;</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#suavizado-ema">Suavizado EMA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#espacio-de-visualizacion">Espacio de Visualización</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#explicacion-visual-de-predicciones">Explicación Visual de Predicciones</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metricas-dinamicas">Métricas Dinámicas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Sistema de Visualización</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/visualization.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sistema-de-visualizacion">
+<h1>Sistema de Visualización<a class="headerlink" href="#sistema-de-visualizacion" title="Link to this heading"></a></h1>
+<p>Mlektic genera figuras Plotly animadas con un tema visual cohesivo en <strong>dark mode</strong>.</p>
+<section id="tema-visual-global">
+<h2>Tema Visual Global<a class="headerlink" href="#tema-visual-global" title="Link to this heading"></a></h2>
+<p>Todas las figuras comparten un tema definido en <code class="docutils literal notranslate"><span class="pre">visualization/theme.py</span></code>:</p>
+<ul class="simple">
+<li><p><strong>Template base</strong>: <code class="docutils literal notranslate"><span class="pre">plotly_dark</span></code> con fuente Helvetica blanca.</p></li>
+<li><p><strong>Altura</strong>: 720px por defecto.</p></li>
+<li><p><strong>Controles</strong>: Botones Play/Pause y slider temporal integrados.</p></li>
+<li><p><strong>Leyenda</strong>: Fondo semi-transparente con texto negro sobre blanco.</p></li>
+</ul>
+</section>
+<section id="renderizado-por-dimension">
+<h2>Renderizado por Dimensión<a class="headerlink" href="#renderizado-por-dimension" title="Link to this heading"></a></h2>
+<section id="d-1-regresion-simple-2d">
+<h3>d = 1: Regresión Simple (2D)<a class="headerlink" href="#d-1-regresion-simple-2d" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Lineal</strong>: Scatter plot con recta animada + curva MSE opcional.</p></li>
+<li><p><strong>Logística Binaria</strong>: Scatter coloreado + curva sigmoide animada.</p></li>
+<li><p><strong>Logística Multiclase</strong>: Curvas de probabilidad por clase.</p></li>
+</ul>
+</section>
+<section id="d-2-visualizacion-3d">
+<h3>d = 2: Visualización 3D<a class="headerlink" href="#d-2-visualizacion-3d" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Lineal</strong>: Scatter 3D + plano predictivo animado.</p></li>
+<li><p><strong>Logística Binaria</strong>: Scatter 3D + superficie de probabilidad.</p></li>
+</ul>
+</section>
+<section id="d-2-matriz-de-parametros-latex">
+<h3>d &gt; 2: Matriz de Parámetros LaTeX<a class="headerlink" href="#d-2-matriz-de-parametros-latex" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Tabla/fórmula LaTeX interactiva con <code class="docutils literal notranslate"><span class="pre">θ</span></code> actualizado por frame.</p></li>
+<li><p>Multiclase: Matriz <code class="docutils literal notranslate"><span class="pre">W</span></code> (d × K) y vector <code class="docutils literal notranslate"><span class="pre">b</span></code> (K).</p></li>
+</ul>
+</section>
+</section>
+<section id="estrategias-de-captura">
+<h2>Estrategias de Captura<a class="headerlink" href="#estrategias-de-captura" title="Link to this heading"></a></h2>
+<section id="iterativa-mode-iterative">
+<h3>Iterativa (<code class="docutils literal notranslate"><span class="pre">mode=&quot;iterative&quot;</span></code>)<a class="headerlink" href="#iterativa-mode-iterative" title="Link to this heading"></a></h3>
+<p>Para modelos con <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code>:</p>
+<ol class="arabic simple">
+<li><p>Clona el estimador con <code class="docutils literal notranslate"><span class="pre">warm_start=True</span></code>, <code class="docutils literal notranslate"><span class="pre">max_iter=1</span></code>.</p></li>
+<li><p>Ejecuta una iteración por frame.</p></li>
+<li><p>Captura predicciones, pesos, pérdida.</p></li>
+</ol>
+</section>
+<section id="interpolacion-mode-final-interp">
+<h3>Interpolación (<code class="docutils literal notranslate"><span class="pre">mode=&quot;final_interp&quot;</span></code>)<a class="headerlink" href="#interpolacion-mode-final-interp" title="Link to this heading"></a></h3>
+<p>Para modelos sin entrenamiento iterativo (e.g. <code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code>):</p>
+<ol class="arabic simple">
+<li><p>Define línea base (media, ceros, prior).</p></li>
+<li><p>Interpola linealmente hacia predicciones finales.</p></li>
+</ol>
+</section>
+<section id="modo-automatico-mode-auto">
+<h3>Modo Automático (<code class="docutils literal notranslate"><span class="pre">mode=&quot;auto&quot;</span></code>)<a class="headerlink" href="#modo-automatico-mode-auto" title="Link to this heading"></a></h3>
+<p>Detecta <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code> → iterativa; si no → interpolación.</p>
+</section>
+</section>
+<section id="suavizado-ema">
+<h2>Suavizado EMA<a class="headerlink" href="#suavizado-ema" title="Link to this heading"></a></h2>
+<p>Cuando <code class="docutils literal notranslate"><span class="pre">smooth=&quot;ema&quot;</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[y_t = \beta \cdot y_{t-1} + (1 - \beta) \cdot x_t\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">smooth_beta</span></code> controla la agresividad (0.95 = muy suave, 0.5 = más detalle).</p>
+</section>
+<section id="espacio-de-visualizacion">
+<h2>Espacio de Visualización<a class="headerlink" href="#espacio-de-visualizacion" title="Link to this heading"></a></h2>
+<p>Con <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code> + <code class="docutils literal notranslate"><span class="pre">StandardScaler</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">display_space=&quot;scaled&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">θ</span></code> tal como los aprende el modelo.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code> → Transforma inversamente los pesos a las unidades originales.</p></li>
+</ul>
+</section>
+<section id="explicacion-visual-de-predicciones">
+<h2>Explicación Visual de Predicciones<a class="headerlink" href="#explicacion-visual-de-predicciones" title="Link to this heading"></a></h2>
+<p>Mediante la función <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code>, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual <code class="docutils literal notranslate"><span class="pre">yhat</span></code> a partir de un <code class="docutils literal notranslate"><span class="pre">x_query</span></code>:</p>
+<ul class="simple">
+<li><p><strong>1D</strong>: Punto verde sobre la recta de regresión.</p></li>
+<li><p><strong>2D</strong>: Punto verde anclado espacialmente en un plano 3D.</p></li>
+<li><p><strong>ND</strong>: Presentación dinámica de fórmulas en LaTeX que despliega el producto punto completo, truncando automáticamente parámetros desbordados y manejando el espacio dimensional especificado.</p></li>
+</ul>
+</section>
+<section id="metricas-dinamicas">
+<h2>Métricas Dinámicas<a class="headerlink" href="#metricas-dinamicas" title="Link to this heading"></a></h2>
+<p>Las visualizaciones animadas pueden renderizar arreglos personalizables de métricas en tiempo real pasando una lista a <code class="docutils literal notranslate"><span class="pre">metrics=[&quot;loss&quot;,</span> <span class="pre">&quot;mse&quot;,</span> <span class="pre">&quot;r2&quot;,</span> <span class="pre">...]</span></code>. Mlektic computará y mostrará estas métricas como subtítulos en recuadros separados.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="api_reference.html" class="btn btn-neutral float-left" title="Referencia de la API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="advanced.html" class="btn btn-neutral float-right" title="Uso Avanzado" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

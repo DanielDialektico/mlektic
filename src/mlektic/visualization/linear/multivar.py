@@ -1,3 +1,18 @@
+"""Multivariate linear-regression visualization builder."""
+
+from __future__ import annotations
+
+import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+from ..theme import (
+    get_base_layout,
+    get_updatemenus,
+    get_sliders,
+    create_annotation,
+)
+
 def build_multivar_lr_figure(
     X,
     y,
@@ -5,22 +20,24 @@ def build_multivar_lr_figure(
     b_hist,
     *,
     loss_hist=None,
+    metrics_hist=None,
     show_loss=True,
     history_kind="iterative",
     title=None,
     strict_loss=False,
     terms_per_line=6,
     dec=4,
+    frame_duration=80,
     threshold_dense=100,  # <=100 usa expansión completa; >100 usa vista matricial
+    theme=None,
 ):
     """
     Multivariable visualization for d > 2 (parameter display).
 
-    IMPORTANT:
+    Important:
     - This visualization is inherently tied to showing weights (theta).
     - If the user's model uses arbitrary transforms/pipelines, theta in original space may not be meaningful.
     """
-
     # --- enforce inside the library ---
     if show_loss and history_kind != "iterative":
         if strict_loss:
@@ -137,48 +154,24 @@ def build_multivar_lr_figure(
 
         def make_annotations(t: int):
             ann = [
-                dict(
-                    x=0.68,
-                    y=0.93,
-                    xref="paper",
-                    yref="paper",
-                    text=model_header_latex(),
-                    showarrow=False,
-                    xanchor="center",
-                    yanchor="top",
-                    font=dict(size=22, color="white"),
-                ),
-                dict(
-                    x=0.68,
-                    y=0.78,
-                    xref="paper",
-                    yref="paper",
-                    text=full_scalar_model_multiline_latex(t),
-                    showarrow=False,
-                    xanchor="center",
-                    yanchor="top",
-                    font=dict(size=17, color="white"),
-                ),
+                create_annotation(model_header_latex(), x=0.68, y=0.93, size=22, yanchor="top"),
+                create_annotation(full_scalar_model_multiline_latex(t), x=0.68, y=0.78, size=17, yanchor="top"),
             ]
 
             if show_loss:
-                ann.append(
-                    dict(
-                        x=0.33,
-                        y=0.94,
-                        xref="paper",
-                        yref="paper",
-                        text=f"<b>Loss</b><br>{loss_hist[t]:.6f}",
-                        showarrow=False,
-                        xanchor="left",
-                        yanchor="top",
-                        font=dict(size=16, color="black"),
-                        bgcolor="white",
-                        bordercolor="black",
-                        borderwidth=1,
-                        borderpad=8,
+                def _metric_box(title, val, y_pos, fmt="6f"):
+                    return dict(
+                        x=0.33, y=y_pos, xref="paper", yref="paper",
+                    text=f"<b>{title}</b><br>{val:{fmt}}",
+                        showarrow=False, xanchor="left", yanchor="top",
+                        font=dict(size=16, color="black"), bgcolor="white",
+                        bordercolor="black", borderwidth=1, borderpad=8,
                     )
-                )
+                if metrics_hist is not None:
+                    for i, (name, hist) in enumerate(metrics_hist.items()):
+                        y_pos = 0.94 - (i * 0.13)
+                        fmt = ".6f" if name.lower() == "loss" else ".4f"
+                        ann.append(_metric_box(name, hist[t], y_pos, fmt))
             return ann
 
         fig = make_subplots(
@@ -226,65 +219,11 @@ def build_multivar_lr_figure(
         fig.frames = frames
 
         fig.update_layout(
-            template="plotly_dark",
-            height=760,
-            font=dict(family="Helvetica"),
-            title=dict(
-                text=title,
-                x=0.5,
-                xanchor="center",
-                font=dict(color="white", size=24),
-            ),
-            margin=dict(l=70, r=40, t=110, b=95),
-            showlegend=False,
-            sliders=[
-                dict(
-                    active=0,
-                    currentvalue=dict(prefix="Step: "),
-                    pad=dict(t=45),
-                    steps=[
-                        dict(
-                            method="animate",
-                            args=[
-                                [str(t)],
-                                {
-                                    "mode": "immediate",
-                                    "frame": {"duration": 0, "redraw": True},
-                                    "transition": {"duration": 0},
-                                },
-                            ],
-                            label=str(t),
-                        )
-                        for t in range(steps_n)
-                    ],
-                )
-            ],
-            updatemenus=[
-                dict(
-                    type="buttons",
-                    direction="left",
-                    x=0.07,
-                    y=1.1,
-                    xanchor="left",
-                    yanchor="top",
-                    bgcolor="white",
-                    bordercolor="black",
-                    borderwidth=1,
-                    font=dict(color="black", size=14),
-                    buttons=[
-                        dict(
-                            label="Play",
-                            method="animate",
-                            args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
-                        ),
-                        dict(
-                            label="Pause",
-                            method="animate",
-                            args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}],
-                        ),
-                    ],
-                )
-            ],
+            **get_base_layout(title=title, margin_t=110, height=760, theme=theme),
+            showlegend=True,
+            legend=dict(x=0.40, y=0.01, xanchor="right", yanchor="bottom"),
+            sliders=get_sliders(steps_n, theme=theme),
+            updatemenus=get_updatemenus(frame_duration, y=1.1, theme=theme),
             annotations=make_annotations(0),
         )
 
@@ -468,106 +407,33 @@ def build_multivar_lr_figure(
 
     def make_annotations(t: int):
         ann = [
-            dict(
-                x=0.68,
-                y=0.995,
-                xref="paper",
-                yref="paper",
-                text=model_formula_latex(),
-                showarrow=False,
-                xanchor="center",
-                yanchor="top",
-                font=dict(size=22, color="white"),
-            ),
-            dict(
-                x=0.68,
-                y=0.938,
-                xref="paper",
-                yref="paper",
-                text=bias_latex(t),
-                showarrow=False,
-                xanchor="center",
-                yanchor="top",
-                font=dict(size=18, color="white"),
-            ),
-            dict(
-                x=0.55,
-                y=0.83,
-                xref="paper",
-                yref="paper",
-                text=x_dim_latex(),
-                showarrow=False,
-                xanchor="center",
-                yanchor="bottom",
-                font=dict(size=14, color="white"),
-            ),
-            dict(
-                x=0.83,
-                y=0.83,
-                xref="paper",
-                yref="paper",
-                text=theta_dim_latex(t),
-                showarrow=False,
-                xanchor="center",
-                yanchor="bottom",
-                font=dict(size=14, color="white"),
-            ),
-            dict(
-                x=0.52,
-                y=0.48,
-                xref="paper",
-                yref="paper",
-                text=x_vector_latex(),
-                showarrow=False,
-                xanchor="center",
-                yanchor="middle",
-                font=dict(size=15, color="white"),
-            ),
-            dict(
-                x=0.80,
-                y=0.48,
-                xref="paper",
-                yref="paper",
-                text=w_matrix_latex(t),
-                showarrow=False,
-                xanchor="center",
-                yanchor="middle",
-                font=dict(size=15, color="white"),
-            ),
-            dict(
-                x=0.71,
-                y=0.03,
-                xref="paper",
-                yref="paper",
-                text=scalar_model_compact_latex(t),
-                showarrow=False,
-                xanchor="center",
-                yanchor="middle",
-                font=dict(size=16, color="white"),
-            ),
+            create_annotation(model_formula_latex(), x=0.68, y=0.995, size=22, yanchor="top"),
+            create_annotation(bias_latex(t), x=0.68, y=0.938, size=18, yanchor="top"),
+            create_annotation(x_dim_latex(), x=0.55, y=0.83, size=14, yanchor="bottom"),
+            create_annotation(theta_dim_latex(t), x=0.83, y=0.83, size=14, yanchor="bottom"),
+            create_annotation(x_vector_latex(), x=0.52, y=0.48, size=15, yanchor="middle"),
+            create_annotation(w_matrix_latex(t), x=0.80, y=0.48, size=15, yanchor="middle"),
+            create_annotation(scalar_model_compact_latex(t), x=0.71, y=0.03, size=16, yanchor="middle"),
         ]
 
         if show_loss:
             th_cols = theta_cols_for_t(t)
             y_loss = 0.98 if th_cols == 1 else 0.86
 
-            ann.append(
-                dict(
-                    x=0.25,
-                    y=y_loss,
-                    xref="paper",
-                    yref="paper",
-                    text=f"<b>Loss</b><br>{loss_hist[t]:.6f}",
-                    showarrow=False,
-                    xanchor="left",
-                    yanchor="top",
-                    font=dict(size=16, color="black"),
-                    bgcolor="white",
-                    bordercolor="black",
-                    borderwidth=1,
-                    borderpad=8,
+            def _metric_box(title, val, y_pos, fmt="6f"):
+                return dict(
+                    x=0.25, y=y_pos, xref="paper", yref="paper",
+                    text=f"<b>{title}</b><br>{val:{fmt}}",
+                    showarrow=False, xanchor="left", yanchor="top",
+                    font=dict(size=16, color="black"), bgcolor="white",
+                    bordercolor="black", borderwidth=1, borderpad=8,
                 )
-            )
+
+            if metrics_hist is not None:
+                for i, (name, hist) in enumerate(metrics_hist.items()):
+                    y_p = y_loss - (i * 0.13)
+                    fmt = ".6f" if name.lower() == "loss" else ".4f"
+                    ann.append(_metric_box(name, hist[t], y_p, fmt))
 
         return ann
 
@@ -616,65 +482,11 @@ def build_multivar_lr_figure(
     fig.frames = frames
 
     fig.update_layout(
-        template="plotly_dark",
-        font=dict(family="Helvetica"),
-        height=760,
-        title=dict(
-            text=title,
-            x=0.5,
-            xanchor="center",
-            font=dict(color="white", size=24),
-        ),
-        margin=dict(l=70, r=40, t=110, b=95),
-        showlegend=False,
-        sliders=[
-            dict(
-                active=0,
-                currentvalue=dict(prefix="Step: "),
-                pad=dict(t=45),
-                steps=[
-                    dict(
-                        method="animate",
-                        args=[
-                            [str(t)],
-                            {
-                                "mode": "immediate",
-                                "frame": {"duration": 0, "redraw": True},
-                                "transition": {"duration": 0},
-                            },
-                        ],
-                        label=str(t),
-                    )
-                    for t in range(steps_n)
-                ],
-            )
-        ],
-        updatemenus=[
-            dict(
-                type="buttons",
-                direction="left",
-                x=0.07,
-                y=1.1,
-                xanchor="left",
-                yanchor="top",
-                bgcolor="white",
-                bordercolor="black",
-                borderwidth=1,
-                font=dict(color="black", size=14),
-                buttons=[
-                    dict(
-                        label="Play",
-                        method="animate",
-                        args=[None, {"frame": {"duration": 80, "redraw": True}, "transition": {"duration": 0}}],
-                    ),
-                    dict(
-                        label="Pause",
-                        method="animate",
-                        args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}],
-                    ),
-                ],
-            )
-        ],
+        **get_base_layout(title=title, margin_t=110, height=760, theme=theme),
+        showlegend=True,
+        legend=dict(x=0.40, y=0.01, xanchor="right", yanchor="bottom"),
+        sliders=get_sliders(steps_n, theme=theme),
+        updatemenus=get_updatemenus(frame_duration, y=1.11, theme=theme),
         annotations=make_annotations(0),
     )
 
@@ -689,156 +501,5 @@ def build_multivar_lr_figure(
 
     return fig
 
----CELL---
 
-from sklearn.linear_model import SGDRegressor
-
-# -------------------------
-# Data (más "lenta" por escala pequeña)
-# -------------------------
-np.random.seed(7)
-n = 120
-
-scale_x = 0.2  # << hace X pequeño => gradientes pequeños
-b_small = 0.04  # << intercepto pequeño => residuales pequeños
-noise_std = 0.03  # << ruido pequeño
-
-X = scale_x * np.random.normal(0, 1.0, size=(n, 1))
-y = (2.2 * X[:, 0] + b_small) + np.random.normal(0, noise_std, size=n)
-
-# -------------------------
-# Usuario entrena normal (SIN Pipeline)
-# -------------------------
-model = SGDRegressor(
-    loss="squared_error",
-    penalty=None,
-    learning_rate="constant",
-    eta0=0.02,
-    shuffle=False,
-    max_iter=1000,
-    tol=1e-6,
-    random_state=7,
-)
-
-model.fit(X, y)
-
-print("Pred (first 5):", model.predict(X[:5]))
-
-# -------------------------
-# Visualización (tu API)
-# -------------------------
-fig = visualize_lr(
-    model,
-    X,
-    y,
-    steps=80,
-    show_loss=True,
-    title="Linear Regression (Simple, 1 variable) - Slow/Smooth Data",
-)
-fig.show()
-
----CELL---
-
-import numpy as np
-from sklearn.linear_model import SGDRegressor
-
-# -------------------------
-# Data (más "lenta" por escala pequeña)
-# -------------------------
-np.random.seed(7)
-n = 120
-
-scale_x = 0.2  # << hace X pequeño => gradientes pequeños
-b_small = 0.04  # << intercepto pequeño => residuales pequeños
-noise_std = 0.03  # << ruido pequeño
-
-X = scale_x * np.random.normal(0, 1.0, size=(n, 1))
-y = (2.2 * X[:, 0] + b_small) + np.random.normal(0, noise_std, size=n)
-
-# -------------------------
-# Usuario entrena normal (SIN Pipeline)
-# -------------------------
-model = SGDRegressor(
-    loss="squared_error",
-    penalty=None,
-    learning_rate="constant",
-    eta0=0.02,
-    shuffle=False,
-    max_iter=1000,
-    tol=1e-6,
-    random_state=7,
-)
-
-model.fit(X, y)
-
-print("Pred (first 5):", model.predict(X[:5]))
-
-# -------------------------
-# Visualización (tu API)
-# -------------------------
-fig = visualize_lr(
-    model,
-    X,
-    y,
-    steps=80,
-    show_loss=False,
-    title="Linear Regression (Simple, 1 variable) - Slow/Smooth Data",
-)
-fig.show()
-
----CELL---
-
-import numpy as np
-from sklearn.linear_model import SGDRegressor
-
-# -------------------------
-# Data (más "lenta" por escala pequeña)
-# -------------------------
-np.random.seed(7)
-n = 240
-d = 100
-
-scale_x = 0.15
-b_small = 0.03
-noise_std = 0.05
-
-X = scale_x * np.random.normal(0, 1.0, size=(n, d))
-
-# ✅ SIEMPRE definir true_w con tamaño d
-true_w = np.zeros(d, dtype=float)
-
-vals = np.array([2.2, -1.5, 0.7, 0.0, -0.9, 1.3, -0.2, -0.5, 0.6, -0.1], dtype=float)
-k = min(d, vals.size)
-true_w[:k] = vals[:k]
-
-# (opcional) si d > len(vals), rellena el resto con ceros o ruido pequeño
-# true_w[k:] = 0.0
-
-y = (X @ true_w + b_small) + np.random.normal(0, noise_std, size=n)
-
-# -------------------------
-# Usuario entrena modelo normal (sin Pipeline)
-# -------------------------
-model = SGDRegressor(
-    loss="squared_error",
-    penalty=None,
-    alpha=0.0,
-    learning_rate="constant",
-    eta0=0.02,
-    shuffle=False,
-    max_iter=1500,
-    tol=1e-6,
-    random_state=7,
-)
-model.fit(X, y)
-
-print("d:", d)
-print("true_w shape:", true_w.shape)
-print("X shape:", X.shape)
-print("Pred (first 5):", model.predict(X[:5]))
-
-# -------------------------
-# Visualización (tu API)
-# -------------------------
-fig = visualize_lr(model, X, y, steps=70)
-fig.show()
+__all__ = ["build_multivar_lr_figure"]

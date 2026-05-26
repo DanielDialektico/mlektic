@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.history.strategy_interp &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">mlektic.history.strategy_interp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para mlektic.history.strategy_interp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Interpolation strategy for history capture.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">mean_squared_error</span>
+
+<span class="kn">from</span> <span class="nn">..adapters.base</span> <span class="kn">import</span> <span class="n">BaseModelAdapter</span>
+<span class="kn">from</span> <span class="nn">..utils.math</span> <span class="kn">import</span> <span class="n">_binary_log_loss_from_p</span><span class="p">,</span> <span class="n">_multiclass_cross_entropy</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">HistoryCaptureStrategy</span>
+
+<div class="viewcode-block" id="InterpolationCapture">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.history.strategy_interp.InterpolationCapture">[documentos]</a>
+<span class="k">class</span> <span class="nc">InterpolationCapture</span><span class="p">(</span><span class="n">HistoryCaptureStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Captures history by interpolating between a baseline and the final model.&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="InterpolationCapture.capture_linear">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.history.strategy_interp.InterpolationCapture.capture_linear">[documentos]</a>
+    <span class="k">def</span> <span class="nf">capture_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adapter</span><span class="p">:</span> <span class="n">BaseModelAdapter</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">steps</span>
+        
+        <span class="c1"># Grid Setup</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">y_line_hist</span> <span class="o">=</span> <span class="n">z_plane_hist</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">Xg_pred</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">config</span><span class="o">.</span><span class="n">grid_1d_points</span><span class="p">)</span>
+            <span class="n">grid</span><span class="p">[</span><span class="s2">&quot;x1_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1_grid</span>
+            <span class="n">y_line_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">x1_grid</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">Xg_pred</span> <span class="o">=</span> <span class="n">x1_grid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">config</span><span class="o">.</span><span class="n">grid_2d_points</span><span class="p">)</span>
+            <span class="n">x2_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">config</span><span class="o">.</span><span class="n">grid_2d_points</span><span class="p">)</span>
+            <span class="n">X1g</span><span class="p">,</span> <span class="n">X2g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x1_grid</span><span class="p">,</span> <span class="n">x2_grid</span><span class="p">)</span>
+            <span class="n">grid</span><span class="p">[</span><span class="s2">&quot;x1_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1_grid</span>
+            <span class="n">grid</span><span class="p">[</span><span class="s2">&quot;x2_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x2_grid</span>
+            <span class="n">grid</span><span class="p">[</span><span class="s2">&quot;X1g&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X1g</span>
+            <span class="n">grid</span><span class="p">[</span><span class="s2">&quot;X2g&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X2g</span>
+            <span class="n">z_plane_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">Xg_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">X1g</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">X2g</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span>
+
+        <span class="c1"># Baseline</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">baseline</span> <span class="o">==</span> <span class="s2">&quot;zeros&quot;</span><span class="p">:</span>
+            <span class="n">y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">g0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">Xg_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean_y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+            <span class="n">y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">mean_y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">g0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">Xg_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mean_y</span><span class="p">)</span> <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Final Predictions</span>
+        <span class="n">yF</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">gF</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xg_pred</span><span class="p">)</span> <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Interpolate</span>
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">t</span> <span class="o">/</span> <span class="p">(</span><span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">steps</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">1.0</span>
+            
+            <span class="n">y_pred</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">y0</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">yF</span>
+            <span class="n">loss_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+            
+            <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gt</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">g0</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">gF</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="n">y_line_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">gt</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span> <span class="n">z_plane_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">gt</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">wF</span><span class="p">,</span> <span class="n">bF</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">extract_linear_theta</span><span class="p">(</span><span class="n">d_expected</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">w_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">wF</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="k">if</span> <span class="n">wF</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">b_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">bF</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">if</span> <span class="n">bF</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;history_kind&quot;</span><span class="p">:</span> <span class="s2">&quot;final_interp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;loss_hist&quot;</span><span class="p">:</span> <span class="n">loss_hist</span><span class="p">,</span>
+            <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">grid</span><span class="p">,</span>
+            <span class="s2">&quot;y_line_hist&quot;</span><span class="p">:</span> <span class="n">y_line_hist</span><span class="p">,</span>
+            <span class="s2">&quot;z_plane_hist&quot;</span><span class="p">:</span> <span class="n">z_plane_hist</span><span class="p">,</span>
+            <span class="s2">&quot;w_hist_learned&quot;</span><span class="p">:</span> <span class="n">w_hist</span><span class="p">,</span>
+            <span class="s2">&quot;b_hist_learned&quot;</span><span class="p">:</span> <span class="n">b_hist</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="InterpolationCapture.capture_logistic">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.history.strategy_interp.InterpolationCapture.capture_logistic">[documentos]</a>
+    <span class="k">def</span> <span class="nf">capture_logistic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adapter</span><span class="p">:</span> <span class="n">BaseModelAdapter</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">steps</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">classes</span> <span class="k">if</span> <span class="n">adapter</span><span class="o">.</span><span class="n">classes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">K</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
+        <span class="n">is_multiclass</span> <span class="o">=</span> <span class="n">K</span> <span class="o">&gt;</span> <span class="mi">2</span>
+        
+        <span class="n">grid</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">p_line_hist</span> <span class="o">=</span> <span class="n">p_plane_hist</span> <span class="o">=</span> <span class="n">p_curves_hist</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">Xg_pred</span> <span class="o">=</span> <span class="kc">None</span>
+        
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">config</span><span class="o">.</span><span class="n">grid_1d_points</span><span class="p">)</span>
+            <span class="n">grid</span><span class="p">[</span><span class="s2">&quot;x1_grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x1_grid</span>
+            <span class="n">Xg_pred</span> <span class="o">=</span> <span class="n">x1_grid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                <span class="n">p_line_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">x1_grid</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p_curves_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">x1_grid</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">K</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+                
+        <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">config</span><span class="o">.</span><span class="n">grid_2d_points</span><span class="p">)</span>
+            <span class="n">x2_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">config</span><span class="o">.</span><span class="n">grid_2d_points</span><span class="p">)</span>
+            <span class="n">X1g</span><span class="p">,</span> <span class="n">X2g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x1_grid</span><span class="p">,</span> <span class="n">x2_grid</span><span class="p">)</span>
+            <span class="n">grid</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;x1_grid&quot;</span><span class="p">:</span> <span class="n">x1_grid</span><span class="p">,</span> <span class="s2">&quot;x2_grid&quot;</span><span class="p">:</span> <span class="n">x2_grid</span><span class="p">,</span> <span class="s2">&quot;X1g&quot;</span><span class="p">:</span> <span class="n">X1g</span><span class="p">,</span> <span class="s2">&quot;X2g&quot;</span><span class="p">:</span> <span class="n">X2g</span><span class="p">})</span>
+            <span class="n">Xg_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">X1g</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">X2g</span><span class="o">.</span><span class="n">ravel</span><span class="p">()])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                <span class="n">p_plane_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">steps</span><span class="p">,</span> <span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_get_baseline_probs</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">baseline</span> <span class="o">==</span> <span class="s2">&quot;uniform&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)])</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n_points</span><span class="p">,</span> <span class="n">K</span><span class="p">),</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">K</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                <span class="n">p1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="n">classes</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">p1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="n">p1</span><span class="p">)])</span>
+            
+            <span class="n">priors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">y</span> <span class="o">==</span> <span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">priors</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">n_points</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">P0</span> <span class="o">=</span> <span class="n">_get_baseline_probs</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">PF</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
+        
+        <span class="n">g0</span> <span class="o">=</span> <span class="n">_get_baseline_probs</span><span class="p">(</span><span class="n">Xg_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">gF</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">Xg_pred</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
+        
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">t</span> <span class="o">/</span> <span class="p">(</span><span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">steps</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="n">Pt</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">P0</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">PF</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                <span class="n">loss_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">_binary_log_loss_from_p</span><span class="p">(</span><span class="n">Pt</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="n">classes</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">loss_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">_multiclass_cross_entropy</span><span class="p">(</span><span class="n">Pt</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
+                
+            <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">gt</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">g0</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">gF</span>
+                <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                    <span class="n">p_line_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                    <span class="n">p_curves_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">gt</span>
+                <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
+                    <span class="n">p_plane_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">gt</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">thetaF</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">extract_logistic_theta</span><span class="p">(</span><span class="n">d_expected</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">w_hist</span> <span class="o">=</span> <span class="n">b_hist</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">thetaF</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">thetaF</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span>
+                <span class="n">w_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">thetaF</span><span class="p">[</span><span class="s2">&quot;w&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">b_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">thetaF</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">w_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">thetaF</span><span class="p">[</span><span class="s2">&quot;W&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">K</span><span class="p">),</span> <span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">b_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">thetaF</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">K</span><span class="p">),</span> <span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;history_kind&quot;</span><span class="p">:</span> <span class="s2">&quot;final_interp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="n">classes</span><span class="p">,</span>
+            <span class="s2">&quot;is_multiclass&quot;</span><span class="p">:</span> <span class="n">is_multiclass</span><span class="p">,</span>
+            <span class="s2">&quot;loss_hist&quot;</span><span class="p">:</span> <span class="n">loss_hist</span><span class="p">,</span>
+            <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">grid</span><span class="p">,</span>
+            <span class="s2">&quot;p_line_hist&quot;</span><span class="p">:</span> <span class="n">p_line_hist</span><span class="p">,</span>
+            <span class="s2">&quot;p_plane_hist&quot;</span><span class="p">:</span> <span class="n">p_plane_hist</span><span class="p">,</span>
+            <span class="s2">&quot;p_curves_hist&quot;</span><span class="p">:</span> <span class="n">p_curves_hist</span><span class="p">,</span>
+            <span class="s2">&quot;w_hist_learned&quot;</span><span class="p">:</span> <span class="n">w_hist</span><span class="p">,</span>
+            <span class="s2">&quot;b_hist_learned&quot;</span><span class="p">:</span> <span class="n">b_hist</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
