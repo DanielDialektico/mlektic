@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inicio Rápido &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="next" title="Arquitectura del Proyecto" href="architecture.html" />
+    <link rel="prev" title="Mlektic — Documentación Técnica" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Inicio Rápido</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#instalacion">Instalación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#primer-ejemplo-regresion-lineal">Primer Ejemplo: Regresión Lineal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#primer-ejemplo-regresion-logistica">Primer Ejemplo: Regresión Logística</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#uso-con-pipelines">Uso con Pipelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Inicio Rápido</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting_started.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="inicio-rapido">
+<h1>Inicio Rápido<a class="headerlink" href="#inicio-rapido" title="Link to this heading"></a></h1>
+<section id="instalacion">
+<h2>Instalación<a class="headerlink" href="#instalacion" title="Link to this heading"></a></h2>
+<p>El proyecto utiliza <code class="docutils literal notranslate"><span class="pre">uv</span></code> como gestor de dependencias (compatible con PEP 621).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/DanielDialektico/mlektic.git
+<span class="nb">cd</span><span class="w"> </span>mlektic
+uv<span class="w"> </span>sync
+</pre></div>
+</div>
+<p>Dependencias principales:</p>
+<ul class="simple">
+<li><p><strong>numpy</strong> — Álgebra lineal y manipulación de arrays.</p></li>
+<li><p><strong>scikit-learn</strong> — Modelos de Machine Learning.</p></li>
+<li><p><strong>plotly</strong> — Motor de visualización interactiva.</p></li>
+</ul>
+</section>
+<section id="primer-ejemplo-regresion-lineal">
+<h2>Primer Ejemplo: Regresión Lineal<a class="headerlink" href="#primer-ejemplo-regresion-lineal" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="nn">pio</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">SGDRegressor</span>
+<span class="kn">from</span> <span class="nn">mlektic</span> <span class="kn">import</span> <span class="n">visualize_lr</span>
+
+<span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;notebook&quot;</span>
+
+<span class="c1"># Datos de juguete</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="mi">10</span>
+<span class="n">y</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="o">*</span> <span class="n">X</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+
+<span class="c1"># Modelo</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">SGDRegressor</span><span class="p">(</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s2">&quot;squared_error&quot;</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+    <span class="n">eta0</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Animación</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Mi Primera Animación Mlektic&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Si la animación en el editor es lenta, puedes exportarla a HTML:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="o">.</span><span class="n">write_html</span><span class="p">(</span><span class="s2">&quot;animacion.html&quot;</span><span class="p">,</span> <span class="n">auto_play</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="primer-ejemplo-regresion-logistica">
+<h2>Primer Ejemplo: Regresión Logística<a class="headerlink" href="#primer-ejemplo-regresion-logistica" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="nn">pio</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">SGDClassifier</span>
+<span class="kn">from</span> <span class="nn">mlektic</span> <span class="kn">import</span> <span class="n">visualize_logistic</span>
+
+<span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;notebook&quot;</span>
+
+<span class="c1"># Datos binarios</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">SGDClassifier</span><span class="p">(</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s2">&quot;log_loss&quot;</span><span class="p">,</span>
+    <span class="n">learning_rate</span><span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+    <span class="n">eta0</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_logistic</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Regresión Logística Binaria&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="uso-con-pipelines">
+<h2>Uso con Pipelines<a class="headerlink" href="#uso-con-pipelines" title="Link to this heading"></a></h2>
+<p>Mlektic soporta nativamente <code class="docutils literal notranslate"><span class="pre">sklearn.pipeline.Pipeline</span></code> con pasos de
+preprocesamiento como <code class="docutils literal notranslate"><span class="pre">StandardScaler</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
+    <span class="p">(</span><span class="s2">&quot;scaler&quot;</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
+    <span class="p">(</span><span class="s2">&quot;sgd&quot;</span><span class="p">,</span> <span class="n">SGDRegressor</span><span class="p">(</span>
+        <span class="n">loss</span><span class="o">=</span><span class="s2">&quot;squared_error&quot;</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+        <span class="n">eta0</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+        <span class="n">max_iter</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="p">)),</span>
+<span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Visualizar en espacio original (des-transforma θ automáticamente)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">)</span>
+
+<span class="c1"># Visualizar en espacio escalado (θ tal cual los aprende el modelo)</span>
+<span class="n">fig_scaled</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;scaled&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="index.html" class="btn btn-neutral float-left" title="Mlektic — Documentación Técnica" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+        <a href="architecture.html" class="btn btn-neutral float-right" title="Arquitectura del Proyecto" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

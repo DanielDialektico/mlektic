@@ -1,108 +1,301 @@
-# Mlektic: A Simple and Efficient Machine Learning Library
+# Mlektic
 
-Mlektic is a Python library built on top of TensorFlow, designed to simplify the implementation and experimentation with univariate/multivariate linear and logistic regression models. By providing a variety of gradient descent algorithms and regularization techniques, Mlektic enables both beginners and experienced practitioners to efficiently build, train, and evaluate regression models with minimal code.
-<p align="center">
-  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-1.jpg" alt="mlektic" width="200">
-</p>
+**Mlektic** es una librería de Python diseñada para demostrar visual y matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas por `plotly`, creadas específicamente para entender las tripas de los algoritmos de Scikit-Learn.
 
-## Key Features
+---
 
-- **Linear and Logistic Regression**: Easily implement and experiment with these fundamental machine learning models.
-- **Gradient Descent Variants**: Choose from various gradient descent methods, including batch, stochastic, and mini-batch, to optimize your models.
-- **Regularization Techniques**: Apply L1, L2, or elastic net regularization to improve model generalization and prevent overfitting.
-- **DataFrame Compatibility**: Seamlessly integrate with Pandas and Polars DataFrames, allowing you to preprocess and manage your data effortlessly.
-- **Cost Visualization**: Visualize the evolution of the cost function over time using dynamic or static plots, helping you better understand the training process.
-- **Evaluation Metrics**: Access a range of evaluation metrics to assess the performance of both linear and logistic regression models, ensuring that your models meet your performance criteria.
-- **Model Saving and Loading**: Store the resulting models for reuse, enabling efficient model deployment and sharing across projects.
-- **User-Friendly API**: Designed with simplicity in mind, Mlektic's API is intuitive and easy to use, making it accessible for users with varying levels of expertise.
+## 🚀 Características Principales
 
-## When to Use Mlektic?
+*   **Integración Nivel-Cero con Scikit-Learn**: Compatible directamente con estimadores iterativos (como `SGDRegressor`, `SGDClassifier`) y `Pipelines` estándar.
+*   **Animaciones Fluidas**: Visualiza en tiempo real cómo los parámetros (`θ`), la recta/curva de predicción y la función de pérdida (Loss) convergen.
+*   **Regresión Lineal y Logística**: Soporte completo para los dos tipos de regresión más fundamentales del ML, cada uno con su propia función pública.
+*   **Renderizado Inteligente por Dimensión**:
+    *   **1 Variable (2D)**: Dibuja la recta de regresión / curva sigmoide ajustándose punto a punto junto a la curva de pérdida.
+    *   **2 Variables (3D)**: Renderiza un plano predictivo / superficie de probabilidad en 3D interactivo que se inclina y eleva iteración por iteración.
+    *   **Múltiples Variables (d > 2)**: Al no ser posible graficar predicciones de alta dimensión, `mlektic` construye dinámicamente una matriz matemática en LaTeX interactiva que actualiza los pesos de tu vector `θ` en tiempo real.
+*   **Clasificación Multiclase**: Visualización automática de curvas de probabilidad por clase (1D) y matrices de pesos multiclase (d > 2).
+*   **Inspección de Pipelines**: Capacidad de proyectar el aprendizaje visualmente tanto en el **"espacio local/escalado"** como de vuelta al **"espacio original"** cuando usas funciones como `StandardScaler`.
 
-- **Educational Purposes**: Ideal for students and educators to demonstrate the principles of regression and gradient descent in a practical setting.
-- **Prototyping and Experimentation**: Quickly prototype regression models and experiment with different optimization techniques without the overhead of more complex machine learning frameworks.
-- **Small to Medium Scale Projects**: Perfect for small to medium-sized projects where ease of use and quick iteration are more important than handling large-scale data.
-<p align="center">
-  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/desc-2.jpg" alt="mlektic" width="200">
-</p>
+---
 
-## Installation
+## 📦 Instalación y Configuración
 
-You can install Mlektic using pip:
+El proyecto está diseñado usando las mejores prácticas de Python modernas (PEP 621) y `uv` como gestor ultrarrápido de dependencias.
 
-```sh
-pip install mlektic
-```  
+Para desarrollar o instalar localmente:
+```bash
+git clone https://github.com/DanielDialektico/mlektic.git
+cd mlektic
 
-## Getting Started
-To train a model using linear regression with standard gradient descent and L1 regularization:
+# Crear entorno virtual e instalar dependencias 
+uv sync
+```
+
+---
+
+## 💡 Quickstart — Regresión Lineal
+
+La API pública para regresión lineal se resume en `visualize_lr`. Todo el trazado dimensional es manejado de manera automática.
 
 ```python
-    from mlektic.linear_reg import LinearRegressionArcht
-    from mlektic import preprocessing
-    from mlektic import methods
-    import pandas as pd
-    import numpy as np
+import numpy as np
+import plotly.io as pio
+from sklearn.linear_model import SGDRegressor
+from mlektic import visualize_lr
 
-    # Generate random data.
-    np.random.seed(42)
-    n_samples = 100
-    feature1 = np.random.rand(n_samples)
-    feature2 = np.random.rand(n_samples)
-    target = 3 * feature1 + 5 * feature2 + np.random.randn(n_samples) * 0.5
+# Fuerza el renderizador incrustado si usas VS Code Jupyter
+pio.renderers.default = "notebook" 
 
-    # Create pandas dataframe from the data.
-    df = pd.DataFrame({
-        'feature1': feature1,
-        'feature2': feature2,
-        'target': target
-    })
+# 1. Generar datos de juguete
+X = np.sort(np.random.rand(100, 1)) * 10
+y = 2.5 * X.ravel() + 1.0 + np.random.randn(100) * 2
 
-    # Create train and test sets.
-    train_set, test_set = preprocessing.pd_dataset(df, ['feature1', 'feature2'], 'target', 0.8)
+# 2. Tu modelo de Scikit-Learn
+model = SGDRegressor(
+    loss="squared_error",
+    max_iter=50,
+    learning_rate="constant",
+    eta0=0.005,
+    random_state=42
+)
+model.fit(X, y)
 
-    # Define regulizer and optimizer.
-    regularizer = methods.regularizer_archt('l1', lambda_value=0.01)
-    optimizer = methods.optimizer_archt('sgd-standard')
+# 3. Animar la magia
+fig = visualize_lr(
+    model, X, y,
+    steps=60,               # Cantidad de cuadros (frames) a simular
+    frame_duration=80,      # Velocidad (ms por frame). Ej: 10 para super rápido
+    show_loss=True,         # Muestra la curva MSE/Loss al costado
+    title="Mi Primera Animación Mlektic"
+)
+fig.show()
 
-    # Configure the model.
-    lin_reg = LinearRegressionArcht(iterations=50, optimizer=optimizer, regularizer=regularizer)
-
-    # Train the model.
-    lin_reg.train(train_set)
-```
-```plaintext
-    Epoch 5, Loss: 15.191523551940918
-    Epoch 10, Loss: 11.642797470092773
-    Epoch 15, Loss: 9.021803855895996
-    Epoch 20, Loss: 7.08500862121582
-    Epoch 25, Loss: 5.652813911437988
-    Epoch 30, Loss: 4.592779636383057
-    Epoch 35, Loss: 3.807236909866333
-    Epoch 40, Loss: 3.2241621017456055
-    Epoch 45, Loss: 2.790440320968628
-    Epoch 50, Loss: 2.4669017791748047
+# (Opcional) Si la animación en tu editor es lenta, expórtalo a HTML puro:
+# fig.write_html("animacion.html", auto_play=False) 
 ```
 
-The cost evolution can be plotted with:
-```sh
-    from mlektic.plot_utils import plot_cost
+---
 
-    cost_history = lin_reg.get_cost_history()
-    plot_cost(cost_history, dim = (7, 5))
+## 💡 Quickstart — Regresión Logística
+
+La API pública para regresión logística es `visualize_logistic`. Soporta clasificación binaria y multiclase.
+
+```python
+import numpy as np
+import plotly.io as pio
+from sklearn.linear_model import SGDClassifier
+from mlektic import visualize_logistic
+
+pio.renderers.default = "notebook"
+
+# 1. Generar datos de clasificación binaria
+np.random.seed(42)
+n = 200
+X = np.random.randn(n, 1)
+y = (X.ravel() > 0).astype(int)
+
+# 2. Tu clasificador de Scikit-Learn
+model = SGDClassifier(
+    loss="log_loss",
+    learning_rate="constant",
+    eta0=0.05,
+    max_iter=500,
+    random_state=42
+)
+model.fit(X, y)
+
+# 3. Animar la curva sigmoide convergiendo
+fig = visualize_logistic(
+    model, X, y,
+    steps=60,
+    show_loss=True,
+    frame_duration=80,
+    title="Regresión Logística Binaria"
+)
+fig.show()
 ```
 
-<p>
-  <img src="https://raw.githubusercontent.com/DanielDialektico/mlektic/main/files/plot.jpg" alt="cost plot" width="500">
-</p>
-<br><br/>
+---
 
-You can replace `LinearRegressionArcht` with `LogisticRegressionArcht`, and try different types of optimizers and regularizers.
+## 🛠 Opciones Avanzadas de Visualización
 
-## Documentation
-For more detailed information, including API references and advanced usage, please refer to the [full documentation](https://dialektico.com/mlektic/docs/).
+### Parámetros de `visualize_lr`
 
-## Contributing
-Contributions are welcome! If you have suggestions for improvements, feel free to open an issue or send me an email to contacto@dialektico.com.
+| Parámetro | Tipo | Default | Descripción |
+|---|---|---|---|
+| `trained_estimator` | estimator / Pipeline | — | Modelo de Scikit-Learn ya entrenado. |
+| `X` | `np.ndarray` | — | Matriz de features de entrenamiento. |
+| `y` | `np.ndarray` | — | Vector objetivo. |
+| `steps` | `int` | `60` | Número de frames de animación. |
+| `mode` | `str` | `"auto"` | Estrategia de captura: `"auto"`, `"iterative"` o `"final_interp"`. |
+| `show_loss` | `bool` | `True` | Muestra la curva de pérdida junto al gráfico principal. |
+| `title` | `str` | `None` | Título personalizado del gráfico. |
+| `smooth` | `str \| None` | `"ema"` | Suavizado de la curva de pérdida (`"ema"` o `None`). |
+| `smooth_beta` | `float` | `0.85` | Parámetro beta para el suavizado EMA. |
+| `strict_loss` | `bool` | `False` | Si `True`, lanza error si el loss no se puede animar correctamente. |
+| `baseline` | `str` | `"mean"` | Referencia inicial del gráfico de pérdida (`"mean"` o `"zeros"`). |
+| `display_space` | `str` | `"original"` | Espacio de visualización de parámetros (`"original"` o `"scaled"`). |
+| `metrics` | `list[str]` | `["loss", "mse", "r2"]` | Lista de métricas a calcular y mostrar ("loss", "mse", "r2", "mae"). |
+| `dec` | `int` | `4` | Decimales para formatear los parámetros. |
+| `frame_duration` | `int` | `80` | Duración de cada frame en ms. Disminuir para más velocidad. |
 
-## License
-Mlektic is licensed under the Apache 2.0 License. See the [LICENSE](https://github.com/DanielDialektico/mlektic/blob/main/LICENSE) file for more details. 
+### Parámetros de `visualize_logistic`
+
+| Parámetro | Tipo | Default | Descripción |
+|---|---|---|---|
+| `trained_estimator` | estimator / Pipeline | — | Clasificador de Scikit-Learn ya entrenado. |
+| `X` | `np.ndarray` | — | Matriz de features de entrenamiento. |
+| `y` | `np.ndarray` | — | Vector de etiquetas. |
+| `steps` | `int` | `60` | Número de frames de animación. |
+| `mode` | `str` | `"auto"` | Estrategia de captura: `"auto"`, `"iterative"` o `"final_interp"`. |
+| `show_loss` | `bool` | `True` | Muestra la curva de log-loss junto al gráfico principal. |
+| `title` | `str` | `None` | Título personalizado del gráfico. |
+| `smooth` | `str \| None` | `"ema"` | Suavizado de la curva de pérdida (`"ema"` o `None`). |
+| `smooth_beta` | `float` | `0.85` | Parámetro beta para el suavizado EMA. |
+| `strict_loss` | `bool` | `False` | Si `True`, lanza error si el loss no se puede animar correctamente. |
+| `baseline` | `str` | `"prior"` | Referencia inicial del loss: `"prior"` (proporciones de clase) o `"uniform"`. |
+| `display_space` | `str` | `"original"` | Espacio de visualización de parámetros (`"original"` o `"scaled"`). |
+| `metrics` | `list[str]` | `["loss", "accuracy"]` | Lista de métricas a mostrar durante el entrenamiento. |
+| `dec` | `int` | `4` | Decimales para formatear los parámetros. |
+| `frame_duration` | `int` | `80` | Duración de cada frame en ms. |
+
+---
+
+## 🔍 Explicación Visual de Predicciones (`explain_lr_prediction`)
+
+`mlektic` incluye una herramienta diseñada para explicar de forma matemática y geométrica una predicción puntual de tu modelo ya entrenado. Soporta Scikit-Learn pipelines y formatea inteligentemente los pesos.
+
+```python
+from mlektic.api.linear import explain_lr_prediction
+
+# 1. Escoge un punto de prueba (forma 2D)
+x_query = np.array([[150.0, 25.0]])
+
+# 2. Haz la predicción con tu modelo
+yhat = model.predict(x_query)[0]
+
+# 3. Explica visualmente de dónde salió el valor
+fig = explain_lr_prediction(
+    model, X_train, y_train,
+    x_query=x_query,
+    yhat=yhat,
+    display_space="original" # Permite ver cómo opera en espacio escalado o nativo
+)
+fig.show()
+```
+
+---
+
+## 🏗 Arquitectura del Proyecto
+
+```
+src/mlektic/
+├── __init__.py              # Exportaciones públicas
+├── core.py                  # Fachada para regresión lineal
+├── logistic.py              # Fachada para regresión logística
+├── api/
+│   ├── linear.py            # API pública: visualize_lr()
+│   └── logistic.py          # API pública: visualize_logistic()
+├── adapters/
+│   ├── base.py              # BaseModelAdapter (ABC)
+│   └── sklearn.py           # SklearnAdapter (Scikit-Learn)
+├── domain/
+│   ├── config.py            # LinearHistoryConfig, LogisticHistoryConfig
+│   └── history.py           # TypedDicts: LinearHistoryPayload, LogisticHistoryPayload
+├── history/
+│   ├── base.py              # HistoryCaptureStrategy (ABC) + funciones de rescalado θ
+│   ├── engine.py            # HistoryEngine: orquesta captura + suavizado + rescalado
+│   ├── strategy_interp.py   # InterpolationCapture (modelos no iterativos)
+│   └── strategy_iterative.py# IterativeCapture (modelos con partial_fit/warm_start)
+├── services/
+│   ├── linear_history.py    # fit_history() y fit_history_logistic()
+│   └── logistic_history.py  # Re-export de fit_history_logistic
+├── utils/
+│   ├── math.py              # sigmoid, softmax, log-loss, EMA, one-hot
+│   └── grids.py             # Generación de meshgrids 1D y 2D
+├── visualization/
+│   ├── theme.py             # Tema visual (dark mode, sliders, play/pause)
+│   ├── linear/
+│   │   ├── router.py        # build_lr_figure(): enruta por dimensión
+│   │   ├── simple.py        # 1 variable (recta + scatter 2D)
+│   │   ├── plane.py         # 2 variables (plano 3D)
+│   │   └── multivar.py      # d > 2 (matriz LaTeX interactiva)
+│   └── logistic/
+│       ├── router.py        # build_logistic_figure(): enruta por dimensión y clases
+│       ├── binary_1d.py     # Binaria, 1 variable (curva sigmoide)
+│       ├── binary_2d.py     # Binaria, 2 variables (superficie 3D)
+│       ├── binary_nd.py     # Binaria, d > 2 (matriz LaTeX)
+│       ├── multiclass_1d.py # Multiclase, 1 variable (curvas de probabilidad)
+│       └── multiclass_nd.py # Multiclase, d > 2 (matriz de pesos)
+└── _internal/
+    └── common.py            # Helpers compartidos (legacy/compatibilidad)
+```
+
+---
+
+## 📐 Funciones de Bajo Nivel
+
+Además de la API de alto nivel (`visualize_lr`, `visualize_logistic`), puedes usar las funciones granulares:
+
+### Regresión Lineal
+*   `fit_history(estimator, X, y, ...)` → Captura el historial de entrenamiento como un diccionario.
+*   `build_lr_figure(X, y, history=...)` → Construye la figura Plotly a partir del historial.
+*   `build_simple_lr_figure(...)` → Figura para 1 variable.
+*   `build_plane_lr_figure(...)` → Figura para 2 variables.
+*   `build_multivar_lr_figure(...)` → Figura para d > 2 variables.
+
+### Regresión Logística
+*   `fit_history_logistic(estimator, X, y, ...)` → Captura el historial logístico.
+*   `build_logistic_figure(X, y, history=...)` → Construye la figura Plotly logística.
+*   `build_binary_simple_logistic_figure(...)` → Figura binaria 1D.
+*   `build_binary_plane_logistic_figure(...)` → Figura binaria 2D.
+*   `build_binary_multivar_logistic_figure(...)` → Figura binaria d > 2.
+*   `build_multiclass_1d_logistic_figure(...)` → Figura multiclase 1D.
+*   `build_multiclass_multivar_logistic_figure(...)` → Figura multiclase d > 2.
+
+---
+
+## 🧪 Directorio Local de Pruebas
+
+Si acabas de clonar el repositorio, puedes probar todas las capacidades multi-dimensionales sin tener que escribir código de prueba verificando el directorio pre-empaquetado `/local_test`. Adentro encontrarás:
+
+### Regresión Lineal
+- `lg_test_1_var.py` — 1 variable con diferentes escenarios de pipelines y sin escalar.
+- `lg_test_plane.py` — 2 variables.
+- `lg_test_multivar_pipeline.py` — Pruebas con regresión de d=2 hasta d=30 en formato matricial iterativo y estático.
+- `tg_pred_test_1.py` / `tg_pred_test_2.py` — Casos de uso de la herramienta explicativa (`explain_lr_prediction`).
+
+### Regresión Logística
+- `test_log_var.py` — Clasificación binaria con datos reales (Breast Cancer) y sintéticos, con y sin escalado.
+
+---
+
+## 📚 Documentación
+
+La documentación técnica completa generada con Sphinx se encuentra en el directorio `codeasdoc/`. Para compilarla localmente:
+
+```bash
+cd codeasdoc
+pip install sphinx sphinx-rtd-theme
+make html          # Linux/macOS
+.\make.bat html    # Windows
+```
+
+La documentación compilada se encontrará en `codeasdoc/_build/html/index.html`.
+
+---
+
+## 🤝 Contribuciones
+
+Si formas parte del equipo de desarrollo, te pedimos ejecutar la suite de linter y testeo antes de cada *Commit*:
+```bash
+uv run ruff format .
+uv run ruff check .
+uv run pytest
+```
+
+---
+
+## 📄 Licencia
+
+Este proyecto se distribuye bajo los términos descritos en el repositorio. Consulta el archivo correspondiente para más detalles.

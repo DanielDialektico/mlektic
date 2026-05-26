@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.visualization.linear.router &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">mlektic.visualization.linear.router</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para mlektic.visualization.linear.router</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Routing logic for linear-regression figure selection.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">..._internal.common</span> <span class="kn">import</span> <span class="n">_first_not_none</span>
+<span class="kn">from</span> <span class="nn">.multivar</span> <span class="kn">import</span> <span class="n">build_multivar_lr_figure</span>
+<span class="kn">from</span> <span class="nn">.plane</span> <span class="kn">import</span> <span class="n">build_plane_lr_figure</span>
+<span class="kn">from</span> <span class="nn">.simple</span> <span class="kn">import</span> <span class="n">build_simple_lr_figure</span>
+
+<div class="viewcode-block" id="build_lr_figure">
+<a class="viewcode-back" href="../../../../api_reference.html#mlektic.visualization.linear.router.build_lr_figure">[documentos]</a>
+<span class="k">def</span> <span class="nf">build_lr_figure</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">,</span>
+    <span class="n">w_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">b_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">history</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">y_line_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">x1_grid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># d==1</span>
+    <span class="n">z_plane_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">X1g</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">X2g</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># d==2</span>
+    <span class="n">loss_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">metrics_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">history_kind</span><span class="o">=</span><span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">strict_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Route to the appropriate visualization figure based on feature dimensions.</span>
+
+<span class="sd">    Depending on the number of features `d` in the dataset `X`, this function delegates</span>
+<span class="sd">    the plot creation to the respective builder for 1D, 2D, or multivariable data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (np.ndarray): The feature matrix of shape (n_samples, d).</span>
+<span class="sd">        y (np.ndarray): The target vector of shape (n_samples,).</span>
+<span class="sd">        w_hist (np.ndarray, optional): History of weights (theta). Defaults to None.</span>
+<span class="sd">        b_hist (np.ndarray, optional): History of biases (intercepts). Defaults to None.</span>
+<span class="sd">        history (dict, optional): Complete history dictionary returned by `fit_history()`. Defaults to None.</span>
+<span class="sd">        y_line_hist (np.ndarray, optional): History of prediction lines (for 1D). Defaults to None.</span>
+<span class="sd">        x1_grid (np.ndarray, optional): X-axis grid for 1D predictions. Defaults to None.</span>
+<span class="sd">        z_plane_hist (np.ndarray, optional): History of prediction planes (for 2D). Defaults to None.</span>
+<span class="sd">        X1g (np.ndarray, optional): Grid for first feature in 2D. Defaults to None.</span>
+<span class="sd">        X2g (np.ndarray, optional): Grid for second feature in 2D. Defaults to None.</span>
+<span class="sd">        loss_hist (np.ndarray, optional): History of loss values. Defaults to None.</span>
+<span class="sd">        show_loss (bool, optional): Whether to display the loss chart. Defaults to False.</span>
+<span class="sd">        history_kind (str, optional): The kind of history collected (&quot;iterative&quot; or &quot;auto&quot;). Defaults to &quot;iterative&quot;.</span>
+<span class="sd">        title (str, optional): The main title of the figure. Defaults to None.</span>
+<span class="sd">        strict_loss (bool, optional): If True, strictly enforce loss display rules. Defaults to False.</span>
+<span class="sd">        dec (int, optional): Number of decimal places to show for parameters. Defaults to 4.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        plotly.graph_objects.Figure: The fully constructed Plotly figure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">X</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># ---- history dict (sin OR con arrays) ----</span>
+    <span class="k">if</span> <span class="n">history</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;history must be a dict returned by fit_history().&quot;</span><span class="p">)</span>
+
+        <span class="n">history_kind</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;history_kind&quot;</span><span class="p">,</span> <span class="n">history_kind</span><span class="p">)</span>
+
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;losses&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">loss_hist</span><span class="p">,</span>
+        <span class="p">)</span>
+        
+        <span class="n">metrics_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">metrics_hist</span><span class="p">)</span>
+
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
+
+        <span class="c1"># Prefer theta &quot;para mostrar&quot; (respeta display_space de fit_history)</span>
+        <span class="n">w_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;w_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">w_hist</span><span class="p">)</span>
+        <span class="n">b_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;b_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">b_hist</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y_line_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;y_line_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">y_line_hist</span><span class="p">)</span>
+            <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x1_grid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">x1_grid</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">z_plane_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;z_plane_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">z_plane_hist</span><span class="p">)</span>
+            <span class="n">X1g</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X1g&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">X1g</span><span class="p">)</span>
+            <span class="n">X2g</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X2g&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">X2g</span><span class="p">)</span>
+
+    <span class="c1"># ---- routing ----</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Linear Regression (Simple, 1 variable)&quot;</span>
+        <span class="k">return</span> <span class="n">build_simple_lr_figure</span><span class="p">(</span>
+            <span class="n">x1</span><span class="p">,</span>
+            <span class="n">y</span><span class="p">,</span>
+            <span class="n">w_hist</span><span class="o">=</span><span class="n">w_hist</span><span class="p">,</span>
+            <span class="n">b_hist</span><span class="o">=</span><span class="n">b_hist</span><span class="p">,</span>
+            <span class="n">y_line_hist</span><span class="o">=</span><span class="n">y_line_hist</span><span class="p">,</span>
+            <span class="n">x1_grid</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span>
+            <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+            <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
+            <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
+            <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
+            <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
+            <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+            <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">x1</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Linear Regression (2 variables)&quot;</span>
+        <span class="k">return</span> <span class="n">build_plane_lr_figure</span><span class="p">(</span>
+            <span class="n">x1</span><span class="p">,</span>
+            <span class="n">x2</span><span class="p">,</span>
+            <span class="n">y</span><span class="p">,</span>
+            <span class="n">w_hist</span><span class="o">=</span><span class="n">w_hist</span><span class="p">,</span>
+            <span class="n">b_hist</span><span class="o">=</span><span class="n">b_hist</span><span class="p">,</span>
+            <span class="n">z_plane_hist</span><span class="o">=</span><span class="n">z_plane_hist</span><span class="p">,</span>
+            <span class="n">X1g</span><span class="o">=</span><span class="n">X1g</span><span class="p">,</span>
+            <span class="n">X2g</span><span class="o">=</span><span class="n">X2g</span><span class="p">,</span>
+            <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+            <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
+            <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
+            <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
+            <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
+            <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+            <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># Para d&gt;2 esta vista ES theta-based (no hay &quot;pred-grid&quot; equivalente aquí)</span>
+        <span class="k">if</span> <span class="n">w_hist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">b_hist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;For d&gt;2, this visualization expects w_hist and b_hist (parameter-display-based).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Multivariable Linear Regression Model (</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2"> variables)&quot;</span>
+        <span class="k">return</span> <span class="n">build_multivar_lr_figure</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">,</span>
+            <span class="n">y</span><span class="p">,</span>
+            <span class="n">w_hist</span><span class="p">,</span>
+            <span class="n">b_hist</span><span class="o">=</span><span class="n">b_hist</span><span class="p">,</span>
+            <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+            <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
+            <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
+            <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
+            <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
+            <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+            <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_lr_figure&quot;</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

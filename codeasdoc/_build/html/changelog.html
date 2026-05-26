@@ -1,0 +1,147 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Changelog &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/translations.js?v=f85f4cfb"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="prev" title="Uso Avanzado" href="advanced.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#v0-1-0-en-desarrollo">v0.1.0 (En desarrollo)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#funcionalidades">Funcionalidades</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Changelog</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/changelog.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading"></a></h1>
+<section id="v0-1-0-en-desarrollo">
+<h2>v0.1.0 (En desarrollo)<a class="headerlink" href="#v0-1-0-en-desarrollo" title="Link to this heading"></a></h2>
+<p>Primera versión de la librería.</p>
+<section id="funcionalidades">
+<h3>Funcionalidades<a class="headerlink" href="#funcionalidades" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Regresión Lineal</strong>: Soporte completo para <code class="docutils literal notranslate"><span class="pre">visualize_lr()</span></code> con:
+- Renderizado 2D (1 variable): recta de regresión animada + curva MSE.
+- Renderizado 3D (2 variables): plano predictivo animado.
+- Renderizado LaTeX (d &gt; 2): matriz de parámetros interactiva.
+- <strong>NUEVO</strong>: <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction()</span></code> para explicar matemáticamente y de forma visual las predicciones de un modelo ya entrenado.</p></li>
+<li><p><strong>Regresión Logística</strong>: Soporte completo para <code class="docutils literal notranslate"><span class="pre">visualize_logistic()</span></code> con:
+- Clasificación binaria: 1D (sigmoide), 2D (superficie), d &gt; 2 (LaTeX).
+- Clasificación multiclase: 1D (curvas de probabilidad), d &gt; 2 (matrices de pesos).</p></li>
+<li><p><strong>Métricas Dinámicas</strong>: Parámetro <code class="docutils literal notranslate"><span class="pre">metrics</span></code> para mostrar simultáneamente variables como <code class="docutils literal notranslate"><span class="pre">loss</span></code>, <code class="docutils literal notranslate"><span class="pre">mse</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, y formateo inteligente de números para evitar desbordes visuales.</p></li>
+<li><p><strong>Integración con Scikit-Learn</strong>: Compatible con estimadores directos y <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code>.</p></li>
+<li><p><strong>Adapter Pattern</strong>: <code class="docutils literal notranslate"><span class="pre">SklearnAdapter</span></code> como implementación concreta del
+<code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code> (extensible a otros frameworks).</p></li>
+<li><p><strong>Strategy Pattern</strong>: Dos estrategias de captura de historial:
+- <code class="docutils literal notranslate"><span class="pre">IterativeCapture</span></code> para modelos iterativos (<code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code>).
+- <code class="docutils literal notranslate"><span class="pre">InterpolationCapture</span></code> para modelos no iterativos.</p></li>
+<li><p><strong>Suavizado EMA</strong>: Opción de suavizar curvas de pérdida y predicciones.</p></li>
+<li><p><strong>Espacio de visualización</strong>: Soporte para <code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code> y <code class="docutils literal notranslate"><span class="pre">&quot;scaled&quot;</span></code>
+con transformación inversa automática de parámetros escalados.</p></li>
+<li><p><strong>Tema visual unificado</strong>: Dark mode con Plotly, botones Play/Pause, slider temporal.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
+        <a href="advanced.html" class="btn btn-neutral float-left" title="Uso Avanzado" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,469 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.visualization.linear.simple &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">mlektic.visualization.linear.simple</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para mlektic.visualization.linear.simple</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;1D linear-regression visualization builder.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">plotly.graph_objects</span> <span class="k">as</span> <span class="nn">go</span>
+<span class="kn">from</span> <span class="nn">plotly.subplots</span> <span class="kn">import</span> <span class="n">make_subplots</span>
+
+<span class="kn">from</span> <span class="nn">..theme</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_base_layout</span><span class="p">,</span>
+    <span class="n">get_legend_props</span><span class="p">,</span>
+    <span class="n">get_updatemenus</span><span class="p">,</span>
+    <span class="n">get_sliders</span><span class="p">,</span>
+    <span class="n">create_annotation</span><span class="p">,</span>
+    <span class="n">data_marker_style</span><span class="p">,</span>
+    <span class="n">model_line_style</span><span class="p">,</span>
+    <span class="n">loss_line_style</span><span class="p">,</span>
+<span class="p">)</span>
+
+<div class="viewcode-block" id="build_simple_lr_figure">
+<a class="viewcode-back" href="../../../../api_reference.html#mlektic.visualization.linear.simple.build_simple_lr_figure">[documentos]</a>
+<span class="k">def</span> <span class="nf">build_simple_lr_figure</span><span class="p">(</span>
+    <span class="n">x1</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">,</span>
+    <span class="n">w_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">b_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="c1"># --- robust inputs (preferred) ---</span>
+    <span class="n">y_line_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># (T, G)</span>
+    <span class="n">x1_grid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># (G,)</span>
+    <span class="c1"># --- loss ---</span>
+    <span class="n">loss_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">metrics_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">history_kind</span><span class="o">=</span><span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Linear Regression (Simple, 1 variable)&quot;</span><span class="p">,</span>
+    <span class="n">strict_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple (1D) visualization.</span>
+
+<span class="sd">    Robust mode:</span>
+<span class="sd">      - Provide y_line_hist + x1_grid =&gt; plot uses predictions, works with ANY sklearn Pipeline/transform.</span>
+
+<span class="sd">    Legacy mode:</span>
+<span class="sd">      - Provide w_hist,b_hist =&gt; plot uses y = w*x + b (only correct for pure linear model in original space)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># --- enforce inside the library ---</span>
+    <span class="k">if</span> <span class="n">show_loss</span> <span class="ow">and</span> <span class="n">history_kind</span> <span class="o">!=</span> <span class="s2">&quot;iterative&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">strict_loss</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;show_loss=True is only allowed for iterative histories.&quot;</span><span class="p">)</span>
+        <span class="n">show_loss</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+    <span class="n">use_pred_grid</span> <span class="o">=</span> <span class="n">y_line_hist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="c1"># -------------------------</span>
+    <span class="c1"># Select mode + validate inputs</span>
+    <span class="c1"># -------------------------</span>
+    <span class="k">if</span> <span class="n">use_pred_grid</span><span class="p">:</span>
+        <span class="n">y_line_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_line_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x1_grid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;If y_line_hist is provided, x1_grid must be provided.&quot;</span><span class="p">)</span>
+        <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x1_grid</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">y_line_hist</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;y_line_hist must have shape (steps, grid_points).&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">y_line_hist</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">x1_grid</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;y_line_hist second dim must match x1_grid size.&quot;</span><span class="p">)</span>
+        <span class="n">steps_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">y_line_hist</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">def</span> <span class="nf">y_line</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">y_line_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+        <span class="c1"># If theta history is also provided, show numeric equation; else show generic</span>
+        <span class="n">w_disp</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">b_disp</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">w_hist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">b_hist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">w_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">b_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+            <span class="c1"># accept shapes: (T,), (T,1)</span>
+            <span class="k">if</span> <span class="n">w_arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">w_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">w_arr</span> <span class="o">=</span> <span class="n">w_arr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">w_arr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">w_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">steps_n</span> <span class="ow">and</span> <span class="n">b_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="n">steps_n</span><span class="p">:</span>
+                <span class="n">w_disp</span> <span class="o">=</span> <span class="n">w_arr</span>
+                <span class="n">b_disp</span> <span class="o">=</span> <span class="n">b_arr</span>
+
+        <span class="k">def</span> <span class="nf">theta_formula_text</span><span class="p">():</span>
+            <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$\hat</span><span class="si">{y}</span><span class="s2">=\theta_0+\theta_1 x_1$&quot;</span>
+
+        <span class="k">def</span> <span class="nf">eq_text</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">w_disp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$\hat</span><span class="si">{y}</span><span class="s2"> = f(x_1)$&quot;</span>
+            <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;$\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2"> = (</span><span class="si">{</span><span class="n">w_disp</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">dec</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">)x_1 + (</span><span class="si">{</span><span class="n">b_disp</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">dec</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">)$&quot;</span>
+
+        <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1_grid</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1_grid</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># legacy path</span>
+        <span class="k">if</span> <span class="n">w_hist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">b_hist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Legacy mode requires w_hist and b_hist. Prefer providing y_line_hist + x1_grid.&quot;</span><span class="p">)</span>
+
+        <span class="n">w_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">b_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">steps_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">b_hist</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+        <span class="c1"># allow w_hist shape flexibility</span>
+        <span class="k">if</span> <span class="n">w_hist</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">w_hist</span> <span class="o">=</span> <span class="n">w_hist</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">w_hist</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">steps_n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;w_hist and b_hist must have the same number of steps.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">w_hist</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Simple LR expects 1 weight, got d=</span><span class="si">{</span><span class="n">w_hist</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="mi">250</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">y_line</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">w1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">b_hist</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">w1</span> <span class="o">*</span> <span class="n">x1_grid</span> <span class="o">+</span> <span class="n">b</span>
+
+        <span class="k">def</span> <span class="nf">theta_formula_text</span><span class="p">():</span>
+            <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$\hat</span><span class="si">{y}</span><span class="s2">=\theta_0+\theta_1 x_1$&quot;</span>
+
+        <span class="k">def</span> <span class="nf">eq_text</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">w1</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">b_hist</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;$\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2"> = (</span><span class="si">{</span><span class="n">w1</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">dec</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">)x_1 + (</span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">dec</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">)$&quot;</span>
+
+    <span class="k">if</span> <span class="n">steps_n</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Need at least 1 step to animate.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># validate loss</span>
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">loss_hist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;show_loss=True requires loss_hist.&quot;</span><span class="p">)</span>
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">loss_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">loss_hist</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">steps_n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;loss_hist must have the same length as steps.&quot;</span><span class="p">)</span>
+
+    <span class="n">step_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">steps_n</span><span class="p">)</span>
+
+    <span class="c1"># -------------------------</span>
+    <span class="c1"># Annotations (paper coords)</span>
+    <span class="c1"># -------------------------</span>
+    <span class="c1"># NOTE: for subplots we use xref/yref=&quot;paper&quot; too; it&#39;s fine because it&#39;s global paper.</span>
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">theta_y</span> <span class="o">=</span> <span class="mf">1.18</span>
+        <span class="n">eq_y</span> <span class="o">=</span> <span class="mf">1.10</span>
+        <span class="n">margin_t</span> <span class="o">=</span> <span class="mi">160</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">theta_y</span> <span class="o">=</span> <span class="mf">1.15</span>
+        <span class="n">eq_y</span> <span class="o">=</span> <span class="mf">1.05</span>
+        <span class="n">margin_t</span> <span class="o">=</span> <span class="mi">150</span>
+
+    <span class="k">def</span> <span class="nf">theta_formula_annotation</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">create_annotation</span><span class="p">(</span><span class="n">theta_formula_text</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="n">theta_y</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">eq_annotation</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">create_annotation</span><span class="p">(</span><span class="n">eq_text</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">eq_y</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span>
+
+    <span class="c1"># -------------------------</span>
+    <span class="c1"># Stable ranges</span>
+    <span class="c1"># -------------------------</span>
+    <span class="c1"># (use step 0 and last to stabilize y-range)</span>
+    <span class="n">y_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">y</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_line</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_line</span><span class="p">(</span><span class="n">steps_n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">y_all</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">y_all</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">y_pad</span> <span class="o">=</span> <span class="mf">0.08</span> <span class="o">*</span> <span class="p">(</span><span class="n">y_max</span> <span class="o">-</span> <span class="n">y_min</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pad</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mf">0.10</span><span class="p">):</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-9</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">lo</span> <span class="o">-</span> <span class="n">frac</span> <span class="o">*</span> <span class="n">span</span><span class="p">,</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">frac</span> <span class="o">*</span> <span class="n">span</span><span class="p">]</span>
+
+    <span class="n">x_range</span> <span class="o">=</span> <span class="n">_pad</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">lmin</span><span class="p">,</span> <span class="n">lmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">loss_hist</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">loss_hist</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">lpad</span> <span class="o">=</span> <span class="mf">0.10</span> <span class="o">*</span> <span class="p">(</span><span class="n">lmax</span> <span class="o">-</span> <span class="n">lmin</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span>
+
+    <span class="c1"># =====================================================================</span>
+    <span class="c1"># CASE A) show_loss=True</span>
+    <span class="c1"># =====================================================================</span>
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span>
+            <span class="n">rows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">cols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">column_widths</span><span class="o">=</span><span class="p">[</span><span class="mf">0.62</span><span class="p">,</span> <span class="mf">0.38</span><span class="p">],</span>
+            <span class="n">horizontal_spacing</span><span class="o">=</span><span class="mf">0.08</span><span class="p">,</span>
+            <span class="n">specs</span><span class="o">=</span><span class="p">[[{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;xy&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;xy&quot;</span><span class="p">}]],</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">metrics_annotations</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="n">ann</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">metrics_hist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">hist</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metrics_hist</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                    <span class="n">y_pos</span> <span class="o">=</span> <span class="mf">0.95</span> <span class="o">-</span> <span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="mf">0.13</span><span class="p">)</span>
+                    <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;.6f&quot;</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;loss&quot;</span> <span class="k">else</span> <span class="s2">&quot;.4f&quot;</span>
+                    <span class="n">ann</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">x</span><span class="o">=</span><span class="mf">0.98</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_pos</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> 
+                        <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&lt;b&gt;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&lt;/b&gt;&lt;br&gt;</span><span class="si">{</span><span class="n">val</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                        <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">),</span> 
+                        <span class="n">bgcolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">bordercolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">borderwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">borderpad</span><span class="o">=</span><span class="mi">6</span>
+                    <span class="p">))</span>
+            <span class="k">return</span> <span class="n">ann</span>
+
+        <span class="c1"># Data</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">x1</span><span class="p">,</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span>
+                <span class="n">marker</span><span class="o">=</span><span class="n">data_marker_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+                <span class="n">legendgroup</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span>
+                <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Model line</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">y_line</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Model&quot;</span><span class="p">,</span>
+                <span class="n">line</span><span class="o">=</span><span class="n">model_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+                <span class="n">legendgroup</span><span class="o">=</span><span class="s2">&quot;fit&quot;</span><span class="p">,</span>
+                <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">uid</span><span class="o">=</span><span class="s2">&quot;MODEL_LINE&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Loss line (start as a single point)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">loss_hist</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Loss&quot;</span><span class="p">,</span>
+                <span class="n">line</span><span class="o">=</span><span class="n">loss_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+                <span class="n">legendgroup</span><span class="o">=</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span>
+                <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">uid</span><span class="o">=</span><span class="s2">&quot;LOSS_LINE&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Frames</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps_n</span><span class="p">):</span>
+            <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                    <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_line</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">model_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span> <span class="n">uid</span><span class="o">=</span><span class="s2">&quot;MODEL_LINE&quot;</span><span class="p">),</span>
+                        <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                            <span class="n">x</span><span class="o">=</span><span class="n">step_axis</span><span class="p">[:</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                            <span class="n">y</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">[:</span> <span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+                            <span class="n">line</span><span class="o">=</span><span class="n">loss_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+                            <span class="n">uid</span><span class="o">=</span><span class="s2">&quot;LOSS_LINE&quot;</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="n">traces</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>  <span class="c1"># update model + loss</span>
+                    <span class="n">layout</span><span class="o">=</span><span class="n">go</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span><span class="n">annotations</span><span class="o">=</span><span class="p">[</span><span class="n">theta_formula_annotation</span><span class="p">(),</span> <span class="n">eq_annotation</span><span class="p">(</span><span class="n">t</span><span class="p">)]</span> <span class="o">+</span> <span class="n">metrics_annotations</span><span class="p">(</span><span class="n">t</span><span class="p">)),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">frames</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">get_base_layout</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">margin_t</span><span class="o">=</span><span class="n">margin_t</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+            <span class="n">annotations</span><span class="o">=</span><span class="p">[</span><span class="n">theta_formula_annotation</span><span class="p">(),</span> <span class="n">eq_annotation</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="n">metrics_annotations</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">legend</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">get_legend_props</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.49</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)),</span>
+            <span class="n">legend2</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">get_legend_props</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.985</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)),</span>
+            <span class="n">sliders</span><span class="o">=</span><span class="n">get_sliders</span><span class="p">(</span><span class="n">steps_n</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+            <span class="n">updatemenus</span><span class="o">=</span><span class="n">get_updatemenus</span><span class="p">(</span><span class="n">frame_duration</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Put loss on legend2</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">legend</span><span class="o">=</span><span class="s2">&quot;legend2&quot;</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;x₁&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">x_range</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="n">y_min</span> <span class="o">-</span> <span class="n">y_pad</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">+</span> <span class="n">y_pad</span><span class="p">],</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Step&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">steps_n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Loss&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="n">lmin</span> <span class="o">-</span> <span class="n">lpad</span><span class="p">,</span> <span class="n">lmax</span> <span class="o">+</span> <span class="n">lpad</span><span class="p">],</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fig</span>
+
+    <span class="c1"># =====================================================================</span>
+    <span class="c1"># CASE B) show_loss=False</span>
+    <span class="c1"># =====================================================================</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">()</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+        <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">x1</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span>
+            <span class="n">marker</span><span class="o">=</span><span class="n">data_marker_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+        <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">y_line</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Model&quot;</span><span class="p">,</span>
+            <span class="n">line</span><span class="o">=</span><span class="n">model_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+            <span class="n">uid</span><span class="o">=</span><span class="s2">&quot;MODEL_LINE&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps_n</span><span class="p">):</span>
+        <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_line</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">model_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span> <span class="n">uid</span><span class="o">=</span><span class="s2">&quot;MODEL_LINE&quot;</span><span class="p">)],</span>
+                <span class="n">traces</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">layout</span><span class="o">=</span><span class="n">go</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span><span class="n">annotations</span><span class="o">=</span><span class="p">[</span><span class="n">theta_formula_annotation</span><span class="p">(),</span> <span class="n">eq_annotation</span><span class="p">(</span><span class="n">t</span><span class="p">)]),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">frames</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">get_base_layout</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">margin_t</span><span class="o">=</span><span class="n">margin_t</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+        <span class="n">annotations</span><span class="o">=</span><span class="p">[</span><span class="n">theta_formula_annotation</span><span class="p">(),</span> <span class="n">eq_annotation</span><span class="p">(</span><span class="mi">0</span><span class="p">)],</span>
+        <span class="n">legend</span><span class="o">=</span><span class="n">get_legend_props</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+        <span class="n">xaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;x₁&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">x_range</span><span class="p">),</span>
+        <span class="n">yaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="n">y_min</span> <span class="o">-</span> <span class="n">y_pad</span><span class="p">,</span> <span class="n">y_max</span> <span class="o">+</span> <span class="n">y_pad</span><span class="p">]),</span>
+        <span class="n">sliders</span><span class="o">=</span><span class="n">get_sliders</span><span class="p">(</span><span class="n">steps_n</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+        <span class="n">updatemenus</span><span class="o">=</span><span class="n">get_updatemenus</span><span class="p">(</span><span class="n">frame_duration</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_simple_lr_figure&quot;</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
