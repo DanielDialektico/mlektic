@@ -93,9 +93,11 @@ def build_multivar_lr_figure(
             raise ValueError("loss_hist must have the same length as b_hist.")
 
     step_axis = np.arange(steps_n)
+    step_axis_list = step_axis.tolist()
 
     # Stable ranges (loss)
     if show_loss:
+        loss_hist_list = loss_hist.tolist()
         lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
         lpad = 0.08 * ((lmax - lmin) + 1e-9)
 
@@ -184,8 +186,8 @@ def build_multivar_lr_figure(
 
         fig.add_trace(
             go.Scatter(
-                x=[],
-                y=[],
+                x=[step if i == 0 else None for i, step in enumerate(step_axis_list)] if show_loss else [],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
                 mode="lines",
                 name="Loss",
                 line=dict(width=3),  # don't hardcode color
@@ -199,8 +201,8 @@ def build_multivar_lr_figure(
         for t in range(steps_n):
             if show_loss:
                 loss_trace = go.Scatter(
-                    x=step_axis[: t + 1],
-                    y=loss_hist[: t + 1],
+                    x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
+                    y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
                     mode="lines",
                     line=dict(width=3),
                     uid="LOSS_LINE",
@@ -447,8 +449,8 @@ def build_multivar_lr_figure(
 
     fig.add_trace(
         go.Scatter(
-            x=[],
-            y=[],
+            x=[step if i == 0 else None for i, step in enumerate(step_axis_list)] if show_loss else [],
+            y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
             mode="lines",
             name="Loss",
             line=dict(width=3),  # don't hardcode color
@@ -462,8 +464,8 @@ def build_multivar_lr_figure(
     for t in range(steps_n):
         if show_loss:
             loss_trace = go.Scatter(
-                x=step_axis[: t + 1],
-                y=loss_hist[: t + 1],
+                x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
+                y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
                 line=dict(width=3),
                 uid="LOSS_LINE",
