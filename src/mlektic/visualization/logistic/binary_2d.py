@@ -29,6 +29,7 @@ def build_binary_plane_logistic_figure(
     X1g=None,
     X2g=None,
     loss_hist=None,
+    metrics_hist=None,
     show_loss=False,
     history_kind="iterative",
     title="Binary Logistic Regression (2 variables)",
@@ -188,6 +189,21 @@ def build_binary_plane_logistic_figure(
             specs=[[{"type": "scene"}, {"type": "xy"}]],
         )
 
+        def metrics_annotations(t):
+            ann = []
+            if metrics_hist is not None:
+                for i, (name, hist) in enumerate(metrics_hist.items()):
+                    val = hist[t]
+                    y_pos = 0.95 - (i * 0.13)
+                    fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
+                    ann.append(dict(
+                        x=0.98, y=y_pos, xref="paper", yref="paper", 
+                        text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
+                        xanchor="right", yanchor="top", font=dict(size=14, color="black"), 
+                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=6
+                    ))
+            return ann
+
         fig.add_trace(
             go.Scatter3d(
                 x=x1,
@@ -257,7 +273,7 @@ def build_binary_plane_logistic_figure(
                     ],
                     traces=[1, 2],
                     layout=go.Layout(
-                        annotations=[formula_annotation(), eq_annotation(t)],
+                        annotations=[formula_annotation(), eq_annotation(t)] + metrics_annotations(t),
                     ),
                 )
             )
@@ -265,7 +281,7 @@ def build_binary_plane_logistic_figure(
 
         fig.update_layout(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
-            annotations=[formula_annotation(), eq_annotation(0)],
+            annotations=[formula_annotation(), eq_annotation(0)] + metrics_annotations(0),
             legend=dict(orientation="v", **get_legend_props(x=0.585, y=0.82, theme=theme)),
             legend2=dict(orientation="v", **get_legend_props(x=0.995, y=0.82, theme=theme)),
             scene=dict(

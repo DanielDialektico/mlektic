@@ -12,6 +12,9 @@ from ..theme import (
     get_updatemenus,
     get_sliders,
     create_annotation,
+    data_marker_style,
+    model_line_style,
+    loss_line_style,
 )
 from ...utils.math import _sigmoid
 
@@ -24,6 +27,7 @@ def build_binary_simple_logistic_figure(
     p_line_hist=None,
     x1_grid=None,
     loss_hist=None,
+    metrics_hist=None,
     show_loss=False,
     history_kind="iterative",
     title="Binary Logistic Regression (1 variable)",
@@ -74,12 +78,15 @@ def build_binary_simple_logistic_figure(
                 b_disp = b_arr
 
         def formula_text():
-            return r"$\hat{p}(y=1\mid x)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
+            return r"$\hat{p}(y=1\mid x)=\sigma(z),\;\; z=\theta_1 x+\theta_0$"
 
         def eq_text(t):
             if w_disp is None:
                 return r"$\sigma(z)=\dfrac{1}{1+e^{-z}},\;\;\hat{p}(y=1\mid x)=f(x_1)$"
-            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}" + rf",\;\; z=({w_disp[t]:.{dec}f})x_1+({b_disp[t]:.{dec}f})$"
+            return (
+                r"$\sigma(z)=\dfrac{1}{1+e^{-z}}"
+                + rf"=\dfrac{{1}}{{1+e^{{-\left(({w_disp[t]:.{dec}f})x+({b_disp[t]:.{dec}f})\right)}}}},\;\; z=({w_disp[t]:.{dec}f})x+({b_disp[t]:.{dec}f})$"
+            )
 
         x_min, x_max = float(x1_grid.min()), float(x1_grid.max())
 
@@ -107,12 +114,15 @@ def build_binary_simple_logistic_figure(
             return _sigmoid(w1 * x1_grid + b)
 
         def formula_text():
-            return r"$\hat{p}(y=1\mid x)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
+            return r"$\hat{p}(y=1\mid x)=\sigma(z),\;\; z=\theta_1 x+\theta_0$"
 
         def eq_text(t):
             w1 = float(w_hist[t, 0])
             b = float(b_hist[t])
-            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}" + rf",\;\; z=({w1:.{dec}f})x_1+({b:.{dec}f})$"
+            return (
+                r"$\sigma(z)=\dfrac{1}{1+e^{-z}}"
+                + rf"=\dfrac{{1}}{{1+e^{{-\left(({w1:.{dec}f})x+({b:.{dec}f})\right)}}}},\;\; z=({w1:.{dec}f})x+({b:.{dec}f})$"
+            )
 
     if steps_n < 1:
         raise ValueError("Need at least 1 step to animate.")
@@ -160,13 +170,28 @@ def build_binary_simple_logistic_figure(
             specs=[[{"type": "xy"}, {"type": "xy"}]],
         )
 
+        def metrics_annotations(t):
+            ann = []
+            if metrics_hist is not None:
+                for i, (name, hist) in enumerate(metrics_hist.items()):
+                    val = hist[t]
+                    y_pos = 0.95 - (i * 0.13)
+                    fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
+                    ann.append(dict(
+                        x=0.98, y=y_pos, xref="paper", yref="paper", 
+                        text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
+                        xanchor="right", yanchor="top", font=dict(size=14, color="black"), 
+                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=6
+                    ))
+            return ann
+
         fig.add_trace(
             go.Scatter(
                 x=x1,
                 y=y_jitter,
                 mode="markers",
                 name="Data",
-                marker=dict(size=7, opacity=0.80),
+                marker=data_marker_style(theme=theme),
                 legendgroup="fit",
                 showlegend=True,
             ),
@@ -180,7 +205,7 @@ def build_binary_simple_logistic_figure(
                 y=p_line(0),
                 mode="lines",
                 name="Model",
-                line=dict(width=4),
+                line=model_line_style(theme=theme),
                 legendgroup="fit",
                 showlegend=True,
                 uid="MODEL_LINE",
@@ -195,7 +220,7 @@ def build_binary_simple_logistic_figure(
                 y=[loss_hist[0]],
                 mode="lines",
                 name="Log-loss",
-                line=dict(width=3),
+                line=loss_line_style(theme=theme),
                 legendgroup="loss",
                 showlegend=True,
                 uid="LOSS_LINE",
@@ -210,24 +235,24 @@ def build_binary_simple_logistic_figure(
                 go.Frame(
                     name=str(t),
                     data=[
-                        go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=dict(width=4), uid="MODEL_LINE"),
+                        go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE"),
                         go.Scatter(
                             x=step_axis[: t + 1],
                             y=loss_hist[: t + 1],
                             mode="lines",
-                            line=dict(width=3),
+                            line=loss_line_style(theme=theme),
                             uid="LOSS_LINE",
                         ),
                     ],
                     traces=[1, 2],
-                    layout=go.Layout(annotations=[formula_annotation(), eq_annotation(t)]),
+                    layout=go.Layout(annotations=[formula_annotation(), eq_annotation(t)] + metrics_annotations(t)),
                 )
             )
         fig.frames = frames
 
         fig.update_layout(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
-            annotations=[formula_annotation(), eq_annotation(0)],
+            annotations=[formula_annotation(), eq_annotation(0)] + metrics_annotations(0),
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
             legend2=dict(orientation="v", **get_legend_props(x=0.985, theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
@@ -249,7 +274,7 @@ def build_binary_simple_logistic_figure(
             y=y_jitter,
             mode="markers",
             name="Data",
-            marker=dict(size=7, opacity=0.80),
+            marker=data_marker_style(theme=theme),
         )
     )
 
@@ -259,7 +284,7 @@ def build_binary_simple_logistic_figure(
             y=p_line(0),
             mode="lines",
             name="Model",
-            line=dict(width=4),
+            line=model_line_style(theme=theme),
             uid="MODEL_LINE",
         )
     )
@@ -269,7 +294,7 @@ def build_binary_simple_logistic_figure(
         frames.append(
             go.Frame(
                 name=str(t),
-                data=[go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=dict(width=4), uid="MODEL_LINE")],
+                data=[go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE")],
                 traces=[1],
                 layout=go.Layout(annotations=[formula_annotation(), eq_annotation(t)]),
             )

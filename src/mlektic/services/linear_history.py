@@ -45,7 +45,8 @@ def fit_history_logistic(
     grid_1d_points=300,
     grid_2d_points=40,
     baseline="prior",
-    display_space="original"
+    display_space="original",
+    metrics=None
 ) -> dict:
     """Capture logistic history."""
     config = LogisticHistoryConfig(
@@ -56,7 +57,8 @@ def fit_history_logistic(
         grid_1d_points=grid_1d_points,
         grid_2d_points=grid_2d_points,
         baseline=baseline,
-        display_space=display_space
+        display_space=display_space,
+        metrics=metrics
     )
     engine = HistoryEngine(trained_estimator)
     return engine.capture_logistic(X, y, config)

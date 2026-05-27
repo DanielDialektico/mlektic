@@ -23,6 +23,7 @@ def build_multiclass_1d_logistic_figure(
     p_curves_hist=None,
     x1_grid=None,
     loss_hist=None,
+    metrics_hist=None,
     show_loss=True,
     history_kind="iterative",
     title=None,
@@ -200,7 +201,7 @@ def build_multiclass_1d_logistic_figure(
         fig = make_subplots(
             rows=1,
             cols=3,
-            column_widths=[0.22, 0.18, 0.28],
+            column_widths=[0.60, 0.22, 0.18],
             horizontal_spacing=0.06,
             specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
         )
@@ -218,7 +219,7 @@ def build_multiclass_1d_logistic_figure(
                     showlegend=True,
                 ),
                 row=1,
-                col=1,
+                col=2,
             )
 
         fig.add_trace(
@@ -232,14 +233,29 @@ def build_multiclass_1d_logistic_figure(
                 showlegend=True,
             ),
             row=1,
-            col=2,
+            col=3,
         )
 
-        X_TEXT = 0.78
-        X_VDOTS = 0.82
+        X_TEXT = 0.20
+        X_VDOTS = 0.28
+
+        def metrics_annotations(t):
+            ann = []
+            if metrics_hist is not None:
+                for i, (name, hist) in enumerate(metrics_hist.items()):
+                    val = hist[t]
+                    y_pos = 0.83 - (i * 0.14)
+                    fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
+                    ann.append(dict(
+                        x=0.98, y=y_pos, xref="paper", yref="paper", 
+                        text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
+                        xanchor="right", yanchor="top", font=dict(size=14, color="black"), 
+                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=6
+                    ))
+            return ann
 
         def make_annotations(t):
-            return [
+            base_ann = [
                 dict(
                     x=X_TEXT,
                     y=0.955,
@@ -253,7 +269,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_TEXT,
-                    y=0.895,
+                    y=0.885,
                     xref="paper",
                     yref="paper",
                     text=x_definition_latex(),
@@ -264,7 +280,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_TEXT,
-                    y=0.805,
+                    y=0.77,
                     xref="paper",
                     yref="paper",
                     text=softmax_def_latex(),
@@ -275,7 +291,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_TEXT,
-                    y=0.700,
+                    y=0.63,
                     xref="paper",
                     yref="paper",
                     text=theta_definition_latex(),
@@ -286,7 +302,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_TEXT,
-                    y=0.575,
+                    y=0.49,
                     xref="paper",
                     yref="paper",
                     text=theta_matrix_latex_math_style(t),
@@ -297,7 +313,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_TEXT,
-                    y=0.340,
+                    y=0.280,
                     xref="paper",
                     yref="paper",
                     text=final_prob_example_latex(t),
@@ -308,7 +324,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_VDOTS,
-                    y=0.200,
+                    y=0.18,
                     xref="paper",
                     yref="paper",
                     text=vertical_dots_latex(),
@@ -319,7 +335,7 @@ def build_multiclass_1d_logistic_figure(
                 ),
                 dict(
                     x=X_TEXT,
-                    y=0.095,
+                    y=0.08,
                     xref="paper",
                     yref="paper",
                     text=last_class_tail_latex(t),
@@ -328,7 +344,30 @@ def build_multiclass_1d_logistic_figure(
                     yanchor="middle",
                     font=dict(size=16, color="white"),
                 ),
+                dict(
+                    x=0.685,
+                    y=0.88,
+                    xref="paper",
+                    yref="paper",
+                    text="<b>Probability</b>",
+                    showarrow=False,
+                    xanchor="center",
+                    yanchor="bottom",
+                    font=dict(size=14, color="white"),
+                ),
+                dict(
+                    x=0.92,
+                    y=0.88,
+                    xref="paper",
+                    yref="paper",
+                    text="<b>Cross-entropy</b>",
+                    showarrow=False,
+                    xanchor="center",
+                    yanchor="bottom",
+                    font=dict(size=14, color="white"),
+                ),
             ]
+            return base_ann + metrics_annotations(t)
 
         frames = []
         for t in range(steps_n):
@@ -351,26 +390,26 @@ def build_multiclass_1d_logistic_figure(
 
         fig.update_layout(
             **get_base_layout(title=title, margin_t=110, theme=theme),
-            legend=dict(orientation="v", **get_legend_props(x=0.28, y=0.9, yanchor="top", theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.58, y=0.9, yanchor="top", theme=theme)),
+            legend=dict(orientation="v", **get_legend_props(x=1.02, y=0.85, yanchor="top", xanchor="left", theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=1.02, y=0.30, yanchor="top", xanchor="left", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, theme=theme),
             annotations=make_annotations(0),
         )
 
         fig.data[K].update(legend="legend2")
-        fig.update_xaxes(title=r"$x$", row=1, col=1)
-        fig.update_yaxes(title="Probability", range=[-0.02, 1.02], row=1, col=1)
-        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
-        fig.update_yaxes(title="Cross-entropy", range=[loss_min - loss_pad, loss_max + loss_pad], row=1, col=2)
-        fig.update_xaxes(visible=False, row=1, col=3, range=[0, 1])
-        fig.update_yaxes(visible=False, row=1, col=3, range=[0, 1])
+        fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+        fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
+        fig.update_xaxes(title=r"$x$", row=1, col=2)
+        fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=3)
+        fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], domain=[0.15, 0.85], row=1, col=3)
         return fig
 
     fig = make_subplots(
         rows=1,
         cols=2,
-        column_widths=[0.58, 0.42],
+        column_widths=[0.72, 0.28],
         horizontal_spacing=0.06,
         specs=[[{"type": "xy"}, {"type": "xy"}]],
     )
@@ -386,11 +425,11 @@ def build_multiclass_1d_logistic_figure(
                 line=dict(width=4),
             ),
             row=1,
-            col=1,
+            col=2,
         )
 
-    X_TEXT = 0.78
-    X_VDOTS = 0.82
+    X_TEXT = 0.24
+    X_VDOTS = 0.32
 
     def make_annotations_no_loss(t):
         return [
@@ -418,7 +457,7 @@ def build_multiclass_1d_logistic_figure(
             ),
             dict(
                 x=X_TEXT,
-                y=0.785,
+                y=0.77,
                 xref="paper",
                 yref="paper",
                 text=softmax_def_latex(),
@@ -429,7 +468,7 @@ def build_multiclass_1d_logistic_figure(
             ),
             dict(
                 x=X_TEXT,
-                y=0.665,
+                y=0.63,
                 xref="paper",
                 yref="paper",
                 text=theta_definition_latex(),
@@ -440,7 +479,7 @@ def build_multiclass_1d_logistic_figure(
             ),
             dict(
                 x=X_TEXT,
-                y=0.53,
+                y=0.49,
                 xref="paper",
                 yref="paper",
                 text=theta_matrix_latex_math_style(t),
@@ -451,7 +490,7 @@ def build_multiclass_1d_logistic_figure(
             ),
             dict(
                 x=X_TEXT,
-                y=0.29,
+                y=0.280,
                 xref="paper",
                 yref="paper",
                 text=final_prob_example_latex(t),
@@ -462,7 +501,7 @@ def build_multiclass_1d_logistic_figure(
             ),
             dict(
                 x=X_VDOTS,
-                y=0.17,
+                y=0.18,
                 xref="paper",
                 yref="paper",
                 text=vertical_dots_latex(),
@@ -483,6 +522,23 @@ def build_multiclass_1d_logistic_figure(
                 font=dict(size=16, color="white"),
             ),
         ]
+        
+    def make_annotations_no_loss_combined(t):
+        ann = make_annotations_no_loss(t)
+        ann.append(
+            dict(
+                x=0.86,
+                y=0.88,
+                xref="paper",
+                yref="paper",
+                text="<b>Probability</b>",
+                showarrow=False,
+                xanchor="center",
+                yanchor="bottom",
+                font=dict(size=14, color="white"),
+            )
+        )
+        return ann
 
     frames = []
     for t in range(steps_n):
@@ -493,23 +549,23 @@ def build_multiclass_1d_logistic_figure(
                 name=str(t),
                 data=frame_data,
                 traces=list(range(0, K)),
-                layout=go.Layout(annotations=make_annotations_no_loss(t)),
+                layout=go.Layout(annotations=make_annotations_no_loss_combined(t)),
             )
         )
     fig.frames = frames
 
     fig.update_layout(
         **get_base_layout(title=title, margin_t=110, theme=theme),
-        legend=dict(orientation="v", **get_legend_props(x=0.55, y=0.9, yanchor="top", theme=theme)),
+        legend=dict(orientation="v", **get_legend_props(x=1.02, y=0.85, yanchor="top", xanchor="left", theme=theme)),
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
-        annotations=make_annotations_no_loss(0),
+        annotations=make_annotations_no_loss_combined(0),
     )
 
-    fig.update_xaxes(title=r"$x$", row=1, col=1)
-    fig.update_yaxes(title="Probability", range=[-0.02, 1.02], row=1, col=1)
-    fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
-    fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
+    fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+    fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
+    fig.update_xaxes(title=r"$x$", row=1, col=2)
+    fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
     return fig
 
 

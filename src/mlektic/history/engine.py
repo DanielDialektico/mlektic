@@ -91,6 +91,63 @@ class HistoryEngine:
         self._apply_smoothing(data, config, is_linear=False)
         self._apply_theta_scaling(data, config, is_linear=False, is_multiclass=data["is_multiclass"])
         data["display_space"] = config.display_space
+
+        w_hist = data["w_hist"]
+        b_hist = data["b_hist"]
+        if w_hist is not None and b_hist is not None:
+            X_eval = X
+            if config.display_space == "scaled" and "scaler_params" in data:
+                scaler_params = data["scaler_params"]
+                if scaler_params[0] is not None:
+                    mu, scale = scaler_params
+                    X_eval = X.copy()
+                    if mu is not None:
+                        X_eval = X_eval - mu
+                    if scale is not None:
+                        X_eval = X_eval / (scale + 1e-12)
+            
+            is_multiclass = data.get("is_multiclass", False)
+            steps = w_hist.shape[0]
+            acc_hist = np.zeros(steps)
+            f1_hist = np.zeros(steps)
+            
+            from sklearn.metrics import accuracy_score, f1_score
+            if is_multiclass:
+                for t in range(steps):
+                    z_t = X_eval @ w_hist[t] + b_hist[t]
+                    y_pred = np.argmax(z_t, axis=1)
+                    acc_hist[t] = accuracy_score(y, y_pred)
+                    f1_hist[t] = f1_score(y, y_pred, average='macro', zero_division=0)
+            else:
+                if w_hist.ndim == 1:
+                    w_t = w_hist.reshape(-1, 1)
+                else:
+                    w_t = w_hist
+                    
+                z_hist = X_eval @ w_t.T + b_hist
+                from ..utils.math import _sigmoid
+                p_hist = _sigmoid(z_hist)
+                y_pred_hist = (p_hist >= 0.5).astype(int)
+                
+                for t in range(steps):
+                    acc_hist[t] = accuracy_score(y, y_pred_hist[:, t])
+                    f1_hist[t] = f1_score(y, y_pred_hist[:, t], average='binary', zero_division=0)
+                    
+            metrics_hist = {
+                "Log-loss": data["loss_hist"],
+                "Accuracy": acc_hist,
+                "F1 Score": f1_hist
+            }
+            
+            if config.metrics:
+                for name, fn in config.metrics.items():
+                    if is_multiclass:
+                        metrics_hist[name] = np.array([fn(y, np.argmax(X_eval @ w_hist[t] + b_hist[t], axis=1)) for t in range(steps)])
+                    else:
+                        metrics_hist[name] = np.array([fn(y, y_pred_hist[:, t]) for t in range(steps)])
+            
+            data["metrics_hist"] = {k: metrics_hist[k] for k in list(metrics_hist)[:5]}
+
         return data
 
     def _resolve_mode(self, requested_mode: str) -> str:

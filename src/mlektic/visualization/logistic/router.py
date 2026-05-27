@@ -32,6 +32,7 @@ def build_logistic_figure(
     strict_loss=False,
     dec=4,
     frame_duration=80,
+    max_theta_cols=8,
     theme=None,
 ):
     """Build logistic figure based on data dimensionality."""
@@ -57,6 +58,8 @@ def build_logistic_figure(
 
         grid = history.get("grid", {}) or {}
 
+        metrics_hist = history.get("metrics_hist", None)
+
         w_hist = _first_not_none(history.get("w_hist", None), w_hist)
         b_hist = _first_not_none(history.get("b_hist", None), b_hist)
 
@@ -71,6 +74,9 @@ def build_logistic_figure(
     classes = np.unique(y) if classes is None else np.asarray(classes)
     K = len(classes)
     is_multiclass = K > 2
+    
+    if history is None:
+        metrics_hist = None
 
     if not is_multiclass:
         if d == 1:
@@ -85,6 +91,7 @@ def build_logistic_figure(
                 p_line_hist=p_line_hist,
                 x1_grid=x1_grid,
                 loss_hist=loss_hist,
+                metrics_hist=metrics_hist,
                 show_loss=show_loss,
                 history_kind=history_kind,
                 title=title,
@@ -109,6 +116,7 @@ def build_logistic_figure(
                 X1g=X1g,
                 X2g=X2g,
                 loss_hist=loss_hist,
+                metrics_hist=metrics_hist,
                 show_loss=show_loss,
                 history_kind=history_kind,
                 title=title,
@@ -126,6 +134,7 @@ def build_logistic_figure(
             w_hist,
             b_hist,
             loss_hist=loss_hist,
+            metrics_hist=metrics_hist,
             show_loss=show_loss,
             history_kind=history_kind,
             title=title,
@@ -147,12 +156,14 @@ def build_logistic_figure(
             p_curves_hist=p_curves_hist,
             x1_grid=x1_grid,
             loss_hist=loss_hist,
+            metrics_hist=metrics_hist,
             show_loss=show_loss,
             history_kind=history_kind,
             title=title,
             strict_loss=strict_loss,
             dec=min(dec, 4),
             frame_duration=frame_duration,
+            max_theta_cols=max_theta_cols,
             theme=theme,
         )
 
@@ -164,12 +175,14 @@ def build_logistic_figure(
         w_hist,
         b_hist,
         loss_hist=loss_hist,
+        metrics_hist=metrics_hist,
         show_loss=show_loss,
         history_kind=history_kind,
         title=title,
         strict_loss=strict_loss,
         dec=min(dec, 4),
         frame_duration=frame_duration,
+        max_theta_cols=max_theta_cols,
         theme=theme,
     )
 

@@ -10,6 +10,7 @@ from ..theme import (
     get_base_layout,
     get_updatemenus,
     get_sliders,
+    loss_line_style,
 )
 
 def build_binary_multivar_logistic_figure(
@@ -19,6 +20,7 @@ def build_binary_multivar_logistic_figure(
     b_hist,
     *,
     loss_hist=None,
+    metrics_hist=None,
     show_loss=True,
     history_kind="iterative",
     title=None,
@@ -80,8 +82,10 @@ def build_binary_multivar_logistic_figure(
             raise ValueError("loss_hist must have same length as b_hist.")
 
     step_axis = np.arange(steps_n)
+    step_axis_list = step_axis.tolist()
 
     if show_loss:
+        loss_hist_list = loss_hist.tolist()
         lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
         lpad = 0.08 * ((lmax - lmin) + 1e-9)
 
@@ -160,23 +164,46 @@ def build_binary_multivar_logistic_figure(
                 ),
             ]
             if show_loss:
-                ann.append(
-                    dict(
-                        x=0.33,
-                        y=0.94,
-                        xref="paper",
-                        yref="paper",
-                        text=f"<b>Log-loss</b><br>{loss_hist[t]:.6f}",
-                        showarrow=False,
-                        xanchor="left",
-                        yanchor="top",
-                        font=dict(size=16, color="black"),
-                        bgcolor="white",
-                        bordercolor="black",
-                        borderwidth=1,
-                        borderpad=8,
+                if metrics_hist is not None:
+                    for i, (name, hist) in enumerate(metrics_hist.items()):
+                        val = hist[t]
+                        y_pos = 0.94 - (i * 0.13)
+                        fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
+                        ann.append(
+                            dict(
+                                x=0.33,
+                                y=y_pos,
+                                xref="paper",
+                                yref="paper",
+                                text=f"<b>{name}</b><br>{val:{fmt}}",
+                                showarrow=False,
+                                xanchor="left",
+                                yanchor="top",
+                                font=dict(size=16, color="black"),
+                                bgcolor="white",
+                                bordercolor="black",
+                                borderwidth=1,
+                                borderpad=8,
+                            )
+                        )
+                else:
+                    ann.append(
+                        dict(
+                            x=0.33,
+                            y=0.94,
+                            xref="paper",
+                            yref="paper",
+                            text=f"<b>Log-loss</b><br>{loss_hist[t]:.6f}",
+                            showarrow=False,
+                            xanchor="left",
+                            yanchor="top",
+                            font=dict(size=16, color="black"),
+                            bgcolor="white",
+                            bordercolor="black",
+                            borderwidth=1,
+                            borderpad=8,
+                        )
                     )
-                )
             return ann
 
         fig = make_subplots(
@@ -188,14 +215,26 @@ def build_binary_multivar_logistic_figure(
         )
 
         fig.add_trace(
-            go.Scatter(x=[], y=[], mode="lines", name="Log-loss", line=dict(width=3), uid="LOSS_LINE"), row=1, col=1
+            go.Scatter(
+                x=[step if i == 0 else None for i, step in enumerate(step_axis_list)] if show_loss else [],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
+                mode="lines",
+                name="Log-loss",
+                line=loss_line_style(theme=theme),
+                uid="LOSS_LINE",
+            ),
+            row=1, col=1
         )
 
         frames = []
         for t in range(steps_n):
             loss_trace = (
                 go.Scatter(
-                    x=step_axis[: t + 1], y=loss_hist[: t + 1], mode="lines", line=dict(width=3), uid="LOSS_LINE"
+                    x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
+                    y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
+                    mode="lines",
+                    line=loss_line_style(theme=theme),
+                    uid="LOSS_LINE"
                 )
                 if show_loss
                 else go.Scatter(x=[], y=[], uid="LOSS_LINE")
@@ -456,23 +495,47 @@ def build_binary_multivar_logistic_figure(
         if show_loss:
             th_cols = theta_cols_for_t(t)
             y_loss = 0.98 if th_cols == 1 else 0.86
-            ann.append(
-                dict(
-                    x=0.25,
-                    y=y_loss,
-                    xref="paper",
-                    yref="paper",
-                    text=f"<b>Log-loss</b><br>{loss_hist[t]:.6f}",
-                    showarrow=False,
-                    xanchor="left",
-                    yanchor="top",
-                    font=dict(size=16, color="black"),
-                    bgcolor="white",
-                    bordercolor="black",
-                    borderwidth=1,
-                    borderpad=8,
+            
+            if metrics_hist is not None:
+                for i, (name, hist) in enumerate(metrics_hist.items()):
+                    val = hist[t]
+                    y_pos = y_loss - (i * 0.13)
+                    fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
+                    ann.append(
+                        dict(
+                            x=0.25,
+                            y=y_pos,
+                            xref="paper",
+                            yref="paper",
+                            text=f"<b>{name}</b><br>{val:{fmt}}",
+                            showarrow=False,
+                            xanchor="left",
+                            yanchor="top",
+                            font=dict(size=16, color="black"),
+                            bgcolor="white",
+                            bordercolor="black",
+                            borderwidth=1,
+                            borderpad=8,
+                        )
+                    )
+            else:
+                ann.append(
+                    dict(
+                        x=0.25,
+                        y=y_loss,
+                        xref="paper",
+                        yref="paper",
+                        text=f"<b>Log-loss</b><br>{loss_hist[t]:.6f}",
+                        showarrow=False,
+                        xanchor="left",
+                        yanchor="top",
+                        font=dict(size=16, color="black"),
+                        bgcolor="white",
+                        bordercolor="black",
+                        borderwidth=1,
+                        borderpad=8,
+                    )
                 )
-            )
 
         return ann
 
@@ -485,13 +548,27 @@ def build_binary_multivar_logistic_figure(
     )
 
     fig.add_trace(
-        go.Scatter(x=[], y=[], mode="lines", name="Log-loss", line=dict(width=3), uid="LOSS_LINE"), row=1, col=1
+        go.Scatter(
+            x=[step if i == 0 else None for i, step in enumerate(step_axis_list)] if show_loss else [],
+            y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
+            mode="lines",
+            name="Log-loss",
+            line=loss_line_style(theme=theme),
+            uid="LOSS_LINE",
+        ),
+        row=1, col=1
     )
 
     frames = []
     for t in range(steps_n):
         loss_trace = (
-            go.Scatter(x=step_axis[: t + 1], y=loss_hist[: t + 1], mode="lines", line=dict(width=3), uid="LOSS_LINE")
+            go.Scatter(
+                x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
+                y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
+                mode="lines",
+                line=loss_line_style(theme=theme),
+                uid="LOSS_LINE"
+            )
             if show_loss
             else go.Scatter(x=[], y=[], uid="LOSS_LINE")
         )
