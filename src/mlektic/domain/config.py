@@ -27,3 +27,4 @@ class LogisticHistoryConfig:
     grid_2d_points: int = 40
     baseline: str = "prior"
     display_space: str = "original"
+    metrics: dict | None = None

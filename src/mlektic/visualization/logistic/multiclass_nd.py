@@ -19,6 +19,7 @@ def build_multiclass_multivar_logistic_figure(
     b_hist,
     *,
     loss_hist=None,
+    metrics_hist=None,
     show_loss=True,
     history_kind="iterative",
     title=None,
@@ -26,6 +27,7 @@ def build_multiclass_multivar_logistic_figure(
     dec=3,
     example_class=0,
     max_features_in_z=3,
+    max_theta_cols=6,
     frame_duration=80,
     theme=None,
 ):
@@ -69,8 +71,10 @@ def build_multiclass_multivar_logistic_figure(
             raise ValueError("loss_hist must match steps.")
 
     ep = np.arange(steps_n)
+    ep_list = ep.tolist()
 
     if show_loss:
+        loss_hist_list = loss_hist.tolist()
         loss_min, loss_max = float(loss_hist.min()), float(loss_hist.max())
         loss_pad = 0.08 * ((loss_max - loss_min) + 1e-9)
 
@@ -179,7 +183,18 @@ def build_multiclass_multivar_logistic_figure(
         terms.append(rf"\left({num(Theta[d_local, class_idx])}\right)")
         return r" + ".join(terms)
 
-    def final_prob_example_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec):
+    def final_prob_symbolic_latex(t):
+        Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
+        K_local = Theta.shape[1]
+        return (
+            r"$$"
+            r"\begin{aligned}"
+            + rf"\hat{{p}}(y=1\mid \mathbf{{x}}) &= \frac{{e^{{z_1(\mathbf{{x}})}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(\mathbf{{x}})}}}}"
+            r"\end{aligned}"
+            r"$$"
+        )
+
+    def final_prob_numeric_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec):
         Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
         D, K_local = Theta.shape
         d_local = D - 1
@@ -201,8 +216,7 @@ def build_multiclass_multivar_logistic_figure(
         return (
             r"$$"
             r"\begin{aligned}"
-            + rf"\hat{{p}}(y=1\mid \mathbf{{x}}) &= \frac{{e^{{z_1(\mathbf{{x}})}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(\mathbf{{x}})}}}} \\[6pt]"
-            + rf"&= \frac{{{num_tex}}}{{{denom_tex}}}"
+            + rf"\phantom{{\hat{{p}}(y=1\mid \mathbf{{x}})}} &= \frac{{{num_tex}}}{{{denom_tex}}}"
             r"\end{aligned}"
             r"$$"
         )
@@ -235,21 +249,27 @@ def build_multiclass_multivar_logistic_figure(
     fig = make_subplots(
         rows=1,
         cols=2,
-        column_widths=[0.55, 0.45],
+        column_widths=[0.70, 0.30],
         horizontal_spacing=0.06,
         specs=[[{"type": "xy"}, {"type": "xy"}]],
     )
 
-    if show_loss:
-        fig.add_trace(go.Scatter(x=[], y=[], mode="lines", name="Cross-entropy", line=dict(width=3)), row=1, col=1)
-    else:
-        fig.add_trace(go.Scatter(x=[], y=[], mode="lines", name="Cross-entropy", line=dict(width=3)), row=1, col=1)
+    fig.add_trace(
+        go.Scatter(
+            x=[step if i == 0 else None for i, step in enumerate(ep_list)] if show_loss else [],
+            y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
+            mode="lines",
+            name="Cross-entropy",
+            line=dict(width=3)
+        ),
+        row=1, col=2
+    )
 
     def make_annotations(t):
         ann = [
             dict(
-                x=0.74,
-                y=0.965,
+                x=0.275,
+                y=0.995,
                 xref="paper",
                 yref="paper",
                 text=model_formula_latex(),
@@ -259,8 +279,8 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=20, color="white"),
             ),
             dict(
-                x=0.74,
-                y=0.885,
+                x=0.275,
+                y=0.915,
                 xref="paper",
                 yref="paper",
                 text=softmax_def_latex(),
@@ -270,8 +290,8 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=18, color="white"),
             ),
             dict(
-                x=0.74,
-                y=0.775,
+                x=0.275,
+                y=0.805,
                 xref="paper",
                 yref="paper",
                 text=Theta_definition_latex(),
@@ -281,8 +301,8 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=18, color="white"),
             ),
             dict(
-                x=0.64,
-                y=0.49,
+                x=0.075,
+                y=0.51,
                 xref="paper",
                 yref="paper",
                 text=x_vector_latex_capped(d, max_rows=7, max_cols=4),
@@ -292,8 +312,8 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=16, color="white"),
             ),
             dict(
-                x=0.84,
-                y=0.49,
+                x=0.375,
+                y=0.51,
                 xref="paper",
                 yref="paper",
                 text=Theta_matrix_latex_capped(t, max_rows=7, max_cols=6, dec=dec),
@@ -303,19 +323,30 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=16, color="white"),
             ),
             dict(
-                x=0.76,
-                y=0.22,
+                x=0.035,
+                y=0.24,
                 xref="paper",
                 yref="paper",
-                text=final_prob_example_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec),
+                text=final_prob_symbolic_latex(t),
                 showarrow=False,
                 xanchor="center",
                 yanchor="middle",
                 font=dict(size=16, color="white"),
             ),
             dict(
-                x=0.81,
-                y=0.095,
+                x=0.198,
+                y=0.15,
+                xref="paper",
+                yref="paper",
+                text=final_prob_numeric_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec),
+                showarrow=False,
+                xanchor="center",
+                yanchor="middle",
+                font=dict(size=16, color="white"),
+            ),
+            dict(
+                x=0.305,
+                y=0.082,
                 xref="paper",
                 yref="paper",
                 text=vertical_dots_latex(),
@@ -325,8 +356,8 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=22, color="white"),
             ),
             dict(
-                x=0.76,
-                y=0.013,
+                x=0.226,
+                y=0.0005,
                 xref="paper",
                 yref="paper",
                 text=last_class_tail_latex(t, max_feat=max_features_in_z, dec=dec),
@@ -338,28 +369,70 @@ def build_multiclass_multivar_logistic_figure(
         ]
 
         if show_loss:
+            if metrics_hist is not None:
+                for i, (name, hist) in enumerate(metrics_hist.items()):
+                    val = hist[t]
+                    y_pos = 0.83 - (i * 0.14)
+                    fmt = ".6f" if name.lower() == "cross-entropy" or name.lower() == "loss" else ".4f"
+                    ann.append(
+                        dict(
+                            x=0.98,
+                            y=y_pos,
+                            xref="paper",
+                            yref="paper",
+                            text=f"<b>{name}</b><br>{val:{fmt}}",
+                            showarrow=False,
+                            xanchor="right",
+                            yanchor="top",
+                            font=dict(size=14, color="black"),
+                            bgcolor="white",
+                            bordercolor="black",
+                            borderwidth=1,
+                            borderpad=6,
+                        )
+                    )
+            else:
+                ann.append(
+                    dict(
+                        x=0.98,
+                        y=0.95,
+                        xref="paper",
+                        yref="paper",
+                        text=f"<b>Cross-entropy</b><br>{loss_hist[t]:.6f}",
+                        showarrow=False,
+                        xanchor="right",
+                        yanchor="top",
+                        font=dict(size=14, color="black"),
+                        bgcolor="white",
+                        bordercolor="black",
+                        borderwidth=1,
+                        borderpad=6,
+                    )
+                )
             ann.append(
                 dict(
-                    x=0.535,
-                    y=0.94,
+                    x=0.85,
+                    y=0.88,
                     xref="paper",
                     yref="paper",
-                    text=f"<b>Cross-entropy</b><br>{loss_hist[t]:.6f}",
+                    text="Cross-entropy",
                     showarrow=False,
-                    xanchor="right",
-                    yanchor="top",
-                    font=dict(size=16, color="black"),
-                    bgcolor="white",
-                    bordercolor="black",
-                    borderwidth=1,
-                    borderpad=8,
+                    xanchor="center",
+                    yanchor="bottom",
+                    font=dict(size=14, color="white"),
                 )
             )
         return ann
 
     frames = []
     for t in range(steps_n):
-        trace = go.Scatter(x=ep[: t + 1], y=loss_hist[: t + 1]) if show_loss else go.Scatter(x=[], y=[])
+        trace = (
+            go.Scatter(
+                x=[step if i <= t else None for i, step in enumerate(ep_list)],
+                y=[val if i <= t else None for i, val in enumerate(loss_hist_list)]
+            )
+            if show_loss else go.Scatter(x=[], y=[])
+        )
         frames.append(
             go.Frame(
                 name=str(t),
@@ -378,15 +451,15 @@ def build_multiclass_multivar_logistic_figure(
         annotations=make_annotations(0),
     )
 
-    if show_loss:
-        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=1)
-        fig.update_yaxes(title="Cross-entropy", range=[loss_min - loss_pad, loss_max + loss_pad], row=1, col=1)
-    else:
-        fig.update_xaxes(title="Step", row=1, col=1)
-        fig.update_yaxes(title="Cross-entropy", row=1, col=1)
+    fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+    fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
 
-    fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
-    fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
+    if show_loss:
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
+        fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], domain=[0.15, 0.85], row=1, col=2)
+    else:
+        fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
+        fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
     return fig
 
 

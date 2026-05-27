@@ -64,8 +64,21 @@ class InterpolationCapture(HistoryCaptureStrategy):
                 if d == 2: z_plane_hist[t] = gt.reshape(X1g.shape)
 
         wF, bF = adapter.extract_linear_theta(d_expected=d)
-        w_hist = np.tile(wF.reshape(1, -1), (steps, 1)) if wF is not None else None
-        b_hist = np.full(steps, float(bF), dtype=float) if bF is not None else None
+        w_hist = b_hist = None
+        if wF is not None and bF is not None:
+            if config.baseline == "zeros":
+                w0 = np.zeros_like(wF)
+                b0 = 0.0
+            else:
+                w0 = np.zeros_like(wF)
+                b0 = float(np.mean(y))
+                
+            w_hist = np.zeros((steps, d), dtype=float)
+            b_hist = np.zeros(steps, dtype=float)
+            for t in range(steps):
+                alpha = t / (steps - 1) if steps > 1 else 1.0
+                w_hist[t] = (1 - alpha) * w0 + alpha * wF
+                b_hist[t] = (1 - alpha) * b0 + alpha * bF
 
         return {
             "history_kind": "final_interp",
@@ -152,11 +165,42 @@ class InterpolationCapture(HistoryCaptureStrategy):
         w_hist = b_hist = None
         if thetaF:
             if thetaF["task"] == "binary":
-                w_hist = np.tile(thetaF["w"].reshape(1, -1), (steps, 1))
-                b_hist = np.full(steps, float(thetaF["b"]), dtype=float)
+                wF = thetaF["w"]
+                bF = float(thetaF["b"])
+                w0 = np.zeros_like(wF)
+                
+                if config.baseline == "uniform":
+                    b0 = 0.0
+                else:
+                    p1 = float(np.mean(y == classes[1]))
+                    p1 = max(min(p1, 1 - 1e-15), 1e-15)
+                    b0 = np.log(p1 / (1 - p1))
+                
+                w_hist = np.zeros((steps, d), dtype=float)
+                b_hist = np.zeros(steps, dtype=float)
+                for t in range(steps):
+                    alpha = t / (steps - 1) if steps > 1 else 1.0
+                    w_hist[t] = (1 - alpha) * w0 + alpha * wF
+                    b_hist[t] = (1 - alpha) * b0 + alpha * bF
             else:
-                w_hist = np.tile(thetaF["W"].reshape(1, d, K), (steps, 1, 1))
-                b_hist = np.tile(thetaF["b"].reshape(1, K), (steps, 1))
+                WF = thetaF["W"]
+                bF_arr = thetaF["b"]
+                W0 = np.zeros_like(WF)
+                
+                if config.baseline == "uniform":
+                    b0_arr = np.zeros_like(bF_arr)
+                else:
+                    priors = np.array([(y == c).mean() for c in classes], dtype=float)
+                    priors = np.maximum(priors, 1e-15)
+                    b0_arr = np.log(priors)
+                    b0_arr = b0_arr - np.mean(b0_arr)
+                    
+                w_hist = np.zeros((steps, d, K), dtype=float)
+                b_hist = np.zeros((steps, K), dtype=float)
+                for t in range(steps):
+                    alpha = t / (steps - 1) if steps > 1 else 1.0
+                    w_hist[t] = (1 - alpha) * W0 + alpha * WF
+                    b_hist[t] = (1 - alpha) * b0_arr + alpha * bF_arr
 
         return {
             "history_kind": "final_interp",

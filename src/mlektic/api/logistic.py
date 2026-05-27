@@ -20,8 +20,10 @@ def visualize_logistic(
     strict_loss=False,
     baseline="prior",
     display_space="original",
+    metrics=None,
     dec=4,
     frame_duration=80,
+    max_theta_cols=8,
     theme=None,
 ):
     """Visualize logistic regression learning process over steps."""
@@ -35,6 +37,7 @@ def visualize_logistic(
         smooth_beta=smooth_beta,
         baseline=baseline,
         display_space=display_space,
+        metrics=metrics,
     )
 
     fig = build_logistic_figure(
@@ -46,6 +49,7 @@ def visualize_logistic(
         strict_loss=strict_loss,
         dec=dec,
         frame_duration=frame_duration,
+        max_theta_cols=max_theta_cols,
         theme=theme,
     )
 

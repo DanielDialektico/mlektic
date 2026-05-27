@@ -106,7 +106,7 @@ class SklearnAdapter(BaseModelAdapter):
 
     @property
     def is_iterative(self) -> bool:
-        return hasattr(self.final_estimator, "partial_fit") or hasattr(self.final_estimator, "warm_start")
+        return hasattr(self.final_estimator, "partial_fit")
         
     @property
     def classes(self) -> np.ndarray:
@@ -160,7 +160,7 @@ class SklearnAdapter(BaseModelAdapter):
         except: pass
         try: est.set_params(**{p("max_iter"): 1})
         except: pass
-        try: est.set_params(**{p("tol"): None})
+        try: est.set_params(**{p("tol"): 0.0})
         except: pass
         try: est.set_params(**{p("shuffle"): False})
         except: pass
