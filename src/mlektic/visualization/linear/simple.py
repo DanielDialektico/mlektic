@@ -247,11 +247,14 @@ def build_simple_lr_figure(
             col=1,
         )
 
+        step_axis_list = step_axis.tolist()
+        loss_hist_list = loss_hist.tolist()
+
         # Loss line (start as a single point)
         fig.add_trace(
             go.Scatter(
-                x=[0],
-                y=[loss_hist[0]],
+                x=[step if i == 0 else None for i, step in enumerate(step_axis_list)],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
                 name="Loss",
                 line=loss_line_style(theme=theme),
@@ -272,8 +275,8 @@ def build_simple_lr_figure(
                     data=[
                     go.Scatter(x=x1_grid, y=y_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE"),
                         go.Scatter(
-                            x=step_axis[: t + 1],
-                            y=loss_hist[: t + 1],
+                            x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
+                            y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
                             mode="lines",
                             line=loss_line_style(theme=theme),
                             uid="LOSS_LINE",

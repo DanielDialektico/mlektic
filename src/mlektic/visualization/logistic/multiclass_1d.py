@@ -222,10 +222,13 @@ def build_multiclass_1d_logistic_figure(
                 col=2,
             )
 
+        ep_list = ep.tolist()
+        loss_hist_list = loss_hist.tolist()
+
         fig.add_trace(
             go.Scatter(
-                x=[0],
-                y=[loss_hist[0]],
+                x=[step if i == 0 else None for i, step in enumerate(ep_list)],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
                 name="Cross-entropy",
                 line=dict(width=3),
@@ -373,7 +376,10 @@ def build_multiclass_1d_logistic_figure(
         for t in range(steps_n):
             Pg = p_curves(t)
             curve_updates = [go.Scatter(x=x1_grid, y=Pg[:, k]) for k in range(K)]
-            loss_update = go.Scatter(x=ep[: t + 1], y=loss_hist[: t + 1])
+            loss_update = go.Scatter(
+                x=[step if i <= t else None for i, step in enumerate(ep_list)],
+                y=[val if i <= t else None for i, val in enumerate(loss_hist_list)]
+            )
 
             frames.append(
                 go.Frame(
