@@ -286,11 +286,11 @@ def build_binary_plane_logistic_figure(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
             annotations=[formula_annotation(), eq_annotation(0)] + metrics_annotations(0),
             legend=dict(orientation="v", **get_legend_props(x=0.585, y=0.82, theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.995, y=0.82, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.995, y=0.05, theme=theme)),
             scene=dict(
                 xaxis=dict(title="x₁", range=x1_range),
                 yaxis=dict(title="x₂", range=x2_range),
-                zaxis=dict(title=r"$\hat{p}(y=1\mid \mathbf{x})$", range=y_range),
+                zaxis=dict(title="σ(z)", range=y_range),
                 aspectmode="cube",
                 camera=CAMERA,
             ),
@@ -361,7 +361,7 @@ def build_binary_plane_logistic_figure(
         scene=dict(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
-            zaxis=dict(title=r"$\hat{p}(y=1\mid \mathbf{x})$", range=y_range),
+            zaxis=dict(title="σ(z)", range=y_range),
             aspectmode="cube",
             camera=CAMERA,
         ),

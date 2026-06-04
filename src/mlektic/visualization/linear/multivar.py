@@ -415,7 +415,7 @@ def build_multivar_lr_figure(
             create_annotation(theta_dim_latex(t), x=0.83, y=0.83, size=14, yanchor="bottom"),
             create_annotation(x_vector_latex(), x=0.52, y=0.48, size=15, yanchor="middle"),
             create_annotation(w_matrix_latex(t), x=0.80, y=0.48, size=15, yanchor="middle"),
-            create_annotation(scalar_model_compact_latex(t), x=0.71, y=0.03, size=16, yanchor="middle"),
+            create_annotation(scalar_model_compact_latex(t), x=0.71, y=0.01, size=16, yanchor="middle"),
         ]
 
         if show_loss:

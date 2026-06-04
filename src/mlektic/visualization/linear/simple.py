@@ -301,7 +301,7 @@ def build_simple_lr_figure(
         fig.data[2].update(legend="legend2")
 
         fig.update_xaxes(title="x₁", range=x_range, row=1, col=1)
-        fig.update_yaxes(title="y", range=[y_min - y_pad, y_max + y_pad], row=1, col=1)
+        fig.update_yaxes(title="ŷ", range=[y_min - y_pad, y_max + y_pad], row=1, col=1)
 
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
@@ -351,7 +351,7 @@ def build_simple_lr_figure(
         annotations=[theta_formula_annotation(), eq_annotation(0)],
         legend=get_legend_props(theme=theme),
         xaxis=dict(title="x₁", range=x_range),
-        yaxis=dict(title="y", range=[y_min - y_pad, y_max + y_pad]),
+        yaxis=dict(title="ŷ", range=[y_min - y_pad, y_max + y_pad]),
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )

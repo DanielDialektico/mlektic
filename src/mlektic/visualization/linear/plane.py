@@ -327,7 +327,7 @@ def build_plane_lr_figure(
             scene=dict(
                 xaxis=dict(title="x₁", range=x1_range),
                 yaxis=dict(title="x₂", range=x2_range),
-                zaxis=dict(title="y", range=y_range),
+                zaxis=dict(title="ŷ", range=y_range),
                 aspectmode="cube",
                 camera=CAMERA,
             ),
@@ -404,7 +404,7 @@ def build_plane_lr_figure(
         scene=dict(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
-            zaxis=dict(title="y", range=y_range),
+            zaxis=dict(title="ŷ", range=y_range),
             aspectmode="cube",
             camera=CAMERA,
         ),
