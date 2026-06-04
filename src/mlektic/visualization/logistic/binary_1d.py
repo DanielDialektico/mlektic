@@ -264,7 +264,7 @@ def build_binary_simple_logistic_figure(
 
         fig.data[2].update(legend="legend2")
         fig.update_xaxes(title="x₁", range=x_range, row=1, col=1)
-        fig.update_yaxes(title=r"$\hat{p}(y=1\mid x)$", range=[-0.08, 1.08], row=1, col=1)
+        fig.update_yaxes(title="σ(z)", range=[-0.08, 1.08], row=1, col=1)
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(title="Log-loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
         return fig
@@ -309,7 +309,7 @@ def build_binary_simple_logistic_figure(
         annotations=[formula_annotation(), eq_annotation(0)],
         legend=get_legend_props(theme=theme),
         xaxis=dict(title="x₁", range=x_range),
-        yaxis=dict(title=r"$\hat{p}(y=1\mid x)$", range=[-0.08, 1.08]),
+        yaxis=dict(title="σ(z)", range=[-0.08, 1.08]),
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )

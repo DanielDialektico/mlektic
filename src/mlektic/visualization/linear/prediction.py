@@ -71,8 +71,8 @@ def explain_lr_prediction(
         # Count digits ignoring the negative sign
         num_digits = len(int_part) if int_part[0] != '-' else len(int_part) - 1
         
-        if num_digits > 5:
-            limit = 6 if int_part[0] == '-' else 5
+        if num_digits > 7:
+            limit = 8 if int_part[0] == '-' else 7
             return int_part[:limit] + r"\dots"
         return s
 
@@ -234,7 +234,8 @@ def explain_lr_prediction(
         subst_tex = (
             r"$\begin{aligned}"
             r"\hat{y} &= \theta_0 + \theta_1 x_1\\"
-            rf"\hat{{y}} &= ({_fmt(b_disp)}) + ({_fmt(w_disp[0])}) \cdot ({_fmt(xq1_disp)})"
+            rf"\hat{{y}} &= ({_fmt(b_disp)}) \\"
+            rf"&\quad + ({_fmt(w_disp[0])}) \cdot ({_fmt(xq1_disp)})"
             r"\end{aligned}$"
         )
         res_tex = (
@@ -247,7 +248,7 @@ def explain_lr_prediction(
         fig = make_subplots(
             rows=1, cols=2,
             column_widths=[0.36, 0.64],
-            horizontal_spacing=0.06,
+            horizontal_spacing=0.14,
             specs=[[{"type": "xy"}, {"type": "xy"}]],
         )
         fig.update_xaxes(visible=False, range=[0, 1], row=1, col=1)
@@ -355,7 +356,7 @@ def explain_lr_prediction(
             sliders=custom_sliders(slider_steps),
         )
         fig.update_xaxes(title="x₁", range=x_range, row=1, col=2)
-        fig.update_yaxes(title="y", range=y_range, row=1, col=2)
+        fig.update_yaxes(title="ŷ", range=y_range, row=1, col=2)
         return fig
 
     # =====================================================================
@@ -388,7 +389,8 @@ def explain_lr_prediction(
         subst_tex = (
             r"$\begin{aligned}"
             r"\hat{y} &= \theta_0 + \theta_1 x_1 + \theta_2 x_2\\"
-            rf"\hat{{y}} &= ({_fmt(b_disp)}) + ({_fmt(w_disp[0])}) \cdot ({_fmt(xq1_disp)})\\"
+            rf"\hat{{y}} &= ({_fmt(b_disp)}) \\"
+            rf"&\quad + ({_fmt(w_disp[0])}) \cdot ({_fmt(xq1_disp)})\\"
             rf"&\quad + ({_fmt(w_disp[1])}) \cdot ({_fmt(xq2_disp)})"
             r"\end{aligned}$"
         )
@@ -401,7 +403,7 @@ def explain_lr_prediction(
 
         fig = make_subplots(
             rows=1, cols=2, column_widths=[0.36, 0.64],
-            horizontal_spacing=0.06, specs=[[{"type": "xy"}, {"type": "scene"}]],
+            horizontal_spacing=0.14, specs=[[{"type": "xy"}, {"type": "scene"}]],
         )
         fig.update_xaxes(visible=False, range=[0, 1], row=1, col=1)
         fig.update_yaxes(visible=False, range=[0, 1], row=1, col=1)
@@ -426,6 +428,7 @@ def explain_lr_prediction(
             x=[x_disp[0]], y=[x_disp[1]], z=[yhat],
             mode="markers", name="Prediction",
             marker=dict(size=6, color=pred_color),
+            hovertemplate="<b>Prediction</b><br>x₁: %{x}<br>x₂: %{y}<br>ŷ: %{z}<extra></extra>",
             legendgroup="fit", showlegend=True,
             visible=False, uid="PRED_POINT_3D",
         ), row=1, col=2)
@@ -467,19 +470,29 @@ def explain_lr_prediction(
                 title_annot(T3, 0.30), body_annot(r_body, 0.23),
             ]
 
+        def scene_ann(stage: int):
+            if stage == 3:
+                return [dict(
+                    x=x_disp[0], y=x_disp[1], z=yhat,
+                    text=rf"$\hat{{y}}={_fmt(yhat)}$",
+                    showarrow=True, arrowhead=2, ax=25, ay=-35,
+                    font=dict(size=14, color=ann_color),
+                )]
+            return []
+
         stage_pred_visible = [False, False, False, True]
         slider_steps = []
         for s in [0, 1, 2, 3]:
             slider_steps.append(dict(
                 label=str(s), method="update",
-                args=[{"visible": [True, True, stage_pred_visible[s]]}, {"annotations": ann_slots(s)}],
+                args=[{"visible": [True, True, stage_pred_visible[s]]}, {"annotations": ann_slots(s), "scene.annotations": scene_ann(s)}],
             ))
 
         buttons = [
-            dict(label="Input", method="update", args=[{"visible": [True, True, False]}, {"annotations": ann_slots(1)}]),
-            dict(label="Substitution", method="update", args=[{"visible": [True, True, False]}, {"annotations": ann_slots(2)}]),
-            dict(label="Output", method="update", args=[{"visible": [True, True, True]}, {"annotations": ann_slots(3)}]),
-            dict(label="Reset", method="update", args=[{"visible": [True, True, False]}, {"annotations": ann_slots(0)}]),
+            dict(label="Input", method="update", args=[{"visible": [True, True, False]}, {"annotations": ann_slots(1), "scene.annotations": scene_ann(1)}]),
+            dict(label="Substitution", method="update", args=[{"visible": [True, True, False]}, {"annotations": ann_slots(2), "scene.annotations": scene_ann(2)}]),
+            dict(label="Output", method="update", args=[{"visible": [True, True, True]}, {"annotations": ann_slots(3), "scene.annotations": scene_ann(3)}]),
+            dict(label="Reset", method="update", args=[{"visible": [True, True, False]}, {"annotations": ann_slots(0), "scene.annotations": scene_ann(0)}]),
         ]
 
         layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
@@ -494,9 +507,10 @@ def explain_lr_prediction(
             scene=dict(
                 xaxis=dict(title="x₁", range=x1_range),
                 yaxis=dict(title="x₂", range=x2_range),
-                zaxis=dict(title="y", range=z_range),
+                zaxis=dict(title="ŷ", range=z_range),
                 aspectmode="cube",
                 camera=CAMERA,
+                annotations=scene_ann(0),
             ),
         )
         return fig
@@ -527,11 +541,26 @@ def explain_lr_prediction(
 
         subst_tex = r"$\begin{aligned}" + r"\hat{y} = " + r"\\ ".join([rf"&\quad {ln}" for ln in subst_lines]) + r"\end{aligned}$"
         res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat)}" + r"\end{aligned}$"
+        vals = [_fmt(v) for v in x_disp] + [_fmt(yhat)]
+        pairs = []
+        for i in range(0, len(vals), 2):
+            pairs.append(", ".join(vals[i:i+2]))
+        
+        rhs_lines = []
+        for i, pair in enumerate(pairs):
+            if i == 0:
+                line = rf"&= ({pair}" + ("," if len(pairs) > 1 else ")")
+            elif i == len(pairs) - 1:
+                line = rf"&\phantom{{= (}} {pair})"
+            else:
+                line = rf"&\phantom{{= (}} {pair},"
+            rhs_lines.append(line)
+        
+        rhs_tex = r" \\ ".join(rhs_lines)
+        
         point_tex = (
             r"$\begin{aligned}"
-            rf"(x_1,x_2,\ldots,x_d, \hat{{y}}) &= ({_fmt(x_disp[0])}, {_fmt(x_disp[1])}, \cdots,\ "
-            r"\\"
-            r"&\qquad\qquad " + rf"{_fmt(x_disp[-1])}, {_fmt(yhat)})"
+            rf"(x_1, x_2, \dots, \hat{{y}}) {rhs_tex}"
             r"\end{aligned}$"
         )
 
@@ -631,7 +660,7 @@ def explain_lr_prediction(
     model_formula_tex = r"$\hat{y}=\theta_0 + \operatorname{vec}(\boldsymbol{\theta})^\top\operatorname{vec}(\mathbf{x})$"
     subst_eq_tex = r"$\begin{aligned}\hat{y} & = & " + rf"({_fmt(w_disp[0])})\cdot({_fmt(x_disp[0])})" + r" & + \cdots\\      &   &               & + (" + rf"{_fmt(b_disp)}" + r")\end{aligned}$"
     res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat)}" + r"\end{aligned}$"
-    point_tex = r"$\begin{aligned}" + rf"(x_1,\ldots,x_d, \hat{{y}}) &= ({_fmt(x_disp[0])}, \cdots,\ " + r"\\" + r"&\qquad\qquad " + rf"{_fmt(x_disp[-1])}, {_fmt(yhat)})" + r"\end{aligned}$"
+    point_tex = r"$\begin{aligned}" + rf"(x_1, \dots, \hat{{y}}) &= ({_fmt(x_disp[0])}, \dots,\ " + r"\\" + r"&\qquad\qquad " + rf"{_fmt(yhat)})" + r"\end{aligned}$"
 
     fig = make_subplots(
         rows=1, cols=3, column_widths=[0.33, 0.34, 0.33],
@@ -670,7 +699,7 @@ def explain_lr_prediction(
             ann.append(body_annot(2, "", 0.38))
         else:
             ann.append(body_annot(2, th_mat_tex, 0.90, size=14, x=0.09))
-            ann.append(body_annot(2, theta0_tex, 0.24, size=15, x=0.37))
+            ann.append(body_annot(2, theta0_tex, 0.25, size=15, x=0.37))
             ann.append(body_annot(2, subst_eq_tex, 0.20, size=15, x=0.06))
         ann.append(title_annot(3, T3, 0.96))
         if stage < 3:
