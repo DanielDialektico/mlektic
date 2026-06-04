@@ -138,7 +138,7 @@ def build_binary_simple_logistic_figure(
 
     if show_loss:
         theta_y = 1.18
-        eq_y = 1.10
+        eq_y = 1.08
         margin_t = 160
     else:
         theta_y = 1.15

@@ -147,9 +147,9 @@ def build_binary_plane_logistic_figure(
     step_axis = np.arange(steps_n)
 
     if show_loss:
-        theta_y = 1.16
+        theta_y = 1.18
         eq_y = 1.08
-        margin_t = 150
+        margin_t = 160
     else:
         theta_y = 1.15
         eq_y = 1.05
