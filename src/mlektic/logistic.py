@@ -16,6 +16,7 @@ from .visualization.logistic.binary_nd import build_binary_multivar_logistic_fig
 from .visualization.logistic.multiclass_1d import build_multiclass_1d_logistic_figure
 from .visualization.logistic.multiclass_nd import build_multiclass_multivar_logistic_figure
 from .visualization.logistic.router import build_logistic_figure
+from .api.logistic import explain_logistic_prediction
 
 pio.renderers.default = "colab"
 
@@ -28,4 +29,5 @@ __all__ = [
     "build_binary_multivar_logistic_figure",
     "build_multiclass_1d_logistic_figure",
     "build_multiclass_multivar_logistic_figure",
+    "explain_logistic_prediction",
 ]

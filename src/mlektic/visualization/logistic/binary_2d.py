@@ -91,7 +91,7 @@ def build_binary_plane_logistic_figure(
             w1 = float(w_disp[t, 0])
             w2 = float(w_disp[t, 1])
             b = float(b_disp[t])
-            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}" + rf",\;\; z=({w1:.{dec}f})x_1+({w2:.{dec}f})x_2+({b:.{dec}f})$"
+            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}=\dfrac{1}{1+e^{-(" + rf"({w1:.{dec}f})x_1+({w2:.{dec}f})x_2+({b:.{dec}f})" + r")}}$"
 
         x1_min, x1_max = float(np.min(X1g)), float(np.max(X1g))
         x2_min, x2_max = float(np.min(X2g)), float(np.max(X2g))
@@ -129,7 +129,7 @@ def build_binary_plane_logistic_figure(
             w1 = float(w_hist[t, 0])
             w2 = float(w_hist[t, 1])
             b = float(b_hist[t])
-            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}" + rf",\;\; z=({w1:.{dec}f})x_1+({w2:.{dec}f})x_2+({b:.{dec}f})$"
+            return r"$\sigma(z)=\dfrac{1}{1+e^{-z}}=\dfrac{1}{1+e^{-(" + rf"({w1:.{dec}f})x_1+({w2:.{dec}f})x_2+({b:.{dec}f})" + r")}}$"
 
         x1_min, x1_max = float(np.min(X1g)), float(np.max(X1g))
         x2_min, x2_max = float(np.min(X2g)), float(np.max(X2g))
@@ -212,6 +212,8 @@ def build_binary_plane_logistic_figure(
                 mode="markers",
                 name="Data",
                 marker=data_3d_marker_style(theme=theme),
+                hovertemplate="<b>Data</b><br>x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
+                hoverlabel=dict(font=dict(color="black")),
                 legendgroup="fit",
                 showlegend=True,
             ),
@@ -313,6 +315,8 @@ def build_binary_plane_logistic_figure(
             mode="markers",
             name="Data",
             marker=data_3d_marker_style(theme=theme),
+            hovertemplate="<b>Data</b><br>x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
+            hoverlabel=dict(font=dict(color="black")),
         )
     )
 

@@ -14,24 +14,18 @@ from ..theme import (
 )
 from ...utils.math import _softmax
 
-def _model_formula_latex():
-    return r"$$\mathbf{z}=\Theta^\top\mathbf{x},\qquad \hat{\mathbf{p}}=\mathrm{softmax}(\mathbf{z})$$"
+def _row1_formula_latex(K):
+    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}=\begin{{bmatrix}}x\\1\end{{bmatrix}}\in\mathbb{{R}}^{{2}},\quad \Theta\in\mathbb{{R}}^{{2\times {K}}}$$"
 
-def _x_definition_latex():
-    return r"$$\mathbf{x}=\begin{bmatrix}x\\1\end{bmatrix}\in\mathbb{R}^{2}$$"
-
-def _softmax_def_latex(K):
-    return rf"$$\mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;k=1,\dots,{K}$$"
-
-def _theta_definition_latex(K):
-    return rf"$$\Theta\in\mathbb{{R}}^{{2\times {K}}},\quad z_k(x)=\theta_{{1,k}}x+\theta_{{0,k}}$$"
+def _row3_formula_latex(K):
+    return rf"$$\hat{{\mathbf{{p}}}}=\mathrm{{softmax}}(\mathbf{{z}}),\quad \mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;k=1,\dots,{K},\quad z_k(x)=\theta_{{1,k}}x+\theta_{{0,k}}$$"
 
 def _theta_matrix_latex_math_style(w_hist, b_hist, t, max_elems, dec):
     Theta = np.vstack([w_hist[t, 0], b_hist[t]])  # (2,K)
     K_local = Theta.shape[1]
 
     def fmt(v):
-        return rf"{v:+.{dec}f}"
+        return rf"{v:.{dec}f}"
 
     if K_local <= max_elems:
         row1 = " & ".join(fmt(Theta[0, j]) for j in range(K_local))
@@ -263,13 +257,11 @@ def build_multiclass_1d_logistic_figure(
 
     def make_annotations(t):
         base_ann = [
-            dict(x=X_TEXT, y=0.955, xref="paper", yref="paper", text=_model_formula_latex(), showarrow=False, xanchor="center", yanchor="top", font=dict(size=20, color="white")),
-            dict(x=X_TEXT, y=0.885, xref="paper", yref="paper", text=_x_definition_latex(), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.77, xref="paper", yref="paper", text=_softmax_def_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.63, xref="paper", yref="paper", text=_theta_definition_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.49, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=20, color="white")),
-            dict(x=X_TEXT, y=0.280, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
-            dict(x=X_VDOTS, y=0.18, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
+            dict(x=X_TEXT, y=0.96, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
+            dict(x=X_TEXT, y=0.80, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=20, color="white")),
+            dict(x=X_TEXT, y=0.64, xref="paper", yref="paper", text=_row3_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
+            dict(x=X_TEXT, y=0.36, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
+            dict(x=X_VDOTS, y=0.195, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
             dict(x=X_TEXT, y=0.08, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
         ]
         

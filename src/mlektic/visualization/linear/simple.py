@@ -239,6 +239,7 @@ def build_simple_lr_figure(
                 mode="lines",
                 name="Model",
                 line=model_line_style(theme=theme),
+                hoverlabel=dict(bgcolor="white", font=dict(color="black")),
                 legendgroup="fit",
                 showlegend=True,
                 uid="MODEL_LINE",
@@ -273,7 +274,7 @@ def build_simple_lr_figure(
                 go.Frame(
                     name=str(t),
                     data=[
-                    go.Scatter(x=x1_grid, y=y_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE"),
+                    go.Scatter(x=x1_grid, y=y_line(t), mode="lines", name="Model", line=model_line_style(theme=theme), hoverlabel=dict(bgcolor="white", font=dict(color="black")), uid="MODEL_LINE"),
                         go.Scatter(
                             x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
                             y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
@@ -330,6 +331,7 @@ def build_simple_lr_figure(
             mode="lines",
             name="Model",
             line=model_line_style(theme=theme),
+            hoverlabel=dict(bgcolor="white", font=dict(color="black")),
             uid="MODEL_LINE",
         )
     )
@@ -339,7 +341,7 @@ def build_simple_lr_figure(
         frames.append(
             go.Frame(
                 name=str(t),
-                data=[go.Scatter(x=x1_grid, y=y_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE")],
+                data=[go.Scatter(x=x1_grid, y=y_line(t), mode="lines", name="Model", line=model_line_style(theme=theme), hoverlabel=dict(bgcolor="white", font=dict(color="black")), uid="MODEL_LINE")],
                 traces=[1],
                 layout=go.Layout(annotations=[theta_formula_annotation(), eq_annotation(t)]),
             )

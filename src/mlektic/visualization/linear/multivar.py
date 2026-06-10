@@ -125,7 +125,7 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
         w = np.asarray(w_hist[t_idx], dtype=float).ravel()
         d_local = w.size
 
-        def fmt(x): return rf"{x:+.{dec}f}"
+        def fmt(x): return rf"{x:.{dec}f}"
 
         if th_cols == 1:
             if d_local <= rows:

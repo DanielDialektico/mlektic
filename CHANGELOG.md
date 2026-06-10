@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Comprehensive `pytest` test suite covering `visualize_lr`, `visualize_logistic`, and `explain_lr_prediction` across 1D, 2D, and ND dimensional boundaries, including Pipeline scenarios.
 - Moved legacy tests and old modules that were incompatible with Scikit-Learn to `old_mlektic_core`.
 - Added an extreme complexity local test case (`local_test/log_test_2_var.py`) demonstrating `K=20` and `d=20` to validate robust mathematical rendering in maximum stress scenarios.
-- `explain_lr_prediction()`: tool for mathematically and visually explaining predictions of an already trained linear regression model.
+- `explain_lr_prediction()` and `explain_logistic_prediction()`: tools for mathematically and visually explaining predictions of already trained linear and logistic regression models.
 - Dynamic metrics parameter (`metrics`) to display multiple variables (e.g., `loss`, `mse`, `r2`) simultaneously with smart number formatting to avoid visual overflows.
 - Comprehensive initial documentation in `README.md`.
 - Proper docstrings and enabled pydocstyle in ruff for Sphinx readiness.
@@ -24,6 +24,8 @@ All notable changes to this project will be documented in this file.
 - Refactored rendering core files (`prediction.py`, `multivar.py`, `binary_nd.py`, `multiclass_1d.py`) to eliminate Plotly trace code duplication, dynamically assemble subplot columns, and centralize LaTeX builders for better maintainability.
 - Improved formatting and alignment of LaTeX mathematical annotations in the multivariable logistic regression visualization (`multiclass_nd.py`).
 - Adjusted the layout of the logistic regression visualization for multi-class and multi-variable configurations to prevent overlapping of equations and matrices.
+- Refined Multiclass Logistic prediction (1D and ND): replaced static matrix prediction display with dynamic mathematical argmax equations in the Result panel.
+- Tightened mathematical substitution bounds and probability annotation bounds for high-cardinality multi-class classification (e.g. K=30) to eliminate vertical canvas overflow.
 - Separated probability equations into aligned individual blocks (`\begin{aligned}`) allowing distinct configurations without compromising perfect equality alignment.
 - Modified Y-axis positioning for numerical fraction and definitions to use available vertical canvas space properly.
 - Re-synced formatting logic for the 1-graph vs 2-graphs layouts to make annotations mathematically identical (`multiclass_1d.py`).

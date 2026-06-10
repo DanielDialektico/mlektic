@@ -96,11 +96,11 @@ def _theta_to_original(w_s, b_s, scaler):
     b_o = float(b_s - np.sum(w_s * mu / (scale + 1e-12)))
     return w_o, b_o
 
-def _custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color, x=0.08, y=1.10):
+def _custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color, x=0.5, y=1.10, xanchor="center"):
     return [dict(
         type="buttons",
         direction="left",
-        x=x, y=y,
+        x=x, y=y, xanchor=xanchor,
         bgcolor=btn_bg,
         bordercolor=btn_border,
         borderwidth=1,
@@ -142,8 +142,8 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     subst_tex = (
         r"$\begin{aligned}"
         r"\hat{y} &= \theta_0 + \theta_1 x_1\\"
-        rf"\hat{{y}} &= ({_fmt(b_disp, dec)}) \\"
-        rf"&\quad + ({_fmt(w_disp[0], dec)}) \cdot ({_fmt(xq1_disp, dec)})"
+        rf"\hat{{y}} &= ({_fmt(b_disp, dec)})\;+ \\"
+        rf"&\quad ({_fmt(w_disp[0], dec)}) \cdot ({_fmt(xq1_disp, dec)})"
         r"\end{aligned}$"
     )
     res_tex = (
@@ -176,6 +176,7 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         mode="lines",
         name="Model",
         line=model_line_style(theme=theme),
+        hoverlabel=dict(bgcolor="white", font=dict(color="black")),
         legendgroup="fit",
         showlegend=True,
         uid="MODEL_LINE",
@@ -218,7 +219,7 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
             font=dict(size=15, color=text_color),
         )
 
-    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
+    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
 
     def ann_slots(stage: int):
         v_body = "" if stage < 1 else vars_tex
@@ -261,7 +262,6 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         shapes=shapes,
         annotations=ann_slots(0),
         updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color),
-        sliders=_custom_sliders(slider_steps, p.get("slider_font_color")),
     )
     fig.update_xaxes(title="x₁", range=x_range, row=1, col=2)
     fig.update_yaxes(title="ŷ", range=y_range, row=1, col=2)
@@ -294,9 +294,9 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     subst_tex = (
         r"$\begin{aligned}"
         r"\hat{y} &= \theta_0 + \theta_1 x_1 + \theta_2 x_2\\"
-        rf"\hat{{y}} &= ({_fmt(b_disp, dec)}) \\"
-        rf"&\quad + ({_fmt(w_disp[0], dec)}) \cdot ({_fmt(xq1_disp, dec)})\\"
-        rf"&\quad + ({_fmt(w_disp[1], dec)}) \cdot ({_fmt(xq2_disp, dec)})"
+        rf"\hat{{y}} &= ({_fmt(b_disp, dec)})\;+ \\"
+        rf"&\quad ({_fmt(w_disp[0], dec)}) \cdot ({_fmt(xq1_disp, dec)})\;+ \\"
+        rf"&\quad ({_fmt(w_disp[1], dec)}) \cdot ({_fmt(xq2_disp, dec)})"
         r"\end{aligned}$"
     )
     res_tex = (
@@ -317,6 +317,7 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         x=x1, y=x2, z=y_train,
         mode="markers", name="Data",
         marker=data_3d_marker_style(theme=theme),
+        hovertemplate="<b>Data</b><br>x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
         legendgroup="fit", showlegend=True,
     ), row=1, col=2)
 
@@ -363,7 +364,7 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
             font=dict(size=15, color=text_color),
         )
 
-    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
+    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
 
     def ann_slots(stage: int):
         v_body = "" if stage < 1 else vars_tex
@@ -408,7 +409,6 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         shapes=shapes,
         annotations=ann_slots(0),
         updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color),
-        sliders=_custom_sliders(slider_steps, p.get("slider_font_color")),
         scene=dict(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
@@ -456,8 +456,7 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
 
         subst_lines = []
         for j in range(d):
-            plus = r"+\;" if j < d - 1 else r""
-            subst_lines.append(rf"({_fmt(w_disp[j], dec)})\cdot({_fmt(x_disp[j], dec)})\;{plus}")
+            subst_lines.append(rf"({_fmt(w_disp[j], dec)})\cdot({_fmt(x_disp[j], dec)})\;+")
         subst_lines.append(rf"({_fmt(b_disp, dec)})")
 
         subst_tex = r"$\begin{aligned}" + r"\hat{y} = " + r"\\ ".join([rf"&\quad {ln}" for ln in subst_lines]) + r"\end{aligned}$"
@@ -496,30 +495,30 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
 
         DY = -0.05
         def title_annot(col, tex_title, y):
-            return dict(x=0.32, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=rf"$\bf{{{tex_title}}}$", showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color))
+            return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=rf"$\bf{{{tex_title}}}$", showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color=text_color))
         def paper_top_center(tex_body, y=1.05, size=18):
             return dict(x=0.5, y=y + DY, xref="paper", yref="paper", text=tex_body, showarrow=False, xanchor="center", yanchor="bottom", align="center", font=dict(size=size, color=text_color))
-        def body_annot(col, tex_body, y, size=15, x=0.06):
-            return dict(x=x, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="left", yanchor="top", align="left", font=dict(size=size, color=text_color))
+        def body_annot(col, tex_body, y, size=15):
+            return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=size, color=text_color))
         def block_rect(col, y0, y1):
             return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=0.02, x1=0.98, y0=y0, y1=y1 + DY, line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
 
         shapes = [block_rect(1, 0.02, 0.98), block_rect(2, 0.02, 0.98), block_rect(3, 0.02, 0.98)]
-        T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
+        T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
 
         def ann_slots(stage: int):
             ann = [paper_top_center(model_formula_tex, y=1.05, size=18)]
             ann.append(title_annot(1, T1, 0.96))
-            ann.append(body_annot(1, "" if stage < 1 else vars_tex, 0.90, size=15, x=0.10))
+            ann.append(body_annot(1, "" if stage < 1 else vars_tex, 0.90, size=15))
             ann.append(title_annot(2, T2, 0.96))
-            ann.append(body_annot(2, "" if stage < 2 else subst_tex, 0.90, size=15, x=0.06))
+            ann.append(body_annot(2, "" if stage < 2 else subst_tex, 0.90, size=15))
             ann.append(title_annot(3, T3, 0.96))
             if stage < 3:
-                ann.append(body_annot(3, "", 0.88, size=15, x=0.05))
-                ann.append(body_annot(3, "", 0.74, size=15, x=0.05))
+                ann.append(body_annot(3, "", 0.88, size=15))
+                ann.append(body_annot(3, "", 0.74, size=15))
             else:
-                ann.append(body_annot(3, res_yhat_tex, 0.88, size=15, x=0.05))
-                ann.append(body_annot(3, point_tex, 0.79, size=15, x=0.05))
+                ann.append(body_annot(3, res_yhat_tex, 0.88, size=15))
+                ann.append(body_annot(3, point_tex, 0.79, size=15))
             return ann
 
         slider_steps = []
@@ -536,9 +535,11 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
         layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
 
+        up_kwargs = dict(x=0.08, xanchor="left") if d >= 10 else {}
+
         fig.update_layout(
             **layout_kwargs, shapes=shapes, annotations=ann_slots(0),
-            updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color), sliders=_custom_sliders(slider_steps, p.get("slider_font_color")),
+            updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color, **up_kwargs),
         )
         return fig
 
@@ -576,18 +577,18 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
 
     DY = -0.05
     def title_annot(col, tex_title, y):
-        return dict(x=0.32, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=rf"$\bf{{{tex_title}}}$", showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color))
+        return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=rf"$\bf{{{tex_title}}}$", showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color=text_color))
     def top_center_annot(col, tex_body, y):
         return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="center", yanchor="bottom", align="center", font=dict(size=15, color=text_color))
     def paper_top_center(tex_body, y=1.05, size=18):
         return dict(x=0.5, y=y + DY, xref="paper", yref="paper", text=tex_body, showarrow=False, xanchor="center", yanchor="bottom", align="center", font=dict(size=size, color=text_color))
-    def body_annot(col, tex_body, y, size=15, x=0.06):
-        return dict(x=x, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="left", yanchor="top", align="left", font=dict(size=size, color=text_color))
+    def body_annot(col, tex_body, y, size=15):
+        return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=size, color=text_color))
     def block_rect(col, y0, y1):
         return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=0.02, x1=0.98, y0=y0, y1=y1 + DY, line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
 
     shapes = [block_rect(1, 0.02, 0.98), block_rect(2, 0.02, 0.98), block_rect(3, 0.02, 0.98)]
-    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
+    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
 
     def ann_slots(stage: int):
         ann = [paper_top_center(model_formula_tex, y=1.07, size=18)]
@@ -601,16 +602,16 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
             ann.append(body_annot(2, "", 0.88))
             ann.append(body_annot(2, "", 0.38))
         else:
-            ann.append(body_annot(2, th_mat_tex, 0.90, size=14, x=0.09))
-            ann.append(body_annot(2, theta0_tex, 0.25, size=15, x=0.37))
-            ann.append(body_annot(2, subst_eq_tex, 0.20, size=15, x=0.06))
+            ann.append(body_annot(2, th_mat_tex, 0.90, size=14))
+            ann.append(body_annot(2, theta0_tex, 0.25, size=15))
+            ann.append(body_annot(2, subst_eq_tex, 0.20, size=15))
         ann.append(title_annot(3, T3, 0.96))
         if stage < 3:
-            ann.append(body_annot(3, "", 0.88, size=15, x=0.05))
-            ann.append(body_annot(3, "", 0.74, size=15, x=0.05))
+            ann.append(body_annot(3, "", 0.88, size=15))
+            ann.append(body_annot(3, "", 0.74, size=15))
         else:
-            ann.append(body_annot(3, res_yhat_tex, 0.88, size=15, x=0.05))
-            ann.append(body_annot(3, point_tex, 0.79, size=15, x=0.05))
+            ann.append(body_annot(3, res_yhat_tex, 0.88, size=15))
+            ann.append(body_annot(3, point_tex, 0.79, size=15))
         return ann
 
     slider_steps = []
@@ -629,7 +630,7 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
 
     fig.update_layout(
         **layout_kwargs, shapes=shapes, annotations=ann_slots(0),
-        updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color), sliders=_custom_sliders(slider_steps, p.get("slider_font_color")),
+        updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color, x=0.08, xanchor="left"),
     )
     return fig
 
