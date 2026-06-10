@@ -161,21 +161,22 @@ fig.show()
 
 ---
 
-## 🔍 Explicación Visual de Predicciones (`explain_lr_prediction`)
+## 🔍 Explicación Visual de Predicciones (`explain_lr_prediction`, `explain_logistic_prediction`)
 
-`mlektic` incluye una herramienta diseñada para explicar de forma matemática y geométrica una predicción puntual de tu modelo ya entrenado. Soporta Scikit-Learn pipelines y formatea inteligentemente los pesos.
+`mlektic` incluye herramientas diseñadas para explicar de forma matemática y geométrica una predicción puntual de tu modelo ya entrenado. Soporta Scikit-Learn pipelines y formatea inteligentemente los pesos.
 
 ```python
 from mlektic.api.linear import explain_lr_prediction
+from mlektic.api.logistic import explain_logistic_prediction
 
 # 1. Escoge un punto de prueba (forma 2D)
 x_query = np.array([[150.0, 25.0]])
 
-# 2. Haz la predicción con tu modelo
+# 2. Haz la predicción con tu modelo lineal o logístico
 yhat = model.predict(x_query)[0]
 
 # 3. Explica visualmente de dónde salió el valor
-fig = explain_lr_prediction(
+fig = explain_lr_prediction( # o explain_logistic_prediction
     model, X_train, y_train,
     x_query=x_query,
     yhat=yhat,

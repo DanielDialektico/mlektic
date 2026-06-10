@@ -15,6 +15,7 @@ from .logistic import (
     build_logistic_figure,
     build_multiclass_1d_logistic_figure,
     build_multiclass_multivar_logistic_figure,
+    explain_logistic_prediction,
     fit_history_logistic,
     visualize_logistic,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "build_plane_lr_figure",
     "build_multivar_lr_figure",
     "visualize_lr",
+    "explain_lr_prediction",
     "build_logistic_figure",
     "fit_history_logistic",
     "visualize_logistic",
@@ -34,4 +36,5 @@ __all__ = [
     "build_binary_multivar_logistic_figure",
     "build_multiclass_1d_logistic_figure",
     "build_multiclass_multivar_logistic_figure",
+    "explain_logistic_prediction",
 ]

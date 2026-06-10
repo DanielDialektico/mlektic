@@ -78,17 +78,11 @@ def build_multiclass_multivar_logistic_figure(
         loss_min, loss_max = float(loss_hist.min()), float(loss_hist.max())
         loss_pad = 0.08 * ((loss_max - loss_min) + 1e-9)
 
-    def model_formula_latex():
-        return r"$$\mathbf{z}=\Theta^\top\mathbf{x},\qquad \hat{\mathbf{p}}=\mathrm{softmax}(\mathbf{z})$$"
+    def row1_formula_latex():
+        return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}\in\mathbb{{R}}^{{{d}+1}},\quad \Theta\in\mathbb{{R}}^{{({d}+1)\times {K}}}$$"
 
-    def softmax_def_latex():
-        return rf"$$\mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;k=1,\dots,{K}$$"
-
-    def Theta_definition_latex():
-        return (
-            rf"$$\Theta\in\mathbb{{R}}^{{({d}+1)\times {K}}},\quad "
-            rf"z_k(\mathbf{{x}})=\sum_{{j=1}}^{{{d + 1}}}\theta_{{j,k}}x_j$$"
-        )
+    def row3_formula_latex():
+        return rf"$$\hat{{\mathbf{{p}}}}=\mathrm{{softmax}}(\mathbf{{z}}),\quad \mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;k=1,\dots,{K},\quad z_k(\mathbf{{x}})=\sum_{{j=1}}^{{{d + 1}}}\theta_{{j,k}}x_j$$"
 
     def x_vector_latex_capped(d_local, max_rows=7, max_cols=4):
         entries = [rf"x_{{{j}}}" for j in range(1, d_local + 1)] + [r"1"]
@@ -133,7 +127,7 @@ def build_multiclass_multivar_logistic_figure(
         R, C = Theta.shape
 
         def fmt(v):
-            return rf"{v:+.{dec}f}"
+            return rf"{v:.{dec}f}"
 
         if R <= max_rows:
             row_slots = list(range(R))
@@ -174,7 +168,7 @@ def build_multiclass_multivar_logistic_figure(
 
     def z_numeric_expr(Theta, class_idx, d_local, max_feat=max_features_in_z, dec=dec):
         def num(v):
-            return f"{v:+.{dec}f}"
+            return f"{v:.{dec}f}"
 
         feat_count = min(d_local, max_feat)
         terms = [rf"\left({num(Theta[j, class_idx])}\right)x_{{{j + 1}}}" for j in range(feat_count)]
@@ -269,32 +263,10 @@ def build_multiclass_multivar_logistic_figure(
         ann = [
             dict(
                 x=0.275,
-                y=0.995,
+                y=0.99,
                 xref="paper",
                 yref="paper",
-                text=model_formula_latex(),
-                showarrow=False,
-                xanchor="center",
-                yanchor="top",
-                font=dict(size=20, color="white"),
-            ),
-            dict(
-                x=0.275,
-                y=0.915,
-                xref="paper",
-                yref="paper",
-                text=softmax_def_latex(),
-                showarrow=False,
-                xanchor="center",
-                yanchor="top",
-                font=dict(size=18, color="white"),
-            ),
-            dict(
-                x=0.275,
-                y=0.805,
-                xref="paper",
-                yref="paper",
-                text=Theta_definition_latex(),
+                text=row1_formula_latex(),
                 showarrow=False,
                 xanchor="center",
                 yanchor="top",
@@ -302,7 +274,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.075,
-                y=0.51,
+                y=0.73,
                 xref="paper",
                 yref="paper",
                 text=x_vector_latex_capped(d, max_rows=7, max_cols=4),
@@ -313,7 +285,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.375,
-                y=0.51,
+                y=0.73,
                 xref="paper",
                 yref="paper",
                 text=Theta_matrix_latex_capped(t, max_rows=7, max_cols=6, dec=dec),
@@ -323,8 +295,19 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=16, color="white"),
             ),
             dict(
+                x=0.275,
+                y=0.48,
+                xref="paper",
+                yref="paper",
+                text=row3_formula_latex(),
+                showarrow=False,
+                xanchor="center",
+                yanchor="top",
+                font=dict(size=18, color="white"),
+            ),
+            dict(
                 x=0.035,
-                y=0.24,
+                y=0.34,
                 xref="paper",
                 yref="paper",
                 text=final_prob_symbolic_latex(t),
@@ -335,7 +318,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.198,
-                y=0.15,
+                y=0.25,
                 xref="paper",
                 yref="paper",
                 text=final_prob_numeric_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec),
@@ -346,7 +329,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.305,
-                y=0.082,
+                y=0.17,
                 xref="paper",
                 yref="paper",
                 text=vertical_dots_latex(),
@@ -357,7 +340,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.226,
-                y=0.0005,
+                y=0.09,
                 xref="paper",
                 yref="paper",
                 text=last_class_tail_latex(t, max_feat=max_features_in_z, dec=dec),

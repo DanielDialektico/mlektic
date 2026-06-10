@@ -138,7 +138,7 @@ def build_binary_simple_logistic_figure(
 
     if show_loss:
         theta_y = 1.18
-        eq_y = 1.10
+        eq_y = 1.08
         margin_t = 160
     else:
         theta_y = 1.15
@@ -204,8 +204,9 @@ def build_binary_simple_logistic_figure(
                 x=x1_grid,
                 y=p_line(0),
                 mode="lines",
-                name="Model",
+                name="Probability Curve",
                 line=model_line_style(theme=theme),
+                hoverlabel=dict(bgcolor="white", font=dict(color="black")),
                 legendgroup="fit",
                 showlegend=True,
                 uid="MODEL_LINE",
@@ -238,7 +239,7 @@ def build_binary_simple_logistic_figure(
                 go.Frame(
                     name=str(t),
                     data=[
-                        go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE"),
+                        go.Scatter(x=x1_grid, y=p_line(t), mode="lines", name="Probability Curve", line=model_line_style(theme=theme), hoverlabel=dict(bgcolor="white", font=dict(color="black")), uid="MODEL_LINE"),
                         go.Scatter(
                             x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
                             y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
@@ -286,8 +287,9 @@ def build_binary_simple_logistic_figure(
             x=x1_grid,
             y=p_line(0),
             mode="lines",
-            name="Model",
+            name="Probability Curve",
             line=model_line_style(theme=theme),
+            hoverlabel=dict(bgcolor="white", font=dict(color="black")),
             uid="MODEL_LINE",
         )
     )
@@ -297,7 +299,7 @@ def build_binary_simple_logistic_figure(
         frames.append(
             go.Frame(
                 name=str(t),
-                data=[go.Scatter(x=x1_grid, y=p_line(t), mode="lines", line=model_line_style(theme=theme), uid="MODEL_LINE")],
+                data=[go.Scatter(x=x1_grid, y=p_line(t), mode="lines", name="Probability Curve", line=model_line_style(theme=theme), hoverlabel=dict(bgcolor="white", font=dict(color="black")), uid="MODEL_LINE")],
                 traces=[1],
                 layout=go.Layout(annotations=[formula_annotation(), eq_annotation(t)]),
             )

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ..services.logistic_history import fit_history_logistic
 from ..visualization.logistic.router import build_logistic_figure
+from ..visualization.logistic.prediction import explain_logistic_prediction
 from ..visualization.theme import attach_highlight
 
 def visualize_logistic(

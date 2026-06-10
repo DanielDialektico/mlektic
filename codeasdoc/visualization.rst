@@ -83,7 +83,7 @@ Con ``Pipeline`` + ``StandardScaler``:
 Explicación Visual de Predicciones
 ===================================
 
-Mediante la función ``explain_lr_prediction``, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual ``yhat`` a partir de un ``x_query``:
+Mediante las funciones ``explain_lr_prediction`` y ``explain_logistic_prediction``, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual ``yhat`` a partir de un ``x_query``:
 
 - **1D**: Punto verde sobre la recta de regresión.
 - **2D**: Punto verde anclado espacialmente en un plano 3D.

@@ -22,6 +22,8 @@ API de Alto Nivel
 
 .. autofunction:: mlektic.api.logistic.visualize_logistic
 
+.. autofunction:: mlektic.api.logistic.explain_logistic_prediction
+
 
 Servicios de Historial
 =======================

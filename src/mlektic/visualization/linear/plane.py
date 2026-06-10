@@ -249,6 +249,8 @@ def build_plane_lr_figure(
                 mode="markers",
                 name="Data",
                 marker=data_3d_marker_style(theme=theme),
+                hovertemplate="<b>Data</b><br>x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
+                hoverlabel=dict(font=dict(color="black")),
                 legendgroup="fit",
                 showlegend=True,
             ),
@@ -356,6 +358,8 @@ def build_plane_lr_figure(
             mode="markers",
             name="Data",
             marker=data_3d_marker_style(theme=theme),
+            hovertemplate="<b>Data</b><br>x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
+            hoverlabel=dict(font=dict(color="black")),
         )
     )
 
