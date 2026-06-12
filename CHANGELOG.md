@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2026-06-04
 
 ### Added
+- **2D Multiclass Logistic Regression Visualization**: Added full support for visualizing multi-class logistic regression in 2-dimensional feature spaces. The builder dynamically generates a 3D plot displaying the actual data points on the floor grid and $K$ distinct translucent, colored probability surfaces hovering and adjusting over time.
+- Integrated a live LaTeX panel directly into the 2D Multiclass layout, showcasing the $\mathbf{z} = \Theta^\top\mathbf{x}$ formula, the dynamic parameter matrix $\Theta \in \mathbb{R}^{3 \times K}$, the explicit Softmax formulation, and a live step-by-step mathematical evaluation of a sample probability curve $\hat{p}(y=k \mid \mathbf{x})$.
+- Modified capture engines (`strategy_iterative.py` and `strategy_interp.py`) to systematically extract and cache a multidimensional probability surface history (`p_surfaces_hist`) required for $K$-class 3D rendering.
 - Comprehensive `pytest` test suite covering `visualize_lr`, `visualize_logistic`, and `explain_lr_prediction` across 1D, 2D, and ND dimensional boundaries, including Pipeline scenarios.
 - Moved legacy tests and old modules that were incompatible with Scikit-Learn to `old_mlektic_core`.
 - Added an extreme complexity local test case (`local_test/log_test_2_var.py`) demonstrating `K=20` and `d=20` to validate robust mathematical rendering in maximum stress scenarios.
