@@ -29,6 +29,7 @@ d = 2: Visualización 3D
 
 - **Lineal**: Scatter 3D + plano predictivo animado.
 - **Logística Binaria**: Scatter 3D + superficie de probabilidad.
+- **Logística Multiclase**: Scatter 3D + ``K`` superficies de probabilidad translúcidas superpuestas, acompañadas de un panel LaTeX que muestra dinámicamente la matriz de pesos :math:`\Theta \in \mathbb{R}^{3 \times K}` y las ecuaciones softmax evaluadas.
 
 d > 2: Matriz de Parámetros LaTeX
 -----------------------------------
@@ -46,7 +47,7 @@ Para modelos con ``partial_fit`` / ``warm_start``:
 
 1. Clona el estimador con ``warm_start=True``, ``max_iter=1``.
 2. Ejecuta una iteración por frame.
-3. Captura predicciones, pesos, pérdida.
+3. Captura predicciones, pesos, pérdida, y, en configuraciones multiclase 2D, extrae un historial matricial de superficies probabilísticas (``p_surfaces_hist``).
 
 Interpolación (``mode="final_interp"``)
 -----------------------------------------

@@ -9,6 +9,7 @@ from .binary_1d import build_binary_simple_logistic_figure
 from .binary_2d import build_binary_plane_logistic_figure
 from .binary_nd import build_binary_multivar_logistic_figure
 from .multiclass_1d import build_multiclass_1d_logistic_figure
+from .multiclass_2d import build_multiclass_2d_logistic_figure
 from .multiclass_nd import build_multiclass_multivar_logistic_figure
 
 def build_logistic_figure(
@@ -24,6 +25,7 @@ def build_logistic_figure(
     X1g=None,
     X2g=None,  # binary d==2
     p_curves_hist=None,  # multiclass d==1
+    p_surfaces_hist=None,  # multiclass d==2
     loss_hist=None,
     classes=None,
     show_loss=False,
@@ -66,6 +68,7 @@ def build_logistic_figure(
         p_line_hist = _first_not_none(history.get("p_line_hist", None), p_line_hist)
         p_plane_hist = _first_not_none(history.get("p_plane_hist", None), p_plane_hist)
         p_curves_hist = _first_not_none(history.get("p_curves_hist", None), p_curves_hist)
+        p_surfaces_hist = _first_not_none(history.get("p_surfaces_hist", None), p_surfaces_hist)
 
         x1_grid = _first_not_none(grid.get("x1_grid", None), x1_grid)
         X1g = _first_not_none(grid.get("X1g", None), X1g)
@@ -155,6 +158,30 @@ def build_logistic_figure(
             b_hist,
             p_curves_hist=p_curves_hist,
             x1_grid=x1_grid,
+            loss_hist=loss_hist,
+            metrics_hist=metrics_hist,
+            show_loss=show_loss,
+            history_kind=history_kind,
+            title=title,
+            strict_loss=strict_loss,
+            dec=min(dec, 4),
+            frame_duration=frame_duration,
+            max_theta_cols=max_theta_cols,
+            theme=theme,
+        )
+
+    if d == 2:
+        if title is None:
+            title = f"Multiclass Logistic Regression (K={K}, d=2)"
+        return build_multiclass_2d_logistic_figure(
+            X[:, 0],
+            X[:, 1],
+            y,
+            w_hist,
+            b_hist,
+            p_surfaces_hist=p_surfaces_hist,
+            X1g=X1g,
+            X2g=X2g,
             loss_hist=loss_hist,
             metrics_hist=metrics_hist,
             show_loss=show_loss,

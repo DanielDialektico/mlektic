@@ -185,6 +185,11 @@ class HistoryEngine:
                 P = h.reshape(h.shape[0], -1)
                 for j in range(P.shape[1]): P[:, j] = _ema_smooth(P[:, j], beta)
                 data["p_curves_hist"] = P.reshape(h.shape)
+            if data.get("p_surfaces_hist") is not None:
+                h = data["p_surfaces_hist"]
+                P = h.reshape(h.shape[0], -1)
+                for j in range(P.shape[1]): P[:, j] = _ema_smooth(P[:, j], beta)
+                data["p_surfaces_hist"] = P.reshape(h.shape)
 
     def _apply_theta_scaling(self, data: dict, config, is_linear: bool, is_multiclass: bool):
         w_learned = data.get("w_hist_learned")
