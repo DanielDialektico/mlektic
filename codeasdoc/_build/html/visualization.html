@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sistema de Visualización &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
@@ -125,6 +125,7 @@
 <ul class="simple">
 <li><p><strong>Lineal</strong>: Scatter 3D + plano predictivo animado.</p></li>
 <li><p><strong>Logística Binaria</strong>: Scatter 3D + superficie de probabilidad.</p></li>
+<li><p><strong>Logística Multiclase</strong>: Scatter 3D + <code class="docutils literal notranslate"><span class="pre">K</span></code> superficies de probabilidad translúcidas superpuestas, acompañadas de un panel LaTeX que muestra dinámicamente la matriz de pesos <span class="math notranslate nohighlight">\(\Theta \in \mathbb{R}^{3 \times K}\)</span> y las ecuaciones softmax evaluadas.</p></li>
 </ul>
 </section>
 <section id="d-2-matriz-de-parametros-latex">
@@ -143,7 +144,7 @@
 <ol class="arabic simple">
 <li><p>Clona el estimador con <code class="docutils literal notranslate"><span class="pre">warm_start=True</span></code>, <code class="docutils literal notranslate"><span class="pre">max_iter=1</span></code>.</p></li>
 <li><p>Ejecuta una iteración por frame.</p></li>
-<li><p>Captura predicciones, pesos, pérdida.</p></li>
+<li><p>Captura predicciones, pesos, pérdida, y, en configuraciones multiclase 2D, extrae un historial matricial de superficies probabilísticas (<code class="docutils literal notranslate"><span class="pre">p_surfaces_hist</span></code>).</p></li>
 </ol>
 </section>
 <section id="interpolacion-mode-final-interp">
@@ -176,7 +177,7 @@
 </section>
 <section id="explicacion-visual-de-predicciones">
 <h2>Explicación Visual de Predicciones<a class="headerlink" href="#explicacion-visual-de-predicciones" title="Link to this heading"></a></h2>
-<p>Mediante la función <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code>, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual <code class="docutils literal notranslate"><span class="pre">yhat</span></code> a partir de un <code class="docutils literal notranslate"><span class="pre">x_query</span></code>:</p>
+<p>Mediante las funciones <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code> y <code class="docutils literal notranslate"><span class="pre">explain_logistic_prediction</span></code>, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual <code class="docutils literal notranslate"><span class="pre">yhat</span></code> a partir de un <code class="docutils literal notranslate"><span class="pre">x_query</span></code>:</p>
 <ul class="simple">
 <li><p><strong>1D</strong>: Punto verde sobre la recta de regresión.</p></li>
 <li><p><strong>2D</strong>: Punto verde anclado espacialmente en un plano 3D.</p></li>
@@ -185,7 +186,16 @@
 </section>
 <section id="metricas-dinamicas">
 <h2>Métricas Dinámicas<a class="headerlink" href="#metricas-dinamicas" title="Link to this heading"></a></h2>
-<p>Las visualizaciones animadas pueden renderizar arreglos personalizables de métricas en tiempo real pasando una lista a <code class="docutils literal notranslate"><span class="pre">metrics=[&quot;loss&quot;,</span> <span class="pre">&quot;mse&quot;,</span> <span class="pre">&quot;r2&quot;,</span> <span class="pre">...]</span></code>. Mlektic computará y mostrará estas métricas como subtítulos en recuadros separados.</p>
+<p>Las visualizaciones animadas pueden renderizar arreglos personalizables de
+métricas en tiempo real.</p>
+<ul class="simple">
+<li><p>Regresión lineal: <code class="docutils literal notranslate"><span class="pre">metrics=[&quot;loss&quot;,</span> <span class="pre">&quot;mse&quot;,</span> <span class="pre">&quot;r2&quot;,</span> <span class="pre">&quot;mae&quot;]</span></code>.</p></li>
+<li><p>Regresión logística: <code class="docutils literal notranslate"><span class="pre">metrics=[&quot;loss&quot;,</span> <span class="pre">&quot;accuracy&quot;,</span> <span class="pre">&quot;f1&quot;]</span></code>.</p></li>
+<li><p>Métricas personalizadas: <code class="docutils literal notranslate"><span class="pre">metrics={&quot;Nombre&quot;:</span> <span class="pre">callable}</span></code>, donde <code class="docutils literal notranslate"><span class="pre">callable</span></code>
+recibe <code class="docutils literal notranslate"><span class="pre">(y_true,</span> <span class="pre">y_pred)</span></code> y devuelve un escalar.</p></li>
+</ul>
+<p>Mlektic computa y muestra estas métricas como subtítulos o recuadros separados,
+según el builder de visualización usado.</p>
 </section>
 </section>
 

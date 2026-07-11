@@ -1,6 +1,6 @@
 import numpy as np
-import pytest
 import plotly.graph_objs as go
+import pytest
 from sklearn.linear_model import SGDRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler

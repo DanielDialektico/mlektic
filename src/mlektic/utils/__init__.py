@@ -1,14 +1,14 @@
 """Public exports for utils."""
 
+from .grids import build_1d_grid, build_2d_grid
 from .math import (
-    _sigmoid,
-    _softmax,
     _binary_log_loss_from_p,
+    _ema_smooth,
     _multiclass_cross_entropy,
     _one_hot,
-    _ema_smooth,
+    _sigmoid,
+    _softmax,
 )
-from .grids import build_1d_grid, build_2d_grid
 
 __all__ = [
     "_sigmoid",

@@ -1,10 +1,14 @@
 """Mlektic public package exports."""
 
+from .api.optimize import (
+    show_optimized,
+)
 from .core import (
     build_lr_figure,
     build_multivar_lr_figure,
     build_plane_lr_figure,
     build_simple_lr_figure,
+    explain_lr_prediction,
     fit_history,
     visualize_lr,
 )
@@ -18,9 +22,6 @@ from .logistic import (
     explain_logistic_prediction,
     fit_history_logistic,
     visualize_logistic,
-)
-from .api.optimize import (
-    show_optimized,
 )
 
 __all__ = [

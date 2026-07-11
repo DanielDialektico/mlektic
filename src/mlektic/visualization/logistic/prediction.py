@@ -2,30 +2,30 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from ..theme import (
-    get_base_layout,
-    data_marker_style,
-    model_line_style,
-    _resolve,
-)
+from ...utils.math import _sigmoid, _softmax
 from ..linear.prediction import (
-    _fmt,
+    _custom_updatemenus,
     _extract_linear_theta,
     _find_standard_scaler,
-    _to_scaled_x,
-    _theta_to_original,
-    _custom_updatemenus,
-    _custom_sliders,
+    _fmt,
     _matrix_compact,
     _needs_single_col,
+    _theta_to_original,
+    _to_scaled_x,
 )
-from ...utils.math import _sigmoid, _softmax
+from ..theme import (
+    _resolve,
+    data_marker_style,
+    get_base_layout,
+    model_line_style,
+)
+
 
 def _explain_log_1d(
-    X_train, y_train, 
-    x_disp, w_disp, b_disp, 
-    p_hat, y_hat, 
-    title, dec, grid_points, theme, 
+    X_train, y_train,
+    x_disp, w_disp, b_disp,
+    p_hat, y_hat,
+    title, dec, grid_points, theme,
     p, text_color, ann_color, btn_bg, btn_border, btn_font_color
 ):
     x1_train = X_train[:, 0].ravel()
@@ -51,7 +51,7 @@ def _explain_log_1d(
 
     # Math formulas
     vars_tex = r"$\begin{aligned}" + rf"x_1 &= {_fmt(xq1_disp, dec)}" + r"\end{aligned}$"
-    
+
     subst_tex = (
         r"$\begin{aligned}"
         r"&\hat{p}(y=1|x) = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1 x_1 + \theta_0 \\[5pt]"
@@ -59,7 +59,7 @@ def _explain_log_1d(
         rf"&\sigma(z) = \frac{{1}}{{1 + e^{{-\left(({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp, dec)})\right)}}}}"
         r"\end{aligned}$"
     )
-    
+
     res_tex = (
         r"$\begin{aligned}"
         rf"\hat{{p}} &= {_fmt(p_hat, dec)}\\"
@@ -136,7 +136,7 @@ def _explain_log_1d(
             line=dict(width=1),
             fillcolor="rgba(220,220,220,0.10)", layer="below",
         )
-    
+
     shapes = [block_rect(0.69, 0.98), block_rect(0.29, 0.67), block_rect(0.02, 0.27)]
 
     def title_annot(tex_title, y):
@@ -202,7 +202,7 @@ def _explain_log_1d(
 
     layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
     layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
-    
+
     fig.update_layout(
         **layout_kwargs,
         shapes=shapes,
@@ -214,14 +214,14 @@ def _explain_log_1d(
     return fig
 
 def _explain_log_2d(
-    X_train, y_train, 
-    x_disp, w_disp, b_disp, 
-    p_hat, y_hat, 
-    title, dec, grid_2d_points, theme, 
+    X_train, y_train,
+    x_disp, w_disp, b_disp,
+    p_hat, y_hat,
+    title, dec, grid_2d_points, theme,
     p, text_color, ann_color, btn_bg, btn_border, btn_font_color
 ):
-    from ..theme import surface_style, data_3d_marker_style
-    
+    from ..theme import data_3d_marker_style, surface_style
+
     x1, x2 = X_train[:, 0].ravel(), X_train[:, 1].ravel()
     xq1_disp, xq2_disp = float(x_disp[0]), float(x_disp[1])
 
@@ -244,7 +244,7 @@ def _explain_log_2d(
     CAMERA = dict(eye=dict(x=1.55, y=1.55, z=1.15))
 
     vars_tex = r"$\begin{aligned}" + rf"&x_1 = {_fmt(xq1_disp, dec)}\\" + rf"&x_2 = {_fmt(xq2_disp, dec)}" + r"\end{aligned}$"
-    
+
     subst_tex = (
         r"$\begin{aligned}"
         r"&\hat{p}(y=1|x) = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1 x_1 + \theta_2 x_2 + \theta_0 \\[5pt]"
@@ -252,7 +252,7 @@ def _explain_log_2d(
         rf"&\sigma(z) = \frac{{1}}{{1 + e^{{-\left(({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(w_disp[1], dec)})\cdot({_fmt(xq2_disp, dec)}) + ({_fmt(b_disp, dec)})\right)}}}}"
         r"\end{aligned}$"
     )
-    
+
     res_tex = (
         r"$\begin{aligned}"
         rf"\hat{{p}} &= {_fmt(p_hat, dec)}\\"
@@ -396,16 +396,16 @@ def _explain_log_2d(
     return fig
 
 def _explain_log_multiclass_1d(
-    X_train, y_train, 
-    x_disp, w_disp, b_disp, 
-    p_hat, y_hat, 
-    title, dec, grid_points, theme, 
+    X_train, y_train,
+    x_disp, w_disp, b_disp,
+    p_hat, y_hat,
+    title, dec, grid_points, theme,
     p, text_color, ann_color, btn_bg, btn_border, btn_font_color
 ):
-    from ..theme import surface_style, loss_line_style, data_3d_marker_style, data_marker_style
-    from ...utils.math import _softmax
     import plotly.express as px
-    
+
+    from ...utils.math import _softmax
+
     x1_train = X_train[:, 0].ravel()
     xq1_disp = float(x_disp[0])
     K = w_disp.shape[0]
@@ -415,7 +415,7 @@ def _explain_log_multiclass_1d(
     x_min_plot = min(x_min - pad_x, xq1_disp - pad_x)
     x_max_plot = max(x_max + pad_x, xq1_disp + pad_x)
     x_grid = np.linspace(x_min_plot, x_max_plot, int(grid_points))
-    
+
     z_grid = w_disp @ x_grid.reshape(1, -1) + b_disp.reshape(-1, 1)
     p_curves = _softmax(z_grid.T).T
 
@@ -423,22 +423,22 @@ def _explain_log_multiclass_1d(
     vars_tex = r"$\begin{aligned}" + rf"{x_tex}" + r"\end{aligned}$"
 
     y_hat_idx = int(np.argmax(p_hat))
-    
-    
+
+
     def exp_tex(k):
         return rf"({_fmt(w_disp[k, 0], dec)})({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp[k], dec)})"
-        
+
     denom_tex = rf"e^{{{exp_tex(0)}}} + \dots + e^{{{exp_tex(K-1)}}}"
-    
+
     def p_subst(k):
         num_tex = rf"e^{{{exp_tex(k)}}}"
         return rf"\hat{{p}}_{{{k}}} = \frac{{{num_tex}}}{{{denom_tex}}} = {_fmt(p_hat[k], dec)}"
-        
+
     subst_lines = []
     header1 = r"\text{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}, \quad "
     header2 = r"z_k(\mathbf{x}) = \theta_{1,k} x_1 + \theta_{0,k}"
     subst_lines.append(header1 + header2 + r" \\[-6pt]")
-    
+
     y_hat_idx = int(np.argmax(p_hat))
     if K <= 3:
         for k in range(K):
@@ -450,9 +450,9 @@ def _explain_log_multiclass_1d(
             subst_lines.append(p_subst(y_hat_idx))
             subst_lines.append(r"\vdots")
         subst_lines.append(p_subst(K - 1))
-        
+
     subst_tex = r"$\begin{gathered}" + r" \\[2pt]".join(subst_lines) + r"\end{gathered}$"
-    
+
     p_hat_max = float(np.max(p_hat))
     res_tex = (
         r"$\begin{aligned}"
@@ -472,12 +472,12 @@ def _explain_log_multiclass_1d(
             [{"type": "xy"}, None]
         ]
     )
-    
+
     # Hide axes for the math boxes: box 1 -> (1,1), box 2 -> (2,1)[idx 3], box 3 -> (3,1)[idx 4]
     for idx in (1, 3, 4):
         fig.update_xaxes(visible=False, row=(1 if idx==1 else 2 if idx==3 else 3), col=1)
         fig.update_yaxes(visible=False, row=(1 if idx==1 else 2 if idx==3 else 3), col=1)
-        
+
     fig.update_xaxes(title="x₁", range=[x_min_plot, x_max_plot], row=1, col=2)
     fig.update_yaxes(title_text="p(y=k|x)", title_standoff=5, range=[-0.05, 1.05], row=1, col=2)
 
@@ -506,7 +506,7 @@ def _explain_log_multiclass_1d(
             legendgroup=f"class_{k}", showlegend=False,
             visible=False,
         ), row=1, col=2)
-        
+
     fig.add_trace(go.Scatter(
         x=[xq1_disp, xq1_disp], y=[-0.05, 1.05],
         mode="lines", name="x_query",
@@ -549,7 +549,7 @@ def _explain_log_multiclass_1d(
         if stage == 3:
             # Place annotations without overlap in data coordinates using bottom-up layout
             sorted_selected = sorted(selected_classes, key=lambda c: p_hat[c], reverse=True)
-            
+
             text_ys_rev = []
             for k in reversed(sorted_selected):  # lowest prob to highest
                 target_y = p_hat[k]
@@ -576,9 +576,7 @@ def _explain_log_multiclass_1d(
 
     stage_pred_visible = [False, False, False, True]
     slider_steps = []
-    # traces count: 1 dummy + len(selected_classes)*2 + 1 vline
-    total_traces = 1 + len(selected_classes) * 2 + 1
-    
+
     for s in [0, 1, 2, 3]:
         vis_array = [False]
         show_pred = stage_pred_visible[s]
@@ -623,28 +621,28 @@ def _explain_log_multiclass_nd(
     title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color
 ):
     model_formula_tex = r"$\mathbf{z} = \mathbf{\Theta}\operatorname{vec}(\mathbf{x}) + \boldsymbol{\theta}_0, \quad \hat{\mathbf{p}} = \text{softmax}(\mathbf{z})$"
-    
+
     x_rows, x_force_1col = 15, _needs_single_col(x_disp, max_digits=5)
     x_cols = 1 if x_force_1col else 3
     x_items = [rf"{_fmt(x_disp[j], dec)}" for j in range(d)]
     x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 7, 7))
     x_mat_tex = rf"$\mathbf{{x}}=\begin{{bmatrix}} {x_mat_inner} \end{{bmatrix}}$"
     x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}\times {x_cols}}}$"
-    
+
     def exp_tex(k):
         return rf"({_fmt(w_disp[k, 0], dec)})({_fmt(x_disp[0], dec)}) + \dots + ({_fmt(b_disp[k], dec)})"
-        
+
     denom_tex = rf"e^{{{exp_tex(0)}}} + \dots + e^{{{exp_tex(K-1)}}}"
-    
+
     def p_subst(k):
         num_tex = rf"e^{{{exp_tex(k)}}}"
         return rf"\hat{{p}}_{{{k}}} = \frac{{{num_tex}}}{{{denom_tex}}} = {_fmt(p_hat[k], dec)}"
-        
+
     subst_lines = []
     header1 = r"\text{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}, \quad "
     header2 = r"z_k(\mathbf{x}) = \sum_{j=1}^{D} \theta_{j,k} x_j + \theta_{0,k}"
     subst_lines.append(header1 + header2 + r" \\[8pt]")
-    
+
     y_hat_idx = int(np.argmax(p_hat))
     if K <= 3:
         for k in range(K):
@@ -656,9 +654,9 @@ def _explain_log_multiclass_nd(
             subst_lines.append(p_subst(y_hat_idx))
             subst_lines.append(r"\vdots")
         subst_lines.append(p_subst(K - 1))
-        
+
     subst_tex = r"$\begin{gathered}" + r" \\[-2pt]".join(subst_lines) + r"\end{gathered}$"
-    
+
     p_hat_max = float(np.max(p_hat))
     res_tex = (
         r"$\begin{aligned}"
@@ -666,7 +664,7 @@ def _explain_log_multiclass_nd(
         rf"&\hat{{y}} = \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
         r"\end{aligned}$"
     )
-    
+
     y_dim_tex = rf"$\hat{{\mathbf{{p}}}} \in \mathbb{{R}}^{{1 \times {K}}}$"
 
     fig = make_subplots(
@@ -697,19 +695,19 @@ def _explain_log_multiclass_nd(
         ann = [paper_top_center(model_formula_tex, y=1.02, size=18)]
         ann.append(top_center_annot(1, x_dim_tex, 1.02))
         ann.append(top_center_annot(3, y_dim_tex, 1.02))
-        
+
         ann.append(title_annot(1, T1, 0.96))
         ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.89, size=14, x=0.03))
-        
+
         ann.append(title_annot(2, T2, 0.96))
         ann.append(dict(x=0.5, y=0.90 + DY, xref="x2", yref="y2", text="" if stage < 2 else subst_tex, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=13, color=text_color)))
-        
+
         ann.append(title_annot(3, T3, 0.96))
         if stage < 3:
             ann.append(dict(x=0.05, y=0.85 + DY, xref="x3", yref="y3", text="", showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color)))
         else:
             ann.append(dict(x=0.05, y=0.85 + DY, xref="x3", yref="y3", text=res_tex, showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color)))
-        
+
         return ann
 
     buttons = [
@@ -743,11 +741,10 @@ def explain_logistic_prediction(
     display_space="original",
     theme=None,
 ):
-    """
-    Creates an interactive step-by-step prediction visualization for a trained 1D binary Logistic Regression model.
-    """
+    """Create an interactive step-by-step prediction visualization for logistic regression."""
     def _extract_logistic_multiclass_theta(est):
         from ..linear.prediction import _get_last_estimator
+
         last = _get_last_estimator(est)
         if not (hasattr(last, "coef_") and hasattr(last, "intercept_")):
             raise ValueError("Estimator must expose coef_ and intercept_.")
@@ -761,20 +758,20 @@ def explain_logistic_prediction(
         b_s = np.asarray(b_s, dtype=float).ravel()
         if scaler is None:
             return w_s.copy(), b_s.copy()
-        
+
         mu, scale, with_mean, with_std = _safe_get_scale(scaler)
         dloc = w_s.shape[1]
-        
+
         if (not with_std) or (scale is None):
             scale = np.ones(dloc, dtype=float)
         else:
             scale = np.asarray(scale, dtype=float).ravel()
-        
+
         if (not with_mean) or (mu is None):
             mu = np.zeros(dloc, dtype=float)
         else:
             mu = np.asarray(mu, dtype=float).ravel()
-            
+
         w_o = w_s / (scale + 1e-12)
         b_o = b_s - np.sum(w_s * mu / (scale + 1e-12), axis=1)
         return w_o, b_o
@@ -789,7 +786,7 @@ def explain_logistic_prediction(
 
     if x_query is None:
         raise ValueError("Must provide x_query.")
-    
+
     x_query = np.asarray(x_query, dtype=float).ravel()
     if x_query.size != d:
         raise ValueError(f"x_query must have {d} elements.")
@@ -816,7 +813,7 @@ def explain_logistic_prediction(
         else:
             z = np.sum(w_s * x_query_scaled) + b_s
             p_hat = _sigmoid(z)
-    
+
     if y_hat is None:
         if is_multiclass:
             y_hat = trained_estimator.classes_[np.argmax(p_hat)]

@@ -6,13 +6,14 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ...utils.math import _softmax
 from ..theme import (
     get_base_layout,
     get_legend_props,
-    get_updatemenus,
     get_sliders,
+    get_updatemenus,
 )
-from ...utils.math import _softmax
+
 
 def _row1_formula_latex(K):
     return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}=\begin{{bmatrix}}x\\1\end{{bmatrix}}\in\mathbb{{R}}^{{2}},\quad \Theta\in\mathbb{{R}}^{{2\times {K}}}$$"
@@ -249,13 +250,14 @@ def build_multiclass_1d_logistic_figure(
         )
 
     def metrics_annotations(t):
-        if metrics_hist is None: return []
+        if metrics_hist is None:
+            return []
         lines = []
         items = list(metrics_hist.items())[:3]
         for name, hist in items:
             fmt = ".6f" if name.lower() in ("log-loss", "loss") else ".4f"
             lines.append(f"<b>{name}</b>: {hist[t]:{fmt}}")
-        
+
         return [dict(
             x=1.05, y=1.05, xref="paper", yref="y2 domain",
             text="    |    ".join(lines), showarrow=False,
@@ -272,7 +274,7 @@ def build_multiclass_1d_logistic_figure(
             dict(x=X_VDOTS, y=0.15, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
             dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
         ]
-        
+
         base_ann.append(
             dict(x=0.5, y=0.98, xref="x2 domain", yref="y2 domain", text="<b>Probability</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
         )
@@ -281,14 +283,14 @@ def build_multiclass_1d_logistic_figure(
             base_ann.append(
                 dict(x=0.5, y=0.98, xref="x4 domain", yref="y4 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
             )
-            
+
         return base_ann + metrics_annotations(t)
 
     frames = []
     for t in range(steps_n):
         Pg = p_curves(t)
         curve_updates = [go.Scatter(x=x1_grid, y=Pg[:, k]) for k in range(K)]
-        
+
         if show_loss:
             loss_update = go.Scatter(
                 x=[step if i <= t else None for i, step in enumerate(ep_list)],
@@ -341,14 +343,14 @@ def build_multiclass_1d_logistic_figure(
         fig.update_yaxes(visible=False, row=2, col=1, range=[0, 1])
 
     fig.update_xaxes(title=r"$x$$", row=1, col=2)
-    
+
     if show_loss:
         fig.update_yaxes(range=[-0.02, 1.02], row=1, col=2)
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=2, col=2)
         fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], row=2, col=2)
     else:
         fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
-        
+
     return fig
 
 __all__ = ["build_multiclass_1d_logistic_figure"]

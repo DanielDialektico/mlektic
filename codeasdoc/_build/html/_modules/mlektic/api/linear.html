@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mlektic.api.linear &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
@@ -77,16 +77,17 @@
   <h1>Código fuente para mlektic.api.linear</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Public API for linear-regression visualization.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">..services.linear_history</span> <span class="kn">import</span> <span class="n">fit_history</span>
-<span class="kn">from</span> <span class="nn">..visualization.linear.router</span> <span class="kn">import</span> <span class="n">build_lr_figure</span>
-<span class="kn">from</span> <span class="nn">..visualization.linear.prediction</span> <span class="kn">import</span> <span class="n">explain_lr_prediction</span>
-<span class="kn">from</span> <span class="nn">..visualization.theme</span> <span class="kn">import</span> <span class="n">attach_highlight</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..services.linear_history</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_history</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.linear.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">explain_lr_prediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.linear.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_lr_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="n">attach_highlight</span>
+
 
 <div class="viewcode-block" id="visualize_lr">
 <a class="viewcode-back" href="../../../api_reference.html#mlektic.api.linear.visualize_lr">[documentos]</a>
-<span class="k">def</span> <span class="nf">visualize_lr</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">visualize_lr</span><span class="p">(</span>
     <span class="n">trained_estimator</span><span class="p">,</span>
     <span class="n">X</span><span class="p">,</span>
     <span class="n">y</span><span class="p">,</span>
@@ -103,6 +104,8 @@
     <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">max_frames</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">frame_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -125,8 +128,13 @@
 <span class="sd">        smooth_beta (float, optional): Beta parameter for EMA smoothing. Defaults to 0.85.</span>
 <span class="sd">        strict_loss (bool, optional): If True, throw errors if loss cannot be animated cleanly. Defaults to False.</span>
 <span class="sd">        baseline (str, optional): Initial reference line for the loss curve (&quot;mean&quot; or &quot;zeros&quot;). Defaults to &quot;mean&quot;.</span>
-<span class="sd">        display_space (str, optional): The space in which to display the parameters (&quot;original&quot; or &quot;scaled&quot;). Defaults to &quot;original&quot;.</span>
+<span class="sd">        display_space (str, optional): Parameter display space (&quot;original&quot; or &quot;scaled&quot;). Defaults to &quot;original&quot;.</span>
+<span class="sd">        metrics (Sequence[str] | dict, optional): Built-in metric names or custom metric callables.</span>
 <span class="sd">        dec (int, optional): The number of decimal places to format the parameters. Defaults to 4.</span>
+<span class="sd">        frame_duration (int, optional): Duration of each animation frame in milliseconds. Defaults to 80.</span>
+<span class="sd">        max_frames (int | None, optional): Maximum rendered frames after temporal decimation. Defaults to 60.</span>
+<span class="sd">        frame_step (int | None, optional): Step used when ``max_frames`` is None. Defaults to 10.</span>
+<span class="sd">        theme (str | None, optional): Visualization theme name. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        plotly.graph_objects.Figure: The animated Plotly figure object.</span>
@@ -142,6 +150,8 @@
         <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
         <span class="n">display_space</span><span class="o">=</span><span class="n">display_space</span><span class="p">,</span>
         <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+        <span class="n">max_frames</span><span class="o">=</span><span class="n">max_frames</span><span class="p">,</span>
+        <span class="n">frame_step</span><span class="o">=</span><span class="n">frame_step</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">build_lr_figure</span><span class="p">(</span>

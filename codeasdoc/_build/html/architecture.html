@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arquitectura del Proyecto &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
@@ -55,6 +55,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#modulo-services">Módulo <code class="docutils literal notranslate"><span class="pre">services/</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#modulo-utils">Módulo <code class="docutils literal notranslate"><span class="pre">utils/</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#modulo-visualization">Módulo <code class="docutils literal notranslate"><span class="pre">visualization/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#escalabilidad-hacia-nuevos-modelos">Escalabilidad hacia Nuevos Modelos</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#modulo-internal">Módulo <code class="docutils literal notranslate"><span class="pre">_internal/</span></code></a></li>
 </ul>
 </li>
@@ -222,10 +223,31 @@ sobre los cuales se evalúan las predicciones.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">binary_2d.py</span></code> → Clasificación binaria 2D: superficie de probabilidad 3D.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">binary_nd.py</span></code> → Clasificación binaria d &gt; 2: matriz LaTeX de pesos.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">multiclass_1d.py</span></code> → Multiclase 1D: curvas de probabilidad por clase.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multiclass_2d.py</span></code> → Multiclase 2D: superficies Softmax superpuestas.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">multiclass_nd.py</span></code> → Multiclase d &gt; 2: matriz de pesos multiclase.</p></li>
 </ul>
 </li>
 </ul>
+</section>
+<section id="escalabilidad-hacia-nuevos-modelos">
+<h2>Escalabilidad hacia Nuevos Modelos<a class="headerlink" href="#escalabilidad-hacia-nuevos-modelos" title="Link to this heading"></a></h2>
+<p>La frontera de extensión principal es <code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code>. La API pública y
+los builders de visualización no dependen directamente de Scikit-Learn; dependen
+del contrato del adapter y del payload de historial.</p>
+<p>Para añadir nuevas familias de modelos, por ejemplo PyTorch, Keras, XGBoost o
+capas de redes neuronales artificiales, el nuevo adapter debe implementar:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">predict()</span></code> y, para clasificación, <code class="docutils literal notranslate"><span class="pre">predict_proba()</span></code>.</p></li>
+<li><p>Extracción de parámetros cuando exista una forma interpretable para la figura.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit()</span></code> / <code class="docutils literal notranslate"><span class="pre">partial_fit()</span></code> o una estrategia de replay equivalente.</p></li>
+<li><p>Transformación de features y metadatos de escalado cuando el modelo use
+preprocesamiento externo.</p></li>
+</ul>
+<p>El <code class="docutils literal notranslate"><span class="pre">HistoryEngine</span></code> orquesta captura, métricas, suavizado, rescalado y
+decimación temporal. Las estrategias de captura producen historiales con una
+forma común, y los routers de visualización eligen el builder por dimensión y
+tipo de tarea. Este diseño permite sumar nuevos modelos sin duplicar la lógica
+de métricas ni las figuras por dimensión.</p>
 </section>
 <section id="modulo-internal">
 <h2>Módulo <code class="docutils literal notranslate"><span class="pre">_internal/</span></code><a class="headerlink" href="#modulo-internal" title="Link to this heading"></a></h2>

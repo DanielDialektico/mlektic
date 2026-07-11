@@ -9,11 +9,11 @@ from plotly.subplots import make_subplots
 from ..theme import (
     get_base_layout,
     get_legend_props,
-    get_updatemenus,
     get_sliders,
-    create_annotation,
+    get_updatemenus,
     loss_line_style,
 )
+
 
 def _row1_formula_latex_2d(K):
     return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}=\begin{{bmatrix}}x_1\\x_2\\1\end{{bmatrix}}\in\mathbb{{R}}^{{3}},\quad \Theta\in\mathbb{{R}}^{{3\times {K}}}$$"
@@ -24,7 +24,10 @@ def _row3_formula_latex_2d(K):
 def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
     K_local = Theta.shape[1]
-    def fmt(v): return rf"{v:.{dec}f}"
+
+    def fmt(v):
+        return rf"{v:.{dec}f}"
+
     if K_local <= max_elems:
         row1 = " & ".join(fmt(Theta[0, j]) for j in range(K_local))
         row2 = " & ".join(fmt(Theta[1, j]) for j in range(K_local))
@@ -38,23 +41,27 @@ def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
     row1_items = [fmt(Theta[0, j]) for j in head_idx] + [r"\cdots"] + [fmt(Theta[0, j]) for j in tail_idx]
     row2_items = [fmt(Theta[1, j]) for j in head_idx] + [r"\cdots"] + [fmt(Theta[1, j]) for j in tail_idx]
     row3_items = [fmt(Theta[2, j]) for j in head_idx] + [r"\cdots"] + [fmt(Theta[2, j]) for j in tail_idx]
-    row1 = " & ".join(row1_items); row2 = " & ".join(row2_items); row3 = " & ".join(row3_items)
+    row1 = " & ".join(row1_items)
+    row2 = " & ".join(row2_items)
+    row3 = " & ".join(row3_items)
     cols_spec = "c" * max_elems
     return r"$$" + r"\Theta=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + r"\\" + row3 + r"\end{array}\right]" + r"$$"
 
 def _z_numeric_expr_bivar(Theta, class_idx, dec):
-    def num(v): return f"{v:+.{dec}f}"
+    def num(v):
+        return f"{v:+.{dec}f}"
+
     return rf"\left({num(Theta[0, class_idx])}\right)x_1 + \left({num(Theta[1, class_idx])}\right)x_2 + \left({num(Theta[2, class_idx])}\right)"
 
 def _denom_three_terms_tex_2d(Theta, K_local, dec):
     z1 = _z_numeric_expr_bivar(Theta, 0, dec=dec)
     if K_local == 1:
         return rf"e^{{{z1}}}"
-        
+
     if K_local == 2:
         z2 = _z_numeric_expr_bivar(Theta, 1, dec=dec)
         return rf"e^{{{z1}}} + e^{{{z2}}}"
-        
+
     zK = _z_numeric_expr_bivar(Theta, K_local - 1, dec=dec)
     return rf"e^{{{z1}}} + \cdots + e^{{{zK}}}"
 
@@ -96,6 +103,7 @@ def build_multiclass_2d_logistic_figure(
     max_theta_cols=8,
     theme=None,
 ):
+    """Build the 2D multiclass logistic-regression Softmax surface figure."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
             raise ValueError("show_loss=True is only allowed for iterative histories.")
@@ -105,14 +113,14 @@ def build_multiclass_2d_logistic_figure(
     x1 = np.asarray(x1).ravel()
     x2 = np.asarray(x2).ravel()
     y = np.asarray(y).ravel()
-    
+
     if p_surfaces_hist is None or X1g is None or X2g is None:
         raise ValueError("p_surfaces_hist, X1g, X2g are required for multiclass 2D.")
 
     p_surfaces_hist = np.asarray(p_surfaces_hist, dtype=float)
     X1g = np.asarray(X1g, dtype=float)
     X2g = np.asarray(X2g, dtype=float)
-    
+
     steps_n, h, w, K = p_surfaces_hist.shape
 
     if title is None:
@@ -146,8 +154,6 @@ def build_multiclass_2d_logistic_figure(
     x1_min, x1_max = float(np.min(X1g)), float(np.max(X1g))
     x2_min, x2_max = float(np.min(X2g)), float(np.max(X2g))
 
-    ep = np.arange(steps_n)
-    ep_list = ep.tolist()
     if show_loss:
         loss_hist_list = loss_hist.tolist()
 
@@ -162,7 +168,7 @@ def build_multiclass_2d_logistic_figure(
         kwargs_subplots["vertical_spacing"] = 0.08
 
     fig = make_subplots(**kwargs_subplots)
-    
+
     def _pad(lo, hi, frac=0.10):
         span = (hi - lo) + 1e-9
         return [lo - frac * span, hi + frac * span]
@@ -178,13 +184,14 @@ def build_multiclass_2d_logistic_figure(
         lpad = 0.10 * (lmax - lmin + 1e-9)
 
     def metrics_annotations(t):
-        if metrics_hist is None: return []
+        if metrics_hist is None:
+            return []
         lines = []
         items = list(metrics_hist.items())[:3]
         for name, hist in items:
             fmt = ".6f" if name.lower() in ("log-loss", "loss") else ".4f"
             lines.append(f"<b>{name}</b>: {hist[t]:{fmt}}")
-        
+
         return [dict(
             x=1.05, y=1.05, xref="paper", yref="paper",
             text="    |    ".join(lines), showarrow=False,
@@ -201,7 +208,7 @@ def build_multiclass_2d_logistic_figure(
             dict(x=X_VDOTS, y=0.12, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
             dict(x=X_TEXT, y=-0.08, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=13, color="white")),
         ]
-        
+
         base_ann.append(
             dict(x=0.835, y=1.00, xref="paper", yref="paper", text="<b>Probability</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
         )
@@ -210,12 +217,12 @@ def build_multiclass_2d_logistic_figure(
             base_ann.append(
                 dict(x=-0.05, y=0.0, xref="x2 domain", yref="y2 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=12, color="white"))
             )
-            
+
         return base_ann + metrics_annotations(t)
 
     # colorscales for surfaces
     colorscales = ["Blues", "Reds", "Greens", "Oranges", "Purples", "Greys", "YlGnBu", "YlOrRd"]
-    
+
     # Add Data
     scatter = go.Scatter3d(
         x=x1,
@@ -231,7 +238,7 @@ def build_multiclass_2d_logistic_figure(
         fig.add_trace(scatter, row=1, col=2)
     else:
         fig.add_trace(scatter, row=1, col=2)
-        
+
     for k in range(K):
         cs = colorscales[k % len(colorscales)]
         surf = go.Surface(
@@ -270,7 +277,7 @@ def build_multiclass_2d_logistic_figure(
         frame_data = [
             go.Scatter3d(x=x1, y=x2, z=np.zeros_like(x1) - 0.02)
         ]
-        
+
         for k in range(K):
             frame_data.append(
                 go.Surface(
@@ -279,7 +286,7 @@ def build_multiclass_2d_logistic_figure(
                     z=p_surfaces_hist[t, :, :, k],
                 )
             )
-            
+
         if show_loss:
             frame_data.append(
                 go.Scatter(
@@ -290,7 +297,7 @@ def build_multiclass_2d_logistic_figure(
             traces = list(range(K + 2))
         else:
             traces = list(range(K + 1))
-            
+
         frames.append(
             go.Frame(
                 name=str(t),
@@ -319,7 +326,7 @@ def build_multiclass_2d_logistic_figure(
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )
-    
+
     # Ocultar ejes del primer subplot para dejar espacio puro al texto
     fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
     fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])

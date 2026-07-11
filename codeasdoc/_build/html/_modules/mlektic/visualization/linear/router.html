@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mlektic.visualization.linear.router &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
 
   
@@ -77,18 +77,19 @@
   <h1>Código fuente para mlektic.visualization.linear.router</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Routing logic for linear-regression figure selection.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">..._internal.common</span> <span class="kn">import</span> <span class="n">_first_not_none</span>
-<span class="kn">from</span> <span class="nn">.multivar</span> <span class="kn">import</span> <span class="n">build_multivar_lr_figure</span>
-<span class="kn">from</span> <span class="nn">.plane</span> <span class="kn">import</span> <span class="n">build_plane_lr_figure</span>
-<span class="kn">from</span> <span class="nn">.simple</span> <span class="kn">import</span> <span class="n">build_simple_lr_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..._internal.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">_first_not_none</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.multivar</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multivar_lr_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plane</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_plane_lr_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.simple</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_simple_lr_figure</span>
+
 
 <div class="viewcode-block" id="build_lr_figure">
 <a class="viewcode-back" href="../../../../api_reference.html#mlektic.visualization.linear.router.build_lr_figure">[documentos]</a>
-<span class="k">def</span> <span class="nf">build_lr_figure</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_lr_figure</span><span class="p">(</span>
     <span class="n">X</span><span class="p">,</span>
     <span class="n">y</span><span class="p">,</span>
     <span class="n">w_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -128,11 +129,14 @@
 <span class="sd">        X1g (np.ndarray, optional): Grid for first feature in 2D. Defaults to None.</span>
 <span class="sd">        X2g (np.ndarray, optional): Grid for second feature in 2D. Defaults to None.</span>
 <span class="sd">        loss_hist (np.ndarray, optional): History of loss values. Defaults to None.</span>
+<span class="sd">        metrics_hist (dict, optional): Metric histories keyed by display name. Defaults to None.</span>
 <span class="sd">        show_loss (bool, optional): Whether to display the loss chart. Defaults to False.</span>
 <span class="sd">        history_kind (str, optional): The kind of history collected (&quot;iterative&quot; or &quot;auto&quot;). Defaults to &quot;iterative&quot;.</span>
 <span class="sd">        title (str, optional): The main title of the figure. Defaults to None.</span>
 <span class="sd">        strict_loss (bool, optional): If True, strictly enforce loss display rules. Defaults to False.</span>
 <span class="sd">        dec (int, optional): Number of decimal places to show for parameters. Defaults to 4.</span>
+<span class="sd">        frame_duration (int, optional): Duration of animation frames in milliseconds. Defaults to 80.</span>
+<span class="sd">        theme (str | None, optional): Visualization theme name. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        plotly.graph_objects.Figure: The fully constructed Plotly figure.</span>
@@ -157,7 +161,7 @@
             <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
             <span class="n">loss_hist</span><span class="p">,</span>
         <span class="p">)</span>
-        
+
         <span class="n">metrics_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">metrics_hist</span><span class="p">)</span>
 
         <span class="n">grid</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>

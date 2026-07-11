@@ -1,11 +1,11 @@
 import numpy as np
-import pytest
 import plotly.graph_objs as go
+import pytest
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from mlektic import visualize_logistic, explain_logistic_prediction
+from mlektic import explain_logistic_prediction, visualize_logistic
 
 
 def _make_dummy_classification_data(n_samples=50, n_features=1, n_classes=2):

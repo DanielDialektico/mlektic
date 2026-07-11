@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class LinearHistoryConfig:
     """Configuration for linear history capture."""

@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mlektic.domain.history &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
@@ -77,17 +77,17 @@
   <h1>Código fuente para mlektic.domain.history</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Typed history payload contracts used across the library.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypedDict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypedDict</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
 
 
 <div class="viewcode-block" id="LinearHistoryPayload">
 <a class="viewcode-back" href="../../../api_reference.html#mlektic.domain.history.LinearHistoryPayload">[documentos]</a>
-<span class="k">class</span> <span class="nc">LinearHistoryPayload</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearHistoryPayload</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Contract for linear-regression history capture payloads.&quot;&quot;&quot;</span>
 
     <span class="n">history_kind</span><span class="p">:</span> <span class="nb">str</span>
@@ -105,7 +105,7 @@
 
 <div class="viewcode-block" id="LogisticHistoryPayload">
 <a class="viewcode-back" href="../../../api_reference.html#mlektic.domain.history.LogisticHistoryPayload">[documentos]</a>
-<span class="k">class</span> <span class="nc">LogisticHistoryPayload</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogisticHistoryPayload</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Contract for logistic-regression history capture payloads.&quot;&quot;&quot;</span>
 
     <span class="n">history_kind</span><span class="p">:</span> <span class="nb">str</span>

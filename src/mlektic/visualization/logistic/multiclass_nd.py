@@ -8,9 +8,10 @@ from plotly.subplots import make_subplots
 
 from ..theme import (
     get_base_layout,
-    get_updatemenus,
     get_sliders,
+    get_updatemenus,
 )
+
 
 def build_multiclass_multivar_logistic_figure(
     X,

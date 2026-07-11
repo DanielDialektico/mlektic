@@ -138,6 +138,9 @@ fig.show()
 | `metrics` | `list[str]` | `["loss", "mse", "r2"]` | Lista de métricas a calcular y mostrar ("loss", "mse", "r2", "mae"). |
 | `dec` | `int` | `4` | Decimales para formatear los parámetros. |
 | `frame_duration` | `int` | `80` | Duración de cada frame en ms. Disminuir para más velocidad. |
+| `max_frames` | `int \| None` | `60` | Límite de frames renderizados para mantener animaciones livianas. |
+| `frame_step` | `int \| None` | `10` | Salto temporal usado cuando `max_frames=None`. |
+| `theme` | `str \| None` | `None` | Tema visual. `None` usa el tema clásico oscuro. |
 
 ### Parámetros de `visualize_logistic`
 
@@ -158,6 +161,16 @@ fig.show()
 | `metrics` | `list[str]` | `["loss", "accuracy"]` | Lista de métricas a mostrar durante el entrenamiento. |
 | `dec` | `int` | `4` | Decimales para formatear los parámetros. |
 | `frame_duration` | `int` | `80` | Duración de cada frame en ms. |
+| `max_frames` | `int \| None` | `60` | Límite de frames renderizados para mantener animaciones livianas. |
+| `frame_step` | `int \| None` | `10` | Salto temporal usado cuando `max_frames=None`. |
+| `max_theta_cols` | `int` | `5` | Máximo de columnas de pesos visibles antes de truncar matrices LaTeX. |
+| `theme` | `str \| None` | `None` | Tema visual. `None` usa el tema clásico oscuro. |
+
+`metrics` acepta nombres de métricas integradas o un diccionario de funciones
+personalizadas. En regresión lineal están disponibles `"loss"`, `"mse"`,
+`"r2"` y `"mae"`; en regresión logística, `"loss"`, `"accuracy"` y `"f1"`.
+Si pasas un diccionario como `{"Mi métrica": callable}`, la función debe recibir
+`(y_true, y_pred)` y devolver un escalar.
 
 ---
 
@@ -166,8 +179,7 @@ fig.show()
 `mlektic` incluye herramientas diseñadas para explicar de forma matemática y geométrica una predicción puntual de tu modelo ya entrenado. Soporta Scikit-Learn pipelines y formatea inteligentemente los pesos.
 
 ```python
-from mlektic.api.linear import explain_lr_prediction
-from mlektic.api.logistic import explain_logistic_prediction
+from mlektic import explain_lr_prediction, explain_logistic_prediction
 
 # 1. Escoge un punto de prueba (forma 2D)
 x_query = np.array([[150.0, 25.0]])
@@ -227,10 +239,29 @@ src/mlektic/
 │       ├── binary_2d.py     # Binaria, 2 variables (superficie 3D)
 │       ├── binary_nd.py     # Binaria, d > 2 (matriz LaTeX)
 │       ├── multiclass_1d.py # Multiclase, 1 variable (curvas de probabilidad)
+│       ├── multiclass_2d.py # Multiclase, 2 variables (superficies softmax)
 │       └── multiclass_nd.py # Multiclase, d > 2 (matriz de pesos)
 └── _internal/
     └── common.py            # Helpers compartidos (legacy/compatibilidad)
 ```
+
+### Escalabilidad hacia nuevos modelos
+
+La frontera de extensión principal es `BaseModelAdapter`. Para soportar otro
+ecosistema de modelos (por ejemplo PyTorch, Keras, XGBoost o una futura capa de
+redes neuronales), añade un adapter que implemente:
+
+* `predict()` y, para clasificación, `predict_proba()`.
+* Extracción de parámetros cuando exista una forma lineal interpretable.
+* `fit()` / `partial_fit()` o una estrategia de replay equivalente.
+* Transformación de features y metadatos de escalado cuando el modelo use un
+  pipeline o preprocesamiento externo.
+
+El motor de historial (`HistoryEngine`) consume adapters y estrategias de
+captura, y los routers de visualización deciden el builder por dimensión/tarea.
+Esto evita acoplar la visualización a Scikit-Learn y deja preparado el camino
+para añadir nuevas familias de modelos sin duplicar figuras ni lógica de
+métricas.
 
 ---
 

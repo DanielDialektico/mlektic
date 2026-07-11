@@ -3,14 +3,15 @@
 from ..domain.config import LinearHistoryConfig, LogisticHistoryConfig
 from ..history.engine import HistoryEngine
 
+
 def fit_history(
     trained_estimator,
     X,
     y,
     *,
     steps=60,
-    mode="auto", 
-    smooth=None, 
+    mode="auto",
+    smooth=None,
     smooth_beta=0.85,
     grid_1d_points=250,
     grid_2d_points=40,
@@ -43,8 +44,8 @@ def fit_history_logistic(
     y,
     *,
     steps=60,
-    mode="auto", 
-    smooth=None, 
+    mode="auto",
+    smooth=None,
     smooth_beta=0.85,
     grid_1d_points=300,
     grid_2d_points=40,

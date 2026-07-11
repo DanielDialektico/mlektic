@@ -29,6 +29,7 @@ d = 2: Visualización 3D
 
 - **Lineal**: Scatter 3D + plano predictivo animado.
 - **Logística Binaria**: Scatter 3D + superficie de probabilidad.
+- **Logística Multiclase**: Scatter 3D + ``K`` superficies de probabilidad translúcidas superpuestas, acompañadas de un panel LaTeX que muestra dinámicamente la matriz de pesos :math:`\Theta \in \mathbb{R}^{3 \times K}` y las ecuaciones softmax evaluadas.
 
 d > 2: Matriz de Parámetros LaTeX
 -----------------------------------
@@ -46,7 +47,7 @@ Para modelos con ``partial_fit`` / ``warm_start``:
 
 1. Clona el estimador con ``warm_start=True``, ``max_iter=1``.
 2. Ejecuta una iteración por frame.
-3. Captura predicciones, pesos, pérdida.
+3. Captura predicciones, pesos, pérdida, y, en configuraciones multiclase 2D, extrae un historial matricial de superficies probabilísticas (``p_surfaces_hist``).
 
 Interpolación (``mode="final_interp"``)
 -----------------------------------------
@@ -83,7 +84,7 @@ Con ``Pipeline`` + ``StandardScaler``:
 Explicación Visual de Predicciones
 ===================================
 
-Mediante la función ``explain_lr_prediction``, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual ``yhat`` a partir de un ``x_query``:
+Mediante las funciones ``explain_lr_prediction`` y ``explain_logistic_prediction``, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual ``yhat`` a partir de un ``x_query``:
 
 - **1D**: Punto verde sobre la recta de regresión.
 - **2D**: Punto verde anclado espacialmente en un plano 3D.
@@ -92,4 +93,13 @@ Mediante la función ``explain_lr_prediction``, Mlektic permite diseccionar mate
 Métricas Dinámicas
 ===================
 
-Las visualizaciones animadas pueden renderizar arreglos personalizables de métricas en tiempo real pasando una lista a ``metrics=["loss", "mse", "r2", ...]``. Mlektic computará y mostrará estas métricas como subtítulos en recuadros separados.
+Las visualizaciones animadas pueden renderizar arreglos personalizables de
+métricas en tiempo real.
+
+- Regresión lineal: ``metrics=["loss", "mse", "r2", "mae"]``.
+- Regresión logística: ``metrics=["loss", "accuracy", "f1"]``.
+- Métricas personalizadas: ``metrics={"Nombre": callable}``, donde ``callable``
+  recibe ``(y_true, y_pred)`` y devuelve un escalar.
+
+Mlektic computa y muestra estas métricas como subtítulos o recuadros separados,
+según el builder de visualización usado.

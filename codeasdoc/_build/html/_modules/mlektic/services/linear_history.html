@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mlektic.services.linear_history &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
 
   
@@ -77,25 +77,28 @@
   <h1>Código fuente para mlektic.services.linear_history</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;API for building history payloads.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">..domain.config</span> <span class="kn">import</span> <span class="n">LinearHistoryConfig</span><span class="p">,</span> <span class="n">LogisticHistoryConfig</span>
-<span class="kn">from</span> <span class="nn">..history.engine</span> <span class="kn">import</span> <span class="n">HistoryEngine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..domain.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearHistoryConfig</span><span class="p">,</span> <span class="n">LogisticHistoryConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..history.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistoryEngine</span>
+
 
 <div class="viewcode-block" id="fit_history">
 <a class="viewcode-back" href="../../../api_reference.html#mlektic.services.linear_history.fit_history">[documentos]</a>
-<span class="k">def</span> <span class="nf">fit_history</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_history</span><span class="p">(</span>
     <span class="n">trained_estimator</span><span class="p">,</span>
     <span class="n">X</span><span class="p">,</span>
     <span class="n">y</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> 
-    <span class="n">smooth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">smooth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">smooth_beta</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
     <span class="n">grid_1d_points</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
     <span class="n">grid_2d_points</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>
     <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">,</span>
-    <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_frames</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">frame_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture linear history.&quot;&quot;&quot;</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">LinearHistoryConfig</span><span class="p">(</span>
@@ -107,7 +110,9 @@
         <span class="n">grid_2d_points</span><span class="o">=</span><span class="n">grid_2d_points</span><span class="p">,</span>
         <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
         <span class="n">display_space</span><span class="o">=</span><span class="n">display_space</span><span class="p">,</span>
-        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+        <span class="n">max_frames</span><span class="o">=</span><span class="n">max_frames</span><span class="p">,</span>
+        <span class="n">frame_step</span><span class="o">=</span><span class="n">frame_step</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">engine</span> <span class="o">=</span> <span class="n">HistoryEngine</span><span class="p">(</span><span class="n">trained_estimator</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">capture_linear</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span></div>
@@ -115,19 +120,22 @@
 
 <div class="viewcode-block" id="fit_history_logistic">
 <a class="viewcode-back" href="../../../api_reference.html#mlektic.services.linear_history.fit_history_logistic">[documentos]</a>
-<span class="k">def</span> <span class="nf">fit_history_logistic</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fit_history_logistic</span><span class="p">(</span>
     <span class="n">trained_estimator</span><span class="p">,</span>
     <span class="n">X</span><span class="p">,</span>
     <span class="n">y</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
-    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> 
-    <span class="n">smooth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">smooth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">smooth_beta</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
     <span class="n">grid_1d_points</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
     <span class="n">grid_2d_points</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;prior&quot;</span><span class="p">,</span>
-    <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span>
+    <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_frames</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+    <span class="n">frame_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture logistic history.&quot;&quot;&quot;</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">LogisticHistoryConfig</span><span class="p">(</span>
@@ -138,7 +146,10 @@
         <span class="n">grid_1d_points</span><span class="o">=</span><span class="n">grid_1d_points</span><span class="p">,</span>
         <span class="n">grid_2d_points</span><span class="o">=</span><span class="n">grid_2d_points</span><span class="p">,</span>
         <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
-        <span class="n">display_space</span><span class="o">=</span><span class="n">display_space</span>
+        <span class="n">display_space</span><span class="o">=</span><span class="n">display_space</span><span class="p">,</span>
+        <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
+        <span class="n">max_frames</span><span class="o">=</span><span class="n">max_frames</span><span class="p">,</span>
+        <span class="n">frame_step</span><span class="o">=</span><span class="n">frame_step</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">engine</span> <span class="o">=</span> <span class="n">HistoryEngine</span><span class="p">(</span><span class="n">trained_estimator</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">capture_logistic</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span></div>

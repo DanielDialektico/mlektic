@@ -7,21 +7,23 @@ from ..adapters.base import BaseModelAdapter
 from ..utils.math import _binary_log_loss_from_p, _multiclass_cross_entropy
 from .base import HistoryCaptureStrategy
 
+
 class IterativeCapture(HistoryCaptureStrategy):
     """Captures history by iteratively fitting the model step by step."""
-    
+
     def capture_linear(self, adapter: BaseModelAdapter, X: np.ndarray, y: np.ndarray, config) -> dict:
-        n, d = X.shape
+        """Capture linear-regression history through incremental replay."""
+        _, d = X.shape
         steps = config.steps
-        
+
         # We need a new adapter instance configured for replay
         replay_adapter = adapter.clone_for_replay()
-        replay_adapter.fit(X, y) # Init state
-        
+        replay_adapter.fit(X, y)  # Init state
+
         grid = {}
         y_line_hist = z_plane_hist = None
         Xg_pred = None
-        
+
         if d == 1:
             x1_grid = np.linspace(float(X[:, 0].min()), float(X[:, 0].max()), config.grid_1d_points)
             grid["x1_grid"] = x1_grid
@@ -41,15 +43,17 @@ class IterativeCapture(HistoryCaptureStrategy):
         loss_hist = np.zeros(steps, dtype=float)
         w_hist = np.zeros((steps, d), dtype=float)
         b_hist = np.zeros(steps, dtype=float)
-        
+
         # Step 0
         y_pred0 = replay_adapter.predict(X)
         loss_hist[0] = float(mean_squared_error(y, y_pred0))
         g0 = replay_adapter.predict(Xg_pred) if Xg_pred is not None else None
         if g0 is not None:
-            if d == 1: y_line_hist[0] = g0
-            elif d == 2: z_plane_hist[0] = g0.reshape(X1g.shape)
-            
+            if d == 1:
+                y_line_hist[0] = g0
+            elif d == 2:
+                z_plane_hist[0] = g0.reshape(X1g.shape)
+
         w0, b0 = replay_adapter.extract_linear_theta(d_expected=d)
         if w0 is not None:
             w_hist[0] = w0
@@ -60,17 +64,19 @@ class IterativeCapture(HistoryCaptureStrategy):
         for t in range(1, steps):
             try:
                 replay_adapter.partial_fit(Xt, y)
-            except:
-                replay_adapter.fit(X, y) # Fallback
+            except Exception:
+                replay_adapter.fit(X, y)  # Fallback
 
             y_pred = replay_adapter.predict(X)
             loss_hist[t] = float(mean_squared_error(y, y_pred))
-            
+
             gt = replay_adapter.predict(Xg_pred) if Xg_pred is not None else None
             if gt is not None:
-                if d == 1: y_line_hist[t] = gt
-                elif d == 2: z_plane_hist[t] = gt.reshape(X1g.shape)
-                
+                if d == 1:
+                    y_line_hist[t] = gt
+                elif d == 2:
+                    z_plane_hist[t] = gt.reshape(X1g.shape)
+
             wt, bt = replay_adapter.extract_linear_theta(d_expected=d)
             if wt is not None:
                 w_hist[t] = wt
@@ -88,19 +94,20 @@ class IterativeCapture(HistoryCaptureStrategy):
         }
 
     def capture_logistic(self, adapter: BaseModelAdapter, X: np.ndarray, y: np.ndarray, config) -> dict:
-        n, d = X.shape
+        """Capture logistic-regression history through incremental replay."""
+        _, d = X.shape
         steps = config.steps
-        
+
         replay_adapter = adapter.clone_for_replay()
         replay_adapter.fit(X, y)
         classes = replay_adapter.classes if replay_adapter.classes is not None else np.unique(y)
         K = len(classes)
         is_multiclass = K > 2
-        
+
         grid = {}
         p_line_hist = p_plane_hist = p_curves_hist = p_surfaces_hist = None
         Xg_pred = None
-        
+
         if d == 1:
             x1_grid = np.linspace(float(X[:, 0].min()), float(X[:, 0].max()), config.grid_1d_points)
             grid["x1_grid"] = x1_grid
@@ -109,7 +116,7 @@ class IterativeCapture(HistoryCaptureStrategy):
                 p_line_hist = np.zeros((steps, x1_grid.size), dtype=float)
             else:
                 p_curves_hist = np.zeros((steps, x1_grid.size, K), dtype=float)
-                
+
         elif d == 2:
             x1_grid = np.linspace(float(X[:, 0].min()), float(X[:, 0].max()), config.grid_2d_points)
             x2_grid = np.linspace(float(X[:, 1].min()), float(X[:, 1].max()), config.grid_2d_points)
@@ -123,7 +130,7 @@ class IterativeCapture(HistoryCaptureStrategy):
 
         loss_hist = np.zeros(steps, dtype=float)
         w_hist = b_hist = None
-        
+
         # Initialize history stores based on multiclass or binary
         theta0 = replay_adapter.extract_logistic_theta(d_expected=d)
         if theta0:
@@ -145,7 +152,7 @@ class IterativeCapture(HistoryCaptureStrategy):
                 loss_hist[t] = _binary_log_loss_from_p(Pt[:, 1], (y == classes[1]).astype(float))
             else:
                 loss_hist[t] = _multiclass_cross_entropy(Pt, y, classes)
-                
+
             if Xg_pred is not None:
                 gt = adapter_inst.predict_proba(Xg_pred, classes)
                 if d == 1 and not is_multiclass:
@@ -156,7 +163,7 @@ class IterativeCapture(HistoryCaptureStrategy):
                     p_plane_hist[t] = gt[:, 1].reshape(X1g.shape)
                 elif d == 2 and is_multiclass:
                     p_surfaces_hist[t] = gt.reshape(X1g.shape[0], X1g.shape[1], K)
-                    
+
             thetat = adapter_inst.extract_logistic_theta(d_expected=d)
             if thetat and w_hist is not None:
                 if thetat["task"] == "binary":
@@ -172,7 +179,7 @@ class IterativeCapture(HistoryCaptureStrategy):
         for t in range(1, steps):
             try:
                 replay_adapter.partial_fit(Xt, y)
-            except:
+            except Exception:
                 replay_adapter.fit(X, y)
             _record_step(t, replay_adapter)
 

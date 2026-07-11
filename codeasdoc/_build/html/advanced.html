@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Uso Avanzado &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
@@ -51,10 +51,13 @@
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Uso Avanzado</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#uso-granular-de-la-api">Uso Granular de la API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#metricas-personalizadas">Métricas Personalizadas</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#control-de-frames">Control de Frames</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#exportar-a-html">Exportar a HTML</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuracion-del-renderer">Configuración del Renderer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dimensionalidad-alta">Dimensionalidad Alta</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#directorio-local-test">Directorio <code class="docutils literal notranslate"><span class="pre">local_test/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compatibilidad-con-futuros-adapters">Compatibilidad con Futuros Adapters</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
@@ -89,7 +92,7 @@
 <section id="uso-granular-de-la-api">
 <h2>Uso Granular de la API<a class="headerlink" href="#uso-granular-de-la-api" title="Link to this heading"></a></h2>
 <p>Puedes usar las funciones de bajo nivel por separado para mayor control:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mlektic</span> <span class="kn">import</span> <span class="n">fit_history</span><span class="p">,</span> <span class="n">build_lr_figure</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">mlektic</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_history</span><span class="p">,</span> <span class="n">build_lr_figure</span>
 
 <span class="c1"># Capturar historial</span>
 <span class="n">history</span> <span class="o">=</span> <span class="n">fit_history</span><span class="p">(</span>
@@ -100,6 +103,8 @@
     <span class="n">smooth_beta</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
     <span class="n">baseline</span><span class="o">=</span><span class="s2">&quot;zeros&quot;</span><span class="p">,</span>
     <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="s2">&quot;mse&quot;</span><span class="p">,</span> <span class="s2">&quot;r2&quot;</span><span class="p">,</span> <span class="s2">&quot;mae&quot;</span><span class="p">],</span>
+    <span class="n">max_frames</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Construir figura con opciones</span>
@@ -114,6 +119,49 @@
 </pre></div>
 </div>
 </section>
+<section id="metricas-personalizadas">
+<h2>Métricas Personalizadas<a class="headerlink" href="#metricas-personalizadas" title="Link to this heading"></a></h2>
+<p>Las visualizaciones calculan métricas por frame para alimentar subtítulos y
+paneles de la animación.</p>
+<p>En regresión lineal puedes solicitar métricas integradas:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="s2">&quot;mse&quot;</span><span class="p">,</span> <span class="s2">&quot;r2&quot;</span><span class="p">,</span> <span class="s2">&quot;mae&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>En regresión logística están disponibles:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_logistic</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="s2">&quot;f1&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>También puedes pasar funciones personalizadas como diccionario. Cada función
+recibe <code class="docutils literal notranslate"><span class="pre">(y_true,</span> <span class="pre">y_pred)</span></code> y debe devolver un escalar:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">history</span> <span class="o">=</span> <span class="n">fit_history</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;Error mediano&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y_true</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)),</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="control-de-frames">
+<h2>Control de Frames<a class="headerlink" href="#control-de-frames" title="Link to this heading"></a></h2>
+<p>Para entrenamientos largos, <code class="docutils literal notranslate"><span class="pre">steps</span></code> puede ser mayor que la cantidad de frames
+que quieres renderizar. <code class="docutils literal notranslate"><span class="pre">max_frames</span></code> reduce el historial de forma uniforme
+antes de construir la figura:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">max_frames</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Si necesitas muestrear cada N pasos en vez de fijar un máximo, desactiva
+<code class="docutils literal notranslate"><span class="pre">max_frames</span></code> y usa <code class="docutils literal notranslate"><span class="pre">frame_step</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_logistic</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">max_frames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">frame_step</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="exportar-a-html">
 <h2>Exportar a HTML<a class="headerlink" href="#exportar-a-html" title="Link to this heading"></a></h2>
 <p>Para compartir animaciones sin depender de Jupyter:</p>
@@ -125,7 +173,7 @@
 <section id="configuracion-del-renderer">
 <h2>Configuración del Renderer<a class="headerlink" href="#configuracion-del-renderer" title="Link to this heading"></a></h2>
 <p>Plotly requiere configurar el renderer según tu entorno:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">plotly.io</span> <span class="k">as</span> <span class="nn">pio</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
 
 <span class="c1"># Jupyter Notebook / VS Code</span>
 <span class="n">pio</span><span class="o">.</span><span class="n">renderers</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;notebook&quot;</span>
@@ -147,10 +195,10 @@ Si usas otro entorno, sobreescríbelo antes de llamar a <code class="docutils li
 <h2>Dimensionalidad Alta<a class="headerlink" href="#dimensionalidad-alta" title="Link to this heading"></a></h2>
 <p>Para datasets con muchas features (d &gt; 2), Mlektic genera una representación
 LaTeX del vector de parámetros. Ejemplo con 150 dimensiones:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
-<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
-<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">SGDRegressor</span>
-<span class="kn">from</span> <span class="nn">mlektic</span> <span class="kn">import</span> <span class="n">visualize_lr</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.linear_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGDRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mlektic</span><span class="w"> </span><span class="kn">import</span> <span class="n">visualize_lr</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([</span>
     <span class="p">(</span><span class="s2">&quot;scaler&quot;</span><span class="p">,</span> <span class="n">StandardScaler</span><span class="p">()),</span>
@@ -182,6 +230,15 @@ LaTeX del vector de parámetros. Ejemplo con 150 dimensiones:</p>
 python<span class="w"> </span>test_1_var.py
 </pre></div>
 </div>
+</section>
+<section id="compatibilidad-con-futuros-adapters">
+<h2>Compatibilidad con Futuros Adapters<a class="headerlink" href="#compatibilidad-con-futuros-adapters" title="Link to this heading"></a></h2>
+<p>La API de alto nivel trabaja contra adapters. Para soportar otro framework, el
+adapter debe traducir su modelo al contrato interno: predicción, probabilidades,
+extracción de parámetros cuando aplique, captura incremental o replay, y datos
+de escalado. Esta separación deja la librería preparada para modelos no
+Scikit-Learn y para una futura capa de visualización de redes neuronales sin
+acoplar cada figura a un framework específico.</p>
 </section>
 </section>
 
