@@ -48,11 +48,15 @@ def _z_numeric_expr_bivar(Theta, class_idx, dec):
 
 def _denom_three_terms_tex_2d(Theta, K_local, dec):
     z1 = _z_numeric_expr_bivar(Theta, 0, dec=dec)
-    if K_local == 1: return rf"e^{{{z1}}}"
-    z2 = _z_numeric_expr_bivar(Theta, 1, dec=dec)
-    if K_local == 2: return rf"e^{{{z1}}} + e^{{{z2}}}"
+    if K_local == 1:
+        return rf"e^{{{z1}}}"
+        
+    if K_local == 2:
+        z2 = _z_numeric_expr_bivar(Theta, 1, dec=dec)
+        return rf"e^{{{z1}}} + e^{{{z2}}}"
+        
     zK = _z_numeric_expr_bivar(Theta, K_local - 1, dec=dec)
-    return rf"e^{{{z1}}} + e^{{{z2}}} + \cdots + e^{{{zK}}}"
+    return rf"e^{{{z1}}} + \cdots + e^{{{zK}}}"
 
 def _final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
@@ -122,23 +126,42 @@ def build_multiclass_2d_logistic_figure(
             raise ValueError("loss_hist must match steps.")
 
     step_axis = np.arange(steps_n)
-    margin_t = 120
+    margin_t = 150
 
     if show_loss:
-        cols = 3
-        column_widths = [0.60, 0.24, 0.16]
-        specs = [[{"type": "xy"}, {"type": "scene"}, {"type": "xy"}]]
+        cols = 2
+        rows = 2
+        column_widths = [0.65, 0.35]
+        specs = [[{"type": "xy"}, {"type": "scene"}], [{"type": "xy"}, {"type": "xy"}]]
         X_TEXT = 0.28
-        X_VDOTS = 0.31
+        X_VDOTS = 0.32
     else:
         cols = 2
-        column_widths = [0.60, 0.40]
+        rows = 1
+        column_widths = [0.65, 0.35]
         specs = [[{"type": "xy"}, {"type": "scene"}]]
-        X_TEXT = 0.30
-        X_VDOTS = 0.34
+        X_TEXT = 0.28
+        X_VDOTS = 0.32
 
     x1_min, x1_max = float(np.min(X1g)), float(np.max(X1g))
     x2_min, x2_max = float(np.min(X2g)), float(np.max(X2g))
+
+    ep = np.arange(steps_n)
+    ep_list = ep.tolist()
+    if show_loss:
+        loss_hist_list = loss_hist.tolist()
+
+    kwargs_subplots = dict(
+        rows=rows, cols=cols,
+        column_widths=column_widths,
+        horizontal_spacing=0.06,
+        specs=specs,
+    )
+    if show_loss:
+        kwargs_subplots["row_heights"] = [0.75, 0.25]
+        kwargs_subplots["vertical_spacing"] = 0.08
+
+    fig = make_subplots(**kwargs_subplots)
     
     def _pad(lo, hi, frac=0.10):
         span = (hi - lo) + 1e-9
@@ -154,46 +177,38 @@ def build_multiclass_2d_logistic_figure(
         lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
         lpad = 0.10 * (lmax - lmin + 1e-9)
 
-    fig = make_subplots(
-        rows=1, cols=cols,
-        column_widths=column_widths,
-        horizontal_spacing=0.06,
-        specs=specs,
-    )
-
     def metrics_annotations(t):
-        ann = []
-        if metrics_hist is not None:
-            for i, (name, hist) in enumerate(metrics_hist.items()):
-                val = hist[t]
-                y_pos = 0.72 - (i * 0.10)
-                fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
-                ann.append(dict(
-                    x=0.98, y=y_pos, xref="paper", yref="paper", 
-                    text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
-                    xanchor="right", yanchor="top", font=dict(size=11, color="black"), 
-                    bgcolor="white", bordercolor="black", borderwidth=1, borderpad=4
-                ))
-        return ann
+        if metrics_hist is None: return []
+        lines = []
+        items = list(metrics_hist.items())[:3]
+        for name, hist in items:
+            fmt = ".6f" if name.lower() in ("log-loss", "loss") else ".4f"
+            lines.append(f"<b>{name}</b>: {hist[t]:{fmt}}")
+        
+        return [dict(
+            x=1.05, y=1.05, xref="paper", yref="paper",
+            text="    |    ".join(lines), showarrow=False,
+            xanchor="right", yanchor="bottom", font=dict(size=12, color="black"),
+            bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="black", borderwidth=1, borderpad=5
+        )]
 
     def make_annotations(t):
         base_ann = [
-            dict(x=X_TEXT, y=0.98, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.72, xref="paper", yref="paper", text=_theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=20, color="white")),
-            dict(x=X_TEXT, y=0.51, xref="paper", yref="paper", text=_row3_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.30, xref="paper", yref="paper", text=_final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=13, color="white")),
-            dict(x=X_VDOTS, y=0.17, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
-            dict(x=X_TEXT, y=0.06, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=13, color="white")),
+            dict(x=X_TEXT, y=1.18, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.58, xref="paper", yref="paper", text=_row3_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.44, xref="paper", yref="paper", text=_final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="top", font=dict(size=13, color="white")),
+            dict(x=X_VDOTS, y=0.12, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
+            dict(x=X_TEXT, y=-0.08, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=13, color="white")),
         ]
         
-        prob_title_x = 0.72 if show_loss else 0.80
         base_ann.append(
-            dict(x=prob_title_x, y=0.88, xref="paper", yref="paper", text="<b>Probability</b>", showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white"))
+            dict(x=0.835, y=1.00, xref="paper", yref="paper", text="<b>Probability</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
         )
 
         if show_loss:
             base_ann.append(
-                dict(x=0.92, y=0.77, xref="paper", yref="paper", text="<b>Cross-entropy</b>", showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=12, color="white"))
+                dict(x=-0.05, y=0.0, xref="x2 domain", yref="y2 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=12, color="white"))
             )
             
         return base_ann + metrics_annotations(t)
@@ -245,11 +260,9 @@ def build_multiclass_2d_logistic_figure(
                 mode="lines",
                 name="Log-loss",
                 line=loss_line_style(theme=theme),
-                legendgroup="loss",
-                showlegend=True,
+                showlegend=False,
             ),
-            row=1,
-            col=3,
+            row=2, col=2,
         )
 
     frames = []
@@ -294,8 +307,8 @@ def build_multiclass_2d_logistic_figure(
     fig.update_layout(
         **layout_kwargs,
         annotations=make_annotations(0),
-        legend=dict(orientation="v", **get_legend_props(x=1.02, y=0.85, yanchor="top", xanchor="left", theme=theme)),
-        legend2=dict(orientation="v", **get_legend_props(x=1.02, y=0.30, yanchor="top", xanchor="left", theme=theme)),
+        legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
+        legend2=dict(orientation="v", **get_legend_props(x=1.05, y=0.30, yanchor="top", xanchor="right", theme=theme)),
         scene=dict(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
@@ -310,11 +323,16 @@ def build_multiclass_2d_logistic_figure(
     # Ocultar ejes del primer subplot para dejar espacio puro al texto
     fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
     fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
+    if show_loss:
+        fig.update_xaxes(visible=False, row=2, col=1, range=[0, 1])
+        fig.update_yaxes(visible=False, row=2, col=1, range=[0, 1])
 
     if show_loss:
         fig.data[-1].update(legend="legend2")
-        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=3)
-        fig.update_yaxes(title="Log-loss", range=[lmin - lpad, lmax + lpad], domain=[0.25, 0.75], row=1, col=3)
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], domain=[0.60, 0.85], row=2, col=2)
+        fig.update_yaxes(range=[lmin - lpad, lmax + lpad], domain=[0.0, 0.25], row=2, col=2)
+        # Forzar que la escena 3D también aproveche el espacio superior y esté separada
+        fig.update_layout(scene=dict(domain=dict(x=[0.55, 1.0], y=[0.35, 1.0])))
 
     return fig
 

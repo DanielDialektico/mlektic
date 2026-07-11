@@ -137,13 +137,13 @@ def build_binary_simple_logistic_figure(
     step_axis = np.arange(steps_n)
 
     if show_loss:
-        theta_y = 1.18
+        theta_y = 1.25
         eq_y = 1.08
-        margin_t = 160
+        margin_t = 180
     else:
-        theta_y = 1.15
-        eq_y = 1.05
-        margin_t = 150
+        theta_y = 1.25
+        eq_y = 1.08
+        margin_t = 180
 
     def formula_annotation():
         return create_annotation(formula_text(), y=theta_y)
@@ -175,13 +175,13 @@ def build_binary_simple_logistic_figure(
             if metrics_hist is not None:
                 for i, (name, hist) in enumerate(metrics_hist.items()):
                     val = hist[t]
-                    y_pos = 0.95 - (i * 0.13)
-                    fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
+                    y_pos = 0.95 - (i * 0.18)
+                    fmt = ".6f" if name.lower() == "log-loss" else ".4f"
                     ann.append(dict(
                         x=0.98, y=y_pos, xref="paper", yref="paper", 
                         text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
-                        xanchor="right", yanchor="top", font=dict(size=14, color="black"), 
-                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=6
+                        xanchor="right", yanchor="top", font=dict(size=13, color="black"), 
+                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=5
                     ))
             return ann
 

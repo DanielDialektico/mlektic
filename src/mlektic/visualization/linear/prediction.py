@@ -219,7 +219,7 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
             font=dict(size=15, color=text_color),
         )
 
-    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
+    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
     def ann_slots(stage: int):
         v_body = "" if stage < 1 else vars_tex
@@ -364,7 +364,7 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
             font=dict(size=15, color=text_color),
         )
 
-    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
+    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
     def ann_slots(stage: int):
         v_body = "" if stage < 1 else vars_tex
@@ -449,7 +449,7 @@ def _matrix_compact(items, rows, cols, head_rows, tail_rows):
     return lines
 
 def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color):
-    if d <= 15:
+    if d <= 12:
         model_formula_tex = rf"$\hat{{y}}=\theta_0+\sum_{{j=1}}^{{{d}}}\theta_j x_j$"
         vars_lines = [rf"x_{{{j+1}}} = {_fmt(x_disp[j], dec)}" for j in range(d)]
         vars_tex = r"$\begin{aligned}" + r"\\ ".join([rf"&{ln}" for ln in vars_lines]) + r"\end{aligned}$"
@@ -459,7 +459,7 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
             subst_lines.append(rf"({_fmt(w_disp[j], dec)})\cdot({_fmt(x_disp[j], dec)})\;+")
         subst_lines.append(rf"({_fmt(b_disp, dec)})")
 
-        subst_tex = r"$\begin{aligned}" + r"\hat{y} = " + r"\\ ".join([rf"&\quad {ln}" for ln in subst_lines]) + r"\end{aligned}$"
+        subst_tex = r"$\begin{aligned}" + r"&\hat{y} = " + subst_lines[0] + r"\\ " + r"\\ ".join([rf"&\quad {ln}" for ln in subst_lines[1:]]) + r"\end{aligned}$"
         res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat, dec)}" + r"\end{aligned}$"
         vals = [_fmt(v, dec) for v in x_disp] + [_fmt(yhat, dec)]
         pairs = []
@@ -469,18 +469,19 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         rhs_lines = []
         for i, pair in enumerate(pairs):
             if i == 0:
-                line = rf"&= ({pair}" + ("," if len(pairs) > 1 else ")")
+                line = rf"&\quad ({pair}" + ("," if len(pairs) > 1 else ")")
             elif i == len(pairs) - 1:
-                line = rf"&\phantom{{= (}} {pair})"
+                line = rf"&\quad {pair})"
             else:
-                line = rf"&\phantom{{= (}} {pair},"
+                line = rf"&\quad {pair},"
             rhs_lines.append(line)
         
         rhs_tex = r" \\ ".join(rhs_lines)
         
         point_tex = (
             r"$\begin{aligned}"
-            rf"(x_1, x_2, \dots, \hat{{y}}) {rhs_tex}"
+            rf"&(x_1, x_2, \dots, \hat{{y}}) = \\"
+            rf"{rhs_tex}"
             r"\end{aligned}$"
         )
 
@@ -498,27 +499,30 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
             return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=rf"$\bf{{{tex_title}}}$", showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color=text_color))
         def paper_top_center(tex_body, y=1.05, size=18):
             return dict(x=0.5, y=y + DY, xref="paper", yref="paper", text=tex_body, showarrow=False, xanchor="center", yanchor="bottom", align="center", font=dict(size=size, color=text_color))
-        def body_annot(col, tex_body, y, size=15):
-            return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=size, color=text_color))
+        def body_annot(col, tex_body, y, size=15, align="center", x_pos=None):
+            if x_pos is None:
+                x_pos = 0.5 if align == "center" else 0.10
+            x_anch = "center" if align == "center" else "left"
+            return dict(x=x_pos, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor=x_anch, yanchor="top", align="left", font=dict(size=size, color=text_color))
         def block_rect(col, y0, y1):
             return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=0.02, x1=0.98, y0=y0, y1=y1 + DY, line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
 
         shapes = [block_rect(1, 0.02, 0.98), block_rect(2, 0.02, 0.98), block_rect(3, 0.02, 0.98)]
-        T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
+        T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
         def ann_slots(stage: int):
             ann = [paper_top_center(model_formula_tex, y=1.05, size=18)]
             ann.append(title_annot(1, T1, 0.96))
-            ann.append(body_annot(1, "" if stage < 1 else vars_tex, 0.90, size=15))
+            ann.append(body_annot(1, "" if stage < 1 else vars_tex, 0.90, size=15, align="center"))
             ann.append(title_annot(2, T2, 0.96))
-            ann.append(body_annot(2, "" if stage < 2 else subst_tex, 0.90, size=15))
+            ann.append(body_annot(2, "" if stage < 2 else subst_tex, 0.90, size=15, align="left", x_pos=0.15))
             ann.append(title_annot(3, T3, 0.96))
             if stage < 3:
-                ann.append(body_annot(3, "", 0.88, size=15))
-                ann.append(body_annot(3, "", 0.74, size=15))
+                ann.append(body_annot(3, "", 0.88, size=15, align="center"))
+                ann.append(body_annot(3, "", 0.74, size=15, align="left", x_pos=0.25))
             else:
-                ann.append(body_annot(3, res_yhat_tex, 0.88, size=15))
-                ann.append(body_annot(3, point_tex, 0.79, size=15))
+                ann.append(body_annot(3, res_yhat_tex, 0.88, size=15, align="center"))
+                ann.append(body_annot(3, point_tex, 0.79, size=15, align="left", x_pos=0.25))
             return ann
 
         slider_steps = []
@@ -543,17 +547,17 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         )
         return fig
 
-    # ---- MODE: d > 15 => matrix view ----
-    x_rows, x_force_1col = 15, _needs_single_col(x_disp, max_digits=5)
+    # ---- MODE: d > 12 => matrix view ----
+    x_rows, x_force_1col = 11, _needs_single_col(x_disp, max_digits=5)
     x_cols = 1 if x_force_1col else 3
     x_items = [rf"{_fmt(x_disp[j], dec)}" for j in range(d)]
-    x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 7, 7))
+    x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 5, 5))
     x_mat_tex = rf"$\mathbf{{x}}=\begin{{bmatrix}} {x_mat_inner} \end{{bmatrix}}$"
 
-    th_rows, th_force_1col = 13, _needs_single_col(w_disp, max_digits=5)
+    th_rows, th_force_1col = 9, _needs_single_col(w_disp, max_digits=5)
     th_cols = 1 if th_force_1col else 3
     th_items = [rf"{_fmt(w_disp[j], dec)}" for j in range(d)]
-    th_mat_inner = r" \\ ".join(_matrix_compact(th_items, th_rows, th_cols, 6, 6))
+    th_mat_inner = r" \\ ".join(_matrix_compact(th_items, th_rows, th_cols, 4, 4))
     th_mat_tex = rf"$\boldsymbol{{\theta}}=\begin{{bmatrix}} {th_mat_inner} \end{{bmatrix}}$"
 
     x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}\times {x_cols}}}$"
@@ -562,9 +566,21 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
     theta0_tex = rf"$\theta_0 = {_fmt(b_disp, dec)}$"
 
     model_formula_tex = r"$\hat{y}=\theta_0 + \operatorname{vec}(\boldsymbol{\theta})^\top\operatorname{vec}(\mathbf{x})$"
-    subst_eq_tex = r"$\begin{aligned}\hat{y} & = & " + rf"({_fmt(w_disp[0], dec)})\cdot({_fmt(x_disp[0], dec)})" + r" & + \cdots\\      &   &               & + (" + rf"{_fmt(b_disp, dec)}" + r")\end{aligned}$"
+    subst_eq_tex = (
+        r"$\begin{aligned}"
+        rf"&\hat{{y}} = ({_fmt(w_disp[0], dec)})\cdot({_fmt(x_disp[0], dec)}) \\"
+        rf"&\quad + ({_fmt(w_disp[1], dec)})\cdot({_fmt(x_disp[1], dec)}) + \cdots\\"
+        rf"&\quad + ({_fmt(b_disp, dec)})"
+        r"\end{aligned}$"
+    )
     res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat, dec)}" + r"\end{aligned}$"
-    point_tex = r"$\begin{aligned}" + rf"(x_1, \dots, \hat{{y}}) &= ({_fmt(x_disp[0], dec)}, \dots,\ " + r"\\" + r"&\qquad\qquad " + rf"{_fmt(yhat, dec)})" + r"\end{aligned}$"
+    point_tex = (
+        r"$\begin{aligned}"
+        rf"&(x_1, x_2, \dots, \hat{{y}}) = \\"
+        r"&\quad (" + rf"{_fmt(x_disp[0], dec)}, {_fmt(x_disp[1], dec)}, \dots," + r"\\"
+        r"&\quad " + rf"{_fmt(yhat, dec)})"
+        r"\end{aligned}$"
+    )
 
     fig = make_subplots(
         rows=1, cols=3, column_widths=[0.33, 0.34, 0.33],
@@ -582,13 +598,16 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="center", yanchor="bottom", align="center", font=dict(size=15, color=text_color))
     def paper_top_center(tex_body, y=1.05, size=18):
         return dict(x=0.5, y=y + DY, xref="paper", yref="paper", text=tex_body, showarrow=False, xanchor="center", yanchor="bottom", align="center", font=dict(size=size, color=text_color))
-    def body_annot(col, tex_body, y, size=15):
-        return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=size, color=text_color))
+    def body_annot(col, tex_body, y, size=15, align="center", x_pos=None):
+        if x_pos is None:
+            x_pos = 0.5 if align == "center" else 0.08
+        x_anch = "center" if align == "center" else "left"
+        return dict(x=x_pos, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor=x_anch, yanchor="top", align="left", font=dict(size=size, color=text_color))
     def block_rect(col, y0, y1):
         return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=0.02, x1=0.98, y0=y0, y1=y1 + DY, line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
 
     shapes = [block_rect(1, 0.02, 0.98), block_rect(2, 0.02, 0.98), block_rect(3, 0.02, 0.98)]
-    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
+    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
     def ann_slots(stage: int):
         ann = [paper_top_center(model_formula_tex, y=1.07, size=18)]
@@ -596,22 +615,22 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         ann.append(top_center_annot(2, th_dim_tex, 0.995))
         ann.append(top_center_annot(3, y_dim_tex, 0.995))
         ann.append(title_annot(1, T1, 0.96))
-        ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.88, size=14))
+        ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.88, size=14, align="left"))
         ann.append(title_annot(2, T2, 0.96))
         if stage < 2:
-            ann.append(body_annot(2, "", 0.88))
-            ann.append(body_annot(2, "", 0.38))
+            ann.append(body_annot(2, "", 0.88, align="center"))
+            ann.append(body_annot(2, "", 0.38, align="center"))
         else:
-            ann.append(body_annot(2, th_mat_tex, 0.90, size=14))
-            ann.append(body_annot(2, theta0_tex, 0.25, size=15))
-            ann.append(body_annot(2, subst_eq_tex, 0.20, size=15))
+            ann.append(body_annot(2, th_mat_tex, 0.90, size=14, align="left"))
+            ann.append(body_annot(2, theta0_tex, 0.35, size=15, align="center"))
+            ann.append(body_annot(2, subst_eq_tex, 0.27, size=15, align="center"))
         ann.append(title_annot(3, T3, 0.96))
         if stage < 3:
-            ann.append(body_annot(3, "", 0.88, size=15))
-            ann.append(body_annot(3, "", 0.74, size=15))
+            ann.append(body_annot(3, "", 0.88, size=15, align="center"))
+            ann.append(body_annot(3, "", 0.74, size=15, align="left", x_pos=0.25))
         else:
-            ann.append(body_annot(3, res_yhat_tex, 0.88, size=15))
-            ann.append(body_annot(3, point_tex, 0.79, size=15))
+            ann.append(body_annot(3, res_yhat_tex, 0.88, size=15, align="center"))
+            ann.append(body_annot(3, point_tex, 0.79, size=15, align="left", x_pos=0.25))
         return ann
 
     slider_steps = []

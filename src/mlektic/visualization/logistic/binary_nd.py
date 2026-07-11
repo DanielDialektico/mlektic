@@ -56,12 +56,12 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
         b = float(b_hist[t_idx])
         terms = [rf"({w[i]:.{dec}f})x_{{{i + 1}}}" for i in range(d)]
         chunks = [terms[i : i + terms_per_line] for i in range(0, len(terms), terms_per_line)]
-        lines = [r"z = " + " + ".join(chunks[0])]
+        lines = [r"&z = " + " + ".join(chunks[0])]
         for ch in chunks[1:]:
-            lines.append(r"\quad " + " + ".join(ch))
+            lines.append(r"&\quad + " + " + ".join(ch))
         lines[-1] = lines[-1] + rf" + ({b:.{dec}f})"
         body = r" \\ ".join(lines)
-        return r"$$\begin{aligned}" + body + r"\\[4pt]\hat{p}(y=1\mid \mathbf{x})=\dfrac{1}{1+e^{-z}}" + r"\end{aligned}$$"
+        return r"$$\begin{aligned}" + body + r"\\[4pt]&\hat{p}(y=1\mid \mathbf{x})=\dfrac{1}{1+e^{-z}}" + r"\end{aligned}$$"
 
     ann = [
         dict(
