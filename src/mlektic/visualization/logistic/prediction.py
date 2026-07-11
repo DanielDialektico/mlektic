@@ -70,7 +70,7 @@ def _explain_log_1d(
 
     fig = make_subplots(
         rows=1, cols=2,
-        column_widths=[0.45, 0.55],
+        column_widths=[0.48, 0.52],
         horizontal_spacing=0.10,
         specs=[[{"type": "xy"}, {"type": "xy"}]],
     )
@@ -137,7 +137,7 @@ def _explain_log_1d(
             fillcolor="rgba(220,220,220,0.10)", layer="below",
         )
     
-    shapes = [block_rect(0.68, 0.98), block_rect(0.30, 0.65), block_rect(0.02, 0.27)]
+    shapes = [block_rect(0.69, 0.98), block_rect(0.29, 0.67), block_rect(0.02, 0.27)]
 
     def title_annot(tex_title, y):
         return dict(
@@ -163,7 +163,7 @@ def _explain_log_1d(
         r_body = "" if stage < 3 else res_tex
         ann = [
             title_annot(T1, 0.96), body_annot(v_body, 0.89),
-            title_annot(T2, 0.63), body_annot(s_body, 0.59),
+            title_annot(T2, 0.65), body_annot(s_body, 0.61),
             title_annot(T3, 0.25), body_annot(r_body, 0.20),
         ]
         if stage == 3:
@@ -262,7 +262,7 @@ def _explain_log_2d(
     )
 
     fig = make_subplots(
-        rows=1, cols=2, column_widths=[0.55, 0.45],
+        rows=1, cols=2, column_widths=[0.64, 0.36],
         horizontal_spacing=0.08, specs=[[{"type": "xy"}, {"type": "scene"}]],
     )
     fig.update_xaxes(visible=False, range=[0, 1], row=1, col=1)
@@ -315,7 +315,7 @@ def _explain_log_2d(
             line=dict(width=1),
             fillcolor="rgba(220,220,220,0.10)", layer="below",
         )
-    shapes = [block_rect(0.68, 0.98), block_rect(0.30, 0.65), block_rect(0.02, 0.27)]
+    shapes = [block_rect(0.69, 0.98), block_rect(0.29, 0.67), block_rect(0.02, 0.27)]
 
     def title_annot(tex_title, y):
         return dict(
@@ -341,7 +341,7 @@ def _explain_log_2d(
         r_body = "" if stage < 3 else res_tex
         return [
             title_annot(T1, 0.96), body_annot(v_body, 0.89),
-            title_annot(T2, 0.63), body_annot(s_body, 0.59),
+            title_annot(T2, 0.65), body_annot(s_body, 0.61),
             title_annot(T3, 0.25), body_annot(r_body, 0.20),
         ]
 
@@ -456,15 +456,15 @@ def _explain_log_multiclass_1d(
     p_hat_max = float(np.max(p_hat))
     res_tex = (
         r"$\begin{aligned}"
-        rf"\max(\hat{{\mathbf{{p}}}}) &= {_fmt(p_hat_max, dec)} \\"
-        rf"\hat{{y}} &= \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
+        rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(p_hat_max, dec)} \\"
+        rf"&\hat{{y}} = \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
         r"\end{aligned}$"
     )
 
     fig = make_subplots(
         rows=3, cols=2,
-        row_heights=[0.16, 0.60, 0.24],
-        column_widths=[0.40, 0.60],
+        row_heights=[0.11, 0.71, 0.18],
+        column_widths=[0.55, 0.45],
         vertical_spacing=0.02, horizontal_spacing=0.05,
         specs=[
             [{"type": "xy"}, {"type": "xy", "rowspan": 3}],
@@ -479,7 +479,7 @@ def _explain_log_multiclass_1d(
         fig.update_yaxes(visible=False, row=(1 if idx==1 else 2 if idx==3 else 3), col=1)
         
     fig.update_xaxes(title="x₁", range=[x_min_plot, x_max_plot], row=1, col=2)
-    fig.update_yaxes(title="p(y=k|x)", range=[-0.05, 1.05], row=1, col=2)
+    fig.update_yaxes(title_text="p(y=k|x)", title_standoff=5, range=[-0.05, 1.05], row=1, col=2)
 
     fig.add_trace(go.Scatter(x=[], y=[], mode="lines", showlegend=False), row=1, col=2)
 
@@ -532,10 +532,10 @@ def _explain_log_multiclass_1d(
         elif idx == 3:
             y_pos = 0.91
         else:
-            y_pos = 0.74
+            y_pos = 0.75
         return dict(x=0.05, y=y_pos, xref=f"x{idx}", yref=f"y{idx}", text=tex_body, showarrow=False, xanchor="left", yanchor="top", align="center", font=dict(size=14, color=text_color))
 
-    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
+    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
     def ann_slots(stage: int):
         v_body = "" if stage < 1 else vars_tex
@@ -608,7 +608,7 @@ def _explain_log_multiclass_1d(
     ]
 
     layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
-    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
+    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=40)
 
     fig.update_layout(
         **layout_kwargs, shapes=shapes, annotations=ann_slots(0),
@@ -662,16 +662,16 @@ def _explain_log_multiclass_nd(
     p_hat_max = float(np.max(p_hat))
     res_tex = (
         r"$\begin{aligned}"
-        rf"\max(\hat{{\mathbf{{p}}}}) &= {_fmt(p_hat_max, dec)} \\"
-        rf"\hat{{y}} &= \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
+        rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(p_hat_max, dec)} \\"
+        rf"&\hat{{y}} = \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
         r"\end{aligned}$"
     )
     
     y_dim_tex = rf"$\hat{{\mathbf{{p}}}} \in \mathbb{{R}}^{{1 \times {K}}}$"
 
     fig = make_subplots(
-        rows=1, cols=3, column_widths=[0.26, 0.48, 0.26],
-        horizontal_spacing=0.04, specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
+        rows=1, cols=3, column_widths=[0.28, 0.50, 0.22],
+        horizontal_spacing=0.01, specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
     )
     for c in (1, 2, 3):
         fig.update_xaxes(visible=False, range=[0, 1], row=1, col=c)
@@ -688,27 +688,27 @@ def _explain_log_multiclass_nd(
     def body_annot(col, tex_body, y, size=15, x=0.06):
         return dict(x=x, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False, xanchor="left", yanchor="top", align="left", font=dict(size=size, color=text_color))
     def block_rect(col, y0, y1):
-        return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=0.02, x1=0.98, y0=y0, y1=y1 + DY, line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
+        return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=-0.02, x1=1.02, y0=0.00, y1=1.00 + DY, line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
 
     shapes = [block_rect(1, 0.02, 0.98), block_rect(2, 0.02, 0.98), block_rect(3, 0.02, 0.98)]
-    T1, T2, T3 = "Variables (Input)", "Substitution", "Result (Output)"
+    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
     def ann_slots(stage: int):
-        ann = [paper_top_center(model_formula_tex, y=1.07, size=18)]
-        ann.append(top_center_annot(1, x_dim_tex, 0.995))
-        ann.append(top_center_annot(3, y_dim_tex, 0.995))
+        ann = [paper_top_center(model_formula_tex, y=1.02, size=18)]
+        ann.append(top_center_annot(1, x_dim_tex, 1.02))
+        ann.append(top_center_annot(3, y_dim_tex, 1.02))
         
         ann.append(title_annot(1, T1, 0.96))
-        ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.88, size=14))
+        ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.89, size=14, x=0.03))
         
         ann.append(title_annot(2, T2, 0.96))
         ann.append(dict(x=0.5, y=0.90 + DY, xref="x2", yref="y2", text="" if stage < 2 else subst_tex, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=13, color=text_color)))
         
         ann.append(title_annot(3, T3, 0.96))
         if stage < 3:
-            ann.append(dict(x=0.5, y=0.85 + DY, xref="x3", yref="y3", text="", showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color=text_color)))
+            ann.append(dict(x=0.05, y=0.85 + DY, xref="x3", yref="y3", text="", showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color)))
         else:
-            ann.append(dict(x=0.5, y=0.85 + DY, xref="x3", yref="y3", text=res_tex, showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color=text_color)))
+            ann.append(dict(x=0.05, y=0.85 + DY, xref="x3", yref="y3", text=res_tex, showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color)))
         
         return ann
 
@@ -720,7 +720,7 @@ def _explain_log_multiclass_nd(
     ]
 
     layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
-    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
+    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=40)
 
     up_kwargs = dict(x=0.08, xanchor="left") if d >= 10 else {}
 

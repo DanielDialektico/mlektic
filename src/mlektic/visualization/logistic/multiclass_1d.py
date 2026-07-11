@@ -18,7 +18,7 @@ def _row1_formula_latex(K):
     return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}=\begin{{bmatrix}}x\\1\end{{bmatrix}}\in\mathbb{{R}}^{{2}},\quad \Theta\in\mathbb{{R}}^{{2\times {K}}}$$"
 
 def _row3_formula_latex(K):
-    return rf"$$\hat{{\mathbf{{p}}}}=\mathrm{{softmax}}(\mathbf{{z}}),\quad \mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;k=1,\dots,{K},\quad z_k(x)=\theta_{{1,k}}x+\theta_{{0,k}}$$"
+    return rf"$$\hat{{\mathbf{{p}}}} = \text{{softmax}}(\mathbf{{z}}), \quad \text{{softmax}}(\mathbf{{z}})_k = \frac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}} e^{{z_j}}}}, \quad k=1,\dots,{K}, \quad z_k(x) = \theta_{{1,k}} x + \theta_{{0,k}}$$"
 
 def _theta_matrix_latex_math_style(w_hist, b_hist, t, max_elems, dec):
     Theta = np.vstack([w_hist[t, 0], b_hist[t]])  # (2,K)
@@ -68,12 +68,12 @@ def _denom_three_terms_tex(Theta, K_local, dec):
     if K_local == 1:
         return rf"e^{{{z1}}}"
 
-    z2 = _z_numeric_expr_univar(Theta, 1, dec=dec)
     if K_local == 2:
+        z2 = _z_numeric_expr_univar(Theta, 1, dec=dec)
         return rf"e^{{{z1}}} + e^{{{z2}}}"
 
     zK = _z_numeric_expr_univar(Theta, K_local - 1, dec=dec)
-    return rf"e^{{{z1}}} + e^{{{z2}}} + \cdots + e^{{{zK}}}"
+    return rf"e^{{{z1}}} + \cdots + e^{{{zK}}}"
 
 def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec):
     Theta = np.vstack([w_hist[t, 0], b_hist[t]])
@@ -188,16 +188,19 @@ def build_multiclass_1d_logistic_figure(
         loss_hist = np.asarray(loss_hist, dtype=float).ravel()
         if loss_hist.size != steps_n:
             raise ValueError("loss_hist must match steps.")
-        cols = 3
-        column_widths = [0.60, 0.22, 0.18]
-        specs = [[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]]
-        X_TEXT = 0.20
-        X_VDOTS = 0.28
+    if show_loss:
+        cols = 2
+        rows = 2
+        column_widths = [0.68, 0.32]
+        specs = [[{"type": "xy"}, {"type": "xy"}], [{"type": "xy"}, {"type": "xy"}]]
+        X_TEXT = 0.27
+        X_VDOTS = 0.32
     else:
         cols = 2
-        column_widths = [0.72, 0.28]
+        rows = 1
+        column_widths = [0.68, 0.32]
         specs = [[{"type": "xy"}, {"type": "xy"}]]
-        X_TEXT = 0.24
+        X_TEXT = 0.27
         X_VDOTS = 0.32
 
     ep = np.arange(steps_n)
@@ -205,12 +208,17 @@ def build_multiclass_1d_logistic_figure(
     if show_loss:
         loss_hist_list = loss_hist.tolist()
 
-    fig = make_subplots(
-        rows=1, cols=cols,
+    kwargs_subplots = dict(
+        rows=rows, cols=cols,
         column_widths=column_widths,
         horizontal_spacing=0.06,
         specs=specs,
     )
+    if show_loss:
+        kwargs_subplots["row_heights"] = [0.55, 0.45]
+        kwargs_subplots["vertical_spacing"] = 0.12
+
+    fig = make_subplots(**kwargs_subplots)
 
     Pg0 = p_curves(0)
     for k in range(K):
@@ -237,42 +245,41 @@ def build_multiclass_1d_logistic_figure(
                 legendgroup="loss",
                 showlegend=True,
             ),
-            row=1, col=3,
+            row=2, col=2,
         )
 
     def metrics_annotations(t):
-        ann = []
-        if metrics_hist is not None:
-            for i, (name, hist) in enumerate(metrics_hist.items()):
-                val = hist[t]
-                y_pos = 0.83 - (i * 0.14) if show_loss else 0.83 - (i * 0.14)
-                fmt = ".6f" if name.lower() == "log-loss" or name.lower() == "loss" else ".4f"
-                ann.append(dict(
-                    x=0.98 if show_loss else 0.86, y=y_pos, xref="paper", yref="paper", 
-                    text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
-                    xanchor="right" if show_loss else "center", yanchor="top" if show_loss else "bottom", font=dict(size=14, color="black"), 
-                    bgcolor="white", bordercolor="black", borderwidth=1, borderpad=6
-                ))
-        return ann
+        if metrics_hist is None: return []
+        lines = []
+        items = list(metrics_hist.items())[:3]
+        for name, hist in items:
+            fmt = ".6f" if name.lower() in ("log-loss", "loss") else ".4f"
+            lines.append(f"<b>{name}</b>: {hist[t]:{fmt}}")
+        
+        return [dict(
+            x=1.05, y=1.05, xref="paper", yref="y2 domain",
+            text="    |    ".join(lines), showarrow=False,
+            xanchor="right", yanchor="bottom", font=dict(size=12, color="black"),
+            bgcolor="rgba(255, 255, 255, 0.8)", bordercolor="black", borderwidth=1, borderpad=5
+        )]
 
     def make_annotations(t):
         base_ann = [
-            dict(x=X_TEXT, y=0.96, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.80, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=20, color="white")),
-            dict(x=X_TEXT, y=0.64, xref="paper", yref="paper", text=_row3_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-            dict(x=X_TEXT, y=0.36, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
-            dict(x=X_VDOTS, y=0.195, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
-            dict(x=X_TEXT, y=0.08, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=1.08, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=0.48, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
+            dict(x=X_VDOTS, y=0.15, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
+            dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
         ]
         
-        prob_title_x = 0.685 if show_loss else 0.86
         base_ann.append(
-            dict(x=prob_title_x, y=0.88, xref="paper", yref="paper", text="<b>Probability</b>", showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white"))
+            dict(x=0.5, y=0.98, xref="x2 domain", yref="y2 domain", text="<b>Probability</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
         )
 
         if show_loss:
             base_ann.append(
-                dict(x=0.92, y=0.88, xref="paper", yref="paper", text="<b>Cross-entropy</b>", showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white"))
+                dict(x=0.5, y=0.98, xref="x4 domain", yref="y4 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
             )
             
         return base_ann + metrics_annotations(t)
@@ -311,8 +318,8 @@ def build_multiclass_1d_logistic_figure(
     if show_loss:
         fig.update_layout(
             **layout_kwargs,
-            legend=dict(orientation="v", **get_legend_props(x=1.02, y=0.85, yanchor="top", xanchor="left", theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=1.02, y=0.30, yanchor="top", xanchor="left", theme=theme)),
+            legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=1.05, y=0.30, yanchor="top", xanchor="right", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, theme=theme),
             annotations=make_annotations(0),
@@ -321,7 +328,7 @@ def build_multiclass_1d_logistic_figure(
     else:
         fig.update_layout(
             **layout_kwargs,
-            legend=dict(orientation="v", **get_legend_props(x=1.02, y=0.85, yanchor="top", xanchor="left", theme=theme)),
+            legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, theme=theme),
             annotations=make_annotations(0),
@@ -329,12 +336,18 @@ def build_multiclass_1d_logistic_figure(
 
     fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
     fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
-    fig.update_xaxes(title=r"$x$", row=1, col=2)
-    fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
+    if show_loss:
+        fig.update_xaxes(visible=False, row=2, col=1, range=[0, 1])
+        fig.update_yaxes(visible=False, row=2, col=1, range=[0, 1])
+
+    fig.update_xaxes(title=r"$x$$", row=1, col=2)
     
     if show_loss:
-        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=3)
-        fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], domain=[0.15, 0.85], row=1, col=3)
+        fig.update_yaxes(range=[-0.02, 1.02], row=1, col=2)
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=2, col=2)
+        fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], row=2, col=2)
+    else:
+        fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
         
     return fig
 

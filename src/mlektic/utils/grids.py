@@ -10,7 +10,7 @@ def build_1d_grid(X, grid_size: int = 300):
     return np.linspace(x_min, x_max, int(grid_size))
 
 
-def build_2d_grid(X, grid_size: int = 40):
+def build_2d_grid(X, grid_size: int = 30):
     """Build a 2D meshgrid based on X[:, 0] and X[:, 1]."""
     x1 = X[:, 0]
     x2 = X[:, 1]

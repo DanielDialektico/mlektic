@@ -14,6 +14,8 @@ class LinearHistoryConfig:
     baseline: str = "mean"
     display_space: str = "original"
     metrics: dict | None = None
+    max_frames: int | None = 60
+    frame_step: int | None = 10
 
 
 @dataclass(frozen=True)
@@ -28,3 +30,5 @@ class LogisticHistoryConfig:
     baseline: str = "prior"
     display_space: str = "original"
     metrics: dict | None = None
+    max_frames: int | None = 60
+    frame_step: int | None = 10

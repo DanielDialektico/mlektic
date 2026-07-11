@@ -177,40 +177,25 @@ def build_multiclass_multivar_logistic_figure(
         terms.append(rf"\left({num(Theta[d_local, class_idx])}\right)")
         return r" + ".join(terms)
 
-    def final_prob_symbolic_latex(t):
-        Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
-        K_local = Theta.shape[1]
-        return (
-            r"$$"
-            r"\begin{aligned}"
-            + rf"\hat{{p}}(y=1\mid \mathbf{{x}}) &= \frac{{e^{{z_1(\mathbf{{x}})}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(\mathbf{{x}})}}}}"
-            r"\end{aligned}"
-            r"$$"
-        )
-
-    def final_prob_numeric_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec):
+    def final_prob_top_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec):
         Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
         D, K_local = Theta.shape
         d_local = D - 1
-
         k = int(class_k)
         k = max(0, min(k, K_local - 1))
-
         z_k = z_numeric_expr(Theta, k, d_local, max_feat=max_feat, dec=dec)
         num_tex = rf"e^{{{z_k}}}"
-
         z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
-        z_last = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
-
+        z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
         if K_local == 1:
             denom_tex = rf"e^{{{z_first}}}"
         else:
-            denom_tex = rf"e^{{{z_first}}} + \cdots + e^{{{z_last}}}"
-
+            denom_tex = rf"e^{{{z_first}}} + \cdots + e^{{{z_last_expr}}}"
         return (
             r"$$"
             r"\begin{aligned}"
-            + rf"\phantom{{\hat{{p}}(y=1\mid \mathbf{{x}})}} &= \frac{{{num_tex}}}{{{denom_tex}}}"
+            + rf"\hat{{p}}(y=1\mid \mathbf{{x}}) &= \frac{{e^{{z_1(\mathbf{{x}})}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(\mathbf{{x}})}}}} \\[7pt]"
+            + rf"&= \frac{{{num_tex}}}{{{denom_tex}}}"
             r"\end{aligned}"
             r"$$"
         )
@@ -218,24 +203,21 @@ def build_multiclass_multivar_logistic_figure(
     def vertical_dots_latex():
         return r"$$\vdots$$"
 
-    def last_class_tail_latex(t, max_feat=max_features_in_z, dec=dec):
+    def final_prob_bottom_latex(t, max_feat=max_features_in_z, dec=dec):
         Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
         D, K_local = Theta.shape
         d_local = D - 1
-
-        last_idx = K_local - 1
-        z_last = z_numeric_expr(Theta, last_idx, d_local, max_feat=max_feat, dec=dec)
-        num_tex = rf"e^{{{z_last}}}"
-
         z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
+        z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
+        num_tex_last = rf"e^{{{z_last_expr}}}"
         if K_local == 1:
             denom_tex = rf"e^{{{z_first}}}"
         else:
-            denom_tex = rf"e^{{{z_first}}} + \cdots + e^{{{z_last}}}"
-
+            denom_tex = rf"e^{{{z_first}}} + \cdots + e^{{{z_last_expr}}}"
         return (
             r"$$"
-            r"\begin{aligned}" + rf"\hat{{p}}(y={K_local}\mid \mathbf{{x}}) &= \frac{{{num_tex}}}{{{denom_tex}}}"
+            r"\begin{aligned}"
+            + rf"\hat{{p}}(y={K_local}\mid \mathbf{{x}}) &= \frac{{{num_tex_last}}}{{{denom_tex}}}"
             r"\end{aligned}"
             r"$$"
         )
@@ -243,7 +225,7 @@ def build_multiclass_multivar_logistic_figure(
     fig = make_subplots(
         rows=1,
         cols=2,
-        column_widths=[0.70, 0.30],
+        column_widths=[0.75, 0.25],
         horizontal_spacing=0.06,
         specs=[[{"type": "xy"}, {"type": "xy"}]],
     )
@@ -263,7 +245,7 @@ def build_multiclass_multivar_logistic_figure(
         ann = [
             dict(
                 x=0.275,
-                y=0.99,
+                y=1.12,
                 xref="paper",
                 yref="paper",
                 text=row1_formula_latex(),
@@ -273,63 +255,52 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=18, color="white"),
             ),
             dict(
-                x=0.075,
-                y=0.73,
+                x=0.001,
+                y=0.80,
                 xref="paper",
                 yref="paper",
                 text=x_vector_latex_capped(d, max_rows=7, max_cols=4),
                 showarrow=False,
-                xanchor="center",
+                xanchor="left",
                 yanchor="middle",
                 font=dict(size=16, color="white"),
             ),
             dict(
-                x=0.375,
-                y=0.73,
+                x=0.24,
+                y=0.80,
                 xref="paper",
                 yref="paper",
                 text=Theta_matrix_latex_capped(t, max_rows=7, max_cols=6, dec=dec),
                 showarrow=False,
-                xanchor="center",
+                xanchor="left",
                 yanchor="middle",
                 font=dict(size=16, color="white"),
             ),
             dict(
-                x=0.275,
+                x=0.01,
                 y=0.48,
                 xref="paper",
                 yref="paper",
                 text=row3_formula_latex(),
                 showarrow=False,
-                xanchor="center",
+                xanchor="left",
                 yanchor="top",
-                font=dict(size=18, color="white"),
+                font=dict(size=14, color="white"),
             ),
             dict(
-                x=0.035,
-                y=0.34,
+                x=0.01,
+                y=0.36,
                 xref="paper",
                 yref="paper",
-                text=final_prob_symbolic_latex(t),
+                text=final_prob_top_latex(t),
                 showarrow=False,
-                xanchor="center",
-                yanchor="middle",
-                font=dict(size=16, color="white"),
+                xanchor="left",
+                yanchor="top",
+                font=dict(size=13, color="white"),
             ),
             dict(
-                x=0.198,
-                y=0.25,
-                xref="paper",
-                yref="paper",
-                text=final_prob_numeric_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec),
-                showarrow=False,
-                xanchor="center",
-                yanchor="middle",
-                font=dict(size=16, color="white"),
-            ),
-            dict(
-                x=0.305,
-                y=0.17,
+                x=0.37,
+                y=0.05,
                 xref="paper",
                 yref="paper",
                 text=vertical_dots_latex(),
@@ -339,15 +310,15 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=22, color="white"),
             ),
             dict(
-                x=0.226,
-                y=0.09,
+                x=0.01,
+                y=-0.12,
                 xref="paper",
                 yref="paper",
-                text=last_class_tail_latex(t, max_feat=max_features_in_z, dec=dec),
+                text=final_prob_bottom_latex(t, max_feat=max_features_in_z, dec=dec),
                 showarrow=False,
-                xanchor="center",
-                yanchor="middle",
-                font=dict(size=16, color="white"),
+                xanchor="left",
+                yanchor="bottom",
+                font=dict(size=13, color="white"),
             ),
         ]
 
@@ -367,11 +338,11 @@ def build_multiclass_multivar_logistic_figure(
                             showarrow=False,
                             xanchor="right",
                             yanchor="top",
-                            font=dict(size=14, color="black"),
+                            font=dict(size=11, color="black"),
                             bgcolor="white",
                             bordercolor="black",
                             borderwidth=1,
-                            borderpad=6,
+                            borderpad=4,
                         )
                     )
             else:
@@ -385,11 +356,11 @@ def build_multiclass_multivar_logistic_figure(
                         showarrow=False,
                         xanchor="right",
                         yanchor="top",
-                        font=dict(size=14, color="black"),
+                        font=dict(size=11, color="black"),
                         bgcolor="white",
                         bordercolor="black",
                         borderwidth=1,
-                        borderpad=6,
+                        borderpad=4,
                     )
                 )
             ann.append(

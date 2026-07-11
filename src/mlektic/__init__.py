@@ -19,6 +19,9 @@ from .logistic import (
     fit_history_logistic,
     visualize_logistic,
 )
+from .api.optimize import (
+    show_optimized,
+)
 
 __all__ = [
     "fit_history",
@@ -37,4 +40,5 @@ __all__ = [
     "build_multiclass_1d_logistic_figure",
     "build_multiclass_multivar_logistic_figure",
     "explain_logistic_prediction",
+    "show_optimized",
 ]

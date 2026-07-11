@@ -26,22 +26,22 @@ def _needs_single_col(values, max_digits=5):
 def _theta_is_big_for_t(w_hist, t, max_digits=5):
     return _needs_single_col(w_hist[t], max_digits=max_digits)
 
-def _metric_box(title, val, y_pos, fmt="6f"):
+def _metric_box(title, val, x_pos, y_pos, fmt="6f"):
     return dict(
-        x=0.33, y=y_pos, xref="paper", yref="paper",
+        x=x_pos, y=y_pos, xref="paper", yref="paper",
         text=f"<b>{title}</b><br>{val:{fmt}}",
-        showarrow=False, xanchor="left", yanchor="top",
-        font=dict(size=16, color="black"), bgcolor="white",
-        bordercolor="black", borderwidth=1, borderpad=8,
+        showarrow=False, xanchor="right", yanchor="bottom",
+        font=dict(size=13, color="black"), bgcolor="white",
+        bordercolor="black", borderwidth=1, borderpad=5,
     )
 
-def _metric_box_matrix(title, val, y_pos, fmt="6f"):
+def _metric_box_matrix(title, val, x_pos, y_pos, fmt="6f"):
     return dict(
-        x=0.25, y=y_pos, xref="paper", yref="paper",
+        x=x_pos, y=y_pos, xref="paper", yref="paper",
         text=f"<b>{title}</b><br>{val:{fmt}}",
-        showarrow=False, xanchor="left", yanchor="top",
-        font=dict(size=16, color="black"), bgcolor="white",
-        bordercolor="black", borderwidth=1, borderpad=8,
+        showarrow=False, xanchor="right", yanchor="bottom",
+        font=dict(size=13, color="black"), bgcolor="white",
+        bordercolor="black", borderwidth=1, borderpad=5,
     )
 
 def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_loss, metrics_hist):
@@ -53,23 +53,24 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
         b = float(b_hist[t_idx])
         terms = [rf"({w[i]:.{dec}f})x_{{{i + 1}}}" for i in range(d)]
         chunks = [terms[i : i + terms_per_line] for i in range(0, len(terms), terms_per_line)]
-        lines = [r"\hat{y} = " + " + ".join(chunks[0])]
+        lines = [r"&\hat{y} = " + " + ".join(chunks[0])]
         for ch in chunks[1:]:
-            lines.append(r"\quad " + " + ".join(ch))
+            lines.append(r"&\quad + " + " + ".join(ch))
         lines[-1] = lines[-1] + rf" + ({b:.{dec}f})"
         body = r" \\ ".join(lines)
         return r"$$\begin{aligned}" + body + r"\end{aligned}$$"
 
     ann = [
-        create_annotation(model_header_latex(), x=0.68, y=0.93, size=22, yanchor="top"),
-        create_annotation(full_scalar_model_multiline_latex(t), x=0.68, y=0.78, size=17, yanchor="top"),
+        create_annotation(model_header_latex(), x=0.02, y=0.93, size=22, yanchor="top", xanchor="left"),
+        create_annotation(full_scalar_model_multiline_latex(t), x=0.02, y=0.78, size=17, yanchor="top", xanchor="left"),
     ]
 
     if show_loss and metrics_hist is not None:
         for i, (name, hist) in enumerate(metrics_hist.items()):
-            y_pos = 0.94 - (i * 0.13)
+            x_pos = 0.98 - (i * 0.08)
+            y_pos = 0.69
             fmt = ".6f" if name.lower() == "loss" else ".4f"
-            ann.append(_metric_box(name, hist[t], y_pos, fmt))
+            ann.append(_metric_box(name, hist[t], x_pos, y_pos, fmt))
     return ann
 
 def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, show_loss, metrics_hist):
@@ -171,22 +172,22 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
         return r"$$\hat{y} = " + rf"({w[0]:.{dec}f})x_1 " + rf"+ ({w[1]:.{dec}f})x_2 " + rf"+ ({w[2]:.{dec}f})x_3 " + rf"+ ({w[3]:.{dec}f})x_4 " + rf"+ \cdots + ({w[last - 1]:.{dec}f})x_{{{last}}} " + rf"+ ({b:.{dec}f}) $$"
 
     ann = [
-        create_annotation(model_formula_latex(), x=0.68, y=0.995, size=22, yanchor="top"),
-        create_annotation(bias_latex(t), x=0.68, y=0.938, size=18, yanchor="top"),
-        create_annotation(x_dim_latex(), x=0.55, y=0.83, size=14, yanchor="bottom"),
-        create_annotation(theta_dim_latex(), x=0.83, y=0.83, size=14, yanchor="bottom"),
-        create_annotation(x_vector_latex(), x=0.52, y=0.48, size=15, yanchor="middle"),
-        create_annotation(w_matrix_latex(t), x=0.80, y=0.48, size=15, yanchor="middle"),
-        create_annotation(scalar_model_compact_latex(t), x=0.71, y=0.01, size=16, yanchor="middle"),
+        create_annotation(model_formula_latex(), x=0.02, y=0.995, size=22, yanchor="top", xanchor="left"),
+        create_annotation(bias_latex(t), x=0.02, y=0.938, size=18, yanchor="top", xanchor="left"),
+        create_annotation(x_dim_latex(), x=0.02, y=0.83, size=14, yanchor="bottom", xanchor="left"),
+        create_annotation(theta_dim_latex(), x=0.30, y=0.83, size=14, yanchor="bottom", xanchor="left"),
+        create_annotation(x_vector_latex(), x=0.02, y=0.48, size=15, yanchor="middle", xanchor="left"),
+        create_annotation(w_matrix_latex(t), x=0.30, y=0.48, size=15, yanchor="middle", xanchor="left"),
+        create_annotation(scalar_model_compact_latex(t), x=0.02, y=0.01, size=16, yanchor="middle", xanchor="left"),
     ]
 
     if show_loss:
-        y_loss = 0.98 if th_cols == 1 else 0.86
         if metrics_hist is not None:
             for i, (name, hist) in enumerate(metrics_hist.items()):
-                y_p = y_loss - (i * 0.13)
+                x_pos = 0.98 - (i * 0.08)
+                y_pos = 0.69
                 fmt = ".6f" if name.lower() == "loss" else ".4f"
-                ann.append(_metric_box_matrix(name, hist[t], y_p, fmt))
+                ann.append(_metric_box_matrix(name, hist[t], x_pos, y_pos, fmt))
     return ann
 
 def build_multivar_lr_figure(
@@ -201,7 +202,7 @@ def build_multivar_lr_figure(
     history_kind="iterative",
     title=None,
     strict_loss=False,
-    terms_per_line=6,
+    terms_per_line=5,
     dec=4,
     frame_duration=80,
     threshold_dense=100,
@@ -289,8 +290,8 @@ def build_multivar_lr_figure(
     fig = make_subplots(
         rows=1,
         cols=2,
-        column_widths=[0.42, 0.58],
-        horizontal_spacing=0.06,
+        column_widths=[0.75, 0.25],
+        horizontal_spacing=0.04,
         specs=[[{"type": "xy"}, {"type": "xy"}]],
     )
 
@@ -304,7 +305,7 @@ def build_multivar_lr_figure(
             uid="LOSS_LINE",
         ),
         row=1,
-        col=1,
+        col=2,
     )
 
     frames = []
@@ -333,20 +334,20 @@ def build_multivar_lr_figure(
     fig.update_layout(
         **get_base_layout(title=title, margin_t=110, height=760, theme=theme),
         showlegend=True,
-        legend=dict(x=0.40, y=0.01, xanchor="right", yanchor="bottom"),
+        legend=dict(x=0.90, y=0.15, xanchor="center", yanchor="top"),
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, y=updatemenus_y, theme=theme),
         annotations=_get_ann(0),
     )
 
-    fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=1)
+    fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
     if show_loss:
-        fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], row=1, col=1)
+        fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], domain=[0.25, 0.65], row=1, col=2)
     else:
-        fig.update_yaxes(title="Loss", row=1, col=1)
+        fig.update_yaxes(title="Loss", domain=[0.25, 0.65], row=1, col=2)
 
-    fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
-    fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
+    fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+    fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
 
     return fig
 

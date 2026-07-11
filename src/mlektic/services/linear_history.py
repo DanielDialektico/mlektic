@@ -16,7 +16,9 @@ def fit_history(
     grid_2d_points=40,
     baseline="mean",
     display_space="original",
-    metrics=None
+    metrics=None,
+    max_frames=60,
+    frame_step=10,
 ) -> dict:
     """Capture linear history."""
     config = LinearHistoryConfig(
@@ -28,7 +30,9 @@ def fit_history(
         grid_2d_points=grid_2d_points,
         baseline=baseline,
         display_space=display_space,
-        metrics=metrics
+        metrics=metrics,
+        max_frames=max_frames,
+        frame_step=frame_step,
     )
     engine = HistoryEngine(trained_estimator)
     return engine.capture_linear(X, y, config)
@@ -46,7 +50,9 @@ def fit_history_logistic(
     grid_2d_points=40,
     baseline="prior",
     display_space="original",
-    metrics=None
+    metrics=None,
+    max_frames=60,
+    frame_step=10,
 ) -> dict:
     """Capture logistic history."""
     config = LogisticHistoryConfig(
@@ -58,7 +64,9 @@ def fit_history_logistic(
         grid_2d_points=grid_2d_points,
         baseline=baseline,
         display_space=display_space,
-        metrics=metrics
+        metrics=metrics,
+        max_frames=max_frames,
+        frame_step=frame_step,
     )
     engine = HistoryEngine(trained_estimator)
     return engine.capture_logistic(X, y, config)

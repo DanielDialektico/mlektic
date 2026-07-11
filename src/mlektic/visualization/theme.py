@@ -60,7 +60,8 @@ def _resolve(theme: str | None = None) -> Dict[str, Any]:
 
 def get_base_layout(
     title: str,
-    height: int = 720,
+    height: int = 600,
+    width: int = 1100,
     margin_t: int = 150,
     *,
     theme: str | None = None,
@@ -70,6 +71,8 @@ def get_base_layout(
     layout = dict(
         template=p["template"],
         height=height,
+        width=width,
+        autosize=False,
         font=dict(family=p["font_family"], color=p["text"]),
         title=dict(
             text=title,
