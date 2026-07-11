@@ -2,6 +2,13 @@
 Arquitectura del Proyecto
 ==========================
 
+La integracion PyTorch vive en dos paquetes independientes del flujo Scikit-Learn:
+``neural/`` contiene introspeccion y ``TorchTrainingRecorder``; ``visualization/neural/``
+contiene los builders de arquitectura, entrenamiento y matematicas por capa. PyTorch
+se importa solo al invocar estas funciones, por lo que sigue siendo una dependencia
+opcional. Esta separacion permite sumar CNNs o grafos FX sin cambiar los contratos de
+historial de las regresiones existentes.
+
 Mlektic sigue una **arquitectura hexagonal** (Ports & Adapters) simplificada, organizada
 en capas con responsabilidades claras.
 

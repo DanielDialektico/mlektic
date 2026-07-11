@@ -1,5 +1,64 @@
 # Mlektic
 
+## PyTorch neural networks
+
+Install the optional PyTorch integration only in environments that need it:
+
+```bash
+pip install "mlektic[torch]"
+```
+
+The neural API is designed for notebooks and Colab. It combines a layer graph,
+animated training dynamics, and an exact forward-pass explanation for small MLPs.
+
+```python
+import torch
+from mlektic import (
+    TorchTrainingRecorder,
+    explain_nn_prediction,
+    visualize_nn,
+    visualize_nn_training,
+    visualize_nn_weights,
+)
+
+torch.manual_seed(7)
+X = torch.tensor([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+y = torch.tensor([[0.], [1.], [1.], [0.]])
+
+model = torch.nn.Sequential(
+    torch.nn.Linear(2, 4),
+    torch.nn.Tanh(),
+    torch.nn.Linear(4, 1),
+    torch.nn.Sigmoid(),
+)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.08)
+loss_fn = torch.nn.BCELoss()
+recorder = TorchTrainingRecorder(model, record_every=2)
+
+for step in range(80):
+    optimizer.zero_grad()
+    prediction = model(X)
+    loss = loss_fn(prediction, y)
+    loss.backward()
+    recorder.record(step, loss=loss)  # After backward, before optimizer.step.
+    optimizer.step()
+
+recorder.close()
+history = recorder.to_history()
+
+visualize_nn(model, X[:1], view="architecture").show()
+visualize_nn_training(history, frame_duration=90).show()
+visualize_nn_weights(history, parameter="0.weight", frame_duration=90).show()
+explain_nn_prediction(model, X[0], max_neurons_math=8).show()
+```
+
+For small networks, `explain_nn_prediction` substitutes actual values in each
+`z = Wa + b` computation and then applies the activation. For larger networks,
+use the architecture graph, weight heatmaps, parameter norms, and activation
+statistics instead. `TorchTrainingRecorder` stores full tensors only when they
+have at most `max_tensor_elements` values (4096 by default), keeping large runs
+practical inside a notebook.
+
 **Mlektic** es una librería de Python diseñada para demostrar visual y matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas por `plotly`, creadas específicamente para entender las tripas de los algoritmos de Scikit-Learn.
 
 ---

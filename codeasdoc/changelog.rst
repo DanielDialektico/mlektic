@@ -10,6 +10,11 @@ Primera versión de la librería.
 Funcionalidades
 ----------------
 
+- **Redes Neuronales PyTorch**: soporte opcional mediante ``mlektic[torch]`` con
+  ``TorchTrainingRecorder``, diagramas de arquitectura, animaciones de entrenamiento
+  y pesos, estadisticas de activacion y explicacion matematica de forward passes
+  para MLPs pequenos.
+
 - **Regresión Lineal**: Soporte completo para ``visualize_lr()`` con:
   - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.
   - Renderizado 3D (2 variables): plano predictivo animado.

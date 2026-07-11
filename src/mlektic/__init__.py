@@ -1,5 +1,12 @@
 """Mlektic public package exports."""
 
+from .api.neural import (
+    TorchTrainingRecorder,
+    explain_nn_prediction,
+    visualize_nn,
+    visualize_nn_training,
+    visualize_nn_weights,
+)
 from .api.optimize import (
     show_optimized,
 )
@@ -42,4 +49,9 @@ __all__ = [
     "build_multiclass_multivar_logistic_figure",
     "explain_logistic_prediction",
     "show_optimized",
+    "TorchTrainingRecorder",
+    "visualize_nn",
+    "visualize_nn_training",
+    "visualize_nn_weights",
+    "explain_nn_prediction",
 ]
