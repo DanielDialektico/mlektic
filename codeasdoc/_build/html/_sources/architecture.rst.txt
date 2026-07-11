@@ -144,7 +144,31 @@ Responsable de traducir el historial capturado en figuras Plotly animadas.
   - ``binary_2d.py`` → Clasificación binaria 2D: superficie de probabilidad 3D.
   - ``binary_nd.py`` → Clasificación binaria d > 2: matriz LaTeX de pesos.
   - ``multiclass_1d.py`` → Multiclase 1D: curvas de probabilidad por clase.
+  - ``multiclass_2d.py`` → Multiclase 2D: superficies Softmax superpuestas.
   - ``multiclass_nd.py`` → Multiclase d > 2: matriz de pesos multiclase.
+
+
+Escalabilidad hacia Nuevos Modelos
+===================================
+
+La frontera de extensión principal es ``BaseModelAdapter``. La API pública y
+los builders de visualización no dependen directamente de Scikit-Learn; dependen
+del contrato del adapter y del payload de historial.
+
+Para añadir nuevas familias de modelos, por ejemplo PyTorch, Keras, XGBoost o
+capas de redes neuronales artificiales, el nuevo adapter debe implementar:
+
+- ``predict()`` y, para clasificación, ``predict_proba()``.
+- Extracción de parámetros cuando exista una forma interpretable para la figura.
+- ``fit()`` / ``partial_fit()`` o una estrategia de replay equivalente.
+- Transformación de features y metadatos de escalado cuando el modelo use
+  preprocesamiento externo.
+
+El ``HistoryEngine`` orquesta captura, métricas, suavizado, rescalado y
+decimación temporal. Las estrategias de captura producen historiales con una
+forma común, y los routers de visualización eligen el builder por dimensión y
+tipo de tarea. Este diseño permite sumar nuevos modelos sin duplicar la lógica
+de métricas ni las figuras por dimensión.
 
 
 Módulo ``_internal/``

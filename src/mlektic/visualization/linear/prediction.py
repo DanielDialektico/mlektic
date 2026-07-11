@@ -3,13 +3,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ..theme import (
-    get_base_layout,
+    _resolve,
+    data_3d_marker_style,
     data_marker_style,
+    get_base_layout,
     model_line_style,
     surface_style,
-    data_3d_marker_style,
-    _resolve,
 )
+
 
 def _fmt(val, dec=4):
     s = f"{float(val):.{dec}f}"
@@ -256,7 +257,7 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
 
     layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
     layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
-    
+
     fig.update_layout(
         **layout_kwargs,
         shapes=shapes,
@@ -465,7 +466,7 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         pairs = []
         for i in range(0, len(vals), 2):
             pairs.append(", ".join(vals[i:i+2]))
-        
+
         rhs_lines = []
         for i, pair in enumerate(pairs):
             if i == 0:
@@ -475,9 +476,9 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
             else:
                 line = rf"&\quad {pair},"
             rhs_lines.append(line)
-        
+
         rhs_tex = r" \\ ".join(rhs_lines)
-        
+
         point_tex = (
             r"$\begin{aligned}"
             rf"&(x_1, x_2, \dots, \hat{{y}}) = \\"
@@ -576,7 +577,7 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
     res_yhat_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {_fmt(yhat, dec)}" + r"\end{aligned}$"
     point_tex = (
         r"$\begin{aligned}"
-        rf"&(x_1, x_2, \dots, \hat{{y}}) = \\"
+        r"&(x_1, x_2, \dots, \hat{y}) = \\"
         r"&\quad (" + rf"{_fmt(x_disp[0], dec)}, {_fmt(x_disp[1], dec)}, \dots," + r"\\"
         r"&\quad " + rf"{_fmt(yhat, dec)})"
         r"\end{aligned}$"
@@ -667,10 +668,7 @@ def explain_lr_prediction(
     display_space="original",
     theme=None,
 ):
-    """
-    Explicación visual de una predicción de LR (d=1, d=2, d>=3).
-    """
-
+    """Build a visual explanation for a linear-regression prediction."""
     X_train = np.asarray(X_train, dtype=float)
     if X_train.ndim == 1:
         X_train = X_train.reshape(-1, 1)

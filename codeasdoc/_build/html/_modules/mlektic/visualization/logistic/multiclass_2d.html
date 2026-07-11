@@ -1,0 +1,456 @@
+﻿
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.visualization.logistic.multiclass_2d &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../../search.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+
+
+          <a href="../../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">mlektic.visualization.logistic.multiclass_2d</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <h1>Código fuente para mlektic.visualization.logistic.multiclass_2d</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Multiclass logistic-regression (2D) figure builder.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotly.subplots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_subplots</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..theme</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_base_layout</span><span class="p">,</span>
+    <span class="n">get_legend_props</span><span class="p">,</span>
+    <span class="n">get_sliders</span><span class="p">,</span>
+    <span class="n">get_updatemenus</span><span class="p">,</span>
+    <span class="n">loss_line_style</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row1_formula_latex_2d</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;$$\mathbf</span><span class="se">{{</span><span class="s2">z</span><span class="se">}}</span><span class="s2">=\Theta^\top\mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">,\quad \mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">=\begin</span><span class="se">{{</span><span class="s2">bmatrix</span><span class="se">}}</span><span class="s2">x_1</span><span class="se">\\</span><span class="s2">x_2</span><span class="se">\\</span><span class="s2">1\end</span><span class="se">{{</span><span class="s2">bmatrix</span><span class="se">}}</span><span class="s2">\in\mathbb</span><span class="se">{{</span><span class="s2">R</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">3</span><span class="se">}}</span><span class="s2">,\quad \Theta\in\mathbb</span><span class="se">{{</span><span class="s2">R</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="s2">3\times </span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="se">}}</span><span class="s2">$$&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row3_formula_latex_2d</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;$$\hat</span><span class="se">{{</span><span class="s2">\mathbf</span><span class="se">{{</span><span class="s2">p</span><span class="se">}}}}</span><span class="s2">=\mathrm</span><span class="se">{{</span><span class="s2">softmax</span><span class="se">}}</span><span class="s2">(\mathbf</span><span class="se">{{</span><span class="s2">z</span><span class="se">}}</span><span class="s2">),\quad \mathrm</span><span class="se">{{</span><span class="s2">softmax</span><span class="se">}}</span><span class="s2">(\mathbf</span><span class="se">{{</span><span class="s2">z</span><span class="se">}}</span><span class="s2">)_k=\dfrac</span><span class="se">{{</span><span class="s2">e^</span><span class="se">{{</span><span class="s2">z_k</span><span class="se">}}}}{{</span><span class="s2">\sum_</span><span class="se">{{</span><span class="s2">j=1</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="se">}}</span><span class="s2">e^</span><span class="se">{{</span><span class="s2">z_j</span><span class="se">}}}}</span><span class="s2">,\;\;z_k(\mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">)=\theta_</span><span class="se">{{</span><span class="s2">1,k</span><span class="se">}}</span><span class="s2">x_1+\theta_</span><span class="se">{{</span><span class="s2">2,k</span><span class="se">}}</span><span class="s2">x_2+\theta_</span><span class="se">{{</span><span class="s2">0,k</span><span class="se">}}</span><span class="s2">$$&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_theta_matrix_latex_math_style_2d</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">b_hist</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">max_elems</span><span class="p">,</span> <span class="n">dec</span><span class="p">):</span>
+    <span class="n">Theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">b_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]])</span>
+    <span class="n">K_local</span> <span class="o">=</span> <span class="n">Theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">fmt</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.</span><span class="si">{</span><span class="n">dec</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">K_local</span> <span class="o">&lt;=</span> <span class="n">max_elems</span><span class="p">:</span>
+        <span class="n">row1</span> <span class="o">=</span> <span class="s2">&quot; &amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K_local</span><span class="p">))</span>
+        <span class="n">row2</span> <span class="o">=</span> <span class="s2">&quot; &amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K_local</span><span class="p">))</span>
+        <span class="n">row3</span> <span class="o">=</span> <span class="s2">&quot; &amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K_local</span><span class="p">))</span>
+        <span class="n">cols_spec</span> <span class="o">=</span> <span class="s2">&quot;c&quot;</span> <span class="o">*</span> <span class="n">K_local</span>
+        <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\Theta=\left[\begin</span><span class="si">{array}</span><span class="s2">{&quot;</span> <span class="o">+</span> <span class="n">cols_spec</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;}&quot;</span> <span class="o">+</span> <span class="n">row1</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">row2</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">row3</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{array}</span><span class="s2">\right]&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_elems</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">tail</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_elems</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">head</span>
+    <span class="n">head_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">head</span><span class="p">))</span>
+    <span class="n">tail_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">K_local</span> <span class="o">-</span> <span class="n">tail</span><span class="p">,</span> <span class="n">K_local</span><span class="p">))</span>
+    <span class="n">row1_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">head_idx</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">r</span><span class="s2">&quot;\cdots&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">tail_idx</span><span class="p">]</span>
+    <span class="n">row2_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">head_idx</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">r</span><span class="s2">&quot;\cdots&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">tail_idx</span><span class="p">]</span>
+    <span class="n">row3_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">head_idx</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">r</span><span class="s2">&quot;\cdots&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">fmt</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">tail_idx</span><span class="p">]</span>
+    <span class="n">row1</span> <span class="o">=</span> <span class="s2">&quot; &amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row1_items</span><span class="p">)</span>
+    <span class="n">row2</span> <span class="o">=</span> <span class="s2">&quot; &amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row2_items</span><span class="p">)</span>
+    <span class="n">row3</span> <span class="o">=</span> <span class="s2">&quot; &amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row3_items</span><span class="p">)</span>
+    <span class="n">cols_spec</span> <span class="o">=</span> <span class="s2">&quot;c&quot;</span> <span class="o">*</span> <span class="n">max_elems</span>
+    <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\Theta=\left[\begin</span><span class="si">{array}</span><span class="s2">{&quot;</span> <span class="o">+</span> <span class="n">cols_spec</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;}&quot;</span> <span class="o">+</span> <span class="n">row1</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">row2</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">row3</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{array}</span><span class="s2">\right]&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_z_numeric_expr_bivar</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="n">class_idx</span><span class="p">,</span> <span class="n">dec</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">+.</span><span class="si">{</span><span class="n">dec</span><span class="si">}</span><span class="s2">f</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\left(</span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">class_idx</span><span class="p">])</span><span class="si">}</span><span class="s2">\right)x_1 + \left(</span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">class_idx</span><span class="p">])</span><span class="si">}</span><span class="s2">\right)x_2 + \left(</span><span class="si">{</span><span class="n">num</span><span class="p">(</span><span class="n">Theta</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">class_idx</span><span class="p">])</span><span class="si">}</span><span class="s2">\right)&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_denom_three_terms_tex_2d</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="n">K_local</span><span class="p">,</span> <span class="n">dec</span><span class="p">):</span>
+    <span class="n">z1</span> <span class="o">=</span> <span class="n">_z_numeric_expr_bivar</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">K_local</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;e^</span><span class="se">{{</span><span class="si">{</span><span class="n">z1</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="n">K_local</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">z2</span> <span class="o">=</span> <span class="n">_z_numeric_expr_bivar</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;e^</span><span class="se">{{</span><span class="si">{</span><span class="n">z1</span><span class="si">}</span><span class="se">}}</span><span class="s2"> + e^</span><span class="se">{{</span><span class="si">{</span><span class="n">z2</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span>
+
+    <span class="n">zK</span> <span class="o">=</span> <span class="n">_z_numeric_expr_bivar</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="n">K_local</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;e^</span><span class="se">{{</span><span class="si">{</span><span class="n">z1</span><span class="si">}</span><span class="se">}}</span><span class="s2"> + \cdots + e^</span><span class="se">{{</span><span class="si">{</span><span class="n">zK</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_final_prob_example_latex_2d</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">b_hist</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">example_class</span><span class="p">,</span> <span class="n">dec</span><span class="p">):</span>
+    <span class="n">Theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">b_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]])</span>
+    <span class="n">K_local</span> <span class="o">=</span> <span class="n">Theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">example_class</span><span class="p">),</span> <span class="n">K_local</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">z_k</span> <span class="o">=</span> <span class="n">_z_numeric_expr_bivar</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\begin</span><span class="si">{aligned}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">p</span><span class="se">}}</span><span class="s2">(y=1\mid \mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">) &amp;= \frac</span><span class="se">{{</span><span class="s2">e^</span><span class="se">{{</span><span class="s2">z_1(\mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">)</span><span class="se">}}}}{{</span><span class="s2">\sum_</span><span class="se">{{</span><span class="s2">j=1</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">K_local</span><span class="si">}</span><span class="se">}}</span><span class="s2"> e^</span><span class="se">{{</span><span class="s2">z_j(\mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">)</span><span class="se">}}}}</span><span class="s2"> </span><span class="se">\\</span><span class="s2">[6pt]&quot;</span> <span class="o">+</span> <span class="sa">rf</span><span class="s2">&quot;&amp;= \frac</span><span class="se">{{</span><span class="s2">e^</span><span class="se">{{</span><span class="si">{</span><span class="n">z_k</span><span class="si">}</span><span class="se">}}}}{{</span><span class="si">{</span><span class="n">_denom_three_terms_tex_2d</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span><span class="w"> </span><span class="n">K_local</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{aligned}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_vertical_dots_latex_2d</span><span class="p">():</span>
+    <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$$\vdots$$&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_last_class_tail_latex_2d</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">b_hist</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dec</span><span class="p">):</span>
+    <span class="n">Theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">b_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]])</span>
+    <span class="n">K_local</span> <span class="o">=</span> <span class="n">Theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">z_last</span> <span class="o">=</span> <span class="n">_z_numeric_expr_bivar</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span> <span class="n">K_local</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\begin</span><span class="si">{aligned}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">p</span><span class="se">}}</span><span class="s2">(y=</span><span class="si">{</span><span class="n">K_local</span><span class="si">}</span><span class="s2">\mid \mathbf</span><span class="se">{{</span><span class="s2">x</span><span class="se">}}</span><span class="s2">) &amp;= \frac</span><span class="se">{{</span><span class="s2">e^</span><span class="se">{{</span><span class="si">{</span><span class="n">z_last</span><span class="si">}</span><span class="se">}}}}{{</span><span class="si">{</span><span class="n">_denom_three_terms_tex_2d</span><span class="p">(</span><span class="n">Theta</span><span class="p">,</span><span class="w"> </span><span class="n">K_local</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{aligned}</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="sa">r</span><span class="s2">&quot;$$&quot;</span>
+
+<div class="viewcode-block" id="build_multiclass_2d_logistic_figure">
+<a class="viewcode-back" href="../../../../api_reference.html#mlektic.visualization.logistic.multiclass_2d.build_multiclass_2d_logistic_figure">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_multiclass_2d_logistic_figure</span><span class="p">(</span>
+    <span class="n">x1</span><span class="p">,</span>
+    <span class="n">x2</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">,</span>
+    <span class="n">w_hist</span><span class="p">,</span>
+    <span class="n">b_hist</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">p_surfaces_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">X1g</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">X2g</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">loss_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">metrics_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">show_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">history_kind</span><span class="o">=</span><span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">strict_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dec</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">example_class</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">max_theta_cols</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the 2D multiclass logistic-regression Softmax surface figure.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">show_loss</span> <span class="ow">and</span> <span class="n">history_kind</span> <span class="o">!=</span> <span class="s2">&quot;iterative&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">strict_loss</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;show_loss=True is only allowed for iterative histories.&quot;</span><span class="p">)</span>
+        <span class="n">show_loss</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">p_surfaces_hist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">X1g</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">X2g</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;p_surfaces_hist, X1g, X2g are required for multiclass 2D.&quot;</span><span class="p">)</span>
+
+    <span class="n">p_surfaces_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p_surfaces_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">X1g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X1g</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">X2g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X2g</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">steps_n</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="n">p_surfaces_hist</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Multiclass Logistic Regression (K=</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2">, d=2)&quot;</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">loss_hist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;show_loss=True requires loss_hist.&quot;</span><span class="p">)</span>
+        <span class="n">loss_hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">loss_hist</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">loss_hist</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">steps_n</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;loss_hist must match steps.&quot;</span><span class="p">)</span>
+
+    <span class="n">step_axis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">steps_n</span><span class="p">)</span>
+    <span class="n">margin_t</span> <span class="o">=</span> <span class="mi">150</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">column_widths</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">]</span>
+        <span class="n">specs</span> <span class="o">=</span> <span class="p">[[{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;xy&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;scene&quot;</span><span class="p">}],</span> <span class="p">[{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;xy&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;xy&quot;</span><span class="p">}]]</span>
+        <span class="n">X_TEXT</span> <span class="o">=</span> <span class="mf">0.28</span>
+        <span class="n">X_VDOTS</span> <span class="o">=</span> <span class="mf">0.32</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">column_widths</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">]</span>
+        <span class="n">specs</span> <span class="o">=</span> <span class="p">[[{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;xy&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;scene&quot;</span><span class="p">}]]</span>
+        <span class="n">X_TEXT</span> <span class="o">=</span> <span class="mf">0.28</span>
+        <span class="n">X_VDOTS</span> <span class="o">=</span> <span class="mf">0.32</span>
+
+    <span class="n">x1_min</span><span class="p">,</span> <span class="n">x1_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">X1g</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">X1g</span><span class="p">))</span>
+    <span class="n">x2_min</span><span class="p">,</span> <span class="n">x2_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">X2g</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">X2g</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">loss_hist_list</span> <span class="o">=</span> <span class="n">loss_hist</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="n">kwargs_subplots</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">rows</span><span class="o">=</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span>
+        <span class="n">column_widths</span><span class="o">=</span><span class="n">column_widths</span><span class="p">,</span>
+        <span class="n">horizontal_spacing</span><span class="o">=</span><span class="mf">0.06</span><span class="p">,</span>
+        <span class="n">specs</span><span class="o">=</span><span class="n">specs</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">kwargs_subplots</span><span class="p">[</span><span class="s2">&quot;row_heights&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">]</span>
+        <span class="n">kwargs_subplots</span><span class="p">[</span><span class="s2">&quot;vertical_spacing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.08</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs_subplots</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pad</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="mf">0.10</span><span class="p">):</span>
+        <span class="n">span</span> <span class="o">=</span> <span class="p">(</span><span class="n">hi</span> <span class="o">-</span> <span class="n">lo</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-9</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">lo</span> <span class="o">-</span> <span class="n">frac</span> <span class="o">*</span> <span class="n">span</span><span class="p">,</span> <span class="n">hi</span> <span class="o">+</span> <span class="n">frac</span> <span class="o">*</span> <span class="n">span</span><span class="p">]</span>
+
+    <span class="n">x1_range</span> <span class="o">=</span> <span class="n">_pad</span><span class="p">(</span><span class="n">x1_min</span><span class="p">,</span> <span class="n">x1_max</span><span class="p">)</span>
+    <span class="n">x2_range</span> <span class="o">=</span> <span class="n">_pad</span><span class="p">(</span><span class="n">x2_min</span><span class="p">,</span> <span class="n">x2_max</span><span class="p">)</span>
+    <span class="n">y_range</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">]</span>
+
+    <span class="n">CAMERA</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">eye</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.55</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.55</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mf">1.15</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">lmin</span><span class="p">,</span> <span class="n">lmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">loss_hist</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">loss_hist</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">lpad</span> <span class="o">=</span> <span class="mf">0.10</span> <span class="o">*</span> <span class="p">(</span><span class="n">lmax</span> <span class="o">-</span> <span class="n">lmin</span> <span class="o">+</span> <span class="mf">1e-9</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">metrics_annotations</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">metrics_hist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">metrics_hist</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">hist</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;.6f&quot;</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;log-loss&quot;</span><span class="p">,</span> <span class="s2">&quot;loss&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;.4f&quot;</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;b&gt;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&lt;/b&gt;: </span><span class="si">{</span><span class="n">hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">:{</span><span class="n">fmt</span><span class="si">}}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="mf">1.05</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.05</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="s2">&quot;    |    &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">),</span>
+            <span class="n">bgcolor</span><span class="o">=</span><span class="s2">&quot;rgba(255, 255, 255, 0.8)&quot;</span><span class="p">,</span> <span class="n">bordercolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">borderwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">borderpad</span><span class="o">=</span><span class="mi">5</span>
+        <span class="p">)]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_annotations</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="n">base_ann</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X_TEXT</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.18</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">_row1_formula_latex_2d</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)),</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X_TEXT</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.82</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">_theta_matrix_latex_math_style_2d</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">b_hist</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">max_theta_cols</span><span class="p">,</span> <span class="n">dec</span><span class="p">),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;middle&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)),</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X_TEXT</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.58</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">_row3_formula_latex_2d</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)),</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X_TEXT</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.44</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">_final_prob_example_latex_2d</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">b_hist</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">example_class</span><span class="p">,</span> <span class="n">dec</span><span class="p">),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)),</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X_VDOTS</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">_vertical_dots_latex_2d</span><span class="p">(),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;middle&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)),</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">X_TEXT</span><span class="p">,</span> <span class="n">y</span><span class="o">=-</span><span class="mf">0.08</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">_last_class_tail_latex_2d</span><span class="p">(</span><span class="n">w_hist</span><span class="p">,</span> <span class="n">b_hist</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">dec</span><span class="p">),</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">)),</span>
+        <span class="p">]</span>
+
+        <span class="n">base_ann</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">0.835</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.00</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&lt;b&gt;Probability&lt;/b&gt;&quot;</span><span class="p">,</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">))</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+            <span class="n">base_ann</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=-</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;x2 domain&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;y2 domain&quot;</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s2">&quot;&lt;b&gt;Cross-entropy&lt;/b&gt;&quot;</span><span class="p">,</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">))</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">base_ann</span> <span class="o">+</span> <span class="n">metrics_annotations</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="c1"># colorscales for surfaces</span>
+    <span class="n">colorscales</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Blues&quot;</span><span class="p">,</span> <span class="s2">&quot;Reds&quot;</span><span class="p">,</span> <span class="s2">&quot;Greens&quot;</span><span class="p">,</span> <span class="s2">&quot;Oranges&quot;</span><span class="p">,</span> <span class="s2">&quot;Purples&quot;</span><span class="p">,</span> <span class="s2">&quot;Greys&quot;</span><span class="p">,</span> <span class="s2">&quot;YlGnBu&quot;</span><span class="p">,</span> <span class="s2">&quot;YlOrRd&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Add Data</span>
+    <span class="n">scatter</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatter3d</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">x1</span><span class="p">,</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">x2</span><span class="p">,</span>
+        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.02</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;markers&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">,</span>
+        <span class="n">marker</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">colorscale</span><span class="o">=</span><span class="s2">&quot;Jet&quot;</span><span class="p">,</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">showscale</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">hovertemplate</span><span class="o">=</span><span class="s2">&quot;&lt;b&gt;Data&lt;/b&gt;&lt;br&gt;x1: %</span><span class="si">{x}</span><span class="s2">&lt;br&gt;x2: %</span><span class="si">{y}</span><span class="s2">&lt;br&gt;Class: %</span><span class="si">{marker.color}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;&quot;</span><span class="p">,</span>
+        <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">scatter</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">scatter</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="n">colorscales</span><span class="p">[</span><span class="n">k</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colorscales</span><span class="p">)]</span>
+        <span class="n">surf</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">=</span><span class="n">X1g</span><span class="p">,</span>
+            <span class="n">y</span><span class="o">=</span><span class="n">X2g</span><span class="p">,</span>
+            <span class="n">z</span><span class="o">=</span><span class="n">p_surfaces_hist</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">k</span><span class="p">],</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Class </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">colorscale</span><span class="o">=</span><span class="n">cs</span><span class="p">,</span>
+            <span class="n">opacity</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
+            <span class="n">showscale</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">showlegend</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">legendgroup</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;class_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">step_axis_list</span> <span class="o">=</span> <span class="n">step_axis</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">loss_hist_list</span> <span class="o">=</span> <span class="n">loss_hist</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="n">step</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">step_axis_list</span><span class="p">)],</span>
+                <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">val</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">loss_hist_list</span><span class="p">)],</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;lines&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Log-loss&quot;</span><span class="p">,</span>
+                <span class="n">line</span><span class="o">=</span><span class="n">loss_line_style</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+                <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">frames</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps_n</span><span class="p">):</span>
+        <span class="n">frame_data</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Scatter3d</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">x2</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.02</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">K</span><span class="p">):</span>
+            <span class="n">frame_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Surface</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">X1g</span><span class="p">,</span>
+                    <span class="n">y</span><span class="o">=</span><span class="n">X2g</span><span class="p">,</span>
+                    <span class="n">z</span><span class="o">=</span><span class="n">p_surfaces_hist</span><span class="p">[</span><span class="n">t</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">k</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+            <span class="n">frame_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="n">step</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">step_axis_list</span><span class="p">)],</span>
+                    <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">val</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="k">else</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">loss_hist_list</span><span class="p">)],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">traces</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">K</span> <span class="o">+</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">traces</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">K</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Frame</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                <span class="n">data</span><span class="o">=</span><span class="n">frame_data</span><span class="p">,</span>
+                <span class="n">traces</span><span class="o">=</span><span class="n">traces</span><span class="p">,</span>
+                <span class="n">layout</span><span class="o">=</span><span class="n">go</span><span class="o">.</span><span class="n">Layout</span><span class="p">(</span>
+                    <span class="n">annotations</span><span class="o">=</span><span class="n">make_annotations</span><span class="p">(</span><span class="n">t</span><span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">frames</span>
+
+    <span class="n">layout_kwargs</span> <span class="o">=</span> <span class="n">get_base_layout</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">margin_t</span><span class="o">=</span><span class="n">margin_t</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="o">**</span><span class="n">layout_kwargs</span><span class="p">,</span>
+        <span class="n">annotations</span><span class="o">=</span><span class="n">make_annotations</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">legend</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">get_legend_props</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.05</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)),</span>
+        <span class="n">legend2</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">get_legend_props</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.05</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.30</span><span class="p">,</span> <span class="n">yanchor</span><span class="o">=</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="n">xanchor</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)),</span>
+        <span class="n">scene</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">xaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;x₁&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">x1_range</span><span class="p">),</span>
+            <span class="n">yaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;x₂&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">x2_range</span><span class="p">),</span>
+            <span class="n">zaxis</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;p(y|x)&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">y_range</span><span class="p">),</span>
+            <span class="n">aspectmode</span><span class="o">=</span><span class="s2">&quot;cube&quot;</span><span class="p">,</span>
+            <span class="n">camera</span><span class="o">=</span><span class="n">CAMERA</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">sliders</span><span class="o">=</span><span class="n">get_sliders</span><span class="p">(</span><span class="n">steps_n</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+        <span class="n">updatemenus</span><span class="o">=</span><span class="n">get_updatemenus</span><span class="p">(</span><span class="n">frame_duration</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Ocultar ejes del primer subplot para dejar espacio puro al texto</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">show_loss</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">legend</span><span class="o">=</span><span class="s2">&quot;legend2&quot;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Step&quot;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">steps_n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">domain</span><span class="o">=</span><span class="p">[</span><span class="mf">0.60</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">],</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="n">lmin</span> <span class="o">-</span> <span class="n">lpad</span><span class="p">,</span> <span class="n">lmax</span> <span class="o">+</span> <span class="n">lpad</span><span class="p">],</span> <span class="n">domain</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">],</span> <span class="n">row</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># Forzar que la escena 3D también aproveche el espacio superior y esté separada</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">scene</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mf">0.55</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">])))</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_multiclass_2d_logistic_figure&quot;</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

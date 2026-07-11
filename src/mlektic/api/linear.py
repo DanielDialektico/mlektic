@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from ..services.linear_history import fit_history
-from ..visualization.linear.router import build_lr_figure
 from ..visualization.linear.prediction import explain_lr_prediction
+from ..visualization.linear.router import build_lr_figure
 from ..visualization.theme import attach_highlight
+
 
 def visualize_lr(
     trained_estimator,
@@ -48,8 +49,13 @@ def visualize_lr(
         smooth_beta (float, optional): Beta parameter for EMA smoothing. Defaults to 0.85.
         strict_loss (bool, optional): If True, throw errors if loss cannot be animated cleanly. Defaults to False.
         baseline (str, optional): Initial reference line for the loss curve ("mean" or "zeros"). Defaults to "mean".
-        display_space (str, optional): The space in which to display the parameters ("original" or "scaled"). Defaults to "original".
+        display_space (str, optional): Parameter display space ("original" or "scaled"). Defaults to "original".
+        metrics (Sequence[str] | dict, optional): Built-in metric names or custom metric callables.
         dec (int, optional): The number of decimal places to format the parameters. Defaults to 4.
+        frame_duration (int, optional): Duration of each animation frame in milliseconds. Defaults to 80.
+        max_frames (int | None, optional): Maximum rendered frames after temporal decimation. Defaults to 60.
+        frame_step (int | None, optional): Step used when ``max_frames`` is None. Defaults to 10.
+        theme (str | None, optional): Visualization theme name. Defaults to None.
 
     Returns:
         plotly.graph_objects.Figure: The animated Plotly figure object.

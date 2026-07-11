@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mlektic.visualization.logistic.router &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
 
   
@@ -77,20 +77,22 @@
   <h1>Código fuente para mlektic.visualization.logistic.router</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Routing logic for logistic-regression figure selection.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">..._internal.common</span> <span class="kn">import</span> <span class="n">_first_not_none</span>
-<span class="kn">from</span> <span class="nn">.binary_1d</span> <span class="kn">import</span> <span class="n">build_binary_simple_logistic_figure</span>
-<span class="kn">from</span> <span class="nn">.binary_2d</span> <span class="kn">import</span> <span class="n">build_binary_plane_logistic_figure</span>
-<span class="kn">from</span> <span class="nn">.binary_nd</span> <span class="kn">import</span> <span class="n">build_binary_multivar_logistic_figure</span>
-<span class="kn">from</span> <span class="nn">.multiclass_1d</span> <span class="kn">import</span> <span class="n">build_multiclass_1d_logistic_figure</span>
-<span class="kn">from</span> <span class="nn">.multiclass_nd</span> <span class="kn">import</span> <span class="n">build_multiclass_multivar_logistic_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..._internal.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">_first_not_none</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.binary_1d</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_binary_simple_logistic_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.binary_2d</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_binary_plane_logistic_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.binary_nd</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_binary_multivar_logistic_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.multiclass_1d</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multiclass_1d_logistic_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.multiclass_2d</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multiclass_2d_logistic_figure</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.multiclass_nd</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multiclass_multivar_logistic_figure</span>
+
 
 <div class="viewcode-block" id="build_logistic_figure">
 <a class="viewcode-back" href="../../../../api_reference.html#mlektic.visualization.logistic.router.build_logistic_figure">[documentos]</a>
-<span class="k">def</span> <span class="nf">build_logistic_figure</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_logistic_figure</span><span class="p">(</span>
     <span class="n">X</span><span class="p">,</span>
     <span class="n">y</span><span class="p">,</span>
     <span class="n">w_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -103,6 +105,7 @@
     <span class="n">X1g</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">X2g</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># binary d==2</span>
     <span class="n">p_curves_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># multiclass d==1</span>
+    <span class="n">p_surfaces_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># multiclass d==2</span>
     <span class="n">loss_hist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">show_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -111,6 +114,7 @@
     <span class="n">strict_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">max_theta_cols</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build logistic figure based on data dimensionality.&quot;&quot;&quot;</span>
@@ -136,12 +140,15 @@
 
         <span class="n">grid</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;grid&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{}</span>
 
+        <span class="n">metrics_hist</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
         <span class="n">w_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;w_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">w_hist</span><span class="p">)</span>
         <span class="n">b_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;b_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">b_hist</span><span class="p">)</span>
 
         <span class="n">p_line_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;p_line_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">p_line_hist</span><span class="p">)</span>
         <span class="n">p_plane_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;p_plane_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">p_plane_hist</span><span class="p">)</span>
         <span class="n">p_curves_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;p_curves_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">p_curves_hist</span><span class="p">)</span>
+        <span class="n">p_surfaces_hist</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;p_surfaces_hist&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">p_surfaces_hist</span><span class="p">)</span>
 
         <span class="n">x1_grid</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x1_grid&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">x1_grid</span><span class="p">)</span>
         <span class="n">X1g</span> <span class="o">=</span> <span class="n">_first_not_none</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;X1g&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">X1g</span><span class="p">)</span>
@@ -150,6 +157,9 @@
     <span class="n">classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">if</span> <span class="n">classes</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
     <span class="n">K</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
     <span class="n">is_multiclass</span> <span class="o">=</span> <span class="n">K</span> <span class="o">&gt;</span> <span class="mi">2</span>
+
+    <span class="k">if</span> <span class="n">history</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">metrics_hist</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">is_multiclass</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -164,6 +174,7 @@
                 <span class="n">p_line_hist</span><span class="o">=</span><span class="n">p_line_hist</span><span class="p">,</span>
                 <span class="n">x1_grid</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span>
                 <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+                <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
                 <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
                 <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
                 <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
@@ -188,6 +199,7 @@
                 <span class="n">X1g</span><span class="o">=</span><span class="n">X1g</span><span class="p">,</span>
                 <span class="n">X2g</span><span class="o">=</span><span class="n">X2g</span><span class="p">,</span>
                 <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+                <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
                 <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
                 <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
                 <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
@@ -205,6 +217,7 @@
             <span class="n">w_hist</span><span class="p">,</span>
             <span class="n">b_hist</span><span class="p">,</span>
             <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+            <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
             <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
             <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
             <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
@@ -226,12 +239,38 @@
             <span class="n">p_curves_hist</span><span class="o">=</span><span class="n">p_curves_hist</span><span class="p">,</span>
             <span class="n">x1_grid</span><span class="o">=</span><span class="n">x1_grid</span><span class="p">,</span>
             <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+            <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
             <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
             <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
             <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
             <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
             <span class="n">dec</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">dec</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
             <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+            <span class="n">max_theta_cols</span><span class="o">=</span><span class="n">max_theta_cols</span><span class="p">,</span>
+            <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Multiclass Logistic Regression (K=</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s2">, d=2)&quot;</span>
+        <span class="k">return</span> <span class="n">build_multiclass_2d_logistic_figure</span><span class="p">(</span>
+            <span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+            <span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">y</span><span class="p">,</span>
+            <span class="n">w_hist</span><span class="p">,</span>
+            <span class="n">b_hist</span><span class="p">,</span>
+            <span class="n">p_surfaces_hist</span><span class="o">=</span><span class="n">p_surfaces_hist</span><span class="p">,</span>
+            <span class="n">X1g</span><span class="o">=</span><span class="n">X1g</span><span class="p">,</span>
+            <span class="n">X2g</span><span class="o">=</span><span class="n">X2g</span><span class="p">,</span>
+            <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+            <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
+            <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
+            <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
+            <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
+            <span class="n">dec</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">dec</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+            <span class="n">max_theta_cols</span><span class="o">=</span><span class="n">max_theta_cols</span><span class="p">,</span>
             <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -243,12 +282,14 @@
         <span class="n">w_hist</span><span class="p">,</span>
         <span class="n">b_hist</span><span class="p">,</span>
         <span class="n">loss_hist</span><span class="o">=</span><span class="n">loss_hist</span><span class="p">,</span>
+        <span class="n">metrics_hist</span><span class="o">=</span><span class="n">metrics_hist</span><span class="p">,</span>
         <span class="n">show_loss</span><span class="o">=</span><span class="n">show_loss</span><span class="p">,</span>
         <span class="n">history_kind</span><span class="o">=</span><span class="n">history_kind</span><span class="p">,</span>
         <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
         <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
         <span class="n">dec</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">dec</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
         <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+        <span class="n">max_theta_cols</span><span class="o">=</span><span class="n">max_theta_cols</span><span class="p">,</span>
         <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
     <span class="p">)</span></div>
 

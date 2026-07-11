@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2026-06-04
 
 ### Added
+- Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.
+- Added reusable history sampling utilities to decimate long animation histories through `max_frames` or `frame_step`.
+- Documented the adapter extension path for future model families, including non-Scikit-Learn estimators and upcoming neural-network visualization work.
 - **2D Multiclass Logistic Regression Visualization**: Added full support for visualizing multi-class logistic regression in 2-dimensional feature spaces. The builder dynamically generates a 3D plot displaying the actual data points on the floor grid and $K$ distinct translucent, colored probability surfaces hovering and adjusting over time.
 - Integrated a live LaTeX panel directly into the 2D Multiclass layout, showcasing the $\mathbf{z} = \Theta^\top\mathbf{x}$ formula, the dynamic parameter matrix $\Theta \in \mathbb{R}^{3 \times K}$, the explicit Softmax formulation, and a live step-by-step mathematical evaluation of a sample probability curve $\hat{p}(y=k \mid \mathbf{x})$.
 - Modified capture engines (`strategy_iterative.py` and `strategy_interp.py`) to systematically extract and cache a multidimensional probability surface history (`p_surfaces_hist`) required for $K$-class 3D rendering.
@@ -19,6 +22,9 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Fixed root-package exports so `from mlektic import explain_lr_prediction` matches the documented public API.
+- Fixed logistic metric histories so classification metrics map predictions back to the original class labels instead of assuming zero-based label indexes.
+- Preserved scaler metadata in interpolation histories so pipeline visualizations can evaluate metrics in the requested display space.
 - **Plotly Visual Overflows**: Resolved massive text layout overlaps in logistic regression `prediction` views (1D, 2D, Multiclass 1D, and Multiclass ND) by precisely tuning Grid `column_widths`, `row_heights`, and expanding bounding boxes beyond default axis constraints.
 - **Result Output Alignment**: Forced strict left-alignment on `\max` and `\hat{y} = \text{argmax}` math equations inside Multiclass result panels to prevent right-drifting.
 - **Y-Axis Stand-Offs**: Prevented the $p(y=k \mid x)$ axis label from crashing into mathematical panels by directly shrinking `title_standoff` instead of disturbing layout proportions.
@@ -27,6 +33,10 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Refactored `HistoryEngine` so it orchestrates capture, metric building, temporal sampling, smoothing, and parameter scaling through smaller focused helpers.
+- Tightened Ruff configuration to lint the maintained package, tests, and Sphinx configuration while excluding generated, legacy, and manual-test directories.
+- Updated README and Sphinx documentation for metrics, frame controls, `multiclass_2d`, generated API reference, and future adapter scalability.
+- Replaced broad replay-configuration handling in the Scikit-Learn adapter with explicit parameter attempts and narrower exception handling.
 - **Surface Smoothing (2D)**: Drastically enhanced rendering quality for Logistic Regression 2D probability surfaces and decision boundary planes by boosting the mesh grid resolution.
 - **Layout Dimensions**: Enforced fixed `height` (and dimensions when appropriate) across visualization frames to guarantee consistent aspect ratios and eliminate bounding jitters.
 - Refactored rendering core files (`prediction.py`, `multivar.py`, `binary_nd.py`, `multiclass_1d.py`) to eliminate Plotly trace code duplication, dynamically assemble subplot columns, and centralize LaTeX builders for better maintainability.

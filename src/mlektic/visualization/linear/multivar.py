@@ -7,11 +7,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ..theme import (
-    get_base_layout,
-    get_updatemenus,
-    get_sliders,
     create_annotation,
+    get_base_layout,
+    get_sliders,
+    get_updatemenus,
 )
+
 
 def _needs_single_col(values, max_digits=5):
     vals = np.asarray(values, dtype=float).ravel()
@@ -208,9 +209,7 @@ def build_multivar_lr_figure(
     threshold_dense=100,
     theme=None,
 ):
-    """
-    Multivariable visualization for d > 2 (parameter display).
-    """
+    """Build a multivariable visualization for d > 2."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
             raise ValueError("show_loss=True is only allowed for iterative histories.")

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from ..services.logistic_history import fit_history_logistic
-from ..visualization.logistic.router import build_logistic_figure
 from ..visualization.logistic.prediction import explain_logistic_prediction
+from ..visualization.logistic.router import build_logistic_figure
 from ..visualization.theme import attach_highlight
+
 
 def visualize_logistic(
     trained_estimator,
@@ -61,4 +62,9 @@ def visualize_logistic(
     return attach_highlight(fig, theme=theme)
 
 
-__all__ = ["visualize_logistic", "fit_history_logistic", "build_logistic_figure"]
+__all__ = [
+    "visualize_logistic",
+    "fit_history_logistic",
+    "build_logistic_figure",
+    "explain_logistic_prediction",
+]

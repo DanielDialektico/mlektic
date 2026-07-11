@@ -7,15 +7,16 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ..theme import (
+    create_annotation,
+    data_3d_marker_style,
     get_base_layout,
     get_legend_props,
-    get_updatemenus,
     get_sliders,
-    create_annotation,
+    get_updatemenus,
     loss_line_style,
-    data_3d_marker_style,
     surface_style,
 )
+
 
 def build_plane_lr_figure(
     x1,
@@ -200,9 +201,9 @@ def build_plane_lr_figure(
                 y_pos = 0.95 - (i * 0.18)
                 fmt = ".6f" if name.lower() == "loss" else ".4f"
                 ann.append(dict(
-                    x=0.98, y=y_pos, xref="paper", yref="paper", 
-                    text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
-                    xanchor="right", yanchor="top", font=dict(size=13, color="black"), 
+                    x=0.98, y=y_pos, xref="paper", yref="paper",
+                    text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False,
+                    xanchor="right", yanchor="top", font=dict(size=13, color="black"),
                     bgcolor="white", bordercolor="black", borderwidth=1, borderpad=5
                 ))
         return ann

@@ -9,6 +9,7 @@ from .multivar import build_multivar_lr_figure
 from .plane import build_plane_lr_figure
 from .simple import build_simple_lr_figure
 
+
 def build_lr_figure(
     X,
     y,
@@ -49,11 +50,14 @@ def build_lr_figure(
         X1g (np.ndarray, optional): Grid for first feature in 2D. Defaults to None.
         X2g (np.ndarray, optional): Grid for second feature in 2D. Defaults to None.
         loss_hist (np.ndarray, optional): History of loss values. Defaults to None.
+        metrics_hist (dict, optional): Metric histories keyed by display name. Defaults to None.
         show_loss (bool, optional): Whether to display the loss chart. Defaults to False.
         history_kind (str, optional): The kind of history collected ("iterative" or "auto"). Defaults to "iterative".
         title (str, optional): The main title of the figure. Defaults to None.
         strict_loss (bool, optional): If True, strictly enforce loss display rules. Defaults to False.
         dec (int, optional): Number of decimal places to show for parameters. Defaults to 4.
+        frame_duration (int, optional): Duration of animation frames in milliseconds. Defaults to 80.
+        theme (str | None, optional): Visualization theme name. Defaults to None.
 
     Returns:
         plotly.graph_objects.Figure: The fully constructed Plotly figure.
@@ -78,7 +82,7 @@ def build_lr_figure(
             history.get("loss", None),
             loss_hist,
         )
-        
+
         metrics_hist = _first_not_none(history.get("metrics_hist", None), metrics_hist)
 
         grid = history.get("grid", {}) or {}

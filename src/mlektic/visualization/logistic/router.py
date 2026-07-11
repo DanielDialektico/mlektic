@@ -12,6 +12,7 @@ from .multiclass_1d import build_multiclass_1d_logistic_figure
 from .multiclass_2d import build_multiclass_2d_logistic_figure
 from .multiclass_nd import build_multiclass_multivar_logistic_figure
 
+
 def build_logistic_figure(
     X,
     y,
@@ -77,7 +78,7 @@ def build_logistic_figure(
     classes = np.unique(y) if classes is None else np.asarray(classes)
     K = len(classes)
     is_multiclass = K > 2
-    
+
     if history is None:
         metrics_hist = None
 

@@ -8,10 +8,11 @@ from plotly.subplots import make_subplots
 
 from ..theme import (
     get_base_layout,
-    get_updatemenus,
     get_sliders,
+    get_updatemenus,
     loss_line_style,
 )
+
 
 def _needs_single_col(values, max_digits=5):
     vals = np.asarray(values, dtype=float).ravel()

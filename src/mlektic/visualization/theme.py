@@ -382,7 +382,8 @@ def attach_highlight(fig, *, theme: str | None = None):
     def _patched_show(*args, **kwargs):
         _original_show(*args, **kwargs)
         try:
-            from IPython.display import display, HTML   # noqa: delay import
+            from IPython.display import HTML, display
+
             display(HTML(_script))
         except Exception:
             pass  # not in a notebook — ignore silently

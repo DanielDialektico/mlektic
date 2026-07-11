@@ -1,34 +1,37 @@
 """Adapter for Scikit-Learn estimators and pipelines."""
 
 import numpy as np
-from sklearn.pipeline import Pipeline
 from sklearn.base import clone
-from ..utils.math import _sigmoid, _softmax
+from sklearn.pipeline import Pipeline
 
+from ..utils.math import _sigmoid, _softmax
 from .base import BaseModelAdapter
+
 
 class SklearnAdapter(BaseModelAdapter):
     """Adapter for Scikit-Learn models and pipelines."""
-    
+
     def __init__(self, estimator):
+        """Create an adapter over a fitted or unfitted Scikit-Learn estimator."""
         self.estimator = estimator
         self.final_estimator = self._get_final()
         self.is_pipeline = isinstance(self.estimator, Pipeline)
-        
+
     def _get_final(self):
         if isinstance(self.estimator, Pipeline):
             return self.estimator.steps[-1][1]
         return self.estimator
 
     def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict target values or class labels through the wrapped estimator."""
         return np.asarray(self.estimator.predict(X))
-        
+
     def predict_proba(self, X: np.ndarray, classes: np.ndarray = None) -> np.ndarray:
         """Predict probabilities with graceful fallback."""
         if hasattr(self.estimator, "predict_proba"):
             P = self.estimator.predict_proba(X)
             return np.asarray(P, dtype=float)
-            
+
         if hasattr(self.final_estimator, "predict_proba"):
             P = self.final_estimator.predict_proba(X)
             return np.asarray(P, dtype=float)
@@ -56,6 +59,7 @@ class SklearnAdapter(BaseModelAdapter):
         return _softmax(S)
 
     def extract_linear_theta(self, d_expected=None):
+        """Extract a flat linear-regression coefficient vector and intercept."""
         if not (hasattr(self.final_estimator, "coef_") and hasattr(self.final_estimator, "intercept_")):
             return None, None
 
@@ -68,6 +72,7 @@ class SklearnAdapter(BaseModelAdapter):
         return w, b
 
     def extract_logistic_theta(self, d_expected=None):
+        """Extract logistic coefficients in the binary or multiclass schema."""
         if not (hasattr(self.final_estimator, "coef_") and hasattr(self.final_estimator, "intercept_")):
             return None
 
@@ -91,13 +96,15 @@ class SklearnAdapter(BaseModelAdapter):
         return {
             "task": "multiclass",
             "W": W.T.copy(),  # (d, K)
-            "b": b.copy(),    # (K,)
+            "b": b.copy(),  # (K,)
         }
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        """Fit the wrapped estimator."""
         self.estimator.fit(X, y)
-        
+
     def partial_fit(self, X: np.ndarray, y: np.ndarray) -> None:
+        """Run one incremental update, bypassing pipeline transforms when needed."""
         if self.is_pipeline:
             # Assumes X is already transformed if it's a pipeline
             self.final_estimator.partial_fit(X, y)
@@ -106,19 +113,22 @@ class SklearnAdapter(BaseModelAdapter):
 
     @property
     def is_iterative(self) -> bool:
+        """Whether the final estimator supports incremental training."""
         return hasattr(self.final_estimator, "partial_fit")
-        
+
     @property
     def classes(self) -> np.ndarray:
+        """Return learned class labels when available."""
         if hasattr(self.final_estimator, "classes_"):
             return np.asarray(self.final_estimator.classes_)
         return None
 
     def transform_X(self, X: np.ndarray) -> np.ndarray:
+        """Transform X through every pipeline step except the final estimator."""
         if not self.is_pipeline:
             return X
         Xt = X
-        for name, step in self.estimator.steps[:-1]:
+        for _, step in self.estimator.steps[:-1]:
             if hasattr(step, "transform"):
                 Xt = step.transform(Xt)
         return Xt
@@ -135,34 +145,37 @@ class SklearnAdapter(BaseModelAdapter):
         return None
 
     def get_scaler_params(self):
+        """Return the mean and scale of a pipeline scaler, if one exists."""
         scaler = self._find_scaler()
         if not scaler:
             return None, None
-            
+
         mu = getattr(scaler, "mean_", None)
         scale = getattr(scaler, "scale_", None)
         if scale is None:
             var = getattr(scaler, "var_", None)
             if var is not None:
                 scale = np.sqrt(np.asarray(var, dtype=float))
-        
+
         return mu, scale
 
     def clone_for_replay(self):
         """Clone and configure for iterative replay."""
         est = clone(self.estimator)
         pref = self.estimator.steps[-1][0] if self.is_pipeline else None
-        
+
         def p(name):
             return f"{pref}__{name}" if pref is not None else name
-            
-        try: est.set_params(**{p("warm_start"): True})
-        except: pass
-        try: est.set_params(**{p("max_iter"): 1})
-        except: pass
-        try: est.set_params(**{p("tol"): 0.0})
-        except: pass
-        try: est.set_params(**{p("shuffle"): False})
-        except: pass
-        
+
+        for param_name, value in (
+            ("warm_start", True),
+            ("max_iter", 1),
+            ("tol", 0.0),
+            ("shuffle", False),
+        ):
+            try:
+                est.set_params(**{p(param_name): value})
+            except ValueError:
+                continue
+
         return SklearnAdapter(est)

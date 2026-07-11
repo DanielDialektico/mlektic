@@ -93,4 +93,13 @@ Mediante las funciones ``explain_lr_prediction`` y ``explain_logistic_prediction
 Métricas Dinámicas
 ===================
 
-Las visualizaciones animadas pueden renderizar arreglos personalizables de métricas en tiempo real pasando una lista a ``metrics=["loss", "mse", "r2", ...]``. Mlektic computará y mostrará estas métricas como subtítulos en recuadros separados.
+Las visualizaciones animadas pueden renderizar arreglos personalizables de
+métricas en tiempo real.
+
+- Regresión lineal: ``metrics=["loss", "mse", "r2", "mae"]``.
+- Regresión logística: ``metrics=["loss", "accuracy", "f1"]``.
+- Métricas personalizadas: ``metrics={"Nombre": callable}``, donde ``callable``
+  recibe ``(y_true, y_pred)`` y devuelve un escalar.
+
+Mlektic computa y muestra estas métricas como subtítulos o recuadros separados,
+según el builder de visualización usado.

@@ -22,6 +22,8 @@ API de Alto Nivel
 
 .. autofunction:: mlektic.api.logistic.visualize_logistic
 
+.. autofunction:: mlektic.api.logistic.explain_logistic_prediction
+
 
 Servicios de Historial
 =======================
@@ -193,6 +195,12 @@ Builders de Figuras — Regresión Logística
 .. autofunction:: mlektic.visualization.logistic.multiclass_1d.build_multiclass_1d_logistic_figure
 
 
+.. module:: mlektic.visualization.logistic.multiclass_2d
+   :synopsis: Figura multiclase (2 variables).
+
+.. autofunction:: mlektic.visualization.logistic.multiclass_2d.build_multiclass_2d_logistic_figure
+
+
 .. module:: mlektic.visualization.logistic.multiclass_nd
    :synopsis: Figura multiclase (d > 2).
 
@@ -227,6 +235,23 @@ Utilidades de Grids
 .. autofunction:: mlektic.utils.grids.build_1d_grid
 
 .. autofunction:: mlektic.utils.grids.build_2d_grid
+
+
+Métricas e Historial
+====================
+
+.. module:: mlektic.history.metrics
+   :synopsis: Cálculo de métricas por frame.
+
+.. autofunction:: mlektic.history.metrics.build_linear_metrics
+
+.. autofunction:: mlektic.history.metrics.build_logistic_metrics
+
+
+.. module:: mlektic.history.sampling
+   :synopsis: Muestreo temporal de historiales.
+
+.. autofunction:: mlektic.history.sampling.decimate_history
 
 
 Tema Visual

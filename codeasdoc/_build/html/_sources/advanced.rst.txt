@@ -20,6 +20,8 @@ Puedes usar las funciones de bajo nivel por separado para mayor control:
        smooth_beta=0.9,
        baseline="zeros",
        display_space="original",
+       metrics=["loss", "mse", "r2", "mae"],
+       max_frames=60,
    )
 
    # Construir figura con opciones
@@ -31,6 +33,62 @@ Puedes usar las funciones de bajo nivel por separado para mayor control:
        dec=6,
        frame_duration=50,
    )
+
+
+Métricas Personalizadas
+=======================
+
+Las visualizaciones calculan métricas por frame para alimentar subtítulos y
+paneles de la animación.
+
+En regresión lineal puedes solicitar métricas integradas:
+
+.. code-block:: python
+
+   fig = visualize_lr(
+       model, X, y,
+       metrics=["loss", "mse", "r2", "mae"],
+   )
+
+En regresión logística están disponibles:
+
+.. code-block:: python
+
+   fig = visualize_logistic(
+       model, X, y,
+       metrics=["loss", "accuracy", "f1"],
+   )
+
+También puedes pasar funciones personalizadas como diccionario. Cada función
+recibe ``(y_true, y_pred)`` y debe devolver un escalar:
+
+.. code-block:: python
+
+   history = fit_history(
+       model, X, y,
+       metrics={
+           "Error mediano": lambda y_true, y_pred: np.median(np.abs(y_true - y_pred)),
+       },
+   )
+
+
+Control de Frames
+=================
+
+Para entrenamientos largos, ``steps`` puede ser mayor que la cantidad de frames
+que quieres renderizar. ``max_frames`` reduce el historial de forma uniforme
+antes de construir la figura:
+
+.. code-block:: python
+
+   fig = visualize_lr(model, X, y, steps=500, max_frames=80)
+
+Si necesitas muestrear cada N pasos en vez de fijar un máximo, desactiva
+``max_frames`` y usa ``frame_step``:
+
+.. code-block:: python
+
+   fig = visualize_logistic(model, X, y, steps=500, max_frames=None, frame_step=20)
 
 Exportar a HTML
 ================
@@ -110,3 +168,14 @@ Ejecución:
 
    cd local_test
    python test_1_var.py
+
+
+Compatibilidad con Futuros Adapters
+===================================
+
+La API de alto nivel trabaja contra adapters. Para soportar otro framework, el
+adapter debe traducir su modelo al contrato interno: predicción, probabilidades,
+extracción de parámetros cuando aplique, captura incremental o replay, y datos
+de escalado. Esta separación deja la librería preparada para modelos no
+Scikit-Learn y para una futura capa de visualización de redes neuronales sin
+acoplar cada figura a un framework específico.

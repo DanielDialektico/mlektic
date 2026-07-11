@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def _sigmoid(z):
     """Compute a numerically stable sigmoid."""
     z = np.asarray(z, dtype=float)

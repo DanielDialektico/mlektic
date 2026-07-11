@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 
+
 def _first_not_none(*args):
     """Return the first non-None argument from the given list of arguments."""
     for a in args:

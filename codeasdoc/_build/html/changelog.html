@@ -7,7 +7,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Changelog &mdash; Mlektic Documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
@@ -52,6 +52,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#v0-1-0-en-desarrollo">v0.1.0 (En desarrollo)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#funcionalidades">Funcionalidades</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixes-y-mejoras-recientes">Fixes y Mejoras Recientes</a></li>
 </ul>
 </li>
 </ul>
@@ -99,9 +100,12 @@
 - Clasificación binaria: 1D (sigmoide), 2D (superficie), d &gt; 2 (LaTeX).
 - Clasificación multiclase: 1D (curvas de probabilidad), d &gt; 2 (matrices de pesos).</p></li>
 <li><p><strong>Métricas Dinámicas</strong>: Parámetro <code class="docutils literal notranslate"><span class="pre">metrics</span></code> para mostrar simultáneamente variables como <code class="docutils literal notranslate"><span class="pre">loss</span></code>, <code class="docutils literal notranslate"><span class="pre">mse</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, y formateo inteligente de números para evitar desbordes visuales.</p></li>
+<li><p><strong>Métricas Reutilizables</strong>: Builders internos para métricas por frame en regresión lineal y logística, incluyendo <code class="docutils literal notranslate"><span class="pre">loss</span></code>, <code class="docutils literal notranslate"><span class="pre">mse</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, <code class="docutils literal notranslate"><span class="pre">mae</span></code>, <code class="docutils literal notranslate"><span class="pre">accuracy</span></code> y <code class="docutils literal notranslate"><span class="pre">f1</span></code>, además de métricas personalizadas.</p></li>
+<li><p><strong>Muestreo de Historiales</strong>: Utilidades internas para reducir historiales largos mediante <code class="docutils literal notranslate"><span class="pre">max_frames</span></code> o <code class="docutils literal notranslate"><span class="pre">frame_step</span></code> antes del renderizado.</p></li>
 <li><p><strong>Integración con Scikit-Learn</strong>: Compatible con estimadores directos y <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code>.</p></li>
 <li><p><strong>Adapter Pattern</strong>: <code class="docutils literal notranslate"><span class="pre">SklearnAdapter</span></code> como implementación concreta del
 <code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code> (extensible a otros frameworks).</p></li>
+<li><p><strong>Ruta de Escalabilidad</strong>: Documentación del contrato de adapters para futuras familias de modelos, incluyendo frameworks no Scikit-Learn y visualizaciones de redes neuronales.</p></li>
 <li><p><strong>Strategy Pattern</strong>: Dos estrategias de captura de historial:
 - <code class="docutils literal notranslate"><span class="pre">IterativeCapture</span></code> para modelos iterativos (<code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code>).
 - <code class="docutils literal notranslate"><span class="pre">InterpolationCapture</span></code> para modelos no iterativos.</p></li>
@@ -109,6 +113,16 @@
 <li><p><strong>Espacio de visualización</strong>: Soporte para <code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code> y <code class="docutils literal notranslate"><span class="pre">&quot;scaled&quot;</span></code>
 con transformación inversa automática de parámetros escalados.</p></li>
 <li><p><strong>Tema visual unificado</strong>: Dark mode con Plotly, botones Play/Pause, slider temporal.</p></li>
+</ul>
+</section>
+<section id="fixes-y-mejoras-recientes">
+<h3>Fixes y Mejoras Recientes<a class="headerlink" href="#fixes-y-mejoras-recientes" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Estabilidad en Exportación HTML</strong>: Corrección del «glitch» de redimensionamiento de arrays de JavaScript en Plotly; los arrays ahora se rellenan con <code class="docutils literal notranslate"><span class="pre">None</span></code> para garantizar un trazado de línea constante y evitar que las animaciones HTML se corten.</p></li>
+<li><p><strong>Formateo Multivariable</strong>: La función <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction()</span></code> para 3 o más variables ahora formatea correctamente la coordenada resultante incluyendo <code class="docutils literal notranslate"><span class="pre">y_hat</span></code> al final (ej., <code class="docutils literal notranslate"><span class="pre">(x_1,</span> <span class="pre">\dots,</span> <span class="pre">x_d,</span> <span class="pre">\hat{y})</span></code>), logrando consistencia matemática con las vistas de 1D y 2D.</p></li>
+<li><p><strong>Exportaciones Públicas</strong>: <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code> ahora se importa correctamente desde <code class="docutils literal notranslate"><span class="pre">mlektic</span></code>.</p></li>
+<li><p><strong>Métricas Logísticas</strong>: Las métricas de clasificación respetan las etiquetas reales de clase en vez de asumir índices <code class="docutils literal notranslate"><span class="pre">0..K-1</span></code>.</p></li>
+<li><p><strong>Pipelines en Interpolación</strong>: Los historiales interpolados conservan metadatos de escalado para evaluar métricas en el espacio visual solicitado.</p></li>
 </ul>
 </section>
 </section>
