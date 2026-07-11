@@ -11,9 +11,9 @@
 *   **Regresión Lineal y Logística**: Soporte completo para los dos tipos de regresión más fundamentales del ML, cada uno con su propia función pública.
 *   **Renderizado Inteligente por Dimensión**:
     *   **1 Variable (2D)**: Dibuja la recta de regresión / curva sigmoide ajustándose punto a punto junto a la curva de pérdida.
-    *   **2 Variables (3D)**: Renderiza un plano predictivo / superficie de probabilidad en 3D interactivo que se inclina y eleva iteración por iteración.
+    *   **2 Variables (3D)**: Renderiza un plano predictivo / superficie de probabilidad en 3D interactivo que se inclina y eleva iteración por iteración. En el caso de logística multiclase, renderiza $K$ superficies superpuestas evaluando el clasificador Softmax de forma dinámica sobre los datos.
     *   **Múltiples Variables (d > 2)**: Al no ser posible graficar predicciones de alta dimensión, `mlektic` construye dinámicamente una matriz matemática en LaTeX interactiva que actualiza los pesos de tu vector `θ` en tiempo real.
-*   **Clasificación Multiclase**: Visualización automática de curvas de probabilidad por clase (1D) y matrices de pesos multiclase (d > 2).
+*   **Clasificación Multiclase**: Visualización automática de curvas de probabilidad por clase (1D), matrices de pesos multiclase (d > 2), y superficies múltiples simultáneas con paneles de ecuaciones (2D).
 *   **Inspección de Pipelines**: Capacidad de proyectar el aprendizaje visualmente tanto en el **"espacio local/escalado"** como de vuelta al **"espacio original"** cuando usas funciones como `StandardScaler`.
 
 ---

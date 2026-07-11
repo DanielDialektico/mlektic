@@ -24,6 +24,8 @@ def visualize_lr(
     metrics=None,
     dec=4,
     frame_duration=80,
+    max_frames=60,
+    frame_step=10,
     theme=None,
 ):
     """
@@ -63,6 +65,8 @@ def visualize_lr(
         baseline=baseline,
         display_space=display_space,
         metrics=metrics,
+        max_frames=max_frames,
+        frame_step=frame_step,
     )
 
     fig = build_lr_figure(

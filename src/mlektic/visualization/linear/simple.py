@@ -206,13 +206,13 @@ def build_simple_lr_figure(
             if metrics_hist is not None:
                 for i, (name, hist) in enumerate(metrics_hist.items()):
                     val = hist[t]
-                    y_pos = 0.95 - (i * 0.13)
+                    y_pos = 0.95 - (i * 0.18)
                     fmt = ".6f" if name.lower() == "loss" else ".4f"
                     ann.append(dict(
                         x=0.98, y=y_pos, xref="paper", yref="paper", 
                         text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False, 
-                        xanchor="right", yanchor="top", font=dict(size=14, color="black"), 
-                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=6
+                        xanchor="right", yanchor="top", font=dict(size=13, color="black"), 
+                        bgcolor="white", bordercolor="black", borderwidth=1, borderpad=5
                     ))
             return ann
 

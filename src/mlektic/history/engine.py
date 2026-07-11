@@ -13,6 +13,38 @@ from .base import (
     _scale_logistic_multiclass_theta
 )
 
+def decimate_history(data: dict, max_frames: int | None = 60, frame_step: int | None = 10) -> dict:
+    """Extrae muestras espaciadas de los historiales para optimizar animación."""
+    if "loss_hist" not in data:
+        return data
+        
+    steps = len(data["loss_hist"])
+    if steps <= 1:
+        return data
+        
+    indices = None
+    # Priorizar max_frames si está activado
+    if max_frames is not None and steps > max_frames:
+        indices = np.linspace(0, steps - 1, max_frames).astype(int)
+    # Si max_frames se desactivó, usar el frame_step (ej. cada 10 frames)
+    elif max_frames is None and frame_step is not None and frame_step > 0:
+        indices = np.arange(0, steps, frame_step)
+        if indices[-1] != steps - 1:
+            indices = np.append(indices, steps - 1)
+            
+    if indices is None:
+        return data
+        
+    for k, v in data.items():
+        if isinstance(v, np.ndarray) and v.shape[0] == steps:
+            data[k] = v[indices]
+        elif isinstance(v, dict) and k == "metrics_hist":
+            for mk, mv in v.items():
+                if isinstance(mv, np.ndarray) and mv.shape[0] == steps:
+                    v[mk] = mv[indices]
+                    
+    return data
+
 class HistoryEngine:
     """Engine that orchestrates history capture."""
 
@@ -31,7 +63,6 @@ class HistoryEngine:
             strategy = InterpolationCapture()
             
         data = strategy.capture_linear(self.adapter, X, y, config)
-        self._apply_smoothing(data, config, is_linear=True)
         self._apply_theta_scaling(data, config, is_linear=True, is_multiclass=False)
         data["display_space"] = config.display_space
 
@@ -76,6 +107,14 @@ class HistoryEngine:
             # keep up to 5 metrics maximum
             data["metrics_hist"] = {k: metrics_hist[k] for k in list(metrics_hist)[:5]}
 
+        # Aplicar decimación temporal antes de suavizar
+        max_f = getattr(config, "max_frames", 60)
+        f_step = getattr(config, "frame_step", 10)
+        data = decimate_history(data, max_frames=max_f, frame_step=f_step)
+        
+        # El suavizado se aplica sobre los fotogramas finales para garantizar animación fluida
+        self._apply_smoothing(data, config, is_linear=True)
+        
         return data
 
     def capture_logistic(self, X, y, config) -> dict:
@@ -88,7 +127,6 @@ class HistoryEngine:
             strategy = InterpolationCapture()
             
         data = strategy.capture_logistic(self.adapter, X, y, config)
-        self._apply_smoothing(data, config, is_linear=False)
         self._apply_theta_scaling(data, config, is_linear=False, is_multiclass=data["is_multiclass"])
         data["display_space"] = config.display_space
 
@@ -148,6 +186,14 @@ class HistoryEngine:
             
             data["metrics_hist"] = {k: metrics_hist[k] for k in list(metrics_hist)[:5]}
 
+        # Aplicar decimación temporal antes de suavizar
+        max_f = getattr(config, "max_frames", 60)
+        f_step = getattr(config, "frame_step", 10)
+        data = decimate_history(data, max_frames=max_f, frame_step=f_step)
+        
+        # El suavizado se aplica sobre los fotogramas finales para garantizar animación fluida
+        self._apply_smoothing(data, config, is_linear=False)
+        
         return data
 
     def _resolve_mode(self, requested_mode: str) -> str:
@@ -185,6 +231,11 @@ class HistoryEngine:
                 P = h.reshape(h.shape[0], -1)
                 for j in range(P.shape[1]): P[:, j] = _ema_smooth(P[:, j], beta)
                 data["p_curves_hist"] = P.reshape(h.shape)
+            if data.get("p_surfaces_hist") is not None:
+                h = data["p_surfaces_hist"]
+                P = h.reshape(h.shape[0], -1)
+                for j in range(P.shape[1]): P[:, j] = _ema_smooth(P[:, j], beta)
+                data["p_surfaces_hist"] = P.reshape(h.shape)
 
     def _apply_theta_scaling(self, data: dict, config, is_linear: bool, is_multiclass: bool):
         w_learned = data.get("w_hist_learned")

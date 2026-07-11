@@ -98,7 +98,7 @@ class IterativeCapture(HistoryCaptureStrategy):
         is_multiclass = K > 2
         
         grid = {}
-        p_line_hist = p_plane_hist = p_curves_hist = None
+        p_line_hist = p_plane_hist = p_curves_hist = p_surfaces_hist = None
         Xg_pred = None
         
         if d == 1:
@@ -118,6 +118,8 @@ class IterativeCapture(HistoryCaptureStrategy):
             Xg_pred = np.column_stack([X1g.ravel(), X2g.ravel()])
             if not is_multiclass:
                 p_plane_hist = np.zeros((steps, X1g.shape[0], X1g.shape[1]), dtype=float)
+            else:
+                p_surfaces_hist = np.zeros((steps, X1g.shape[0], X1g.shape[1], K), dtype=float)
 
         loss_hist = np.zeros(steps, dtype=float)
         w_hist = b_hist = None
@@ -152,6 +154,8 @@ class IterativeCapture(HistoryCaptureStrategy):
                     p_curves_hist[t] = gt
                 elif d == 2 and not is_multiclass:
                     p_plane_hist[t] = gt[:, 1].reshape(X1g.shape)
+                elif d == 2 and is_multiclass:
+                    p_surfaces_hist[t] = gt.reshape(X1g.shape[0], X1g.shape[1], K)
                     
             thetat = adapter_inst.extract_logistic_theta(d_expected=d)
             if thetat and w_hist is not None:
@@ -181,6 +185,7 @@ class IterativeCapture(HistoryCaptureStrategy):
             "p_line_hist": p_line_hist,
             "p_plane_hist": p_plane_hist,
             "p_curves_hist": p_curves_hist,
+            "p_surfaces_hist": p_surfaces_hist,
             "w_hist_learned": w_hist,
             "b_hist_learned": b_hist,
             "scaler_params": replay_adapter.get_scaler_params(),
