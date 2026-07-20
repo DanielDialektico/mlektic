@@ -21,24 +21,32 @@ class TorchTrainingRecorder:
         self,
         model: Any,
         *,
+        optimizer: Any | None = None,
+        loss_fn: Any | None = None,
         record_every: int = 1,
         capture_weights: bool = True,
         capture_gradients: bool = True,
         capture_activations: bool = True,
         max_tensor_elements: int = 4096,
+        max_activation_elements: int = 512,
     ) -> None:
         """Create a recorder attached to *model* without changing its behavior."""
         if record_every < 1:
             raise ValueError("record_every must be at least 1.")
         if max_tensor_elements < 1:
             raise ValueError("max_tensor_elements must be at least 1.")
+        if max_activation_elements < 1:
+            raise ValueError("max_activation_elements must be at least 1.")
         _require_torch()
         self.model = model
+        self.optimizer = optimizer
+        self.loss_fn = loss_fn
         self.record_every = record_every
         self.capture_weights = capture_weights
         self.capture_gradients = capture_gradients
         self.capture_activations = capture_activations
         self.max_tensor_elements = max_tensor_elements
+        self.max_activation_elements = max_activation_elements
         self.steps: List[int] = []
         self.loss: List[float] = []
         self.metrics: Dict[str, List[float]] = defaultdict(list)
@@ -49,8 +57,9 @@ class TorchTrainingRecorder:
         self.activations: Dict[str, Dict[str, List[float]]] = defaultdict(
             lambda: {"mean": [], "std": [], "min": [], "max": []}
         )
+        self.activation_vectors: Dict[str, List[np.ndarray]] = defaultdict(list)
         self._hooks = []
-        self._latest_activations: Dict[str, Dict[str, float]] = {}
+        self._latest_activations: Dict[str, Dict[str, Any]] = {}
         if capture_activations:
             self._register_activation_hooks()
 
@@ -70,6 +79,14 @@ class TorchTrainingRecorder:
                 "min": float(np.min(values)),
                 "max": float(np.max(values)),
             }
+            if values.ndim >= 2:
+                reduction_axes = (0, *range(2, values.ndim))
+                vector = np.mean(values, axis=reduction_axes)
+            else:
+                vector = values
+            vector = np.asarray(vector, dtype=float).ravel()
+            if vector.size <= self.max_activation_elements:
+                self._latest_activations[name]["vector"] = vector.copy()
 
         return hook
 
@@ -108,6 +125,9 @@ class TorchTrainingRecorder:
         if self.capture_activations:
             for name, summary in self._latest_activations.items():
                 for statistic, value in summary.items():
+                    if statistic == "vector":
+                        self.activation_vectors[name].append(np.asarray(value, dtype=float).copy())
+                        continue
                     self.activations[name][statistic].append(value)
         return True
 
@@ -139,7 +159,33 @@ class TorchTrainingRecorder:
                 name: {statistic: np.asarray(values, dtype=float) for statistic, values in summary.items()}
                 for name, summary in self.activations.items()
             },
+            "activation_vectors": {name: list(values) for name, values in self.activation_vectors.items()},
+            "training_config": self._training_config(),
         }
+
+    def _training_config(self) -> Dict[str, Any]:
+        """Return lightweight optimizer, loss, and capture configuration metadata."""
+        config: Dict[str, Any] = {
+            "model": self.model.__class__.__name__,
+            "record_every": self.record_every,
+        }
+        if self.optimizer is not None:
+            config["optimizer"] = self.optimizer.__class__.__name__
+            defaults = getattr(self.optimizer, "defaults", {})
+            config["optimizer_hyperparameters"] = {
+                name: value
+                for name, value in defaults.items()
+                if value is None or isinstance(value, (bool, int, float, str, tuple, list))
+            }
+        if self.loss_fn is not None:
+            config["loss"] = self.loss_fn.__class__.__name__
+            config["loss_hyperparameters"] = {
+                name: value
+                for name, value in vars(self.loss_fn).items()
+                if not name.startswith("_")
+                and (value is None or isinstance(value, (bool, int, float, str, tuple, list)))
+            }
+        return config
 
     def close(self) -> None:
         """Remove forward hooks when the recorder is no longer needed."""

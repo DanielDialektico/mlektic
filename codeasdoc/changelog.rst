@@ -11,9 +11,9 @@ Funcionalidades
 ----------------
 
 - **Redes Neuronales PyTorch**: soporte opcional mediante ``mlektic[torch]`` con
-  ``TorchTrainingRecorder``, diagramas de arquitectura, animaciones de entrenamiento
-  y pesos, estadisticas de activacion y explicacion matematica de forward passes
-  para MLPs pequenos.
+  grafo animado de feed forward y backpropagation, arquitectura matematica,
+  dimensiones y formulas LaTeX, loss y metricas, evolucion matricial de parametros,
+  explicacion temporal del forward pass y reportes HTML completos para redes grandes.
 
 - **Regresión Lineal**: Soporte completo para ``visualize_lr()`` con:
   - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.

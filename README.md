@@ -8,15 +8,20 @@ Install the optional PyTorch integration only in environments that need it:
 pip install "mlektic[torch]"
 ```
 
-The neural API is designed for notebooks and Colab. It combines a layer graph,
-animated training dynamics, and an exact forward-pass explanation for small MLPs.
+The neural API is designed for notebooks and Colab. It combines a mathematical
+architecture map, an animated forward/backpropagation graph, training metrics,
+LaTeX parameter evolution, numerical forward-pass substitutions, and a scalable
+HTML taxonomy report.
 
 ```python
 import torch
 from mlektic import (
     TorchTrainingRecorder,
+    display_nn_math_report,
     explain_nn_prediction,
-    visualize_nn,
+    export_nn_math_report,
+    visualize_nn_architecture,
+    visualize_nn_graph,
     visualize_nn_training,
     visualize_nn_weights,
 )
@@ -33,31 +38,55 @@ model = torch.nn.Sequential(
 )
 optimizer = torch.optim.Adam(model.parameters(), lr=0.08)
 loss_fn = torch.nn.BCELoss()
-recorder = TorchTrainingRecorder(model, record_every=2)
+recorder = TorchTrainingRecorder(
+    model,
+    optimizer=optimizer,
+    loss_fn=loss_fn,
+    record_every=2,
+)
 
 for step in range(80):
     optimizer.zero_grad()
     prediction = model(X)
     loss = loss_fn(prediction, y)
     loss.backward()
-    recorder.record(step, loss=loss)  # After backward, before optimizer.step.
+    accuracy = ((prediction >= 0.5) == y.bool()).float().mean()
+    recorder.record(
+        step,
+        loss=loss,
+        metrics={"accuracy": accuracy},
+    )  # After backward, before optimizer.step.
     optimizer.step()
 
 recorder.close()
 history = recorder.to_history()
 
-visualize_nn(model, X[:1], view="architecture").show()
-visualize_nn_training(history, frame_duration=90).show()
-visualize_nn_weights(history, parameter="0.weight", frame_duration=90).show()
-explain_nn_prediction(model, X[0], max_neurons_math=8).show()
+visualize_nn_architecture(model, X[:1], history=history).show()
+visualize_nn_graph(model, X[0], history, max_frames=16).show()
+visualize_nn_training(history, max_frames=24, frame_duration=90).show()
+visualize_nn_weights(history, max_rows=4, max_cols=5, max_frames=24).show()
+explain_nn_prediction(model, X[0], history=history, max_frames=12).show()
+
+# Inline in Jupyter/Colab, or export a standalone report for a large network.
+display_nn_math_report(model, X[:1], history=history)
+report_path = export_nn_math_report(
+    model,
+    X[:1],
+    history=history,
+    path="xor-mathematics.html",
+)
 ```
 
-For small networks, `explain_nn_prediction` substitutes actual values in each
-`z = Wa + b` computation and then applies the activation. For larger networks,
-use the architecture graph, weight heatmaps, parameter norms, and activation
-statistics instead. `TorchTrainingRecorder` stores full tensors only when they
-have at most `max_tensor_elements` values (4096 by default), keeping large runs
-practical inside a notebook.
+In the graph, each recorded step has a forward frame (`F`) and a backpropagation
+frame (`B`). Hovering shows exact weights, gradients, updates, activations, and
+dimensions. Positive and negative values use different colors, while the
+formula above the graph updates with representative parameter values.
+
+For small networks, `explain_nn_prediction` substitutes actual values in every
+`z = Wa + b` computation. Larger models are summarized with ellipses in Plotly
+and remain fully documented in the standalone HTML report. The recorder keeps
+full tensors only up to `max_tensor_elements` values (4096 by default), so large
+runs still retain loss, metrics, and tensor norms without overloading a notebook.
 
 **Mlektic** es una librería de Python diseñada para demostrar visual y matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas por `plotly`, creadas específicamente para entender las tripas de los algoritmos de Scikit-Learn.
 

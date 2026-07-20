@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2026-06-04
 
 ### Added
-- Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, parameter, gradient, and activation summaries.
-- Added neural-network visualizations for PyTorch modules: an expandable architecture graph, animated training loss and parameter norms, weight heatmaps, and activation-flow charts.
-- Added `explain_nn_prediction()` for layer-by-layer forward-pass mathematics in small networks, with numerical substitutions for `z = Wa + b` and activation outputs.
+- Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
+- Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
+- Added an animated mathematical network graph with paired feed-forward/backpropagation frames, signed node and edge colors, and hover details for weights, activations, gradients, parameter updates, biases, and dimensions.
+- Added separate animated loss and performance-metric panels, plus fully mathematical LaTeX views for parameter matrices and activation evolution with automatic ellipses.
+- Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Wa + b`, and summarized representations for deeper networks.
+- Added standalone and notebook HTML mathematical reports with the complete taxonomy, definition, configuration, dimensions, parameter roles, and training evolution for every layer.
 - Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.
 - Added reusable history sampling utilities to decimate long animation histories through `max_frames` or `frame_step`.
 - Documented the adapter extension path for future model families, including non-Scikit-Learn estimators and upcoming neural-network visualization work.

@@ -7,6 +7,8 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy as np
 
+from .taxonomy import module_formula, module_hyperparameters, module_role
+
 
 def _require_torch():
     """Import PyTorch only when a neural-network feature is used."""
@@ -47,27 +49,11 @@ def _as_model_input(model: Any, input_sample: Any):
     return sample.unsqueeze(0) if sample.ndim == 1 else sample
 
 
-def _module_formula(module: Any) -> str:
-    """Return the mathematical rule most useful to a learner for a module."""
-    name = module.__class__.__name__
-    formulas = {
-        "Linear": r"z = Wa + b",
-        "ReLU": r"a = \max(0, z)",
-        "Sigmoid": r"a = \sigma(z)",
-        "Tanh": r"a = \tanh(z)",
-        "GELU": r"a = \operatorname{GELU}(z)",
-        "LeakyReLU": r"a = \max(z, \alpha z)",
-        "Softmax": r"a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}",
-        "Dropout": r"a = \operatorname{Dropout}(z)",
-        "Flatten": r"a = \operatorname{vec}(z)",
-    }
-    return formulas.get(name, name)
-
-
 def describe_torch_model(model: Any, input_sample: Any | None = None) -> List[Dict[str, Any]]:
     """Describe leaf modules, parameter counts, and optional observed output shapes."""
     torch = _require_torch()
     layers: List[Dict[str, Any]] = []
+    input_shapes: Dict[str, Tuple[int, ...] | None] = {}
     shapes: Dict[str, Tuple[int, ...] | None] = {}
     hooks = []
 
@@ -75,7 +61,8 @@ def describe_torch_model(model: Any, input_sample: Any | None = None) -> List[Di
         sample = _as_model_input(model, input_sample)
 
         def capture(name: str):
-            def hook(_module, _inputs, output):
+            def hook(_module, inputs, output):
+                input_shapes[name] = _shape_of(inputs)
                 shapes[name] = _shape_of(output)
 
             return hook
@@ -91,8 +78,17 @@ def describe_torch_model(model: Any, input_sample: Any | None = None) -> List[Di
             for hook in hooks:
                 hook.remove()
 
+    mathematical_index = 0
     for index, (name, module) in enumerate(_leaf_modules(model)):
+        role = module_role(module.__class__.__name__)
+        if role == "learnable":
+            mathematical_index += 1
+        formula_index = max(mathematical_index, 1)
         own_parameters = list(module.parameters(recurse=False))
+        parameter_shapes = {
+            parameter_name: tuple(parameter.shape)
+            for parameter_name, parameter in module.named_parameters(recurse=False)
+        }
         parameter_count = sum(parameter.numel() for parameter in own_parameters)
         units = None
         if hasattr(module, "out_features"):
@@ -102,12 +98,20 @@ def describe_torch_model(model: Any, input_sample: Any | None = None) -> List[Di
         layers.append(
             {
                 "index": index,
+                "math_index": formula_index,
                 "name": name,
                 "type": module.__class__.__name__,
                 "units": units,
                 "parameters": parameter_count,
+                "trainable_parameters": sum(
+                    parameter.numel() for parameter in own_parameters if parameter.requires_grad
+                ),
+                "parameter_shapes": parameter_shapes,
+                "input_shape": input_shapes.get(name),
                 "output_shape": shapes.get(name),
-                "formula": _module_formula(module),
+                "formula": module_formula(module, formula_index),
+                "hyperparameters": module_hyperparameters(module),
+                "role": role,
             }
         )
     if not layers:
@@ -115,7 +119,11 @@ def describe_torch_model(model: Any, input_sample: Any | None = None) -> List[Di
     return layers
 
 
-def run_torch_forward(model: Any, input_sample: Any) -> Tuple[Any, "OrderedDict[str, Dict[str, np.ndarray]]"]:
+def run_torch_forward(
+    model: Any,
+    input_sample: Any,
+    parameter_values: Dict[str, np.ndarray] | None = None,
+) -> Tuple[Any, "OrderedDict[str, Dict[str, np.ndarray]]"]:
     """Run one inference while retaining inputs and outputs of leaf modules."""
     torch = _require_torch()
     sample = _as_model_input(model, input_sample)
@@ -134,6 +142,16 @@ def run_torch_forward(model: Any, input_sample: Any) -> Tuple[Any, "OrderedDict[
         return hook
 
     hooks = [module.register_forward_hook(capture(name)) for name, module in _leaf_modules(model)]
+    originals: Dict[str, Any] = {}
+    if parameter_values:
+        with torch.no_grad():
+            for name, parameter in model.named_parameters():
+                if name not in parameter_values:
+                    continue
+                originals[name] = parameter.detach().clone()
+                replacement = torch.as_tensor(parameter_values[name], device=parameter.device, dtype=parameter.dtype)
+                if replacement.shape == parameter.shape:
+                    parameter.copy_(replacement)
     was_training = model.training
     try:
         model.eval()
@@ -141,6 +159,11 @@ def run_torch_forward(model: Any, input_sample: Any) -> Tuple[Any, "OrderedDict[
             output = model(sample)
     finally:
         model.train(was_training)
+        if originals:
+            with torch.no_grad():
+                for name, parameter in model.named_parameters():
+                    if name in originals:
+                        parameter.copy_(originals[name])
         for hook in hooks:
             hook.remove()
     return output, records

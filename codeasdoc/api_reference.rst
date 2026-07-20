@@ -36,11 +36,21 @@ Redes Neuronales PyTorch
 
 .. autofunction:: mlektic.api.neural.visualize_nn
 
+.. autofunction:: mlektic.api.neural.visualize_nn_architecture
+
+.. autofunction:: mlektic.api.neural.visualize_nn_graph
+
 .. autofunction:: mlektic.api.neural.visualize_nn_training
 
 .. autofunction:: mlektic.api.neural.visualize_nn_weights
 
 .. autofunction:: mlektic.api.neural.explain_nn_prediction
+
+.. autofunction:: mlektic.api.neural.build_nn_math_report
+
+.. autofunction:: mlektic.api.neural.display_nn_math_report
+
+.. autofunction:: mlektic.api.neural.export_nn_math_report
 
 
 Servicios de Historial
