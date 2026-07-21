@@ -18,11 +18,15 @@ entre arquitectura, entrenamiento y prediccion.
   mapa de calor global entre el peso minimo y maximo; las lineas punteadas color
   tinto superpuestas representan la magnitud del gradiente de backpropagation. El
   color de cada nodo representa su salida numerica exacta para la entrada elegida,
-  normalizada por capa a lo largo del intervalo temporal mostrado para hacer
-  visibles cambios pequenos. El hover conserva la salida sin normalizar y evita
-  mostrar sintaxis LaTeX cruda. Las aristas codifican :math:`w_{ji}` y los nodos
-  :math:`a_j=\phi(\sum_i w_{ji}a_i+b_j)`, por lo que usan escalas distintas. El
-  ultimo frame usa los tensores finales del modelo.
+  usando por defecto una sola escala global con los minimos y maximos reales de
+  todos los nodos y frames, incluidos valores negativos. El hover conserva la
+  salida exacta y evita mostrar sintaxis LaTeX cruda. Las aristas codifican
+  :math:`w_{ji}` y los nodos :math:`a_j=\phi(\sum_i w_{ji}a_i+b_j)`, por lo que
+  usan escalas distintas. El ultimo frame usa los tensores finales del modelo.
+  ``node_color_mode="relative"`` ofrece contraste normalizado por capa como modo
+  opcional. ``edge_color_mode="signal"`` colorea cada arista mediante la
+  contribucion forward :math:`w_{ji}a_i`; el modo predeterminado ``"weight"``
+  conserva la visualizacion de los parametros.
 - ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
   normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
   pequenos. Tambien puede inferir tres metricas al recibir ``predictions`` y

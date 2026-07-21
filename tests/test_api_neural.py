@@ -103,16 +103,52 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     )
     assert "Feed forward" in _annotation_text(figure)
     assert "Backpropagation" in _annotation_text(figure)
-    assert r"\widetilde a_j^{(\ell)}" in _annotation_text(figure)
+    assert "Node heatmap (exact)" in _annotation_text(figure)
+    assert r"a_j^{(\ell)}" in _annotation_text(figure)
     assert r"\mathbb{R}" in _annotation_text(figure)
     first_node_colors = [tuple(trace.marker.color) for trace in figure.frames[0].data if trace.mode == "markers"]
     last_node_colors = [tuple(trace.marker.color) for trace in figure.frames[-1].data if trace.mode == "markers"]
     assert any(first != last for first, last in zip(first_node_colors[1:], last_node_colors[1:]))
-    assert figure.data[-2].marker.colorbar.title.text == "Weight value"
-    assert figure.data[-1].marker.colorbar.title.text == r"$\widetilde{a}_j^{(\ell)}$"
+    assert figure.data[-2].marker.colorbar.title.text == r"$w_{ji}^{(\ell)}$"
+    assert figure.data[-1].marker.colorbar.title.text == r"$a_j^{(\ell)}$"
+    assert figure.data[-1].marker.cmin < 0.0
+    assert figure.data[-1].marker.cmax > 0.0
     assert figure.data[-1].marker.showscale is True
     assert figure.layout.updatemenus[0].buttons[0].args[1]["frame"]["redraw"] is False
     assert all(" F" not in step.label and " B" not in step.label for step in figure.layout.sliders[0].steps)
+
+
+def test_graph_supports_relative_nodes_and_forward_signal_edges(trained_small_network):
+    model, X, history = trained_small_network
+    figure = visualize_nn(
+        model,
+        X[1],
+        history=history,
+        view="graph",
+        node_color_mode="relative",
+        edge_color_mode="signal",
+        max_frames=2,
+    )
+    hover = " ".join(
+        str(value) for trace in figure.frames[0].data for value in (trace.customdata or [])
+    )
+
+    assert figure.data[-2].marker.colorbar.title.text == r"$w_{ji}^{(\ell)}a_i^{(\ell-1)}$"
+    assert figure.data[-1].marker.colorbar.title.text == r"$\widetilde{a}_j^{(\ell)}$"
+    assert figure.data[-1].marker.cmin == 0.0
+    assert figure.data[-1].marker.cmax == 1.0
+    assert "Forward signal" in hover
+    assert "w * a=" in hover
+    assert "Node heatmap (relative)" in _annotation_text(figure)
+
+
+def test_graph_rejects_unknown_color_modes(trained_small_network):
+    model, X, history = trained_small_network
+
+    with pytest.raises(ValueError, match="node_color_mode"):
+        visualize_nn_graph(model, X[0], history, node_color_mode="unknown")
+    with pytest.raises(ValueError, match="edge_color_mode"):
+        visualize_nn_graph(model, X[0], history, edge_color_mode="unknown")
 
 
 def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_network):

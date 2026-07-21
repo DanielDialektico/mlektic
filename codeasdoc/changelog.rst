@@ -12,7 +12,8 @@ Funcionalidades
 
 - **Redes Neuronales PyTorch**: soporte opcional mediante ``mlektic[torch]`` con
   grafo temporal de pesos y salidas neuronales como mapas de calor independientes,
-  normalizacion temporal por capa para resaltar la evolucion de los nodos,
+  escalas globales reales por defecto, normalizacion temporal opcional por capa y
+  modo adicional para colorear aristas mediante la senal :math:`w_{ji}a_i`,
   gradientes de backpropagation simultaneos, arquitectura matematica, dimensiones y
   formulas LaTeX, cuadricula 2 por 2 para loss y tres metricas inferibles desde
   predicciones y objetivos, evolucion matricial de

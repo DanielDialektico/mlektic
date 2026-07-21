@@ -17,12 +17,6 @@ from .math_format import (
     parameter_snapshot,
 )
 
-WEIGHT_COLORSCALE = [
-    [0.0, NEURAL_COLORS["weight_min"]],
-    [0.5, NEURAL_COLORS["weight_mid"]],
-    [1.0, NEURAL_COLORS["weight_max"]],
-]
-
 ACTIVATION_COLORSCALE = [
     [0.0, NEURAL_COLORS["activation_min"]],
     [0.5, NEURAL_COLORS["activation_mid"]],
@@ -67,8 +61,42 @@ def _scaled_color(
     return _interpolate_color(middle_color, high_color, float((position - 0.5) * 2.0))
 
 
+def _signed_color(
+    value: float,
+    minimum: float,
+    maximum: float,
+    low_color: str,
+    middle_color: str,
+    high_color: str,
+) -> str:
+    if minimum < 0.0 < maximum:
+        if value <= 0.0:
+            ratio = (float(value) - minimum) / (0.0 - minimum)
+            return _interpolate_color(low_color, middle_color, float(np.clip(ratio, 0.0, 1.0)))
+        ratio = float(value) / maximum
+        return _interpolate_color(middle_color, high_color, float(np.clip(ratio, 0.0, 1.0)))
+    if minimum >= 0.0:
+        return _scaled_color(value, minimum, maximum, middle_color, middle_color, high_color)
+    return _scaled_color(value, minimum, maximum, low_color, middle_color, middle_color)
+
+
+def _signed_colorscale(
+    minimum: float,
+    maximum: float,
+    low_color: str,
+    middle_color: str,
+    high_color: str,
+) -> List[List[Any]]:
+    if minimum < 0.0 < maximum:
+        zero_position = (0.0 - minimum) / (maximum - minimum)
+        return [[0.0, low_color], [zero_position, middle_color], [1.0, high_color]]
+    if minimum >= 0.0:
+        return [[0.0, middle_color], [1.0, high_color]]
+    return [[0.0, low_color], [1.0, middle_color]]
+
+
 def _weight_color(value: float, minimum: float, maximum: float) -> str:
-    return _scaled_color(
+    return _signed_color(
         value,
         minimum,
         maximum,
@@ -79,7 +107,7 @@ def _weight_color(value: float, minimum: float, maximum: float) -> str:
 
 
 def _activation_color(value: float, minimum: float, maximum: float) -> str:
-    return _scaled_color(
+    return _signed_color(
         value,
         minimum,
         maximum,
@@ -148,6 +176,7 @@ def _graph_geometry(stages: Sequence[Dict[str, Any]], max_neurons: int):
                 edges.append(
                     {
                         "stage": stage,
+                        "stage_position": stage_position,
                         "source_index": source_index,
                         "target_index": target_index,
                         "x": [x_positions[stage_position], x_positions[stage_position + 1]],
@@ -189,9 +218,20 @@ def _node_values(
     ]
 
 
-def _activation_limits(states: Sequence[Sequence[np.ndarray]]) -> List[Tuple[float, float]]:
+def _activation_limits(
+    states: Sequence[Sequence[np.ndarray]],
+    mode: str,
+) -> List[Tuple[float, float]]:
     if not states:
         return [(0.0, 1.0)]
+    if mode == "value":
+        values = [np.asarray(vector, dtype=float).ravel() for state in states for vector in state]
+        combined = np.concatenate(values) if values else np.asarray([0.0])
+        minimum = float(np.min(combined))
+        maximum = float(np.max(combined))
+        if maximum <= minimum:
+            maximum = minimum + 1e-9
+        return [(minimum, maximum)] * len(states[0])
     limits: List[Tuple[float, float]] = []
     for column_index in range(len(states[0])):
         values = [np.asarray(state[column_index], dtype=float).ravel() for state in states]
@@ -202,6 +242,41 @@ def _activation_limits(states: Sequence[Sequence[np.ndarray]]) -> List[Tuple[flo
             maximum = minimum + 1e-9
         limits.append((minimum, maximum))
     return limits
+
+
+def _edge_value(
+    edge: Dict[str, Any],
+    parameters: Dict[str, np.ndarray],
+    node_values: Sequence[np.ndarray],
+    mode: str,
+) -> float:
+    stage = edge["stage"]
+    weight = float(parameters[stage["weight_name"]][edge["target_index"], edge["source_index"]])
+    if mode == "weight":
+        return weight
+    source_values = node_values[edge["stage_position"]]
+    source_activation = float(source_values[edge["source_index"]])
+    return weight * source_activation
+
+
+def _edge_limits(
+    edges: Sequence[Dict[str, Any]],
+    frame_states: Dict[int, tuple],
+    mode: str,
+    weight_limits: Tuple[float, float],
+) -> Tuple[float, float]:
+    if mode == "weight":
+        return weight_limits
+    values = [
+        _edge_value(edge, state[0], state[3], mode)
+        for state in frame_states.values()
+        for edge in edges
+    ]
+    minimum = float(np.min(values)) if values else 0.0
+    maximum = float(np.max(values)) if values else 0.0
+    if maximum <= minimum:
+        maximum = minimum + 1e-9
+    return minimum, maximum
 
 
 def _plain_vector(values: Any, dec: int, limit: int = 6) -> str:
@@ -232,6 +307,8 @@ def _graph_annotations(
     step: int,
     dec: int,
     is_final: bool,
+    node_color_mode: str,
+    edge_color_mode: str,
 ) -> List[Dict[str, Any]]:
     phase_tex = (
         r"\text{Feed forward: }\mathbf{z}^{(\ell)}=W^{(\ell)}\mathbf{a}^{(\ell-1)}+\mathbf{b}^{(\ell)},\;"
@@ -240,6 +317,20 @@ def _graph_annotations(
         r"\frac{\partial\mathcal{L}}{\partial W^{(\ell)}}"
     )
     final_tex = r"\quad\text{(final weights)}" if is_final else ""
+    node_heatmap_tex = (
+        r"\text{Node heatmap (exact): }a_j^{(\ell)}"
+        if node_color_mode == "value"
+        else (
+            r"\text{Node heatmap (relative): }\widetilde a_j^{(\ell)}="
+            r"\frac{a_j^{(\ell)}-a_{\min}^{(\ell)}}"
+            r"{a_{\max}^{(\ell)}-a_{\min}^{(\ell)}}"
+        )
+    )
+    edge_heatmap_tex = (
+        r"w_{ji}^{(\ell)}"
+        if edge_color_mode == "weight"
+        else r"s_{ji}^{(\ell)}=w_{ji}^{(\ell)}a_i^{(\ell-1)}"
+    )
     annotations: List[Dict[str, Any]] = [
         {
             "x": 0.5,
@@ -275,9 +366,8 @@ def _graph_annotations(
             "xref": "paper",
             "yref": "paper",
             "text": (
-                r"$\text{Node heatmap: }\widetilde a_j^{(\ell)}="
-                r"\frac{a_j^{(\ell)}-a_{\min}^{(\ell)}}"
-                r"{a_{\max}^{(\ell)}-a_{\min}^{(\ell)}}$"
+                f"${node_heatmap_tex}"
+                rf"\qquad\text{{Edge heatmap: }}{edge_heatmap_tex}$"
             ),
             "showarrow": False,
             "xanchor": "left",
@@ -322,9 +412,11 @@ def _edge_traces(
     parameters: Dict[str, np.ndarray],
     previous: Dict[str, np.ndarray],
     gradients: Dict[str, np.ndarray],
-    weight_minimum: float,
-    weight_maximum: float,
+    node_values: Sequence[np.ndarray],
+    edge_minimum: float,
+    edge_maximum: float,
     gradient_scale: float,
+    edge_color_mode: str,
     dec: int,
 ) -> List[go.Scatter]:
     traces: List[go.Scatter] = []
@@ -334,14 +426,20 @@ def _edge_traces(
         row = edge["target_index"]
         column = edge["source_index"]
         weight = float(weights[row, column])
+        source_activation = float(node_values[edge["stage_position"]][column])
+        signal = weight * source_activation
+        encoded_value = weight if edge_color_mode == "weight" else signal
         previous_weights = previous.get(stage["weight_name"], weights)
         delta = float(weight - previous_weights[row, column])
         gradient_matrix = gradients.get(stage["weight_name"], np.zeros_like(weights))
         gradient = float(gradient_matrix[row, column])
         gradient_ratio = min(abs(gradient) / gradient_scale, 1.0)
-        weight_hover = (
-            f"<b>Weight evolution</b><br>layer={stage['index']}<br>"
+        edge_hover = (
+            f"<b>{'Weight evolution' if edge_color_mode == 'weight' else 'Forward signal'}</b>"
+            f"<br>layer={stage['index']}<br>"
             f"w[{row + 1},{column + 1}]={weight:.{dec}f}<br>"
+            f"source output={source_activation:.{dec}f}<br>"
+            f"w * a={signal:+.{dec}f}<br>"
             f"delta w={delta:+.{dec}f}"
         )
         traces.append(
@@ -350,10 +448,10 @@ def _edge_traces(
                 y=edge["y"],
                 mode="lines",
                 line={
-                    "color": _weight_color(weight, weight_minimum, weight_maximum),
+                    "color": _weight_color(encoded_value, edge_minimum, edge_maximum),
                     "width": 3.2,
                 },
-                customdata=[weight_hover, weight_hover],
+                customdata=[edge_hover, edge_hover],
                 hovertemplate="%{customdata}<extra></extra>",
                 showlegend=False,
             )
@@ -391,6 +489,7 @@ def _node_traces(
     parameters: Dict[str, np.ndarray],
     gradients: Dict[str, np.ndarray],
     activation_limits: Sequence[Tuple[float, float]],
+    node_color_mode: str,
     dec: int,
 ) -> List[go.Scatter]:
     traces: List[go.Scatter] = []
@@ -407,7 +506,11 @@ def _node_traces(
                 hover_data.append(
                     f"<b>Input node {node_index + 1}</b><br>"
                     f"output x[{node_index + 1}] = {value:.{dec}f}<br>"
-                    f"heatmap value = {normalized:.3f}"
+                    + (
+                        f"relative heatmap value = {normalized:.3f}"
+                        if node_color_mode == "relative"
+                        else "heatmap uses the exact output"
+                    )
                 )
                 continue
             stage = stages[column_index - 1]
@@ -419,8 +522,12 @@ def _node_traces(
             )
             hover_data.append(
                 f"<b>Neuron {node_index + 1}</b><br>numerical output={value:.{dec}f}<br>"
-                f"heatmap value={normalized:.3f}<br>"
-                f"bias={bias[node_index]:.{dec}f}<br>"
+                + (
+                    f"relative heatmap value={normalized:.3f}<br>"
+                    if node_color_mode == "relative"
+                    else "heatmap uses the exact output<br>"
+                )
+                + f"bias={bias[node_index]:.{dec}f}<br>"
                 f"W[{node_index + 1},:]={_plain_vector(weight_row, dec)}<br>"
                 f"grad W[{node_index + 1},:]={_plain_vector(gradient_rows[node_index], dec)}"
             )
@@ -432,7 +539,18 @@ def _node_traces(
                 marker={
                     "size": 28,
                     "color": [
-                        _activation_color(value, activation_minimum, activation_maximum)
+                        (
+                            _scaled_color(
+                                value,
+                                activation_minimum,
+                                activation_maximum,
+                                NEURAL_COLORS["activation_min"],
+                                NEURAL_COLORS["activation_mid"],
+                                NEURAL_COLORS["activation_max"],
+                            )
+                            if node_color_mode == "relative"
+                            else _activation_color(value, activation_minimum, activation_maximum)
+                        )
                         for value in visible_values
                     ],
                     "line": {"width": 1.5, "color": NEURAL_COLORS["text"]},
@@ -486,14 +604,20 @@ def build_nn_graph_figure(
     max_neurons: int = 8,
     max_frames: int | None = 20,
     frame_duration: int = 180,
+    node_color_mode: str = "value",
+    edge_color_mode: str = "weight",
     dec: int = 3,
 ) -> go.Figure:
-    """Animate weights as a stable heatmap with simultaneous backpropagation cues."""
+    """Animate exact node outputs and edge values with backpropagation cues."""
     stages = dense_stages(model)
     if not stages:
         raise ValueError("The animated graph currently requires at least one torch.nn.Linear layer.")
     if max_neurons < 2:
         raise ValueError("max_neurons must be at least 2.")
+    if node_color_mode not in {"value", "relative"}:
+        raise ValueError("node_color_mode must be 'value' or 'relative'.")
+    if edge_color_mode not in {"weight", "signal"}:
+        raise ValueError("edge_color_mode must be 'weight' or 'signal'.")
     missing = [
         stage["weight_name"]
         for stage in stages
@@ -538,7 +662,14 @@ def build_nn_graph_figure(
         node_values = _node_values(stages, input_values, records)
         frame_states[frame_index] = (parameters, previous, gradients, node_values)
     activation_limits = _activation_limits(
-        [state[3] for state in frame_states.values()]
+        [state[3] for state in frame_states.values()],
+        node_color_mode,
+    )
+    edge_minimum, edge_maximum = _edge_limits(
+        edges,
+        frame_states,
+        edge_color_mode,
+        (weight_minimum, weight_maximum),
     )
 
     def frame_payload(frame_index: int):
@@ -548,9 +679,11 @@ def build_nn_graph_figure(
             parameters,
             previous,
             gradients,
-            weight_minimum,
-            weight_maximum,
+            node_values,
+            edge_minimum,
+            edge_maximum,
             gradient_scale,
+            edge_color_mode,
             dec,
         )
         data.extend(
@@ -563,6 +696,7 @@ def build_nn_graph_figure(
                 parameters,
                 gradients,
                 activation_limits,
+                node_color_mode,
                 dec,
             )
         )
@@ -574,6 +708,8 @@ def build_nn_graph_figure(
             int(steps[frame_index]),
             dec,
             frame_index == steps.size - 1,
+            node_color_mode,
+            edge_color_mode,
         )
         return data, annotations
 
@@ -582,17 +718,37 @@ def build_nn_graph_figure(
         data=[
             *first_data,
             _colorbar_trace(
-                weight_minimum,
-                weight_maximum,
-                colorscale=WEIGHT_COLORSCALE,
-                title="Weight value",
+                edge_minimum,
+                edge_maximum,
+                colorscale=_signed_colorscale(
+                    edge_minimum,
+                    edge_maximum,
+                    NEURAL_COLORS["weight_min"],
+                    NEURAL_COLORS["weight_mid"],
+                    NEURAL_COLORS["weight_max"],
+                ),
+                title=r"$w_{ji}^{(\ell)}$" if edge_color_mode == "weight" else r"$w_{ji}^{(\ell)}a_i^{(\ell-1)}$",
                 y=0.70,
             ),
             _colorbar_trace(
-                0.0,
-                1.0,
-                colorscale=ACTIVATION_COLORSCALE,
-                title=r"$\widetilde{a}_j^{(\ell)}$",
+                0.0 if node_color_mode == "relative" else activation_limits[0][0],
+                1.0 if node_color_mode == "relative" else activation_limits[0][1],
+                colorscale=(
+                    ACTIVATION_COLORSCALE
+                    if node_color_mode == "relative"
+                    else _signed_colorscale(
+                        activation_limits[0][0],
+                        activation_limits[0][1],
+                        NEURAL_COLORS["activation_min"],
+                        NEURAL_COLORS["activation_mid"],
+                        NEURAL_COLORS["activation_max"],
+                    )
+                ),
+                title=(
+                    r"$\widetilde{a}_j^{(\ell)}$"
+                    if node_color_mode == "relative"
+                    else r"$a_j^{(\ell)}$"
+                ),
                 y=0.29,
             ),
         ]
@@ -621,7 +777,7 @@ def build_nn_graph_figure(
         )
     figure.frames = frames
     if title is None:
-        title = "Mathematical network: weight evolution"
+        title = "Mathematical network: parameter and signal evolution"
     layout = neural_layout(title, height=740)
     layout["margin"] = {"t": 165, "r": 105, "b": 115, "l": 45}
     figure.update_layout(

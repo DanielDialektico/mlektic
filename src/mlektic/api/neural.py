@@ -26,6 +26,8 @@ def visualize_nn(
     max_neurons: int = 10,
     max_frames: int | None = 20,
     frame_duration: int = 120,
+    node_color_mode: str = "value",
+    edge_color_mode: str = "weight",
 ):
     """Visualize PyTorch architecture, graph mathematics, training, or activations.
 
@@ -38,6 +40,8 @@ def visualize_nn(
         max_neurons: Maximum individual nodes drawn per layer in the architecture view.
         max_frames: Maximum recorded training steps retained by animated views.
         frame_duration: Milliseconds per animation frame in the training view.
+        node_color_mode: ``"value"`` for exact global outputs or ``"relative"`` for per-layer contrast.
+        edge_color_mode: ``"weight"`` for parameters or ``"signal"`` for ``w_ji * a_i``.
     """
     if view == "architecture":
         return build_nn_architecture_figure(
@@ -60,6 +64,8 @@ def visualize_nn(
             max_neurons=max_neurons,
             max_frames=max_frames,
             frame_duration=frame_duration,
+            node_color_mode=node_color_mode,
+            edge_color_mode=edge_color_mode,
         )
     if view == "training":
         return build_nn_training_figure(
@@ -114,8 +120,10 @@ def visualize_nn_graph(
     max_neurons: int = 8,
     max_frames: int | None = 20,
     frame_duration: int = 180,
+    node_color_mode: str = "value",
+    edge_color_mode: str = "weight",
 ):
-    """Animate a weight heatmap with simultaneous backpropagation gradients."""
+    """Animate exact node outputs, edge values, and backpropagation gradients."""
     return build_nn_graph_figure(
         model,
         input_sample,
@@ -124,6 +132,8 @@ def visualize_nn_graph(
         max_neurons=max_neurons,
         max_frames=max_frames,
         frame_duration=frame_duration,
+        node_color_mode=node_color_mode,
+        edge_color_mode=edge_color_mode,
     )
 
 

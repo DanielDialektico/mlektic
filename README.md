@@ -86,13 +86,20 @@ In the graph, each recorded step is one stable frame. Connection colors form a
 global heatmap from the minimum to maximum weight across training, while thin
 wine-red dotted lines encode backpropagated gradient magnitude. Hovering shows
 exact weights, gradients, updates, node outputs, and dimensions. Every node fill
-also evolves from the exact forward pass for the selected input. Node colors are
-normalized per layer over the displayed timeline so small but meaningful changes
-remain visible; the hover keeps the unscaled numerical output. Edge and node
-palettes intentionally encode different quantities: an edge is a weight
+also evolves from the exact forward pass for the selected input. By default,
+node colors share one global scale whose ticks are the real minimum and maximum
+outputs across all displayed nodes and frames, including negative values. Edge
+and node palettes intentionally encode different quantities: an edge is a weight
 `w[j, i]`, whereas a neuron produces `a[j] = phi(sum_i w[j, i] a[i] + b[j])`.
 The final frame uses the model's current tensors so the last slider position
 always represents the trained network.
+
+For additional contrast, `node_color_mode="relative"` normalizes each layer over
+the displayed timeline and labels the scale as `a_tilde`. The optional
+`edge_color_mode="signal"` colors each connection by the actual forward
+contribution `w[j, i] * a[i]`; the default `"weight"` mode continues to show the
+parameter itself. Both modes retain the exact weight, source output, transmitted
+signal, and node output in hover data.
 
 `visualize_nn_training` uses a compact 2-by-2 grid for loss and three independent
 performance metrics. Passing `predictions` and `targets` to `record()` infers
