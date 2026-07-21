@@ -21,6 +21,8 @@ Funcionalidades
   redes grandes.
   La lectura compacta de pesos y el paso temporal se actualizan como trazas animadas
   sin redibujar toda la red, y el titulo conserva separacion respecto a la ecuacion.
+  Los ceros exactos de ReLU se identifican en el hover; las etiquetas temporales y
+  escalas matematicas conservan margen respecto a los bordes de la figura.
 
 - **Regresión Lineal**: Soporte completo para ``visualize_lr()`` con:
   - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.

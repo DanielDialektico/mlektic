@@ -117,11 +117,18 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     first_node_colors = [tuple(trace.marker.color) for trace in figure.frames[0].data if trace.mode == "markers"]
     last_node_colors = [tuple(trace.marker.color) for trace in figure.frames[-1].data if trace.mode == "markers"]
     assert any(first != last for first, last in zip(first_node_colors[1:], last_node_colors[1:]))
-    assert figure.data[-2].marker.colorbar.title.text == r"$w_{ji}^{(\ell)}$"
-    assert figure.data[-1].marker.colorbar.title.text == r"$a_j^{(\ell)}$"
+    assert r"w_{ji}^{(\ell)}" in _annotation_text(figure)
+    assert r"a_j^{(\ell)}" in _annotation_text(figure)
     assert figure.data[-1].marker.cmin < 0.0
     assert figure.data[-1].marker.cmax > 0.0
     assert figure.data[-1].marker.showscale is True
+    assert figure.data[-2].marker.colorbar.title.text is None
+    assert figure.data[-1].marker.colorbar.title.text is None
+    assert figure.layout.margin.l == 65
+    assert figure.layout.margin.r == 145
+    step_readout = next(trace for trace in figure.data if trace.name == "training step readout")
+    assert step_readout.x[0] == pytest.approx(0.08)
+    assert step_readout.textposition == "middle center"
     assert figure.layout.updatemenus[0].buttons[0].args[1]["frame"]["redraw"] is False
     assert all(" F" not in step.label and " B" not in step.label for step in figure.layout.sliders[0].steps)
 
@@ -141,8 +148,8 @@ def test_graph_supports_relative_nodes_and_forward_signal_edges(trained_small_ne
         str(value) for trace in figure.frames[0].data for value in (trace.customdata or [])
     )
 
-    assert figure.data[-2].marker.colorbar.title.text == r"$w_{ji}^{(\ell)}a_i^{(\ell-1)}$"
-    assert figure.data[-1].marker.colorbar.title.text == r"$\widetilde{a}_j^{(\ell)}$"
+    assert r"s_{ji}^{(\ell)}=w_{ji}^{(\ell)}a_i^{(\ell-1)}" in _annotation_text(figure)
+    assert r"\widetilde a_j^{(\ell)}" in _annotation_text(figure)
     assert figure.data[-1].marker.cmin == 0.0
     assert figure.data[-1].marker.cmax == 1.0
     assert "Forward signal" in hover
@@ -157,6 +164,26 @@ def test_graph_rejects_unknown_color_modes(trained_small_network):
         visualize_nn_graph(model, X[0], history, node_color_mode="unknown")
     with pytest.raises(ValueError, match="edge_color_mode"):
         visualize_nn_graph(model, X[0], history, edge_color_mode="unknown")
+
+
+def test_graph_distinguishes_exact_relu_zero_from_rounded_values():
+    model = torch.nn.Sequential(torch.nn.Linear(2, 1), torch.nn.ReLU())
+    with torch.no_grad():
+        model[0].weight.fill_(-1.0)
+        model[0].bias.zero_()
+    recorder = TorchTrainingRecorder(model)
+    output = model(torch.tensor([[1.0, 1.0]]))
+    recorder.record(0, loss=output.sum())
+    history = recorder.to_history()
+    recorder.close()
+
+    figure = visualize_nn_graph(model, torch.tensor([1.0, 1.0]), history)
+    hover = " ".join(
+        str(value) for trace in figure.frames[0].data for value in (trace.customdata or [])
+    )
+
+    assert "activation=ReLU" in hover
+    assert "numerical output=0 (ReLU inactive)" in hover
 
 
 def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_network):

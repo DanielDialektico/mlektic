@@ -292,6 +292,15 @@ def _plain_vector(values: Any, dec: int, limit: int = 6) -> str:
     return "[" + ", ".join(cells) + "]"
 
 
+def _format_output(value: float, dec: int, activation_type: str | None = None) -> str:
+    precision = max(dec, 6)
+    if value == 0.0:
+        return "0 (ReLU inactive)" if activation_type == "ReLU" else "0 (exact)"
+    if abs(value) < 10.0 ** (-dec):
+        return f"{value:.3e}"
+    return f"{value:.{precision}f}"
+
+
 def _stage_bias(stage: Dict[str, Any], parameters: Dict[str, np.ndarray]) -> np.ndarray:
     bias_name = stage.get("bias_name")
     if bias_name and bias_name in parameters:
@@ -325,6 +334,9 @@ def _graph_annotations(
         r"w_{ji}^{(\ell)}"
         if edge_color_mode == "weight"
         else r"s_{ji}^{(\ell)}=w_{ji}^{(\ell)}a_i^{(\ell-1)}"
+    )
+    node_scale_tex = (
+        r"a_j^{(\ell)}" if node_color_mode == "value" else r"\widetilde a_j^{(\ell)}"
     )
     annotations: List[Dict[str, Any]] = [
         {
@@ -367,6 +379,24 @@ def _graph_annotations(
             "showarrow": False,
             "xanchor": "right",
             "font": {"size": 11, "color": NEURAL_COLORS["muted"]},
+        },
+        {
+            "x": 1.035,
+            "y": 0.89,
+            "xref": "paper",
+            "yref": "paper",
+            "text": f"${edge_heatmap_tex}$",
+            "showarrow": False,
+            "font": {"size": 12, "color": NEURAL_COLORS["text"]},
+        },
+        {
+            "x": 1.035,
+            "y": 0.48,
+            "xref": "paper",
+            "yref": "paper",
+            "text": f"${node_scale_tex}$",
+            "showarrow": False,
+            "font": {"size": 12, "color": NEURAL_COLORS["text"]},
         },
     ]
     for column_index, (x_position, dimension) in enumerate(zip(x_positions, dimensions)):
@@ -415,11 +445,11 @@ def _dynamic_label_traces(
             name="parameter readout",
         ),
         go.Scatter(
-            x=[0.01],
+            x=[0.08],
             y=[0.86],
             mode="text",
             text=[rf"$t={step}{final_tex}$"],
-            textposition="middle left",
+            textposition="middle center",
             textfont={"size": 12, "color": NEURAL_COLORS["text"]},
             cliponaxis=False,
             hoverinfo="skip",
@@ -527,7 +557,7 @@ def _node_traces(
             if column_index == 0:
                 hover_data.append(
                     f"<b>Input node {node_index + 1}</b><br>"
-                    f"output x[{node_index + 1}] = {value:.{dec}f}<br>"
+                    f"output x[{node_index + 1}] = {_format_output(value, dec)}<br>"
                     + (
                         f"relative heatmap value = {normalized:.3f}"
                         if node_color_mode == "relative"
@@ -543,7 +573,9 @@ def _node_traces(
                 np.zeros_like(parameters[stage["weight_name"]]),
             )
             hover_data.append(
-                f"<b>Neuron {node_index + 1}</b><br>numerical output={value:.{dec}f}<br>"
+                f"<b>Neuron {node_index + 1}</b><br>"
+                f"activation={stage.get('activation_type') or 'identity'}<br>"
+                f"numerical output={_format_output(value, dec, stage.get('activation_type'))}<br>"
                 + (
                     f"relative heatmap value={normalized:.3f}<br>"
                     if node_color_mode == "relative"
@@ -575,7 +607,7 @@ def _node_traces(
                         )
                         for value in visible_values
                     ],
-                    "line": {"width": 1.5, "color": NEURAL_COLORS["text"]},
+                    "line": {"width": 1.25, "color": NEURAL_COLORS["muted"]},
                 },
                 customdata=hover_data,
                 hovertemplate="%{customdata}<extra></extra>",
@@ -590,7 +622,6 @@ def _colorbar_trace(
     maximum: float,
     *,
     colorscale: Sequence[Sequence[Any]],
-    title: str,
     y: float,
 ) -> go.Scatter:
     return go.Scatter(
@@ -605,10 +636,11 @@ def _colorbar_trace(
             "colorscale": colorscale,
             "showscale": True,
             "colorbar": {
-                "title": {"text": title, "side": "right"},
                 "thickness": 12,
                 "len": 0.34,
                 "y": y,
+                "x": 1.015,
+                "xanchor": "left",
                 "tickformat": ".3f",
             },
         },
@@ -754,7 +786,6 @@ def build_nn_graph_figure(
                     NEURAL_COLORS["weight_mid"],
                     NEURAL_COLORS["weight_max"],
                 ),
-                title=r"$w_{ji}^{(\ell)}$" if edge_color_mode == "weight" else r"$w_{ji}^{(\ell)}a_i^{(\ell-1)}$",
                 y=0.70,
             ),
             _colorbar_trace(
@@ -770,11 +801,6 @@ def build_nn_graph_figure(
                         NEURAL_COLORS["activation_mid"],
                         NEURAL_COLORS["activation_max"],
                     )
-                ),
-                title=(
-                    r"$\widetilde{a}_j^{(\ell)}$"
-                    if node_color_mode == "relative"
-                    else r"$a_j^{(\ell)}$"
                 ),
                 y=0.29,
             ),
@@ -807,7 +833,7 @@ def build_nn_graph_figure(
     layout = neural_layout(title, height=740)
     layout["title"]["y"] = 0.985
     layout["title"]["yanchor"] = "top"
-    layout["margin"] = {"t": 120, "r": 105, "b": 115, "l": 45}
+    layout["margin"] = {"t": 120, "r": 145, "b": 115, "l": 65}
     figure.update_layout(
         **layout,
         annotations=annotations,
