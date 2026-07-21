@@ -4,6 +4,25 @@ Sistema de Visualización
 
 Mlektic genera figuras Plotly animadas con un tema visual cohesivo en **dark mode**.
 
+Redes Neuronales PyTorch
+========================
+
+La familia neural es opcional y se instala con ``pip install "mlektic[torch]"``.
+Su API esta orientada a notebooks: el estudiante puede recorrer la arquitectura,
+capturar el entrenamiento y relacionar una prediccion con sus operaciones por capa.
+
+- ``visualize_nn(model, x, view="architecture")`` dibuja los modulos hoja en orden,
+  sus formas de salida y el numero de parametros. Las capas densas pequenas se
+  expanden como nodos; las grandes se condensan sin ocultar su dimensionalidad.
+- ``TorchTrainingRecorder`` registra loss, normas L2 de parametros y gradientes,
+  resumenes de activacion y snapshots de tensores pequenos. Se debe llamar a
+  ``record`` despues de ``loss.backward()`` y antes de ``optimizer.step()``.
+- ``visualize_nn_training`` anima la convergencia de loss y de normas de parametro;
+  ``visualize_nn_weights`` anima la matriz de pesos de una capa.
+- ``explain_nn_prediction`` muestra la composicion de funciones y sustituye valores
+  numericos en ``z = Wa + b`` para redes pequenas. Para redes grandes, se recomienda
+  la vista de arquitectura y estadisticas agregadas, no una expansion algebraica.
+
 Tema Visual Global
 ===================
 

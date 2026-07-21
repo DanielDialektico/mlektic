@@ -50,6 +50,7 @@
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Sistema de Visualización</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#redes-neuronales-pytorch">Redes Neuronales PyTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tema-visual-global">Tema Visual Global</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#renderizado-por-dimension">Renderizado por Dimensión</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#d-1-regresion-simple-2d">d = 1: Regresión Simple (2D)</a></li>
@@ -100,6 +101,25 @@
   <section id="sistema-de-visualizacion">
 <h1>Sistema de Visualización<a class="headerlink" href="#sistema-de-visualizacion" title="Link to this heading"></a></h1>
 <p>Mlektic genera figuras Plotly animadas con un tema visual cohesivo en <strong>dark mode</strong>.</p>
+<section id="redes-neuronales-pytorch">
+<h2>Redes Neuronales PyTorch<a class="headerlink" href="#redes-neuronales-pytorch" title="Link to this heading"></a></h2>
+<p>La familia neural es opcional y se instala con <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">&quot;mlektic[torch]&quot;</span></code>.
+Su API esta orientada a notebooks: el estudiante puede recorrer la arquitectura,
+capturar el entrenamiento y relacionar una prediccion con sus operaciones por capa.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">visualize_nn(model,</span> <span class="pre">x,</span> <span class="pre">view=&quot;architecture&quot;)</span></code> dibuja los modulos hoja en orden,
+sus formas de salida y el numero de parametros. Las capas densas pequenas se
+expanden como nodos; las grandes se condensan sin ocultar su dimensionalidad.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TorchTrainingRecorder</span></code> registra loss, normas L2 de parametros y gradientes,
+resumenes de activacion y snapshots de tensores pequenos. Se debe llamar a
+<code class="docutils literal notranslate"><span class="pre">record</span></code> despues de <code class="docutils literal notranslate"><span class="pre">loss.backward()</span></code> y antes de <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">visualize_nn_training</span></code> anima la convergencia de loss y de normas de parametro;
+<code class="docutils literal notranslate"><span class="pre">visualize_nn_weights</span></code> anima la matriz de pesos de una capa.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">explain_nn_prediction</span></code> muestra la composicion de funciones y sustituye valores
+numericos en <code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">=</span> <span class="pre">Wa</span> <span class="pre">+</span> <span class="pre">b</span></code> para redes pequenas. Para redes grandes, se recomienda
+la vista de arquitectura y estadisticas agregadas, no una expansion algebraica.</p></li>
+</ul>
+</section>
 <section id="tema-visual-global">
 <h2>Tema Visual Global<a class="headerlink" href="#tema-visual-global" title="Link to this heading"></a></h2>
 <p>Todas las figuras comparten un tema definido en <code class="docutils literal notranslate"><span class="pre">visualization/theme.py</span></code>:</p>

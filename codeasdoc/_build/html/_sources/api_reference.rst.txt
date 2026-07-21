@@ -25,6 +25,24 @@ API de Alto Nivel
 .. autofunction:: mlektic.api.logistic.explain_logistic_prediction
 
 
+Redes Neuronales PyTorch
+========================
+
+.. module:: mlektic.api.neural
+   :synopsis: Visualizacion y explicacion de redes neuronales PyTorch.
+
+.. autoclass:: mlektic.neural.recorder.TorchTrainingRecorder
+   :members:
+
+.. autofunction:: mlektic.api.neural.visualize_nn
+
+.. autofunction:: mlektic.api.neural.visualize_nn_training
+
+.. autofunction:: mlektic.api.neural.visualize_nn_weights
+
+.. autofunction:: mlektic.api.neural.explain_nn_prediction
+
+
 Servicios de Historial
 =======================
 

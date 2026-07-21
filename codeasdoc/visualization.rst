@@ -4,12 +4,165 @@ Sistema de Visualización
 
 Mlektic genera figuras Plotly animadas con un tema visual cohesivo en **dark mode**.
 
+Redes Neuronales PyTorch
+========================
+
+La familia neural es opcional y se instala con ``pip install "mlektic[torch]"``.
+Su API esta orientada a notebooks y Colab. Cada vista conserva el hilo matematico
+entre arquitectura, entrenamiento y prediccion.
+
+- ``visualize_nn_architecture`` representa cada tipo de capa con una forma semantica
+  y muestra formulas LaTeX, dimensiones de entrada/salida, parametros e
+  hiperparametros. En arquitecturas extensas intercala puntos suspensivos.
+- ``visualize_nn_graph`` crea un frame estable por paso. Las conexiones forman un
+  mapa de calor global entre el peso minimo y maximo; las lineas punteadas color
+  tinto superpuestas representan la magnitud del gradiente de backpropagation. El
+  color de cada nodo representa su salida numerica exacta para la entrada elegida,
+  usando por defecto una sola escala global con los minimos y maximos reales de
+  todos los nodos y frames, incluidos valores negativos. El hover conserva la
+  salida exacta y evita mostrar sintaxis LaTeX cruda. Las aristas codifican
+  :math:`w_{ji}` y los nodos :math:`a_j=\phi(\sum_i w_{ji}a_i+b_j)`, por lo que
+  usan escalas distintas. El ultimo frame usa los tensores finales del modelo.
+  ``node_color_mode="relative"`` ofrece contraste normalizado por capa como modo
+  opcional. ``edge_color_mode="signal"`` colorea cada arista mediante la
+  contribucion forward :math:`w_{ji}a_i`; el modo predeterminado ``"weight"``
+  conserva la visualizacion de los parametros. El hover diferencia ``0 (exact)``
+  de ``0 (ReLU inactive)`` y usa notacion cientifica para valores no nulos que
+  serian redondeados a ``0.000``. Los valores compactos :math:`W_t` y el paso
+  temporal son trazas animadas, por lo que avanzan sin redibujar ni hacer
+  parpadear la red.
+- ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
+  normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
+  pequenos. Tambien puede inferir tres metricas al recibir ``predictions`` y
+  ``targets``: accuracy, precision macro y recall macro para clasificacion; MSE,
+  MAE y R2 para regresion. ``record`` se llama despues de ``optimizer.step()`` y
+  antes del siguiente ``zero_grad()`` para conservar tanto el peso actualizado
+  como el gradiente que lo origino.
+- ``visualize_nn_training`` distribuye loss y tres metricas de rendimiento en una
+  cuadricula compacta de 2 por 2. Si el historial no contiene metricas, mantiene
+  los cuatro paneles e indica como registrarlas. ``visualize_nn_weights`` muestra matrices LaTeX con
+  definiciones, dimensiones y truncado explicito. La vista ``activations`` muestra
+  formulas, vectores y estadisticas compactas por capa.
+- ``explain_nn_prediction`` anima la composicion de funciones y sustituye valores
+  numericos en ``z = Wa + b``. En redes profundas conserva primeras y ultimas capas
+  y marca el tramo omitido con puntos suspensivos.
+- ``display_nn_math_report`` inserta en Jupyter un reporte con la taxonomia completa.
+  ``export_nn_math_report`` genera el mismo documento HTML independiente, con una
+  seccion por capa, configuracion de entrenamiento y evolucion de parametros.
+
+Los limites ``max_frames``, ``max_layers``, ``max_neurons``, ``max_rows`` y
+``max_cols`` mantienen responsivas las figuras. Los tensores mayores que
+``max_tensor_elements`` no se duplican en el historial, aunque sus normas y metricas
+si se conservan.
+
+Ejemplo minimo
+--------------
+
+.. code-block:: python
+
+   recorder = TorchTrainingRecorder(
+       model,
+       optimizer=optimizer,
+       loss_fn=loss_fn,
+       record_every=2,
+   )
+
+   # Dentro del entrenamiento, despues de optimizer.step y antes de zero_grad:
+   recorder.record(
+       step,
+       loss=loss,
+       predictions=prediction,
+       targets=y,
+       task="classification",
+   )
+
+   history = recorder.to_history()
+   visualize_nn_architecture(model, X[:1], history=history).show()
+   visualize_nn_graph(model, X[0], history, max_frames=16).show()
+   visualize_nn_training(history, max_frames=24).show()
+   visualize_nn_weights(history, max_rows=4, max_cols=5).show()
+   explain_nn_prediction(model, X[0], history=history).show()
+   report_path = export_nn_math_report(
+       model,
+       X[:1],
+       history=history,
+       path="network-report.html",
+   )
+
+Modos del grafo matematico
+--------------------------
+
+La configuracion predeterminada conserva unidades y valores reales en dos escalas
+globales independientes:
+
+.. code-block:: python
+
+   visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       node_color_mode="value",  # a_j real; default
+       edge_color_mode="weight", # w_ji real; default
+   ).show()
+
+La escala de nodos no debe compararse numericamente con la de aristas:
+
+.. math::
+
+   \text{peso}=w_{ji},\qquad
+   \text{senal}=w_{ji}a_i,\qquad
+   a_j=\phi\!\left(\sum_i w_{ji}a_i+b_j\right).
+
+Para resaltar cambios pequenos por capa puede usarse una escala relativa. Para
+visualizar lo que aporta cada conexion durante el forward pass puede colorearse
+por senal:
+
+.. code-block:: python
+
+   visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       node_color_mode="relative",
+       edge_color_mode="signal",
+   ).show()
+
+``relative`` mejora el contraste, pero deja de expresar una escala absoluta comun.
+En ambos modos el hover conserva la salida, el peso, la senal transmitida, el
+gradiente y la actualizacion exactos.
+
+Reportes HTML en notebook
+-------------------------
+
+Para redes complejas, el reporte completo puede mostrarse directamente en Jupyter
+o Colab:
+
+.. code-block:: python
+
+   from IPython.display import display
+   from mlektic import display_nn_math_report
+
+   display(
+       display_nn_math_report(
+           model,
+           X[:1],
+           history=history,
+           title="Complex network mathematics",
+       )
+   )
+
+Si el archivo ya fue exportado, puede insertarse en Jupyter con
+``HTML(filename="network-report.html")`` o ``IFrame``. En Colab se recomienda
+``display_nn_math_report`` porque no depende de que el navegador pueda resolver
+una ruta local.
+
 Tema Visual Global
 ===================
 
-Todas las figuras comparten un tema definido en ``visualization/theme.py``:
+Las figuras Scikit-Learn comparten ``visualization/theme.py`` y las vistas neurales
+usan el lenguaje equivalente definido en ``visualization/neural/_style.py``:
 
-- **Template base**: ``plotly_dark`` con fuente Helvetica blanca.
+- **Template base**: ``plotly_dark`` con tipografia clara de alto contraste.
 - **Altura**: 720px por defecto.
 - **Controles**: Botones Play/Pause y slider temporal integrados.
 - **Leyenda**: Fondo semi-transparente con texto negro sobre blanco.

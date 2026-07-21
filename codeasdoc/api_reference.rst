@@ -25,6 +25,40 @@ API de Alto Nivel
 .. autofunction:: mlektic.api.logistic.explain_logistic_prediction
 
 
+Redes Neuronales PyTorch
+========================
+
+PyTorch es una dependencia opcional instalada mediante ``mlektic[torch]``.
+``TorchTrainingRecorder`` produce el historial alineado por pasos que consumen
+las vistas animadas. El grafo usa salidas nodales y pesos exactos con escalas
+globales por defecto; los modos relativos y de senal son optativos. Los reportes
+pueden devolverse como HTML, mostrarse en notebook o exportarse a un archivo.
+
+.. module:: mlektic.api.neural
+   :synopsis: Visualizacion y explicacion de redes neuronales PyTorch.
+
+.. autoclass:: mlektic.neural.recorder.TorchTrainingRecorder
+   :members:
+
+.. autofunction:: mlektic.api.neural.visualize_nn
+
+.. autofunction:: mlektic.api.neural.visualize_nn_architecture
+
+.. autofunction:: mlektic.api.neural.visualize_nn_graph
+
+.. autofunction:: mlektic.api.neural.visualize_nn_training
+
+.. autofunction:: mlektic.api.neural.visualize_nn_weights
+
+.. autofunction:: mlektic.api.neural.explain_nn_prediction
+
+.. autofunction:: mlektic.api.neural.build_nn_math_report
+
+.. autofunction:: mlektic.api.neural.display_nn_math_report
+
+.. autofunction:: mlektic.api.neural.export_nn_math_report
+
+
 Servicios de Historial
 =======================
 

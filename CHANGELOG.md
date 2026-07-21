@@ -2,9 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2026-06-04
+## [Unreleased]
 
 ### Added
+- Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
+- Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
+- Added an animated mathematical network graph with one stable frame per training step, true global min/max scales for node outputs and edge weights by default, optional relative node contrast and forward-signal edge modes, simultaneous wine-red backpropagation overlays, final model tensors, and readable hover data without raw LaTeX syntax.
+- Added a compact 2-by-2 learning-performance grid for loss and three independent metrics, automatic classification/regression metric inference from predictions and targets, and explicit empty metric panels when a history contains only loss.
+- Moved neural parameter and forward-pass animation controls to a reserved upper-left area so buttons never cover the displayed equations.
+- Fixed the mathematical-network parameter readout so weights and the training step update through animation traces without forcing a flickering redraw, and separated the title from the composed-function equation.
+- Added explicit exact-zero and inactive-ReLU hover labels, inset the animated step readout, softened node outlines, and moved mathematical colorbar titles above their scales with wider outer margins.
+- Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Wa + b`, and summarized representations for deeper networks.
+- Added standalone and notebook HTML mathematical reports with the complete taxonomy, definition, configuration, dimensions, parameter roles, and training evolution for every layer.
 - Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.
 - Added reusable history sampling utilities to decimate long animation histories through `max_frames` or `frame_step`.
 - Documented the adapter extension path for future model families, including non-Scikit-Learn estimators and upcoming neural-network visualization work.
@@ -22,6 +31,7 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Kept neural animation button labels readable when Plotly applies its light hover state.
 - Fixed root-package exports so `from mlektic import explain_lr_prediction` matches the documented public API.
 - Fixed logistic metric histories so classification metrics map predictions back to the original class labels instead of assuming zero-based label indexes.
 - Preserved scaler metadata in interpolation histories so pipeline visualizations can evaluate metrics in the requested display space.
@@ -33,6 +43,7 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Completed the README, Sphinx guides, architecture reference, and public neural API docstrings for the PyTorch workflow, exact global heatmaps, optional relative/signal modes, inferred metrics, exact ReLU zeros, animated parameter readouts, and notebook/standalone HTML reports.
 - Refactored `HistoryEngine` so it orchestrates capture, metric building, temporal sampling, smoothing, and parameter scaling through smaller focused helpers.
 - Tightened Ruff configuration to lint the maintained package, tests, and Sphinx configuration while excluding generated, legacy, and manual-test directories.
 - Updated README and Sphinx documentation for metrics, frame controls, `multiclass_2d`, generated API reference, and future adapter scalability.

@@ -1,11 +1,133 @@
 # Mlektic
 
-**Mlektic** es una librería de Python diseñada para demostrar visual y matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas por `plotly`, creadas específicamente para entender las tripas de los algoritmos de Scikit-Learn.
+## PyTorch neural networks
+
+Install the optional PyTorch integration only in environments that need it:
+
+```bash
+pip install "mlektic[torch]"
+```
+
+The neural API is designed for notebooks and Colab. It combines a mathematical
+architecture map, an animated forward/backpropagation graph, training metrics,
+LaTeX parameter evolution, numerical forward-pass substitutions, and a scalable
+HTML taxonomy report.
+
+```python
+import torch
+from IPython.display import display
+from mlektic import (
+    TorchTrainingRecorder,
+    display_nn_math_report,
+    explain_nn_prediction,
+    export_nn_math_report,
+    visualize_nn_architecture,
+    visualize_nn_graph,
+    visualize_nn_training,
+    visualize_nn_weights,
+)
+
+torch.manual_seed(7)
+X = torch.tensor([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+y = torch.tensor([[0.], [1.], [1.], [0.]])
+
+model = torch.nn.Sequential(
+    torch.nn.Linear(2, 4),
+    torch.nn.Tanh(),
+    torch.nn.Linear(4, 1),
+    torch.nn.Sigmoid(),
+)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.08)
+loss_fn = torch.nn.BCELoss()
+recorder = TorchTrainingRecorder(
+    model,
+    optimizer=optimizer,
+    loss_fn=loss_fn,
+    record_every=2,
+)
+
+for step in range(80):
+    optimizer.zero_grad()
+    prediction = model(X)
+    loss = loss_fn(prediction, y)
+    loss.backward()
+    optimizer.step()
+
+    with torch.no_grad():
+        prediction = model(X)
+        recorded_loss = loss_fn(prediction, y)
+    recorder.record(
+        step,
+        loss=recorded_loss,
+        predictions=prediction,
+        targets=y,
+        task="classification",
+    )  # After optimizer.step(), before the next zero_grad().
+
+recorder.close()
+history = recorder.to_history()
+
+visualize_nn_architecture(model, X[:1], history=history).show()
+visualize_nn_graph(model, X[0], history, max_frames=16).show()
+visualize_nn_training(history, max_frames=24, frame_duration=90).show()
+visualize_nn_weights(history, max_rows=4, max_cols=5, max_frames=24).show()
+explain_nn_prediction(model, X[0], history=history, max_frames=12).show()
+
+# Inline in Jupyter/Colab, or export a standalone report for a large network.
+display(display_nn_math_report(model, X[:1], history=history))
+report_path = export_nn_math_report(
+    model,
+    X[:1],
+    history=history,
+    path="xor-mathematics.html",
+)
+```
+
+In the graph, each recorded step is one stable frame. Connection colors form a
+global heatmap from the minimum to maximum weight across training, while thin
+wine-red dotted lines encode backpropagated gradient magnitude. Hovering shows
+exact weights, gradients, updates, node outputs, and dimensions. Every node fill
+also evolves from the exact forward pass for the selected input. By default,
+node colors share one global scale whose ticks are the real minimum and maximum
+outputs across all displayed nodes and frames, including negative values. Edge
+and node palettes intentionally encode different quantities: an edge is a weight
+`w[j, i]`, whereas a neuron produces `a[j] = phi(sum_i w[j, i] a[i] + b[j])`.
+The final frame uses the model's current tensors so the last slider position
+always represents the trained network.
+
+For additional contrast, `node_color_mode="relative"` normalizes each layer over
+the displayed timeline and labels the scale as `a_tilde`. The optional
+`edge_color_mode="signal"` colors each connection by the actual forward
+contribution `w[j, i] * a[i]`; the default `"weight"` mode continues to show the
+parameter itself. Both modes retain the exact weight, source output, transmitted
+signal, and node output in hover data.
+
+The graph distinguishes a true zero from a rounded value. A ReLU output equal to
+zero is labeled `0 (ReLU inactive)`; other exact zeros are labeled `0 (exact)`,
+and tiny nonzero values use scientific notation. The compact `W_t` readout and
+training-step label are animated traces, so they update without forcing a full
+redraw or making the network blink.
+
+`visualize_nn_training` uses a compact 2-by-2 grid for loss and three independent
+performance metrics. Passing `predictions` and `targets` to `record()` infers
+accuracy, macro precision, and macro recall for classification, or MSE, MAE, and
+R2 for regression. Explicit `metrics={...}` values can still override or extend
+the inferred metrics. Histories without metrics keep all four panels and show
+which recorder arguments are missing.
+
+For small networks, `explain_nn_prediction` substitutes actual values in every
+`z = Wa + b` computation. Larger models are summarized with ellipses in Plotly
+and remain fully documented in the standalone HTML report. The recorder keeps
+full tensors only up to `max_tensor_elements` values (4096 by default), so large
+runs still retain loss, metrics, and tensor norms without overloading a notebook.
+
+**Mlektic** es una librería de Python diseñada para demostrar visual y matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas por `plotly` para regresión lineal y logística de Scikit-Learn, además de arquitectura, entrenamiento y matemáticas de redes neuronales PyTorch.
 
 ---
 
 ## 🚀 Características Principales
 
+*   **Redes Neuronales PyTorch**: Arquitectura matemática, grafo temporal de parámetros y señales, métricas de entrenamiento, matrices LaTeX, explicación del forward pass y reportes HTML para redes grandes.
 *   **Integración Nivel-Cero con Scikit-Learn**: Compatible directamente con estimadores iterativos (como `SGDRegressor`, `SGDClassifier`) y `Pipelines` estándar.
 *   **Animaciones Fluidas**: Visualiza en tiempo real cómo los parámetros (`θ`), la recta/curva de predicción y la función de pérdida (Loss) convergen.
 *   **Regresión Lineal y Logística**: Soporte completo para los dos tipos de regresión más fundamentales del ML, cada uno con su propia función pública.
@@ -208,7 +330,8 @@ src/mlektic/
 ├── logistic.py              # Fachada para regresión logística
 ├── api/
 │   ├── linear.py            # API pública: visualize_lr()
-│   └── logistic.py          # API pública: visualize_logistic()
+│   ├── logistic.py          # API pública: visualize_logistic()
+│   └── neural.py            # API pública para redes PyTorch
 ├── adapters/
 │   ├── base.py              # BaseModelAdapter (ABC)
 │   └── sklearn.py           # SklearnAdapter (Scikit-Learn)
@@ -220,6 +343,12 @@ src/mlektic/
 │   ├── engine.py            # HistoryEngine: orquesta captura + suavizado + rescalado
 │   ├── strategy_interp.py   # InterpolationCapture (modelos no iterativos)
 │   └── strategy_iterative.py# IterativeCapture (modelos con partial_fit/warm_start)
+├── neural/
+│   ├── introspection.py     # Hooks, shapes y forward pass reproducible
+│   ├── metrics.py           # Métricas ligeras de clasificación/regresión
+│   ├── recorder.py          # Historial frame-aligned de PyTorch
+│   ├── report.py            # Reportes HTML matemáticos
+│   └── taxonomy.py          # Definiciones y taxonomía de capas
 ├── services/
 │   ├── linear_history.py    # fit_history() y fit_history_logistic()
 │   └── logistic_history.py  # Re-export de fit_history_logistic
@@ -233,23 +362,28 @@ src/mlektic/
 │   │   ├── simple.py        # 1 variable (recta + scatter 2D)
 │   │   ├── plane.py         # 2 variables (plano 3D)
 │   │   └── multivar.py      # d > 2 (matriz LaTeX interactiva)
-│   └── logistic/
+│   ├── logistic/
 │       ├── router.py        # build_logistic_figure(): enruta por dimensión y clases
 │       ├── binary_1d.py     # Binaria, 1 variable (curva sigmoide)
 │       ├── binary_2d.py     # Binaria, 2 variables (superficie 3D)
 │       ├── binary_nd.py     # Binaria, d > 2 (matriz LaTeX)
 │       ├── multiclass_1d.py # Multiclase, 1 variable (curvas de probabilidad)
 │       ├── multiclass_2d.py # Multiclase, 2 variables (superficies softmax)
-│       └── multiclass_nd.py # Multiclase, d > 2 (matriz de pesos)
+│   │   └── multiclass_nd.py # Multiclase, d > 2 (matriz de pesos)
+│   └── neural/
+│       ├── architecture.py  # Diagrama matemático de arquitectura
+│       ├── graph.py         # Grafo temporal de pesos, señales y nodos
+│       ├── math_view.py     # Sustitución numérica del forward pass
+│       └── training.py      # Loss, métricas, parámetros y activaciones
 └── _internal/
     └── common.py            # Helpers compartidos (legacy/compatibilidad)
 ```
 
 ### Escalabilidad hacia nuevos modelos
 
-La frontera de extensión principal es `BaseModelAdapter`. Para soportar otro
-ecosistema de modelos (por ejemplo PyTorch, Keras, XGBoost o una futura capa de
-redes neuronales), añade un adapter que implemente:
+Para estimadores tabulares, la frontera de extensión principal sigue siendo
+`BaseModelAdapter`. Para soportar otro ecosistema (por ejemplo Keras o XGBoost),
+añade un adapter que implemente:
 
 * `predict()` y, para clasificación, `predict_proba()`.
 * Extracción de parámetros cuando exista una forma lineal interpretable.
@@ -262,6 +396,11 @@ captura, y los routers de visualización deciden el builder por dimensión/tarea
 Esto evita acoplar la visualización a Scikit-Learn y deja preparado el camino
 para añadir nuevas familias de modelos sin duplicar figuras ni lógica de
 métricas.
+
+PyTorch usa una integración especializada porque necesita hooks de activación,
+gradientes y snapshots de tensores. Sus builders consumen el contrato de
+`TorchTrainingRecorder`, mientras comparten las mismas políticas de muestreo,
+truncado y presentación matemática.
 
 ---
 

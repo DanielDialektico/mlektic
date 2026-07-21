@@ -89,6 +89,7 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#V"><strong>V</strong></a>
@@ -104,6 +105,8 @@
 
       <ul>
         <li><a href="api_reference.html#mlektic.history.engine.HistoryEngine.__init__">(método de mlektic.history.engine.HistoryEngine)</a>
+</li>
+        <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.__init__">(método de mlektic.neural.recorder.TorchTrainingRecorder)</a>
 </li>
       </ul></li>
       <li><a href="api_reference.html#mlektic.utils.math._binary_log_loss_from_p">_binary_log_loss_from_p() (en el módulo mlektic.utils.math)</a>
@@ -222,6 +225,8 @@
       </ul></li>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.clone_for_replay">clone_for_replay() (método de mlektic.adapters.sklearn.SklearnAdapter)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.close">close() (método de mlektic.neural.recorder.TorchTrainingRecorder)</a>
+</li>
       <li><a href="api_reference.html#mlektic.visualization.theme.create_annotation">create_annotation() (en el módulo mlektic.visualization.theme)</a>
 </li>
   </ul></td>
@@ -252,14 +257,16 @@
 </li>
       <li><a href="api_reference.html#mlektic.api.linear.explain_lr_prediction">explain_lr_prediction() (en el módulo mlektic.api.linear)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.api.neural.explain_nn_prediction">explain_nn_prediction() (en el módulo mlektic.api.neural)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.base.BaseModelAdapter.extract_linear_theta">extract_linear_theta() (método de mlektic.adapters.base.BaseModelAdapter)</a>
 
       <ul>
         <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.extract_linear_theta">(método de mlektic.adapters.sklearn.SklearnAdapter)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.base.BaseModelAdapter.extract_logistic_theta">extract_logistic_theta() (método de mlektic.adapters.base.BaseModelAdapter)</a>
 
       <ul>
@@ -434,6 +441,13 @@
 
       <ul>
         <li><a href="api_reference.html#module-mlektic.api.logistic">module</a>
+</li>
+      </ul></li>
+      <li>
+    mlektic.api.neural
+
+      <ul>
+        <li><a href="api_reference.html#module-mlektic.api.neural">module</a>
 </li>
       </ul></li>
       <li>
@@ -617,6 +631,8 @@
 </li>
         <li><a href="api_reference.html#module-mlektic.api.logistic">mlektic.api.logistic</a>
 </li>
+        <li><a href="api_reference.html#module-mlektic.api.neural">mlektic.api.neural</a>
+</li>
         <li><a href="api_reference.html#module-mlektic.domain.config">mlektic.domain.config</a>
 </li>
         <li><a href="api_reference.html#module-mlektic.domain.history">mlektic.domain.history</a>
@@ -699,6 +715,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.record">record() (método de mlektic.neural.recorder.TorchTrainingRecorder)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -730,6 +754,12 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.to_history">to_history() (método de mlektic.neural.recorder.TorchTrainingRecorder)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder">TorchTrainingRecorder (clase en mlektic.neural.recorder)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.base.BaseModelAdapter.transform_X">transform_X() (método de mlektic.adapters.base.BaseModelAdapter)</a>
 
       <ul>
@@ -744,9 +774,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.api.logistic.visualize_logistic">visualize_logistic() (en el módulo mlektic.api.logistic)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.api.linear.visualize_lr">visualize_lr() (en el módulo mlektic.api.linear)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_reference.html#mlektic.api.linear.visualize_lr">visualize_lr() (en el módulo mlektic.api.linear)</a>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn">visualize_nn() (en el módulo mlektic.api.neural)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_training">visualize_nn_training() (en el módulo mlektic.api.neural)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_weights">visualize_nn_weights() (en el módulo mlektic.api.neural)</a>
 </li>
   </ul></td>
 </tr></table>

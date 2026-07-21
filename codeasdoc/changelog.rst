@@ -10,6 +10,20 @@ Primera versión de la librería.
 Funcionalidades
 ----------------
 
+- **Redes Neuronales PyTorch**: soporte opcional mediante ``mlektic[torch]`` con
+  grafo temporal de pesos y salidas neuronales como mapas de calor independientes,
+  escalas globales reales por defecto, normalizacion temporal opcional por capa y
+  modo adicional para colorear aristas mediante la senal :math:`w_{ji}a_i`,
+  gradientes de backpropagation simultaneos, arquitectura matematica, dimensiones y
+  formulas LaTeX, cuadricula 2 por 2 para loss y tres metricas inferibles desde
+  predicciones y objetivos, evolucion matricial de
+  parametros, explicacion temporal del forward pass y reportes HTML completos para
+  redes grandes.
+  La lectura compacta de pesos y el paso temporal se actualizan como trazas animadas
+  sin redibujar toda la red, y el titulo conserva separacion respecto a la ecuacion.
+  Los ceros exactos de ReLU se identifican en el hover; las etiquetas temporales y
+  escalas matematicas conservan margen respecto a los bordes de la figura.
+
 - **Regresión Lineal**: Soporte completo para ``visualize_lr()`` con:
   - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.
   - Renderizado 3D (2 variables): plano predictivo animado.
@@ -28,7 +42,8 @@ Funcionalidades
 
 - **Adapter Pattern**: ``SklearnAdapter`` como implementación concreta del
   ``BaseModelAdapter`` (extensible a otros frameworks).
-- **Ruta de Escalabilidad**: Documentación del contrato de adapters para futuras familias de modelos, incluyendo frameworks no Scikit-Learn y visualizaciones de redes neuronales.
+- **Ruta de Escalabilidad**: contrato de adapters para futuras familias tabulares
+  y contrato especializado de historiales para PyTorch y otros frameworks neurales.
 
 - **Strategy Pattern**: Dos estrategias de captura de historial:
   - ``IterativeCapture`` para modelos iterativos (``partial_fit`` / ``warm_start``).
@@ -44,6 +59,10 @@ Funcionalidades
 Fixes y Mejoras Recientes
 -------------------------
 
+- **Documentacion Neural Completa**: README, inicio rapido, arquitectura, modos
+  del grafo, escalas globales exactas, metricas automaticas, ceros de ReLU,
+  trazas animadas de parametros y visualizacion/exportacion de reportes HTML
+  quedaron alineados con la API publica y sus docstrings.
 - **Estabilidad en Exportación HTML**: Corrección del "glitch" de redimensionamiento de arrays de JavaScript en Plotly; los arrays ahora se rellenan con ``None`` para garantizar un trazado de línea constante y evitar que las animaciones HTML se corten.
 - **Formateo Multivariable**: La función ``explain_lr_prediction()`` para 3 o más variables ahora formatea correctamente la coordenada resultante incluyendo ``y_hat`` al final (ej., ``(x_1, \dots, x_d, \hat{y})``), logrando consistencia matemática con las vistas de 1D y 2D.
 - **Exportaciones Públicas**: ``explain_lr_prediction`` ahora se importa correctamente desde ``mlektic``.
