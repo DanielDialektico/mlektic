@@ -17,7 +17,9 @@ entre arquitectura, entrenamiento y prediccion.
 - ``visualize_nn_graph`` crea un frame estable por paso. Las conexiones forman un
   mapa de calor global entre el peso minimo y maximo; las lineas punteadas color
   tinto superpuestas representan la magnitud del gradiente de backpropagation. El
-  ultimo frame usa los tensores finales del modelo.
+  color de cada nodo representa su salida numerica exacta para la entrada elegida,
+  con una escala global independiente. El ultimo frame usa los tensores finales
+  del modelo.
 - ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
   normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
   pequenos. ``record`` se llama despues de ``optimizer.step()`` y antes del siguiente

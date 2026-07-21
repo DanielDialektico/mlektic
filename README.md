@@ -89,9 +89,10 @@ report_path = export_nn_math_report(
 In the graph, each recorded step is one stable frame. Connection colors form a
 global heatmap from the minimum to maximum weight across training, while thin
 wine-red dotted lines encode backpropagated gradient magnitude. Hovering shows
-exact weights, gradients, updates, activations, and dimensions. The final frame
-uses the model's current tensors so the last slider position always represents
-the trained network.
+exact weights, gradients, updates, node outputs, and dimensions. Every node fill
+also evolves on its own global output scale using the exact forward pass for the
+selected input. The final frame uses the model's current tensors so the last
+slider position always represents the trained network.
 
 `visualize_nn_training` places loss above as many as three independent metric
 plots. Record metrics such as accuracy, precision, and recall to obtain the full

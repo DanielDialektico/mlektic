@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 import numpy as np
 import plotly.graph_objects as go
 
+from ...neural.introspection import run_torch_forward
 from ...neural.taxonomy import composed_dense_function, dense_stages
 from ._style import NEURAL_COLORS, animation_button_style, neural_layout
 from .math_format import (
@@ -21,6 +22,12 @@ WEIGHT_COLORSCALE = [
     [0.0, NEURAL_COLORS["weight_min"]],
     [0.5, NEURAL_COLORS["weight_mid"]],
     [1.0, NEURAL_COLORS["weight_max"]],
+]
+
+ACTIVATION_COLORSCALE = [
+    [0.0, NEURAL_COLORS["activation_min"]],
+    [0.5, NEURAL_COLORS["activation_mid"]],
+    [1.0, NEURAL_COLORS["activation_max"]],
 ]
 
 
@@ -45,20 +52,41 @@ def _interpolate_color(start: str, end: str, ratio: float) -> str:
     return f"rgb({rgb[0]},{rgb[1]},{rgb[2]})"
 
 
-def _weight_color(value: float, minimum: float, maximum: float) -> str:
+def _scaled_color(
+    value: float,
+    minimum: float,
+    maximum: float,
+    low_color: str,
+    middle_color: str,
+    high_color: str,
+) -> str:
     if maximum <= minimum:
-        return NEURAL_COLORS["weight_mid"]
+        return middle_color
     position = np.clip((float(value) - minimum) / (maximum - minimum), 0.0, 1.0)
     if position <= 0.5:
-        return _interpolate_color(
-            NEURAL_COLORS["weight_min"],
-            NEURAL_COLORS["weight_mid"],
-            float(position * 2.0),
-        )
-    return _interpolate_color(
+        return _interpolate_color(low_color, middle_color, float(position * 2.0))
+    return _interpolate_color(middle_color, high_color, float((position - 0.5) * 2.0))
+
+
+def _weight_color(value: float, minimum: float, maximum: float) -> str:
+    return _scaled_color(
+        value,
+        minimum,
+        maximum,
+        NEURAL_COLORS["weight_min"],
         NEURAL_COLORS["weight_mid"],
         NEURAL_COLORS["weight_max"],
-        float((position - 0.5) * 2.0),
+    )
+
+
+def _activation_color(value: float, minimum: float, maximum: float) -> str:
+    return _scaled_color(
+        value,
+        minimum,
+        maximum,
+        NEURAL_COLORS["activation_min"],
+        NEURAL_COLORS["activation_mid"],
+        NEURAL_COLORS["activation_max"],
     )
 
 
@@ -133,24 +161,43 @@ def _graph_geometry(stages: Sequence[Dict[str, Any]], max_neurons: int):
     return dimensions, indices, x_positions, y_positions, edges
 
 
-def _activation_vector(history: Dict[str, Any], stage: Dict[str, Any], frame_index: int) -> np.ndarray:
-    key = stage.get("activation_name") or stage["name"]
-    vectors = history.get("activation_vectors", {}).get(key, [])
-    if frame_index < len(vectors):
-        return np.asarray(vectors[frame_index], dtype=float).ravel()
-    statistics = history.get("activations", {}).get(key, {})
-    means = statistics.get("mean", [])
-    fallback = float(means[frame_index]) if frame_index < len(means) else 0.0
-    return np.full(stage["out_features"], fallback, dtype=float)
+def _record_vector(records: Dict[str, Dict[str, np.ndarray]], name: str, size: int) -> np.ndarray:
+    record = records.get(name, {})
+    output = np.asarray(record.get("output", []), dtype=float)
+    if not output.size:
+        return np.zeros(size, dtype=float)
+    if output.ndim == 1:
+        return output.ravel()
+    flattened = output.reshape(output.shape[0], -1)
+    return np.mean(flattened, axis=0)
 
 
 def _node_values(
-    history: Dict[str, Any],
     stages: Sequence[Dict[str, Any]],
     input_values: np.ndarray,
-    frame_index: int,
+    records: Dict[str, Dict[str, np.ndarray]],
 ) -> List[np.ndarray]:
-    return [input_values, *[_activation_vector(history, stage, frame_index) for stage in stages]]
+    return [
+        input_values,
+        *[
+            _record_vector(
+                records,
+                stage.get("activation_name") or stage["name"],
+                stage["out_features"],
+            )
+            for stage in stages
+        ],
+    ]
+
+
+def _activation_limits(states: Sequence[Sequence[np.ndarray]]) -> Tuple[float, float]:
+    values = [np.asarray(vector, dtype=float).ravel() for state in states for vector in state]
+    combined = np.concatenate(values) if values else np.asarray([0.0])
+    minimum = float(np.min(combined))
+    maximum = float(np.max(combined))
+    if maximum <= minimum:
+        maximum = minimum + 1e-9
+    return minimum, maximum
 
 
 def _stage_bias(stage: Dict[str, Any], parameters: Dict[str, np.ndarray]) -> np.ndarray:
@@ -204,6 +251,16 @@ def _graph_annotations(
             "showarrow": False,
             "xanchor": "left",
             "font": {"size": 12, "color": NEURAL_COLORS["text"]},
+        },
+        {
+            "x": 0.01,
+            "y": 0.94,
+            "xref": "paper",
+            "yref": "paper",
+            "text": "Node fill = numerical output",
+            "showarrow": False,
+            "xanchor": "left",
+            "font": {"size": 11, "color": NEURAL_COLORS["muted"]},
         },
         {
             "x": 0.99,
@@ -312,16 +369,22 @@ def _node_traces(
     node_values: Sequence[np.ndarray],
     parameters: Dict[str, np.ndarray],
     gradients: Dict[str, np.ndarray],
+    activation_minimum: float,
+    activation_maximum: float,
     dec: int,
 ) -> List[go.Scatter]:
     traces: List[go.Scatter] = []
     for column_index, (column_indices, y_values) in enumerate(zip(indices, y_positions)):
         values = node_values[column_index]
         hover_data = []
+        visible_values = []
         for node_index in column_indices:
             value = float(values[node_index]) if node_index < values.size else float(np.mean(values))
+            visible_values.append(value)
             if column_index == 0:
-                hover_data.append(f"<b>Input {node_index + 1}</b><br>x[{node_index + 1}]={value:.{dec}f}")
+                hover_data.append(
+                    f"<b>Input node {node_index + 1}</b><br>output x[{node_index + 1}]={value:.{dec}f}"
+                )
                 continue
             stage = stages[column_index - 1]
             bias = _stage_bias(stage, parameters)
@@ -331,7 +394,7 @@ def _node_traces(
                 np.zeros_like(parameters[stage["weight_name"]]),
             )
             hover_data.append(
-                f"<b>Neuron {node_index + 1}</b><br>recorded activation={value:.{dec}f}<br>"
+                f"<b>Neuron {node_index + 1}</b><br>numerical output={value:.{dec}f}<br>"
                 f"bias={bias[node_index]:.{dec}f}<br>"
                 rf"$W_{{{node_index + 1},:}}={vector_latex(weight_row, dec=dec, limit=6)}$<br>"
                 rf"$\nabla W_{{{node_index + 1},:}}="
@@ -343,8 +406,11 @@ def _node_traces(
                 y=y_values,
                 mode="markers",
                 marker={
-                    "size": 24,
-                    "color": NEURAL_COLORS["panel"],
+                    "size": 28,
+                    "color": [
+                        _activation_color(value, activation_minimum, activation_maximum)
+                        for value in visible_values
+                    ],
                     "line": {"width": 1.5, "color": NEURAL_COLORS["text"]},
                 },
                 customdata=hover_data,
@@ -355,7 +421,14 @@ def _node_traces(
     return traces
 
 
-def _colorbar_trace(minimum: float, maximum: float) -> go.Scatter:
+def _colorbar_trace(
+    minimum: float,
+    maximum: float,
+    *,
+    colorscale: Sequence[Sequence[Any]],
+    title: str,
+    y: float,
+) -> go.Scatter:
     return go.Scatter(
         x=[None, None],
         y=[None, None],
@@ -365,13 +438,13 @@ def _colorbar_trace(minimum: float, maximum: float) -> go.Scatter:
             "color": [minimum, maximum],
             "cmin": minimum,
             "cmax": maximum,
-            "colorscale": WEIGHT_COLORSCALE,
+            "colorscale": colorscale,
             "showscale": True,
             "colorbar": {
-                "title": {"text": "Weight value", "side": "right"},
+                "title": {"text": title, "side": "right"},
                 "thickness": 12,
-                "len": 0.52,
-                "y": 0.51,
+                "len": 0.34,
+                "y": y,
                 "tickformat": ".3f",
             },
         },
@@ -426,17 +499,26 @@ def build_nn_graph_figure(
         final_parameters,
     )
 
-    def frame_payload(frame_index: int):
+    frame_states: Dict[int, tuple] = {}
+    for source_index in selected_frames:
+        frame_index = int(source_index)
         parameters = _parameter_snapshot_for_frame(
             history,
             frame_index,
             steps.size - 1,
             final_parameters,
         )
-        previous_index = max(0, frame_index - 1)
-        previous = parameter_snapshot(history, previous_index)
+        previous = parameter_snapshot(history, max(0, frame_index - 1))
         gradients = gradient_snapshot(history, frame_index)
-        node_values = _node_values(history, stages, input_values, frame_index)
+        _, records = run_torch_forward(model, input_sample, parameters)
+        node_values = _node_values(stages, input_values, records)
+        frame_states[frame_index] = (parameters, previous, gradients, node_values)
+    activation_minimum, activation_maximum = _activation_limits(
+        [state[3] for state in frame_states.values()]
+    )
+
+    def frame_payload(frame_index: int):
+        parameters, previous, gradients, node_values = frame_states[frame_index]
         data = _edge_traces(
             edges,
             parameters,
@@ -456,6 +538,8 @@ def build_nn_graph_figure(
                 node_values,
                 parameters,
                 gradients,
+                activation_minimum,
+                activation_maximum,
                 dec,
             )
         )
@@ -471,7 +555,25 @@ def build_nn_graph_figure(
         return data, annotations
 
     first_data, first_annotations = frame_payload(int(selected_frames[0]))
-    figure = go.Figure(data=[*first_data, _colorbar_trace(weight_minimum, weight_maximum)])
+    figure = go.Figure(
+        data=[
+            *first_data,
+            _colorbar_trace(
+                weight_minimum,
+                weight_maximum,
+                colorscale=WEIGHT_COLORSCALE,
+                title="Weight value",
+                y=0.70,
+            ),
+            _colorbar_trace(
+                activation_minimum,
+                activation_maximum,
+                colorscale=ACTIVATION_COLORSCALE,
+                title="Node output",
+                y=0.29,
+            ),
+        ]
+    )
     dynamic_trace_indices = list(range(len(first_data)))
     frames = []
     slider_steps = []

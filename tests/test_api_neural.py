@@ -102,7 +102,13 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     )
     assert "Feed forward" in _annotation_text(figure)
     assert "Backpropagation" in _annotation_text(figure)
+    assert "Node fill = numerical output" in _annotation_text(figure)
     assert r"\mathbb{R}" in _annotation_text(figure)
+    first_node_colors = [tuple(trace.marker.color) for trace in figure.frames[0].data if trace.mode == "markers"]
+    last_node_colors = [tuple(trace.marker.color) for trace in figure.frames[-1].data if trace.mode == "markers"]
+    assert any(first != last for first, last in zip(first_node_colors[1:], last_node_colors[1:]))
+    assert figure.data[-2].marker.colorbar.title.text == "Weight value"
+    assert figure.data[-1].marker.colorbar.title.text == "Node output"
     assert figure.data[-1].marker.showscale is True
     assert figure.layout.updatemenus[0].buttons[0].args[1]["frame"]["redraw"] is False
     assert all(" F" not in step.label and " B" not in step.label for step in figure.layout.sliders[0].steps)

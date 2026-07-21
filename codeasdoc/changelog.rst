@@ -11,10 +11,11 @@ Funcionalidades
 ----------------
 
 - **Redes Neuronales PyTorch**: soporte opcional mediante ``mlektic[torch]`` con
-  grafo temporal de pesos como mapa de calor, gradientes de backpropagation
-  simultaneos, arquitectura matematica, dimensiones y formulas LaTeX, loss y tres
-  metricas independientes, evolucion matricial de parametros, explicacion temporal
-  del forward pass y reportes HTML completos para redes grandes.
+  grafo temporal de pesos y salidas neuronales como mapas de calor independientes,
+  gradientes de backpropagation simultaneos, arquitectura matematica, dimensiones y
+  formulas LaTeX, loss y tres metricas independientes, evolucion matricial de
+  parametros, explicacion temporal del forward pass y reportes HTML completos para
+  redes grandes.
 
 - **Regresión Lineal**: Soporte completo para ``visualize_lr()`` con:
   - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.
