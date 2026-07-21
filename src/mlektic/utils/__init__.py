@@ -9,6 +9,7 @@ from .math import (
     _sigmoid,
     _softmax,
 )
+from .probability import multiclass_probabilities
 
 __all__ = [
     "_sigmoid",
@@ -19,4 +20,5 @@ __all__ = [
     "_ema_smooth",
     "build_1d_grid",
     "build_2d_grid",
+    "multiclass_probabilities",
 ]

@@ -259,6 +259,10 @@ Utilidades Matemáticas
 
 .. autofunction:: mlektic.utils.math._ema_smooth
 
+.. autofunction:: mlektic.utils.probability.multiclass_probabilities
+
+.. autofunction:: mlektic.utils.probability.infer_multiclass_link
+
 
 Utilidades de Grids
 ====================

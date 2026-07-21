@@ -82,7 +82,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">..services.logistic_history</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_history_logistic</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.logistic.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">explain_logistic_prediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.logistic.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_logistic_figure</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="n">attach_highlight</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="n">attach_highlight</span><span class="p">,</span> <span class="n">configure_animation</span>
 
 
 <div class="viewcode-block" id="visualize_logistic">
@@ -104,12 +104,52 @@
     <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">transition_duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">max_frames</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
     <span class="n">frame_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">max_theta_cols</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">multiclass_link</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize logistic regression learning process over steps.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize a logistic-regression learning or interpolation history.</span>
+
+<span class="sd">    Binary models use the sigmoid link. For multiclass models,</span>
+<span class="sd">    ``multiclass_link=&quot;auto&quot;`` compares decision scores with ``predict_proba``</span>
+<span class="sd">    and selects either multinomial Softmax or normalized one-vs-rest sigmoids.</span>
+
+<span class="sd">    ``steps`` controls captured states, while ``max_frames`` and ``frame_step``</span>
+<span class="sd">    bound the rendered history. ``transition_duration`` controls interpolation</span>
+<span class="sd">    between 2D frames; Plotly 3D traces retain redraw semantics.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        trained_estimator: Fitted Scikit-Learn classifier or pipeline.</span>
+<span class="sd">        X: Training feature matrix.</span>
+<span class="sd">        y: Training class labels.</span>
+<span class="sd">        steps: Number of captured states before temporal decimation.</span>
+<span class="sd">        mode: ``&quot;auto&quot;``, ``&quot;iterative&quot;``, or ``&quot;final_interp&quot;``.</span>
+<span class="sd">        show_loss: Whether to show loss for a genuine iterative history.</span>
+<span class="sd">        title: Optional figure title.</span>
+<span class="sd">        smooth: ``&quot;ema&quot;`` or ``None`` for captured probability and loss series.</span>
+<span class="sd">        smooth_beta: Exponential moving-average coefficient.</span>
+<span class="sd">        strict_loss: Raise instead of hiding unavailable empirical loss panels.</span>
+<span class="sd">        baseline: ``&quot;prior&quot;`` or ``&quot;uniform&quot;`` interpolation baseline.</span>
+<span class="sd">        display_space: ``&quot;original&quot;`` or ``&quot;scaled&quot;`` parameter space.</span>
+<span class="sd">        metrics: Built-in metric names or custom metric callables.</span>
+<span class="sd">        dec: Decimal places used in mathematical substitutions.</span>
+<span class="sd">        frame_duration: Display time for each native animation frame in</span>
+<span class="sd">            milliseconds. Dynamic LaTeX equations are discrete layout updates;</span>
+<span class="sd">            they are redrawn rather than numerically interpolated.</span>
+<span class="sd">        transition_duration: Visual interpolation time in milliseconds. ``None``</span>
+<span class="sd">            derives it from ``frame_duration`` and ``0`` disables interpolation.</span>
+<span class="sd">        max_frames: Maximum uniformly retained frames, or ``None``.</span>
+<span class="sd">        frame_step: Sampling stride used when ``max_frames`` is ``None``.</span>
+<span class="sd">        max_theta_cols: Visible class columns before LaTeX truncation.</span>
+<span class="sd">        multiclass_link: ``&quot;auto&quot;``, ``&quot;softmax&quot;``, or ``&quot;ovr&quot;``.</span>
+<span class="sd">        theme: Optional visualization theme.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        An animated Plotly figure with mathematically matched definitions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">hist</span> <span class="o">=</span> <span class="n">fit_history_logistic</span><span class="p">(</span>
         <span class="n">trained_estimator</span><span class="p">,</span>
         <span class="n">X</span><span class="p">,</span>
@@ -123,6 +163,7 @@
         <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
         <span class="n">max_frames</span><span class="o">=</span><span class="n">max_frames</span><span class="p">,</span>
         <span class="n">frame_step</span><span class="o">=</span><span class="n">frame_step</span><span class="p">,</span>
+        <span class="n">multiclass_link</span><span class="o">=</span><span class="n">multiclass_link</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">build_logistic_figure</span><span class="p">(</span>
@@ -138,6 +179,7 @@
         <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">configure_animation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">frame_duration</span><span class="p">,</span> <span class="n">transition_duration</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">attach_highlight</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span></div>
 
 

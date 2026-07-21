@@ -6,7 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from ...utils.math import _softmax
+from ...utils.probability import multiclass_link_latex, multiclass_probabilities
 from ..theme import (
     get_base_layout,
     get_legend_props,
@@ -16,45 +16,33 @@ from ..theme import (
 
 
 def _row1_formula_latex(K):
-    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}=\begin{{bmatrix}}x\\1\end{{bmatrix}}\in\mathbb{{R}}^{{2}},\quad \Theta\in\mathbb{{R}}^{{2\times {K}}}$$"
+    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \mathbf{{x}}\in\mathbb{{R}},\quad \Theta\in\mathbb{{R}}^{{1\times {K}}},\quad \boldsymbol{{\theta}}_0\in\mathbb{{R}}^{{{K}}}$$"
 
-def _row3_formula_latex(K):
-    return rf"$$\hat{{\mathbf{{p}}}} = \text{{softmax}}(\mathbf{{z}}), \quad \text{{softmax}}(\mathbf{{z}})_k = \frac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}} e^{{z_j}}}}, \quad k=1,\dots,{K}, \quad z_k(x) = \theta_{{1,k}} x + \theta_{{0,k}}$$"
+def _row3_formula_latex(K, probability_link):
+    definition = multiclass_link_latex(probability_link, K)
+    return rf"$$z_k(x)=\theta_{{1,k}}x+\theta_{{0,k}},\quad {definition},\quad k=1,\ldots,{K}$$"
 
 def _theta_matrix_latex_math_style(w_hist, b_hist, t, max_elems, dec):
-    Theta = np.vstack([w_hist[t, 0], b_hist[t]])  # (2,K)
-    K_local = Theta.shape[1]
+    theta = np.asarray(w_hist[t, 0], dtype=float)
+    bias = np.asarray(b_hist[t], dtype=float)
+    K_local = theta.size
 
     def fmt(v):
         return rf"{v:.{dec}f}"
 
     if K_local <= max_elems:
-        row1 = " & ".join(fmt(Theta[0, j]) for j in range(K_local))
-        row2 = " & ".join(fmt(Theta[1, j]) for j in range(K_local))
-        cols_spec = "c" * K_local
-        return (
-            r"$$"
-            r"\Theta=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + r"\end{array}\right]"
-            r"$$"
-        )
-
-    head = (max_elems - 1) // 2
-    tail = (max_elems - 1) - head
-    head_idx = list(range(head))
-    tail_idx = list(range(K_local - tail, K_local))
-
-    row1_items = [fmt(Theta[0, j]) for j in head_idx] + [r"\cdots"] + [fmt(Theta[0, j]) for j in tail_idx]
-    row2_items = [fmt(Theta[1, j]) for j in head_idx] + [r"\cdots"] + [fmt(Theta[1, j]) for j in tail_idx]
-
-    row1 = " & ".join(row1_items)
-    row2 = " & ".join(row2_items)
-    cols_spec = "c" * max_elems
-
-    return (
-        r"$$"
-        r"\Theta=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + r"\end{array}\right]"
-        r"$$"
-    )
+        indices = list(range(K_local))
+        theta_items = [fmt(theta[j]) for j in indices]
+        bias_items = [fmt(bias[j]) for j in indices]
+    else:
+        head = max(1, (max_elems - 1) // 2)
+        tail = max(1, max_elems - head - 1)
+        indices = list(range(head)) + list(range(K_local - tail, K_local))
+        theta_items = [fmt(theta[j]) for j in indices[:head]] + [r"\cdots"] + [fmt(theta[j]) for j in indices[head:]]
+        bias_items = [fmt(bias[j]) for j in indices[:head]] + [r"\cdots"] + [fmt(bias[j]) for j in indices[head:]]
+    theta_row = " & ".join(theta_items)
+    bias_row = " & ".join(bias_items)
+    return rf"$$\begin{{aligned}}\Theta_t&=\begin{{bmatrix}}{theta_row}\end{{bmatrix}}\in\mathbb{{R}}^{{1\times {K_local}}}\\\boldsymbol{{\theta}}_{{0,t}}&=\begin{{bmatrix}}{bias_row}\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
 
 def _z_numeric_expr_univar(Theta, class_idx, dec):
     def num(v):
@@ -64,19 +52,23 @@ def _z_numeric_expr_univar(Theta, class_idx, dec):
     theta_0k = num(Theta[1, class_idx])
     return rf"\left({theta_1k}\right)x + \left({theta_0k}\right)"
 
-def _denom_three_terms_tex(Theta, K_local, dec):
+def _linked_term(expression, probability_link):
+    return rf"\sigma\!\left({expression}\right)" if probability_link == "ovr" else rf"e^{{{expression}}}"
+
+
+def _denom_three_terms_tex(Theta, K_local, dec, probability_link):
     z1 = _z_numeric_expr_univar(Theta, 0, dec=dec)
     if K_local == 1:
-        return rf"e^{{{z1}}}"
+        return _linked_term(z1, probability_link)
 
     if K_local == 2:
         z2 = _z_numeric_expr_univar(Theta, 1, dec=dec)
-        return rf"e^{{{z1}}} + e^{{{z2}}}"
+        return rf"{_linked_term(z1, probability_link)} + {_linked_term(z2, probability_link)}"
 
     zK = _z_numeric_expr_univar(Theta, K_local - 1, dec=dec)
-    return rf"e^{{{z1}}} + \cdots + e^{{{zK}}}"
+    return rf"{_linked_term(z1, probability_link)} + \cdots + {_linked_term(zK, probability_link)}"
 
-def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec):
+def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability_link):
     Theta = np.vstack([w_hist[t, 0], b_hist[t]])
     K_local = Theta.shape[1]
 
@@ -84,14 +76,14 @@ def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec):
     k = max(0, min(k, K_local - 1))
 
     z_k = _z_numeric_expr_univar(Theta, k, dec=dec)
-    num_tex = rf"e^{{{z_k}}}"
-    denom_tex = _denom_three_terms_tex(Theta, K_local, dec=dec)
+    num_tex = _linked_term(z_k, probability_link)
+    denom_tex = _denom_three_terms_tex(Theta, K_local, dec, probability_link)
 
     return (
         r"$$"
         r"\begin{aligned}"
-        + rf"\hat{{p}}(y=1\mid x) &= \frac{{e^{{z_1(x)}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(x)}}}} \\[6pt]"
-        + rf"&= \frac{{{num_tex}}}{{{denom_tex}}}"
+        + rf"z_{{{k + 1}}}(x)&={z_k}\\[4pt]"
+        + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid x)&=\frac{{{num_tex}}}{{{denom_tex}}}"
         r"\end{aligned}"
         r"$$"
     )
@@ -99,18 +91,18 @@ def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec):
 def _vertical_dots_latex():
     return r"$$\vdots$$"
 
-def _last_class_tail_latex(w_hist, b_hist, t, dec):
+def _last_class_tail_latex(w_hist, b_hist, t, dec, probability_link):
     Theta = np.vstack([w_hist[t, 0], b_hist[t]])
     K_local = Theta.shape[1]
     last_idx = K_local - 1
 
     z_last = _z_numeric_expr_univar(Theta, last_idx, dec=dec)
-    num_tex = rf"e^{{{z_last}}}"
-    denom_tex = _denom_three_terms_tex(Theta, K_local, dec=dec)
+    num_tex = _linked_term(z_last, probability_link)
+    denom_tex = _denom_three_terms_tex(Theta, K_local, dec, probability_link)
 
     return (
         r"$$"
-        r"\begin{aligned}" + rf"\hat{{p}}(y={K_local}\mid x) &= \frac{{{num_tex}}}{{{denom_tex}}}"
+        r"\begin{aligned}" + rf"\hat{{p}}(Y=c_{{{K_local}}}\mid x)&=\frac{{{num_tex}}}{{{denom_tex}}}"
         r"\end{aligned}"
         r"$$"
     )
@@ -133,6 +125,7 @@ def build_multiclass_1d_logistic_figure(
     example_class=0,
     max_theta_cols=8,
     frame_duration=80,
+    probability_link="softmax",
     theme=None,
 ):
     """Internal method to build build_multiclass_1d_logistic_figure."""
@@ -181,7 +174,7 @@ def build_multiclass_1d_logistic_figure(
 
         def p_curves(t):
             Zg = x1_grid.reshape(-1, 1) @ w_hist[t] + b_hist[t].reshape(1, -1)
-            return _softmax(Zg)
+            return multiclass_probabilities(Zg, probability_link)
 
     if show_loss:
         if loss_hist is None:
@@ -267,12 +260,12 @@ def build_multiclass_1d_logistic_figure(
 
     def make_annotations(t):
         base_ann = [
-            dict(x=X_TEXT, y=1.08, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=0.39, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
-            dict(x=X_TEXT, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=X_TEXT, y=0.48, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=0.48, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
             dict(x=X_VDOTS, y=0.15, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
-            dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
         ]
 
         base_ann.append(

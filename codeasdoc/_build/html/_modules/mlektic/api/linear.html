@@ -79,10 +79,12 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">..services.linear_history</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_history</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.linear.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">explain_lr_prediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.linear.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_lr_figure</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="n">attach_highlight</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="n">attach_highlight</span><span class="p">,</span> <span class="n">configure_animation</span>
 
 
 <div class="viewcode-block" id="visualize_lr">
@@ -104,6 +106,10 @@
     <span class="n">metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">transition_duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">animation_mode</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">fps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">interpolation_frames</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">max_frames</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
     <span class="n">frame_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -131,7 +137,21 @@
 <span class="sd">        display_space (str, optional): Parameter display space (&quot;original&quot; or &quot;scaled&quot;). Defaults to &quot;original&quot;.</span>
 <span class="sd">        metrics (Sequence[str] | dict, optional): Built-in metric names or custom metric callables.</span>
 <span class="sd">        dec (int, optional): The number of decimal places to format the parameters. Defaults to 4.</span>
-<span class="sd">        frame_duration (int, optional): Duration of each animation frame in milliseconds. Defaults to 80.</span>
+<span class="sd">        frame_duration (int, optional): Native-frame duration in milliseconds.</span>
+<span class="sd">            In hybrid mode it is divided by ``interpolation_frames`` when</span>
+<span class="sd">            ``fps`` is omitted. Defaults to 80.</span>
+<span class="sd">        transition_duration (int | None, optional): Interpolation duration for 2D</span>
+<span class="sd">            traces. ``None`` derives a smooth value from ``frame_duration``; ``0``</span>
+<span class="sd">            disables transitions.</span>
+<span class="sd">        animation_mode (str, optional): ``&quot;auto&quot;`` enables hybrid trace-only</span>
+<span class="sd">            animation for one-dimensional regression, ``&quot;native&quot;`` preserves</span>
+<span class="sd">            semantic frames and dynamic LaTeX layout substitutions, and</span>
+<span class="sd">            ``&quot;hybrid&quot;`` explicitly requests synchronized trace subframes.</span>
+<span class="sd">        fps (int | None, optional): Visual frames per second in hybrid mode. If</span>
+<span class="sd">            omitted, ``frame_duration`` is divided across the visual subframes.</span>
+<span class="sd">            Values from 30 to 45 are recommended for Jupyter and Colab.</span>
+<span class="sd">        interpolation_frames (int, optional): Visual intervals inserted between</span>
+<span class="sd">            consecutive training checkpoints in hybrid mode. Defaults to 3.</span>
 <span class="sd">        max_frames (int | None, optional): Maximum rendered frames after temporal decimation. Defaults to 60.</span>
 <span class="sd">        frame_step (int | None, optional): Step used when ``max_frames`` is None. Defaults to 10.</span>
 <span class="sd">        theme (str | None, optional): Visualization theme name. Defaults to None.</span>
@@ -139,6 +159,29 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        plotly.graph_objects.Figure: The animated Plotly figure object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">X_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">X_array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">X_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">animation_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="s2">&quot;native&quot;</span><span class="p">,</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;animation_mode must be &#39;auto&#39;, &#39;native&#39;, or &#39;hybrid&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">interpolation_frames</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">interpolation_frames</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;interpolation_frames must be a positive integer.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fps</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="n">fps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;fps must be a positive number or None.&quot;</span><span class="p">)</span>
+
+    <span class="n">resolved_animation_mode</span> <span class="o">=</span> <span class="n">animation_mode</span>
+    <span class="k">if</span> <span class="n">animation_mode</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="n">resolved_animation_mode</span> <span class="o">=</span> <span class="s2">&quot;hybrid&quot;</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;native&quot;</span>
+    <span class="k">if</span> <span class="n">resolved_animation_mode</span> <span class="o">==</span> <span class="s2">&quot;hybrid&quot;</span> <span class="ow">and</span> <span class="n">dimensions</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Hybrid animation is currently available for one-dimensional regression only.&quot;</span><span class="p">)</span>
+
+    <span class="n">visual_frame_duration</span> <span class="o">=</span> <span class="n">frame_duration</span>
+    <span class="k">if</span> <span class="n">resolved_animation_mode</span> <span class="o">==</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">:</span>
+        <span class="n">visual_frame_duration</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">fps</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">fps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">frame_duration</span> <span class="o">/</span> <span class="n">interpolation_frames</span><span class="p">))</span>
+        <span class="p">)</span>
+
     <span class="n">hist</span> <span class="o">=</span> <span class="n">fit_history</span><span class="p">(</span>
         <span class="n">trained_estimator</span><span class="p">,</span>
         <span class="n">X</span><span class="p">,</span>
@@ -162,10 +205,13 @@
         <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
         <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
         <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
-        <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+        <span class="n">frame_duration</span><span class="o">=</span><span class="n">visual_frame_duration</span><span class="p">,</span>
+        <span class="n">animation_mode</span><span class="o">=</span><span class="n">resolved_animation_mode</span><span class="p">,</span>
+        <span class="n">interpolation_frames</span><span class="o">=</span><span class="n">interpolation_frames</span><span class="p">,</span>
         <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">configure_animation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">visual_frame_duration</span><span class="p">,</span> <span class="n">transition_duration</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">attach_highlight</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span></div>
 
 

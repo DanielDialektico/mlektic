@@ -61,8 +61,8 @@ def _linear_substitution(
             )
         return r"\begin{aligned}" + r"\\".join(rows) + r"\end{aligned}"
     return (
-        rf"\mathbf{{z}}^{{({layer_number})}}=W^{{({layer_number})}}\mathbf{{a}}^{{({layer_number - 1})}}"
-        rf"+\mathbf{{b}}^{{({layer_number})}}={vector_latex(output, dec=dec, limit=max_neurons)}"
+        rf"\mathbf{{z}}^{{({layer_number})}}=\Theta^{{({layer_number})}}\mathbf{{a}}^{{({layer_number - 1})}}"
+        rf"+\boldsymbol{{\theta}}_0^{{({layer_number})}}={vector_latex(output, dec=dec, limit=max_neurons)}"
     )
 
 

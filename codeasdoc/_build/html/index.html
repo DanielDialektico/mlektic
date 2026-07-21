@@ -80,9 +80,10 @@
 <h1>Mlektic — Documentación Técnica<a class="headerlink" href="#mlektic-documentacion-tecnica" title="Link to this heading"></a></h1>
 <p><strong>Mlektic</strong> es una librería de Python diseñada para demostrar visual y
 matemáticamente cómo evolucionan los modelos de <em>Machine Learning</em> durante su
-fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas
-por <code class="docutils literal notranslate"><span class="pre">plotly</span></code>, creadas para entender las tripas de los algoritmos de
-Scikit-Learn.</p>
+fase de entrenamiento. Provee graficos y animaciones interactivas impulsadas
+por <code class="docutils literal notranslate"><span class="pre">plotly</span></code> para regresion lineal y logistica de Scikit-Learn, ademas de
+arquitectura, entrenamiento, parametros, activaciones y matematicas del forward
+pass de redes PyTorch.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
 <ul>
@@ -90,6 +91,7 @@ Scikit-Learn.</p>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#instalacion">Instalación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#primer-ejemplo-regresion-lineal">Primer Ejemplo: Regresión Lineal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#primer-ejemplo-regresion-logistica">Primer Ejemplo: Regresión Logística</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#primer-ejemplo-red-neuronal-pytorch">Primer Ejemplo: Red Neuronal PyTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="getting_started.html#uso-con-pipelines">Uso con Pipelines</a></li>
 </ul>
 </li>
@@ -97,6 +99,7 @@ Scikit-Learn.</p>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#diagrama-general">Diagrama General</a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-api">Módulo <code class="docutils literal notranslate"><span class="pre">api/</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-adapters">Módulo <code class="docutils literal notranslate"><span class="pre">adapters/</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-neural">Módulo <code class="docutils literal notranslate"><span class="pre">neural/</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-domain">Módulo <code class="docutils literal notranslate"><span class="pre">domain/</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-history">Módulo <code class="docutils literal notranslate"><span class="pre">history/</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-services">Módulo <code class="docutils literal notranslate"><span class="pre">services/</span></code></a></li>
@@ -108,7 +111,7 @@ Scikit-Learn.</p>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.api.linear">API de Alto Nivel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.api.neural">Redes Neuronales PyTorch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#redes-neuronales-pytorch">Redes Neuronales PyTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.services.linear_history">Servicios de Historial</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.history.engine">Motor de Historial</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.history.base">Estrategias de Captura</a></li>
@@ -129,6 +132,8 @@ Scikit-Learn.</p>
 <li class="toctree-l2"><a class="reference internal" href="visualization.html#renderizado-por-dimension">Renderizado por Dimensión</a></li>
 <li class="toctree-l2"><a class="reference internal" href="visualization.html#estrategias-de-captura">Estrategias de Captura</a></li>
 <li class="toctree-l2"><a class="reference internal" href="visualization.html#suavizado-ema">Suavizado EMA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#transiciones-y-muestreo-temporal">Transiciones y muestreo temporal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#animacion-hibrida-1d">Animación híbrida 1D</a></li>
 <li class="toctree-l2"><a class="reference internal" href="visualization.html#espacio-de-visualizacion">Espacio de Visualización</a></li>
 <li class="toctree-l2"><a class="reference internal" href="visualization.html#explicacion-visual-de-predicciones">Explicación Visual de Predicciones</a></li>
 <li class="toctree-l2"><a class="reference internal" href="visualization.html#metricas-dinamicas">Métricas Dinámicas</a></li>
@@ -138,6 +143,7 @@ Scikit-Learn.</p>
 <li class="toctree-l2"><a class="reference internal" href="advanced.html#uso-granular-de-la-api">Uso Granular de la API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="advanced.html#metricas-personalizadas">Métricas Personalizadas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="advanced.html#control-de-frames">Control de Frames</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#control-de-redes-pytorch">Control de Redes PyTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="advanced.html#exportar-a-html">Exportar a HTML</a></li>
 <li class="toctree-l2"><a class="reference internal" href="advanced.html#configuracion-del-renderer">Configuración del Renderer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="advanced.html#dimensionalidad-alta">Dimensionalidad Alta</a></li>

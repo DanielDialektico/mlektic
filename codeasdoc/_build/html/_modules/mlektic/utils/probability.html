@@ -1,0 +1,174 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.utils.probability &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">mlektic.utils.probability</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para mlektic.utils.probability</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Probability links used by logistic-regression visualizations.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.math</span><span class="w"> </span><span class="kn">import</span> <span class="n">_sigmoid</span><span class="p">,</span> <span class="n">_softmax</span>
+
+<span class="n">MULTICLASS_LINKS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;softmax&quot;</span><span class="p">,</span> <span class="s2">&quot;ovr&quot;</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="multiclass_probabilities">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.utils.probability.multiclass_probabilities">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">multiclass_probabilities</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">link</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map class scores to probabilities with the selected multiclass link.&quot;&quot;&quot;</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">one_dimensional</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">link</span> <span class="o">==</span> <span class="s2">&quot;softmax&quot;</span><span class="p">:</span>
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">_softmax</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">link</span> <span class="o">==</span> <span class="s2">&quot;ovr&quot;</span><span class="p">:</span>
+        <span class="n">independent</span> <span class="o">=</span> <span class="n">_sigmoid</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">independent</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">independent</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="mf">1e-15</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;multiclass_link must be &#39;auto&#39;, &#39;softmax&#39;, or &#39;ovr&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">probabilities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">one_dimensional</span> <span class="k">else</span> <span class="n">probabilities</span></div>
+
+
+
+<div class="viewcode-block" id="infer_multiclass_link">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.utils.probability.infer_multiclass_link">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">infer_multiclass_link</span><span class="p">(</span><span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Infer Softmax versus normalized one-vs-rest sigmoids from model outputs.&quot;&quot;&quot;</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">probabilities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scores</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">probabilities</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;softmax&quot;</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">link</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">multiclass_probabilities</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">link</span><span class="p">)</span> <span class="o">-</span> <span class="n">probabilities</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">MULTICLASS_LINKS</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">errors</span><span class="o">.</span><span class="n">get</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">multiclass_link_latex</span><span class="p">(</span><span class="n">link</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;K&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a compact rigorous LaTeX definition for a multiclass link.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">link</span> <span class="o">==</span> <span class="s2">&quot;ovr&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;q_k=\sigma(z_k)=\frac</span><span class="si">{1}</span><span class="s2">{1+e^{-z_k}},\qquad &quot;</span>
+            <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">p</span><span class="se">}}</span><span class="s2">_k=\frac</span><span class="se">{{</span><span class="s2">q_k</span><span class="se">}}{{</span><span class="s2">\sum_</span><span class="se">{{</span><span class="s2">j=1</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">classes</span><span class="si">}</span><span class="se">}}</span><span class="s2">q_j</span><span class="se">}}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">p</span><span class="se">}}</span><span class="s2">_k=\frac</span><span class="se">{{</span><span class="s2">e^</span><span class="se">{{</span><span class="s2">z_k</span><span class="se">}}}}{{</span><span class="s2">\sum_</span><span class="se">{{</span><span class="s2">j=1</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">classes</span><span class="si">}</span><span class="se">}}</span><span class="s2">e^</span><span class="se">{{</span><span class="s2">z_j</span><span class="se">}}}}</span><span class="s2">&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">multiclass_link_name</span><span class="p">(</span><span class="n">link</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the pedagogical display name of a multiclass probability link.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;normalized OvR sigmoids&quot;</span> <span class="k">if</span> <span class="n">link</span> <span class="o">==</span> <span class="s2">&quot;ovr&quot;</span> <span class="k">else</span> <span class="s2">&quot;Softmax&quot;</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MULTICLASS_LINKS&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;infer_multiclass_link&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;multiclass_link_latex&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;multiclass_link_name&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;multiclass_probabilities&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

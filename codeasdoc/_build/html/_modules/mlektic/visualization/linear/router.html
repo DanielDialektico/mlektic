@@ -109,6 +109,8 @@
     <span class="n">strict_loss</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">dec</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
     <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">animation_mode</span><span class="o">=</span><span class="s2">&quot;native&quot;</span><span class="p">,</span>
+    <span class="n">interpolation_frames</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -136,6 +138,8 @@
 <span class="sd">        strict_loss (bool, optional): If True, strictly enforce loss display rules. Defaults to False.</span>
 <span class="sd">        dec (int, optional): Number of decimal places to show for parameters. Defaults to 4.</span>
 <span class="sd">        frame_duration (int, optional): Duration of animation frames in milliseconds. Defaults to 80.</span>
+<span class="sd">        animation_mode (str, optional): Animation strategy for the 1D builder.</span>
+<span class="sd">        interpolation_frames (int, optional): Visual intervals between 1D checkpoints.</span>
 <span class="sd">        theme (str | None, optional): Visualization theme name. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
@@ -199,6 +203,8 @@
             <span class="n">strict_loss</span><span class="o">=</span><span class="n">strict_loss</span><span class="p">,</span>
             <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
             <span class="n">frame_duration</span><span class="o">=</span><span class="n">frame_duration</span><span class="p">,</span>
+            <span class="n">animation_mode</span><span class="o">=</span><span class="n">animation_mode</span><span class="p">,</span>
+            <span class="n">interpolation_frames</span><span class="o">=</span><span class="n">interpolation_frames</span><span class="p">,</span>
             <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
         <span class="p">)</span>
 

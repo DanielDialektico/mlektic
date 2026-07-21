@@ -38,7 +38,7 @@ class HistoryEngine:
             data["metrics_hist"] = build_linear_metrics(y, y_pred_hist, data["loss_hist"], config.metrics)
 
         data = self._decimate(data, config)
-        self._apply_smoothing(data, config, is_linear=True)
+        self._apply_smoothing(data, config)
         return data
 
     def capture_logistic(self, X, y, config) -> dict:
@@ -65,7 +65,7 @@ class HistoryEngine:
             )
 
         data = self._decimate(data, config)
-        self._apply_smoothing(data, config, is_linear=False)
+        self._apply_smoothing(data, config)
         return data
 
     def _resolve_mode(self, requested_mode: str) -> str:
@@ -94,47 +94,11 @@ class HistoryEngine:
             frame_step=getattr(config, "frame_step", 10),
         )
 
-    def _apply_smoothing(self, data: dict, config, is_linear: bool):
+    def _apply_smoothing(self, data: dict, config):
         if config.smooth != "ema":
             return
 
-        beta = config.smooth_beta
-        data["loss_hist"] = _ema_smooth(data["loss_hist"], beta)
-
-        if is_linear:
-            if data.get("y_line_hist") is not None:
-                h = data["y_line_hist"]
-                for j in range(h.shape[1]):
-                    h[:, j] = _ema_smooth(h[:, j], beta)
-            if data.get("z_plane_hist") is not None:
-                h = data["z_plane_hist"]
-                Z = h.reshape(h.shape[0], -1)
-                for j in range(Z.shape[1]):
-                    Z[:, j] = _ema_smooth(Z[:, j], beta)
-                data["z_plane_hist"] = Z.reshape(h.shape)
-        else:
-            if data.get("p_line_hist") is not None:
-                h = data["p_line_hist"]
-                for j in range(h.shape[1]):
-                    h[:, j] = _ema_smooth(h[:, j], beta)
-            if data.get("p_plane_hist") is not None:
-                h = data["p_plane_hist"]
-                Z = h.reshape(h.shape[0], -1)
-                for j in range(Z.shape[1]):
-                    Z[:, j] = _ema_smooth(Z[:, j], beta)
-                data["p_plane_hist"] = Z.reshape(h.shape)
-            if data.get("p_curves_hist") is not None:
-                h = data["p_curves_hist"]
-                P = h.reshape(h.shape[0], -1)
-                for j in range(P.shape[1]):
-                    P[:, j] = _ema_smooth(P[:, j], beta)
-                data["p_curves_hist"] = P.reshape(h.shape)
-            if data.get("p_surfaces_hist") is not None:
-                h = data["p_surfaces_hist"]
-                P = h.reshape(h.shape[0], -1)
-                for j in range(P.shape[1]):
-                    P[:, j] = _ema_smooth(P[:, j], beta)
-                data["p_surfaces_hist"] = P.reshape(h.shape)
+        data["loss_hist"] = _ema_smooth(data["loss_hist"], config.smooth_beta)
 
     def _apply_theta_scaling(self, data: dict, config, is_linear: bool, is_multiclass: bool):
         w_learned = data.get("w_hist_learned")

@@ -17,6 +17,7 @@
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/translations.js?v=f85f4cfb"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Índice" href="genindex.html" />
     <link rel="search" title="Búsqueda" href="search.html" />
@@ -92,9 +93,18 @@
 <h3>Funcionalidades<a class="headerlink" href="#funcionalidades" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><strong>Redes Neuronales PyTorch</strong>: soporte opcional mediante <code class="docutils literal notranslate"><span class="pre">mlektic[torch]</span></code> con
-<code class="docutils literal notranslate"><span class="pre">TorchTrainingRecorder</span></code>, diagramas de arquitectura, animaciones de entrenamiento
-y pesos, estadisticas de activacion y explicacion matematica de forward passes
-para MLPs pequenos.</p></li>
+grafo temporal de pesos y salidas neuronales como mapas de calor independientes,
+escalas globales reales por defecto, normalizacion temporal opcional por capa y
+modo adicional para colorear aristas mediante la senal <span class="math notranslate nohighlight">\(\theta_{ji}a_i\)</span>,
+gradientes de backpropagation simultaneos, arquitectura matematica, dimensiones y
+formulas LaTeX, cuadricula 2 por 2 para loss y tres metricas inferibles desde
+predicciones y objetivos, evolucion matricial de
+parametros, explicacion temporal del forward pass y reportes HTML completos para
+redes grandes.
+La lectura compacta de pesos y el paso temporal se actualizan como trazas animadas
+sin redibujar toda la red, y el titulo conserva separacion respecto a la ecuacion.
+Los ceros exactos de ReLU se identifican en el hover; las etiquetas temporales y
+escalas matematicas conservan margen respecto a los bordes de la figura.</p></li>
 <li><p><strong>Regresión Lineal</strong>: Soporte completo para <code class="docutils literal notranslate"><span class="pre">visualize_lr()</span></code> con:
 - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.
 - Renderizado 3D (2 variables): plano predictivo animado.
@@ -109,11 +119,13 @@ para MLPs pequenos.</p></li>
 <li><p><strong>Integración con Scikit-Learn</strong>: Compatible con estimadores directos y <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code>.</p></li>
 <li><p><strong>Adapter Pattern</strong>: <code class="docutils literal notranslate"><span class="pre">SklearnAdapter</span></code> como implementación concreta del
 <code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code> (extensible a otros frameworks).</p></li>
-<li><p><strong>Ruta de Escalabilidad</strong>: Documentación del contrato de adapters para futuras familias de modelos, incluyendo frameworks no Scikit-Learn y visualizaciones de redes neuronales.</p></li>
+<li><p><strong>Ruta de Escalabilidad</strong>: contrato de adapters para futuras familias tabulares
+y contrato especializado de historiales para PyTorch y otros frameworks neurales.</p></li>
 <li><p><strong>Strategy Pattern</strong>: Dos estrategias de captura de historial:
 - <code class="docutils literal notranslate"><span class="pre">IterativeCapture</span></code> para modelos iterativos (<code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code>).
 - <code class="docutils literal notranslate"><span class="pre">InterpolationCapture</span></code> para modelos no iterativos.</p></li>
-<li><p><strong>Suavizado EMA</strong>: Opción de suavizar curvas de pérdida y predicciones.</p></li>
+<li><p><strong>Suavizado EMA</strong>: Opción de suavizar la curva de pérdida sin modificar la
+geometría ni los parámetros exactos del modelo.</p></li>
 <li><p><strong>Espacio de visualización</strong>: Soporte para <code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code> y <code class="docutils literal notranslate"><span class="pre">&quot;scaled&quot;</span></code>
 con transformación inversa automática de parámetros escalados.</p></li>
 <li><p><strong>Tema visual unificado</strong>: Dark mode con Plotly, botones Play/Pause, slider temporal.</p></li>
@@ -122,6 +134,42 @@ con transformación inversa automática de parámetros escalados.</p></li>
 <section id="fixes-y-mejoras-recientes">
 <h3>Fixes y Mejoras Recientes<a class="headerlink" href="#fixes-y-mejoras-recientes" title="Link to this heading"></a></h3>
 <ul class="simple">
+<li><p><strong>Contrato de Animacion Documentado</strong>: se distingue entre LaTeX simbolico fijo,
+sustituciones MathJax nativas y trazas numericas hibridas; tambien se explica la
+division de <code class="docutils literal notranslate"><span class="pre">frame_duration</span></code> entre subframes y la recomendacion de 30 a 45 FPS
+para Jupyter y Colab.</p></li>
+<li><p><strong>Controles Estables</strong>: Play y Pause permanecen blancos con texto negro en
+todos sus estados, incluso cuando Plotly reconstruye superficies 3D, sin
+seguimiento JavaScript ni cambios en la interpolación híbrida.</p></li>
+<li><p><strong>Métricas Laterales</strong>: la vista híbrida 1D apila sus recuadros de métricas en
+una columna independiente para evitar superposiciones.</p></li>
+<li><p><strong>Predicciones sin Desbordes</strong>: las sustituciones 2D usan notación científica
+LaTeX y tipografía compacta; las vistas ND muestran vectores columna truncados
+con <code class="docutils literal notranslate"><span class="pre">\vdots</span></code> en lugar de cuadrículas que pudieran confundirse con matrices.</p></li>
+<li><p><strong>Notacion Unificada</strong>: regresion lineal, logistica y redes neuronales usan
+<span class="math notranslate nohighlight">\(\theta\)</span>, <span class="math notranslate nohighlight">\(\Theta\)</span> y <span class="math notranslate nohighlight">\(\boldsymbol{\theta}_0\)</span> con dimensiones
+independientes del acomodo visual de las matrices.</p></li>
+<li><p><strong>Enlace Multiclase Riguroso</strong>: deteccion automatica de Softmax frente a
+sigmoides OvR normalizadas, aplicada a historiales, figuras y sustituciones.</p></li>
+<li><p><strong>Transiciones Suaves</strong>: interpolacion configurable para trazas 2D mediante
+<code class="docutils literal notranslate"><span class="pre">transition_duration</span></code>, con margen entre frames para evitar rectas parcialmente
+dibujadas, rutas SVG estables sin simplificacion variable y redibujado estable
+para superficies 3D.</p></li>
+<li><p><strong>LaTeX Animado en Jupyter</strong>: los frames que modifican ecuaciones o metricas en
+el layout activan redibujado selectivo para que los valores de <span class="math notranslate nohighlight">\(\theta\)</span>
+evolucionen junto con el slider; el orden <code class="docutils literal notranslate"><span class="pre">traces</span> <span class="pre">first</span></code> preserva a la vez la
+interpolacion suave de rectas y curvas 2D.</p></li>
+<li><p><strong>Animacion Hibrida 1D</strong>: recta, coeficientes numericos, perdida y metricas
+comparten subframes sincronizados sin redibujar el layout; el slider conserva
+exclusivamente checkpoints semanticos y la definicion simbolica sigue en LaTeX.</p></li>
+<li><p><strong>EMA Matematicamente Consistente</strong>: <code class="docutils literal notranslate"><span class="pre">smooth=&quot;ema&quot;</span></code> suaviza solamente la
+perdida y nunca modifica geometria, probabilidades o parametros del modelo.</p></li>
+<li><p><strong>Layouts de Alta Dimension</strong>: normalizadores compactos y paneles ND sin
+columnas vacias ni formulas que invadan graficas adyacentes.</p></li>
+<li><p><strong>Documentacion Neural Completa</strong>: README, inicio rapido, arquitectura, modos
+del grafo, escalas globales exactas, metricas automaticas, ceros de ReLU,
+trazas animadas de parametros y visualizacion/exportacion de reportes HTML
+quedaron alineados con la API publica y sus docstrings.</p></li>
 <li><p><strong>Estabilidad en Exportación HTML</strong>: Corrección del «glitch» de redimensionamiento de arrays de JavaScript en Plotly; los arrays ahora se rellenan con <code class="docutils literal notranslate"><span class="pre">None</span></code> para garantizar un trazado de línea constante y evitar que las animaciones HTML se corten.</p></li>
 <li><p><strong>Formateo Multivariable</strong>: La función <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction()</span></code> para 3 o más variables ahora formatea correctamente la coordenada resultante incluyendo <code class="docutils literal notranslate"><span class="pre">y_hat</span></code> al final (ej., <code class="docutils literal notranslate"><span class="pre">(x_1,</span> <span class="pre">\dots,</span> <span class="pre">x_d,</span> <span class="pre">\hat{y})</span></code>), logrando consistencia matemática con las vistas de 1D y 2D.</p></li>
 <li><p><strong>Exportaciones Públicas</strong>: <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code> ahora se importa correctamente desde <code class="docutils literal notranslate"><span class="pre">mlektic</span></code>.</p></li>

@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ...utils.probability import multiclass_link_latex
 from ..theme import (
     get_base_layout,
     get_legend_props,
@@ -16,10 +17,11 @@ from ..theme import (
 
 
 def _row1_formula_latex_2d(K):
-    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}=\begin{{bmatrix}}x_1\\x_2\\1\end{{bmatrix}}\in\mathbb{{R}}^{{3}},\quad \Theta\in\mathbb{{R}}^{{3\times {K}}}$$"
+    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \mathbf{{x}}\in\mathbb{{R}}^2,\quad \Theta\in\mathbb{{R}}^{{2\times {K}}},\quad \boldsymbol{{\theta}}_0\in\mathbb{{R}}^{{{K}}}$$"
 
-def _row3_formula_latex_2d(K):
-    return rf"$$\hat{{\mathbf{{p}}}}=\mathrm{{softmax}}(\mathbf{{z}}),\quad \mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;z_k(\mathbf{{x}})=\theta_{{1,k}}x_1+\theta_{{2,k}}x_2+\theta_{{0,k}}$$"
+def _row3_formula_latex_2d(K, probability_link):
+    definition = multiclass_link_latex(probability_link, K)
+    return rf"$$z_k(\mathbf{{x}})=\theta_{{1,k}}x_1+\theta_{{2,k}}x_2+\theta_{{0,k}},\quad {definition}$$"
 
 def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
@@ -33,7 +35,7 @@ def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
         row2 = " & ".join(fmt(Theta[1, j]) for j in range(K_local))
         row3 = " & ".join(fmt(Theta[2, j]) for j in range(K_local))
         cols_spec = "c" * K_local
-        return r"$$" + r"\Theta=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + r"\\" + row3 + r"\end{array}\right]" + r"$$"
+        return r"$$\begin{aligned}\Theta_t&=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + rf"\end{{array}}\right]\in\mathbb{{R}}^{{2\times {K_local}}}\\\boldsymbol{{\theta}}_{{0,t}}&=\begin{{bmatrix}}" + row3 + rf"\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
     head = (max_elems - 1) // 2
     tail = (max_elems - 1) - head
     head_idx = list(range(head))
@@ -45,7 +47,7 @@ def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
     row2 = " & ".join(row2_items)
     row3 = " & ".join(row3_items)
     cols_spec = "c" * max_elems
-    return r"$$" + r"\Theta=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + r"\\" + row3 + r"\end{array}\right]" + r"$$"
+    return r"$$\begin{aligned}\Theta_t&=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + rf"\end{{array}}\right]\in\mathbb{{R}}^{{2\times {K_local}}}\\\boldsymbol{{\theta}}_{{0,t}}&=\begin{{bmatrix}}" + row3 + rf"\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
 
 def _z_numeric_expr_bivar(Theta, class_idx, dec):
     def num(v):
@@ -53,33 +55,41 @@ def _z_numeric_expr_bivar(Theta, class_idx, dec):
 
     return rf"\left({num(Theta[0, class_idx])}\right)x_1 + \left({num(Theta[1, class_idx])}\right)x_2 + \left({num(Theta[2, class_idx])}\right)"
 
-def _denom_three_terms_tex_2d(Theta, K_local, dec):
+def _linked_term_2d(expression, probability_link):
+    return rf"\sigma\!\left({expression}\right)" if probability_link == "ovr" else rf"e^{{{expression}}}"
+
+
+def _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link):
     z1 = _z_numeric_expr_bivar(Theta, 0, dec=dec)
     if K_local == 1:
-        return rf"e^{{{z1}}}"
+        return _linked_term_2d(z1, probability_link)
 
     if K_local == 2:
         z2 = _z_numeric_expr_bivar(Theta, 1, dec=dec)
-        return rf"e^{{{z1}}} + e^{{{z2}}}"
+        return rf"{_linked_term_2d(z1, probability_link)} + {_linked_term_2d(z2, probability_link)}"
 
     zK = _z_numeric_expr_bivar(Theta, K_local - 1, dec=dec)
-    return rf"e^{{{z1}}} + \cdots + e^{{{zK}}}"
+    return rf"{_linked_term_2d(z1, probability_link)} + \cdots + {_linked_term_2d(zK, probability_link)}"
 
-def _final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec):
+def _final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec, probability_link):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
     K_local = Theta.shape[1]
     k = max(0, min(int(example_class), K_local - 1))
     z_k = _z_numeric_expr_bivar(Theta, k, dec=dec)
-    return r"$$" + r"\begin{aligned}" + rf"\hat{{p}}(y=1\mid \mathbf{{x}}) &= \frac{{e^{{z_1(\mathbf{{x}})}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(\mathbf{{x}})}}}} \\[6pt]" + rf"&= \frac{{e^{{{z_k}}}}}{{{_denom_three_terms_tex_2d(Theta, K_local, dec=dec)}}}" + r"\end{aligned}" + r"$$"
+    numerator = _linked_term_2d(z_k, probability_link)
+    denominator = _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link)
+    return rf"$$\begin{{aligned}}z_{{{k + 1}}}(\mathbf{{x}})&={z_k}\\[4pt]\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})&=\frac{{{numerator}}}{{{denominator}}}\end{{aligned}}$$"
 
 def _vertical_dots_latex_2d():
     return r"$$\vdots$$"
 
-def _last_class_tail_latex_2d(w_hist, b_hist, t, dec):
+def _last_class_tail_latex_2d(w_hist, b_hist, t, dec, probability_link):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
     K_local = Theta.shape[1]
     z_last = _z_numeric_expr_bivar(Theta, K_local - 1, dec=dec)
-    return r"$$" + r"\begin{aligned}" + rf"\hat{{p}}(y={K_local}\mid \mathbf{{x}}) &= \frac{{e^{{{z_last}}}}}{{{_denom_three_terms_tex_2d(Theta, K_local, dec=dec)}}}" + r"\end{aligned}" + r"$$"
+    numerator = _linked_term_2d(z_last, probability_link)
+    denominator = _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link)
+    return rf"$$\hat{{p}}(Y=c_{{{K_local}}}\mid\mathbf{{x}})=\frac{{{numerator}}}{{{denominator}}}$$"
 
 def build_multiclass_2d_logistic_figure(
     x1,
@@ -101,9 +111,10 @@ def build_multiclass_2d_logistic_figure(
     example_class=0,
     frame_duration=80,
     max_theta_cols=8,
+    probability_link="softmax",
     theme=None,
 ):
-    """Build the 2D multiclass logistic-regression Softmax surface figure."""
+    """Build the 2D multiclass logistic-regression probability surfaces."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
             raise ValueError("show_loss=True is only allowed for iterative histories.")
@@ -201,12 +212,12 @@ def build_multiclass_2d_logistic_figure(
 
     def make_annotations(t):
         base_ann = [
-            dict(x=X_TEXT, y=1.18, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=0.39, y=1.08, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=14, color="white")),
-            dict(x=X_TEXT, y=0.58, xref="paper", yref="paper", text=_row3_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
-            dict(x=X_TEXT, y=0.44, xref="paper", yref="paper", text=_final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec), showarrow=False, xanchor="center", yanchor="top", font=dict(size=13, color="white")),
+            dict(x=X_TEXT, y=0.58, xref="paper", yref="paper", text=_row3_formula_latex_2d(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.44, xref="paper", yref="paper", text=_final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=13, color="white")),
             dict(x=X_VDOTS, y=0.12, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
-            dict(x=X_TEXT, y=-0.08, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=13, color="white")),
+            dict(x=X_TEXT, y=-0.08, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=13, color="white")),
         ]
 
         base_ann.append(

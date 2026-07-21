@@ -1,0 +1,343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.neural.report &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Inicio Rápido</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Arquitectura del Proyecto</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">Referencia de la API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Sistema de Visualización</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+      <li class="breadcrumb-item active">mlektic.neural.report</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Código fuente para mlektic.neural.report</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Lightweight standalone mathematical report for PyTorch networks.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">html</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.introspection</span><span class="w"> </span><span class="kn">import</span> <span class="n">describe_torch_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.taxonomy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">composed_dense_function</span><span class="p">,</span>
+    <span class="n">dense_stages</span><span class="p">,</span>
+    <span class="n">format_hyperparameters</span><span class="p">,</span>
+    <span class="n">parameter_definition</span><span class="p">,</span>
+    <span class="n">shape_tex</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_table</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;tr&gt;&lt;th&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/th&gt;&lt;td&gt;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&lt;/td&gt;&lt;/tr&gt;&quot;</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;table&gt;&lt;tbody&gt;</span><span class="si">{</span><span class="n">body</span><span class="si">}</span><span class="s2">&lt;/tbody&gt;&lt;/table&gt;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_history_section</span><span class="p">(</span><span class="n">history</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">history</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;steps&quot;</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;training_config&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;Recorded frames&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">steps</span><span class="o">.</span><span class="n">size</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s2">&quot;Step range&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">steps</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">steps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">steps</span><span class="o">.</span><span class="n">size</span> <span class="k">else</span> <span class="s2">&quot;not recorded&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Optimizer&quot;</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;optimizer&quot;</span><span class="p">,</span> <span class="s2">&quot;not supplied&quot;</span><span class="p">)))),</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;Optimizer configuration&quot;</span><span class="p">,</span>
+            <span class="n">escape</span><span class="p">(</span><span class="n">format_hyperparameters</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;optimizer_hyperparameters&quot;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">20</span><span class="p">)),</span>
+        <span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;Loss&quot;</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="s2">&quot;not supplied&quot;</span><span class="p">)))),</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">loss</span><span class="o">.</span><span class="n">size</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">finite</span> <span class="o">=</span> <span class="n">loss</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">loss</span><span class="p">)]</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;Loss evolution&quot;</span><span class="p">,</span> <span class="sa">rf</span><span class="s2">&quot;\( </span><span class="si">{</span><span class="n">finite</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">\rightarrow </span><span class="si">{</span><span class="n">finite</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> \)&quot;</span><span class="p">))</span>
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">finite</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">array</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">finite</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;Metric: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">rf</span><span class="s2">&quot;\( </span><span class="si">{</span><span class="n">finite</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">\rightarrow </span><span class="si">{</span><span class="n">finite</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2"> \)&quot;</span><span class="p">))</span>
+    <span class="n">norm_rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parameter_norms&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="n">norm_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">rf</span><span class="s2">&quot;&lt;tr&gt;&lt;td&gt;&lt;code&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/code&gt;&lt;/td&gt;&lt;td&gt;\(</span><span class="si">{</span><span class="n">array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">\)&lt;/td&gt;&quot;</span>
+                <span class="sa">rf</span><span class="s2">&quot;&lt;td&gt;\(</span><span class="si">{</span><span class="n">array</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.5f</span><span class="si">}</span><span class="s2">\)&lt;/td&gt;&lt;td&gt;\(</span><span class="si">{</span><span class="n">array</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">array</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">+.5f</span><span class="si">}</span><span class="s2">\)&lt;/td&gt;&lt;/tr&gt;&quot;</span>
+            <span class="p">)</span>
+    <span class="n">norm_table</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">norm_rows</span><span class="p">:</span>
+        <span class="n">norm_table</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;h3&gt;Parameter movement&lt;/h3&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Tensor&lt;/th&gt;&lt;th&gt;Initial norm&lt;/th&gt;&quot;</span>
+            <span class="s2">&quot;&lt;th&gt;Final norm&lt;/th&gt;&lt;th&gt;Change&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&quot;</span>
+            <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">norm_rows</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot;&lt;/tbody&gt;&lt;/table&gt;&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;&lt;section&gt;&lt;h2&gt;Training configuration and evolution&lt;/h2&gt;&quot;</span> <span class="o">+</span> <span class="n">_table</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">+</span> <span class="n">norm_table</span> <span class="o">+</span> <span class="s2">&quot;&lt;/section&gt;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_layer_section</span><span class="p">(</span><span class="n">layer</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">parameter_rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">parameter_name</span><span class="p">,</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;parameter_shapes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">definition</span> <span class="o">=</span> <span class="n">parameter_definition</span><span class="p">(</span>
+            <span class="n">parameter_name</span><span class="p">,</span>
+            <span class="n">shape</span><span class="p">,</span>
+            <span class="n">layer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;math_index&quot;</span><span class="p">,</span> <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">parameter_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&lt;tr&gt;&lt;td&gt;&lt;code&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">parameter_name</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/code&gt;&lt;/td&gt;&quot;</span>
+            <span class="sa">rf</span><span class="s2">&quot;&lt;td&gt;\(</span><span class="si">{</span><span class="n">shape_tex</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span><span class="w"> </span><span class="n">drop_batch</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="si">}</span><span class="s2">\)&lt;/td&gt;&lt;td&gt;\(</span><span class="si">{</span><span class="n">definition</span><span class="si">}</span><span class="s2">\)&lt;/td&gt;&lt;/tr&gt;&quot;</span>
+        <span class="p">)</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Tensor&lt;/th&gt;&lt;th&gt;Shape&lt;/th&gt;&lt;th&gt;Mathematical role&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&quot;</span>
+        <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parameter_rows</span><span class="p">)</span>
+        <span class="o">+</span> <span class="s2">&quot;&lt;/tbody&gt;&lt;/table&gt;&quot;</span>
+        <span class="k">if</span> <span class="n">parameter_rows</span>
+        <span class="k">else</span> <span class="s2">&quot;&lt;p class=&#39;muted&#39;&gt;This layer has no learnable tensors.&lt;/p&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">input_dimension</span> <span class="o">=</span> <span class="n">shape_tex</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;input_shape&quot;</span><span class="p">))</span>
+    <span class="n">output_dimension</span> <span class="o">=</span> <span class="n">shape_tex</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;output_shape&quot;</span><span class="p">))</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">_table</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;Tensor map&quot;</span><span class="p">,</span> <span class="sa">rf</span><span class="s2">&quot;\(\mathbb</span><span class="se">{{</span><span class="s2">R</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">input_dimension</span><span class="si">}</span><span class="se">}}</span><span class="s2">\to\mathbb</span><span class="se">{{</span><span class="s2">R</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">output_dimension</span><span class="si">}</span><span class="se">}}</span><span class="s2">\)&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Parameters&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;parameters&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> total; </span><span class="si">{</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;trainable_parameters&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> trainable&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Hyperparameters&quot;</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="n">format_hyperparameters</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">&quot;hyperparameters&quot;</span><span class="p">],</span> <span class="n">limit</span><span class="o">=</span><span class="mi">30</span><span class="p">))),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;&lt;section class=&#39;layer&#39;&gt;&lt;div class=&#39;layer-heading&#39;&gt;&lt;span class=&#39;index&#39;&gt;</span><span class="si">{</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&lt;/span&gt;&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&lt;div&gt;&lt;h2&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> &lt;span&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&lt;/span&gt;&lt;/h2&gt;&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&lt;p class=&#39;role&#39;&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;role&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&quot;</span>
+        <span class="sa">rf</span><span class="s2">&quot;&lt;div class=&#39;formula&#39;&gt;\[</span><span class="si">{</span><span class="n">layer</span><span class="p">[</span><span class="s1">&#39;formula&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">\]&lt;/div&gt;</span><span class="si">{</span><span class="n">metadata</span><span class="si">}{</span><span class="n">parameters</span><span class="si">}</span><span class="s2">&lt;/section&gt;&quot;</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="build_nn_math_report">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.api.neural.build_nn_math_report">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_nn_math_report</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">input_sample</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Mlektic neural-network mathematical report&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a responsive standalone HTML report with complete layer taxonomy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model: A ``torch.nn.Module`` to inspect.</span>
+<span class="sd">        input_sample: Sample or batch used to infer input and output dimensions.</span>
+<span class="sd">        history: Optional recorder payload with training and parameter evolution.</span>
+<span class="sd">        title: Report title.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A complete UTF-8 HTML document as a string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">layers</span> <span class="o">=</span> <span class="n">describe_torch_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_sample</span><span class="p">)</span>
+    <span class="n">total_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">&quot;parameters&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">)</span>
+    <span class="n">trainable_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">layer</span><span class="p">[</span><span class="s2">&quot;trainable_parameters&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">)</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="n">composed_dense_function</span><span class="p">(</span><span class="n">dense_stages</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">_table</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;Model&quot;</span><span class="p">,</span> <span class="n">escape</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)),</span>
+            <span class="p">(</span><span class="s2">&quot;Leaf layers&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">))),</span>
+            <span class="p">(</span><span class="s2">&quot;Parameters&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">total_parameters</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> total; </span><span class="si">{</span><span class="n">trainable_parameters</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> trainable&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Input&quot;</span><span class="p">,</span> <span class="sa">rf</span><span class="s2">&quot;\(\mathbb</span><span class="se">{{</span><span class="s2">R</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">shape_tex</span><span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;input_shape&#39;</span><span class="p">))</span><span class="si">}</span><span class="se">}}</span><span class="s2">\)&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;Output&quot;</span><span class="p">,</span> <span class="sa">rf</span><span class="s2">&quot;\(\mathbb</span><span class="se">{{</span><span class="s2">R</span><span class="se">}}</span><span class="s2">^</span><span class="se">{{</span><span class="si">{</span><span class="n">shape_tex</span><span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;output_shape&#39;</span><span class="p">))</span><span class="si">}</span><span class="se">}}</span><span class="s2">\)&quot;</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">layer_sections</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_layer_section</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">)</span>
+    <span class="n">history_section</span> <span class="o">=</span> <span class="n">_history_section</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&lt;!doctype html&gt;</span>
+<span class="s2">&lt;html lang=&quot;en&quot;&gt;</span>
+<span class="s2">&lt;head&gt;</span>
+<span class="s2">&lt;meta charset=&quot;utf-8&quot;&gt;</span>
+<span class="s2">&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;</span>
+<span class="s2">&lt;title&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/title&gt;</span>
+<span class="s2">&lt;style&gt;</span>
+<span class="s2">:root </span><span class="se">{{</span><span class="s2"> color-scheme: dark; --bg:#17181c; --surface:#202126; --text:#f5f7fa; --muted:#aeb4bd;</span>
+<span class="s2">  --line:#353841; --learn:#77b7ff; --positive:#55d6be; --negative:#ff7d8e; </span><span class="se">}}</span>
+<span class="s2">* </span><span class="se">{{</span><span class="s2"> box-sizing:border-box; </span><span class="se">}}</span>
+<span class="s2">body </span><span class="se">{{</span><span class="s2"> margin:0; background:var(--bg); color:var(--text);</span>
+<span class="s2">  font-family:Inter,Segoe UI,Arial,sans-serif; line-height:1.55; </span><span class="se">}}</span>
+<span class="s2">main </span><span class="se">{{</span><span class="s2"> width:min(1080px, calc(100% - 32px)); margin:0 auto; padding:40px 0 72px; </span><span class="se">}}</span>
+<span class="s2">header </span><span class="se">{{</span><span class="s2"> border-bottom:1px solid var(--line); padding-bottom:28px; margin-bottom:28px; </span><span class="se">}}</span>
+<span class="s2">h1 </span><span class="se">{{</span><span class="s2"> margin:0 0 8px; font-size:clamp(25px,4vw,38px); font-weight:500; </span><span class="se">}}</span>
+<span class="s2">h2 </span><span class="se">{{</span><span class="s2"> margin:0; font-size:20px; font-weight:500; </span><span class="se">}}</span>
+<span class="s2">h2 span </span><span class="se">{{</span><span class="s2"> color:var(--learn); font-size:14px; margin-left:8px; </span><span class="se">}}</span>
+<span class="s2">h3 </span><span class="se">{{</span><span class="s2"> font-size:16px; font-weight:500; margin-top:28px; </span><span class="se">}}</span>
+<span class="s2">p </span><span class="se">{{</span><span class="s2"> margin:6px 0; </span><span class="se">}}</span><span class="s2"> .muted,.role </span><span class="se">{{</span><span class="s2"> color:var(--muted); </span><span class="se">}}</span>
+<span class="s2">.formula </span><span class="se">{{</span><span class="s2"> overflow-x:auto; padding:14px 0 18px; color:var(--text); </span><span class="se">}}</span>
+<span class="s2">section </span><span class="se">{{</span><span class="s2"> padding:26px 0; border-bottom:1px solid var(--line); </span><span class="se">}}</span>
+<span class="s2">.layer-heading </span><span class="se">{{</span><span class="s2"> display:flex; gap:14px; align-items:center; </span><span class="se">}}</span>
+<span class="s2">.index </span><span class="se">{{</span><span class="s2"> display:grid; place-items:center; width:36px; height:36px;</span>
+<span class="s2">  border:1px solid var(--positive); color:var(--positive); </span><span class="se">}}</span>
+<span class="s2">table </span><span class="se">{{</span><span class="s2"> width:100%; border-collapse:collapse; margin-top:14px; </span><span class="se">}}</span>
+<span class="s2">th,td </span><span class="se">{{</span><span class="s2"> padding:10px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; </span><span class="se">}}</span>
+<span class="s2">th </span><span class="se">{{</span><span class="s2"> color:var(--muted); font-weight:500; width:24%; </span><span class="se">}}</span><span class="s2"> code </span><span class="se">{{</span><span class="s2"> color:var(--positive); </span><span class="se">}}</span>
+<span class="s2">@media (max-width:600px) </span><span class="se">{{</span>
+<span class="s2">  main </span><span class="se">{{</span><span class="s2"> width:min(100% - 20px,1080px); padding-top:24px; </span><span class="se">}}</span>
+<span class="s2">  th,td </span><span class="se">{{</span><span class="s2"> display:block; width:100%; </span><span class="se">}}</span>
+<span class="s2">  th </span><span class="se">{{</span><span class="s2"> border-bottom:0; padding-bottom:2px; </span><span class="se">}}</span>
+<span class="s2">  td </span><span class="se">{{</span><span class="s2"> padding-top:2px; </span><span class="se">}}</span>
+<span class="se">}}</span>
+<span class="s2">&lt;/style&gt;</span>
+<span class="s2">&lt;script&gt;window.MathJax=</span><span class="se">{{</span><span class="s2">tex:</span><span class="se">{{</span><span class="s2">inlineMath:[[&#39;</span><span class="se">\\\\</span><span class="s2">(&#39;,&#39;</span><span class="se">\\\\</span><span class="s2">)&#39;]],displayMath:[[&#39;</span><span class="se">\\\\</span><span class="s2">[&#39;,&#39;</span><span class="se">\\\\</span><span class="s2">]&#39;]]</span><span class="se">}}}}</span><span class="s2">;&lt;/script&gt;</span>
+<span class="s2">&lt;script defer src=&quot;https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js&quot;&gt;&lt;/script&gt;</span>
+<span class="s2">&lt;/head&gt;</span>
+<span class="s2">&lt;body&gt;&lt;main&gt;</span>
+<span class="s2">&lt;header&gt;&lt;h1&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">title</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/h1&gt;</span>
+<span class="s2">&lt;p class=&quot;muted&quot;&gt;Layer taxonomy, dimensions, definitions, configuration, and training movement.&lt;/p&gt;</span>
+<span class="s2">&lt;div class=&quot;formula&quot;&gt;</span><span class="se">\\</span><span class="s2">[</span><span class="si">{</span><span class="n">function</span><span class="si">}</span><span class="se">\\</span><span class="s2">]&lt;/div&gt;</span><span class="si">{</span><span class="n">summary</span><span class="si">}</span><span class="s2">&lt;/header&gt;</span>
+<span class="si">{</span><span class="n">history_section</span><span class="si">}</span>
+<span class="si">{</span><span class="n">layer_sections</span><span class="si">}</span>
+<span class="s2">&lt;/main&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="export_nn_math_report">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.api.neural.export_nn_math_report">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_nn_math_report</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">input_sample</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="s2">&quot;mlektic_nn_math_report.html&quot;</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Mlektic neural-network mathematical report&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write the complete mathematical report and return its resolved path.</span>
+
+<span class="sd">    Parent directories are created when needed. The generated report includes</span>
+<span class="sd">    MathJax from a CDN, so formulas require network access when first displayed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">destination</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">destination</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">destination</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">build_nn_math_report</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_sample</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">),</span>
+        <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">destination</span></div>
+
+
+
+<div class="viewcode-block" id="display_nn_math_report">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.api.neural.display_nn_math_report">[documentos]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">display_nn_math_report</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">input_sample</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">history</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Mlektic neural-network mathematical report&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return an IPython HTML object suitable for Jupyter and Colab.</span>
+
+<span class="sd">    Pass the result to ``IPython.display.display`` when the call is not the final</span>
+<span class="sd">    expression of a notebook cell. Use :func:`export_nn_math_report` outside an</span>
+<span class="sd">    IPython environment.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
+    <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Notebook display requires IPython. Use export_nn_math_report() instead.&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+    <span class="k">return</span> <span class="n">HTML</span><span class="p">(</span><span class="n">build_nn_math_report</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_sample</span><span class="p">,</span> <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">))</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;build_nn_math_report&quot;</span><span class="p">,</span> <span class="s2">&quot;display_nn_math_report&quot;</span><span class="p">,</span> <span class="s2">&quot;export_nn_math_report&quot;</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

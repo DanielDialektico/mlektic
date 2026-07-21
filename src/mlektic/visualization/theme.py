@@ -32,7 +32,6 @@ _CLASSIC = dict(
     btn_border="rgba(0,0,0,0.25)",
     btn_font_color="black",
     btn_border_width=1,
-    btn_active_bg="#cbd5e1",
     annotation_color="white",
     title_size=24,
     annotation_size=16,
@@ -158,6 +157,7 @@ def get_updatemenus(
     return [
         dict(
             type="buttons",
+            showactive=False,
             direction="left",
             x=x,
             y=y,
@@ -246,7 +246,7 @@ def data_marker_style(*, theme: str | None = None) -> Dict[str, Any]:
 def model_line_style(*, theme: str | None = None) -> Dict[str, Any]:
     """Return ``line`` dict for model / prediction traces."""
     p = _resolve(theme)
-    d: Dict[str, Any] = dict(width=p["model_line_width"])
+    d: Dict[str, Any] = dict(width=p["model_line_width"], simplify=False)
     if p["model_line"]:
         d["color"] = p["model_line"]
     return d
@@ -255,7 +255,7 @@ def model_line_style(*, theme: str | None = None) -> Dict[str, Any]:
 def loss_line_style(*, theme: str | None = None) -> Dict[str, Any]:
     """Return ``line`` dict for loss traces."""
     p = _resolve(theme)
-    d: Dict[str, Any] = dict(width=p["loss_line_width"])
+    d: Dict[str, Any] = dict(width=p["loss_line_width"], simplify=False)
     if p["loss_line"]:
         d["color"] = p["loss_line"]
     return d
@@ -281,74 +281,32 @@ def data_3d_marker_style(*, theme: str | None = None) -> Dict[str, Any]:
     return m
 
 
-# ── JS injection for dynamic button highlighting ────────────────
+# ── JS injection for stable button styling ───────────────────
 
 def get_button_highlight_script(*, theme: str | None = None) -> str:
-    """Return a ``<script>`` block that highlights the active Play/Pause button."""
+    """Return CSS that keeps Play/Pause visually stable during Plotly redraws.
+
+    The historical function name is retained for backward compatibility. Plotly
+    rebuilds update-menu SVG nodes while animating 3D traces, so styling every
+    current and future button through CSS is more reliable than tracking an
+    active node in JavaScript.
+    """
     p = _resolve(theme)
-    active_bg = p.get("btn_active_bg", "#e2e8f0")
+    button_bg = p.get("btn_bg", "white")
+    text_color = p.get("btn_font_color", "black")
 
     return (
         "<script>\n"
         "(function() {\n"
-        "  // 1. Mark the closest plotly container with theme properties\n"
-        "  var scripts = document.getElementsByTagName('script');\n"
-        "  var currentScript = scripts[scripts.length - 1];\n"
-        "  var wrapper = currentScript ? currentScript.previousElementSibling : null;\n"
-        "  if (wrapper) {\n"
-        "    var attempts = 0;\n"
-        "    var intv = setInterval(function() {\n"
-        "      var uc = wrapper.querySelector('.updatemenu-container');\n"
-        "      if (uc) {\n"
-        f"        uc.setAttribute('data-active-bg', '{active_bg}');\n"
-        "        clearInterval(intv);\n"
-        "      }\n"
-        "      if (++attempts > 25) clearInterval(intv);\n"
-        "    }, 200);\n"
-        "  }\n"
-        "\n"
-        "  // 2. Global event delegation (only inject once per page)\n"
-        "  if (!window._mlektic_btn_hl) {\n"
-        "    window._mlektic_btn_hl = true;\n"
-        "    function enforceHighlight() {\n"
-        "      var containers = document.querySelectorAll('.updatemenu-container');\n"
-        "      containers.forEach(function(c) {\n"
-        "        var activeText = c.getAttribute('data-active-btn');\n"
-        "        var aBg = c.getAttribute('data-active-bg') || '#cbd5e1';\n"
-        "        \n"
-        "        var btns = c.querySelectorAll('.updatemenu-button');\n"
-        "        btns.forEach(function(btn) {\n"
-        "          var textEl = btn.querySelector('text');\n"
-        "          var rectEl = btn.querySelector('rect');\n"
-        "          if (!textEl || !rectEl) return;\n"
-        "          \n"
-        "          if (!rectEl.hasAttribute('data-orig-fill')) {\n"
-        "            rectEl.setAttribute('data-orig-fill', rectEl.style.fill || rectEl.getAttribute('fill') || '');\n"
-        "          }\n"
-        "          \n"
-        "          var text = textEl.textContent.trim();\n"
-        "          if (activeText && text === activeText) {\n"
-        "            if (rectEl.style.fill !== aBg) rectEl.style.fill = aBg;\n"
-        "          } else {\n"
-        "            var orig = rectEl.getAttribute('data-orig-fill');\n"
-        "            if (rectEl.style.fill !== orig) rectEl.style.fill = orig;\n"
-        "          }\n"
-        "        });\n"
-        "      });\n"
-        "      requestAnimationFrame(enforceHighlight);\n"
-        "    }\n"
-        "\n"
-        "    document.addEventListener('click', function(e) {\n"
-        "      var btn = e.target.closest ? e.target.closest('.updatemenu-button') : null;\n"
-        "      if (btn) {\n"
-        "        var container = btn.closest('.updatemenu-container');\n"
-        "        var textEl = btn.querySelector('text');\n"
-        "        if (container && textEl) {\n"
-        "          container.setAttribute('data-active-btn', textEl.textContent.trim());\n"
-        "        }\n"
-        "      }\n"
-        "    });\n"
-        "    requestAnimationFrame(enforceHighlight);\n"
+        "  if (!document.getElementById('mlektic-stable-button-style')) {\n"
+        "    var style = document.createElement('style');\n"
+        "    style.id = 'mlektic-stable-button-style';\n"
+        "    style.textContent =\n"
+        "      '.js-plotly-plot .updatemenu-button rect {' +\n"
+        f"      'fill: {button_bg} !important;}}' +\n"
+        "      '.js-plotly-plot .updatemenu-button text {' +\n"
+        f"      'fill: {text_color} !important;}}';\n"
+        "    document.head.appendChild(style);\n"
         "  }\n"
         "})();\n"
         "</script>"
@@ -356,7 +314,7 @@ def get_button_highlight_script(*, theme: str | None = None) -> str:
 
 
 def attach_highlight(fig, *, theme: str | None = None):
-    """Patch *fig* so button-highlight JS is injected in Jupyter.
+    """Patch *fig* so stable button CSS is injected in Jupyter.
 
     Two display paths are patched:
 
@@ -389,4 +347,39 @@ def attach_highlight(fig, *, theme: str | None = None):
             pass  # not in a notebook — ignore silently
 
     fig.show = _patched_show
+    return fig
+
+
+def configure_animation(fig, frame_duration: int, transition_duration: int | None = None):
+    """Configure transitions and redraw frames that modify layout mathematics."""
+    if frame_duration < 0:
+        raise ValueError("frame_duration must be non-negative.")
+    transition = min(round(frame_duration * 0.6), 160) if transition_duration is None else transition_duration
+    if transition < 0:
+        raise ValueError("transition_duration must be non-negative or None.")
+    if frame_duration > 0 and transition >= frame_duration:
+        transition = min(round(frame_duration * 0.6), 160)
+    has_non_scatter_traces = any(
+        getattr(trace, "type", "") in {"surface", "scatter3d", "mesh3d", "volume", "isosurface"}
+        for trace in fig.data
+    )
+    has_layout_updates = any(
+        frame.layout is not None and bool(frame.layout.to_plotly_json())
+        for frame in fig.frames or ()
+    )
+    requires_redraw = has_non_scatter_traces or has_layout_updates
+    if has_layout_updates:
+        fig.update_layout(transition=dict(ordering="traces first"))
+    for menu in fig.layout.updatemenus or ():
+        for button in menu.buttons or ():
+            if button.method != "animate" or not button.args:
+                continue
+            options = button.args[1] if len(button.args) > 1 else None
+            if not isinstance(options, dict):
+                continue
+            frame = options.setdefault("frame", {})
+            if frame.get("duration", 0) > 0:
+                frame["duration"] = frame_duration
+                frame["redraw"] = requires_redraw
+                options["transition"] = {"duration": transition, "easing": "linear"}
     return fig

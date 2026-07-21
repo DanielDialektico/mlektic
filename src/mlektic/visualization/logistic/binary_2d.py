@@ -84,11 +84,11 @@ def build_binary_plane_logistic_figure(
                 b_disp = b_arr
 
         def formula_text():
-            return r"$\hat{p}(y=1\mid \mathbf{x})=\sigma(z),\;\; z=\theta_1x_1+\theta_2x_2+\theta_0$"
+            return r"$\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z),\;\;z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0$"
 
         def eq_text(t):
             if w_disp is None:
-                return r"$\hat{p}(y=1\mid \mathbf{x})=f(x_1,x_2)$"
+                return r"$\hat{p}(Y=c_1\mid\mathbf{x})=f(x_1,x_2)$"
             w1 = float(w_disp[t, 0])
             w2 = float(w_disp[t, 1])
             b = float(b_disp[t])
@@ -124,7 +124,7 @@ def build_binary_plane_logistic_figure(
             return _sigmoid(w1 * X1g + w2 * X2g + b)
 
         def formula_text():
-            return r"$\hat{p}(y=1\mid \mathbf{x})=\sigma(z),\;\; z=\theta_1x_1+\theta_2x_2+\theta_0$"
+            return r"$\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z),\;\;z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0$"
 
         def eq_text(t):
             w1 = float(w_hist[t, 0])

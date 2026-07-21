@@ -11,6 +11,7 @@ from ..theme import (
     get_base_layout,
     get_sliders,
     get_updatemenus,
+    loss_line_style,
 )
 
 
@@ -82,16 +83,16 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
     th_cols = 1 if force_theta_one_col else 5
 
     def model_formula_latex():
-        return r"$$\hat{y} = \theta_0 + \operatorname{vec}(\boldsymbol{\theta})^\top \operatorname{vec}(\mathbf{x})$$"
+        return r"$$\hat{y}=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0$$"
 
     def bias_latex(t_idx):
         return rf"$$\theta_0 = {float(b_hist[t_idx]):.{dec}f}$$"
 
     def x_dim_latex():
-        return rf"$$\mathbf{{x}} \in \mathbb{{R}}^{{{d}\times {x_cols}}}$$"
+        return rf"$$\mathbf{{x}}\in\mathbb{{R}}^{{{d}}}$$"
 
     def theta_dim_latex():
-        return rf"$$\boldsymbol{{\theta}} \in \mathbb{{R}}^{{{d}\times {th_cols}}}$$"
+        return rf"$$\boldsymbol{{\theta}}\in\mathbb{{R}}^{{{d}}}$$"
 
     def x_vector_latex():
         def cell(j): return rf"x_{{{j}}}"
@@ -300,7 +301,7 @@ def build_multivar_lr_figure(
             y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
             mode="lines",
             name="Loss",
-            line=dict(width=3),
+            line=loss_line_style(theme=theme),
             uid="LOSS_LINE",
         ),
         row=1,
@@ -314,7 +315,7 @@ def build_multivar_lr_figure(
                 x=[step if i <= t else None for i, step in enumerate(step_axis_list)],
                 y=[val if i <= t else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
-                line=dict(width=3),
+                line=loss_line_style(theme=theme),
                 uid="LOSS_LINE",
             )
         else:

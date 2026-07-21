@@ -2,14 +2,15 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from ...utils.math import _sigmoid, _softmax
+from ...adapters.sklearn import SklearnAdapter
+from ...utils.math import _sigmoid
+from ...utils.probability import multiclass_probabilities
 from ..linear.prediction import (
     _custom_updatemenus,
     _extract_linear_theta,
     _find_standard_scaler,
     _fmt,
     _matrix_compact,
-    _needs_single_col,
     _theta_to_original,
     _to_scaled_x,
 )
@@ -54,7 +55,7 @@ def _explain_log_1d(
 
     subst_tex = (
         r"$\begin{aligned}"
-        r"&\hat{p}(y=1|x) = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1 x_1 + \theta_0 \\[5pt]"
+        r"&\hat{p}(Y=c_1\mid x) = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1x + \theta_0 \\[5pt]"
         rf"&z = ({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp, dec)}) \\[5pt]"
         rf"&\sigma(z) = \frac{{1}}{{1 + e^{{-\left(({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp, dec)})\right)}}}}"
         r"\end{aligned}$"
@@ -247,7 +248,7 @@ def _explain_log_2d(
 
     subst_tex = (
         r"$\begin{aligned}"
-        r"&\hat{p}(y=1|x) = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1 x_1 + \theta_2 x_2 + \theta_0 \\[5pt]"
+        r"&\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z)=\frac{1}{1+e^{-z}},\quad z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0\\[5pt]"
         rf"&z = ({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(w_disp[1], dec)})\cdot({_fmt(xq2_disp, dec)}) + ({_fmt(b_disp, dec)}) \\[5pt]"
         rf"&\sigma(z) = \frac{{1}}{{1 + e^{{-\left(({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(w_disp[1], dec)})\cdot({_fmt(xq2_disp, dec)}) + ({_fmt(b_disp, dec)})\right)}}}}"
         r"\end{aligned}$"
@@ -400,11 +401,10 @@ def _explain_log_multiclass_1d(
     x_disp, w_disp, b_disp,
     p_hat, y_hat,
     title, dec, grid_points, theme,
-    p, text_color, ann_color, btn_bg, btn_border, btn_font_color
+    p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+    probability_link,
 ):
     import plotly.express as px
-
-    from ...utils.math import _softmax
 
     x1_train = X_train[:, 0].ravel()
     xq1_disp = float(x_disp[0])
@@ -417,7 +417,7 @@ def _explain_log_multiclass_1d(
     x_grid = np.linspace(x_min_plot, x_max_plot, int(grid_points))
 
     z_grid = w_disp @ x_grid.reshape(1, -1) + b_disp.reshape(-1, 1)
-    p_curves = _softmax(z_grid.T).T
+    p_curves = multiclass_probabilities(z_grid.T, probability_link).T
 
     x_tex = rf"x_1 = {_fmt(xq1_disp, dec)}"
     vars_tex = r"$\begin{aligned}" + rf"{x_tex}" + r"\end{aligned}$"
@@ -428,14 +428,31 @@ def _explain_log_multiclass_1d(
     def exp_tex(k):
         return rf"({_fmt(w_disp[k, 0], dec)})({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp[k], dec)})"
 
-    denom_tex = rf"e^{{{exp_tex(0)}}} + \dots + e^{{{exp_tex(K-1)}}}"
+    scores = w_disp[:, 0] * xq1_disp + b_disp
+    if probability_link == "ovr":
+        components = _sigmoid(scores)
+        component_symbol = "q"
+        component_definition = r"q_k=\sigma(z_k)"
+        normalizer_symbol = "Q"
+    else:
+        components = np.exp(scores - np.max(scores))
+        component_symbol = "r"
+        component_definition = r"r_k=e^{z_k-z_{\max}}"
+        normalizer_symbol = "R"
+    normalizer = float(np.sum(components))
 
     def p_subst(k):
-        num_tex = rf"e^{{{exp_tex(k)}}}"
-        return rf"\hat{{p}}_{{{k}}} = \frac{{{num_tex}}}{{{denom_tex}}} = {_fmt(p_hat[k], dec)}"
+        return (
+            rf"z_{{{k + 1}}}={exp_tex(k)},\quad {component_symbol}_{{{k + 1}}}="
+            rf"{_fmt(components[k], dec)},\quad\hat{{p}}(Y=c_{{{k + 1}}}\mid x)="
+            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}"
+        )
 
     subst_lines = []
-    header1 = r"\text{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}, \quad "
+    header1 = (
+        component_definition
+        + rf",\quad {normalizer_symbol}=\sum_{{j=1}}^K{component_symbol}_j={_fmt(normalizer, dec)},\quad "
+    )
     header2 = r"z_k(\mathbf{x}) = \theta_{1,k} x_1 + \theta_{0,k}"
     subst_lines.append(header1 + header2 + r" \\[-6pt]")
 
@@ -533,7 +550,8 @@ def _explain_log_multiclass_1d(
             y_pos = 0.91
         else:
             y_pos = 0.75
-        return dict(x=0.05, y=y_pos, xref=f"x{idx}", yref=f"y{idx}", text=tex_body, showarrow=False, xanchor="left", yanchor="top", align="center", font=dict(size=14, color=text_color))
+        font_size = 12 if idx == 3 and K >= 4 else 14
+        return dict(x=0.04, y=y_pos, xref=f"x{idx}", yref=f"y{idx}", text=tex_body, showarrow=False, xanchor="left", yanchor="top", align="center", font=dict(size=font_size, color=text_color))
 
     T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
 
@@ -618,28 +636,46 @@ def _explain_log_multiclass_1d(
 
 def _explain_log_multiclass_nd(
     d, K, x_disp, w_disp, b_disp, p_hat, y_hat,
-    title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color
+    title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+    probability_link,
 ):
-    model_formula_tex = r"$\mathbf{z} = \mathbf{\Theta}\operatorname{vec}(\mathbf{x}) + \boldsymbol{\theta}_0, \quad \hat{\mathbf{p}} = \text{softmax}(\mathbf{z})$"
+    link_name = r"\operatorname{OvR}_{\sigma}" if probability_link == "ovr" else r"\operatorname{softmax}"
+    model_formula_tex = rf"$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \hat{{\mathbf{{p}}}}={link_name}(\mathbf{{z}})$"
 
-    x_rows, x_force_1col = 15, _needs_single_col(x_disp, max_digits=5)
-    x_cols = 1 if x_force_1col else 3
+    x_rows, x_cols = 15, 1
     x_items = [rf"{_fmt(x_disp[j], dec)}" for j in range(d)]
     x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 7, 7))
     x_mat_tex = rf"$\mathbf{{x}}=\begin{{bmatrix}} {x_mat_inner} \end{{bmatrix}}$"
-    x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}\times {x_cols}}}$"
+    x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}}}$"
 
     def exp_tex(k):
         return rf"({_fmt(w_disp[k, 0], dec)})({_fmt(x_disp[0], dec)}) + \dots + ({_fmt(b_disp[k], dec)})"
 
-    denom_tex = rf"e^{{{exp_tex(0)}}} + \dots + e^{{{exp_tex(K-1)}}}"
+    scores = w_disp @ x_disp + b_disp
+    if probability_link == "ovr":
+        components = _sigmoid(scores)
+        component_symbol = "q"
+        component_definition = r"q_k=\sigma(z_k)"
+        normalizer_symbol = "Q"
+    else:
+        components = np.exp(scores - np.max(scores))
+        component_symbol = "r"
+        component_definition = r"r_k=e^{z_k-z_{\max}}"
+        normalizer_symbol = "R"
+    normalizer = float(np.sum(components))
 
     def p_subst(k):
-        num_tex = rf"e^{{{exp_tex(k)}}}"
-        return rf"\hat{{p}}_{{{k}}} = \frac{{{num_tex}}}{{{denom_tex}}} = {_fmt(p_hat[k], dec)}"
+        return (
+            rf"z_{{{k + 1}}}={exp_tex(k)},\quad {component_symbol}_{{{k + 1}}}="
+            rf"{_fmt(components[k], dec)},\quad\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})="
+            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}"
+        )
 
     subst_lines = []
-    header1 = r"\text{softmax}(\mathbf{z})_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}, \quad "
+    header1 = (
+        component_definition
+        + rf",\quad {normalizer_symbol}=\sum_{{j=1}}^K{component_symbol}_j={_fmt(normalizer, dec)},\quad "
+    )
     header2 = r"z_k(\mathbf{x}) = \sum_{j=1}^{D} \theta_{j,k} x_j + \theta_{0,k}"
     subst_lines.append(header1 + header2 + r" \\[8pt]")
 
@@ -665,7 +701,7 @@ def _explain_log_multiclass_nd(
         r"\end{aligned}$"
     )
 
-    y_dim_tex = rf"$\hat{{\mathbf{{p}}}} \in \mathbb{{R}}^{{1 \times {K}}}$"
+    y_dim_tex = rf"$\hat{{\mathbf{{p}}}}\in\Delta^{{{K - 1}}}$"
 
     fig = make_subplots(
         rows=1, cols=3, column_widths=[0.28, 0.50, 0.22],
@@ -739,9 +775,14 @@ def explain_logistic_prediction(
     dec=4,
     grid_points=250,
     display_space="original",
+    multiclass_link="auto",
     theme=None,
 ):
-    """Create an interactive step-by-step prediction visualization for logistic regression."""
+    """Create a link-aware step-by-step logistic prediction visualization.
+
+    ``multiclass_link="auto"`` uses the estimator's exact probability semantics;
+    explicit ``"softmax"`` and ``"ovr"`` values support custom estimators.
+    """
     def _extract_logistic_multiclass_theta(est):
         from ..linear.prediction import _get_last_estimator
 
@@ -792,9 +833,12 @@ def explain_logistic_prediction(
         raise ValueError(f"x_query must have {d} elements.")
 
     scaler = _find_standard_scaler(trained_estimator)
-    is_multiclass = False
-    if hasattr(trained_estimator, "classes_") and len(trained_estimator.classes_) > 2:
-        is_multiclass = True
+    adapter = SklearnAdapter(trained_estimator)
+    classes = adapter.classes if adapter.classes is not None else np.unique(y_train)
+    is_multiclass = len(classes) > 2
+    probability_link = (
+        adapter.resolve_multiclass_link(X_train, multiclass_link) if is_multiclass else "sigmoid"
+    )
 
     if is_multiclass:
         w_s, b_s = _extract_logistic_multiclass_theta(trained_estimator)
@@ -807,18 +851,14 @@ def explain_logistic_prediction(
     x_query_scaled = _to_scaled_x(x_query, scaler)
 
     if p_hat is None:
-        if is_multiclass:
-            z = w_s @ x_query_scaled + b_s
-            p_hat = _softmax(z.reshape(1, -1)).ravel()
-        else:
-            z = np.sum(w_s * x_query_scaled) + b_s
-            p_hat = _sigmoid(z)
+        probabilities = adapter.predict_proba(x_query.reshape(1, -1), classes)
+        p_hat = probabilities.ravel() if is_multiclass else float(probabilities[0, 1])
 
     if y_hat is None:
         if is_multiclass:
-            y_hat = trained_estimator.classes_[np.argmax(p_hat)]
+            y_hat = classes[np.argmax(p_hat)]
         else:
-            y_hat = 1 if p_hat >= 0.5 else 0
+            y_hat = classes[1] if p_hat >= 0.5 else classes[0]
 
     if display_space == "scaled":
         X_disp = np.array([_to_scaled_x(x, scaler) for x in X_train])
@@ -845,17 +885,19 @@ def explain_logistic_prediction(
     btn_font_color = p.get("button_text", "#333333")
 
     if is_multiclass:
-        K = len(trained_estimator.classes_)
+        K = len(classes)
         if d == 1:
             return _explain_log_multiclass_1d(
                 X_disp, y_train, x_disp, w_disp, b_disp, p_hat, y_hat,
                 title, dec, grid_points, theme,
-                p, text_color, ann_color, btn_bg, btn_border, btn_font_color
+                p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+                probability_link,
             )
         else:
             return _explain_log_multiclass_nd(
                 d, K, x_disp, w_disp, b_disp, p_hat, y_hat,
-                title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color
+                title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+                probability_link,
             )
     else:
         if d == 1:

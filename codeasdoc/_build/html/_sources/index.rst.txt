@@ -6,9 +6,10 @@ Mlektic — Documentación Técnica
 
 **Mlektic** es una librería de Python diseñada para demostrar visual y
 matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su
-fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas
-por ``plotly``, creadas para entender las tripas de los algoritmos de
-Scikit-Learn.
+fase de entrenamiento. Provee graficos y animaciones interactivas impulsadas
+por ``plotly`` para regresion lineal y logistica de Scikit-Learn, ademas de
+arquitectura, entrenamiento, parametros, activaciones y matematicas del forward
+pass de redes PyTorch.
 
 .. toctree::
    :maxdepth: 2

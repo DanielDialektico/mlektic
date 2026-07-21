@@ -48,7 +48,7 @@ def _metric_box_matrix(title, val, y_pos, fmt="6f"):
 def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_loss, metrics_hist, loss_hist):
     def model_header_latex():
         return (
-            rf"$$\hat{{p}}(y=1\mid \mathbf{{x}})=\sigma(z),\qquad "
+            rf"$$\hat{{p}}(Y=c_1\mid\mathbf{{x}})=\sigma(z),\qquad "
             rf"z=\sum_{{j=1}}^{{{d}}}\theta_jx_j+\theta_0$$"
         )
 
@@ -62,7 +62,7 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
             lines.append(r"&\quad + " + " + ".join(ch))
         lines[-1] = lines[-1] + rf" + ({b:.{dec}f})"
         body = r" \\ ".join(lines)
-        return r"$$\begin{aligned}" + body + r"\\[4pt]&\hat{p}(y=1\mid \mathbf{x})=\dfrac{1}{1+e^{-z}}" + r"\end{aligned}$$"
+        return r"$$\begin{aligned}" + body + r"\\[4pt]&\hat{p}(Y=c_1\mid\mathbf{x})=\dfrac{1}{1+e^{-z}}" + r"\end{aligned}$$"
 
     ann = [
         dict(
@@ -96,16 +96,16 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
     th_cols = 1 if force_theta_one_col else 5
 
     def model_formula_latex():
-        return r"$$z=\theta_0+\operatorname{vec}(\boldsymbol{\theta})^\top \operatorname{vec}(\mathbf{x}),\qquad \hat{p}(y=1\mid \mathbf{x})=\sigma(z)$$"
+        return r"$$z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0,\qquad\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z)$$"
 
     def bias_latex(t_idx):
         return rf"$$\theta_0 = {float(b_hist[t_idx]):.{dec}f}$$"
 
     def x_dim_latex():
-        return rf"$$\mathbf{{x}} \in \mathbb{{R}}^{{{d}\times {x_cols}}}$$"
+        return rf"$$\mathbf{{x}}\in\mathbb{{R}}^{{{d}}}$$"
 
     def theta_dim_latex():
-        return rf"$$\boldsymbol{{\theta}} \in \mathbb{{R}}^{{{d}\times {th_cols}}}$$"
+        return rf"$$\boldsymbol{{\theta}}\in\mathbb{{R}}^{{{d}}}$$"
 
     def x_vector_latex():
         def cell(j): return rf"x_{{{j}}}"
@@ -186,7 +186,7 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
             z_part = r"z = " + rf"({w[0]:.{dec}f})x_1 " + rf"+ \cdots + ({w[last - 1]:.{dec}f})x_{{{last}}} " + rf"+ ({b:.{dec}f})"
         else:
             z_part = r"z = " + rf"({w[0]:.{dec}f})x_1 " + rf"+ ({w[1]:.{dec}f})x_2 " + rf"+ ({w[2]:.{dec}f})x_3 " + rf"+ ({w[3]:.{dec}f})x_4 " + rf"+ \cdots + ({w[last - 1]:.{dec}f})x_{{{last}}} " + rf"+ ({b:.{dec}f})"
-        return r"$$" + z_part + r",\qquad \hat{p}(y=1\mid \mathbf{x})=\dfrac{1}{1+e^{-z}} $$"
+        return r"$$" + z_part + r",\qquad\hat{p}(Y=c_1\mid\mathbf{x})=\dfrac{1}{1+e^{-z}}$$"
 
     ann = [
         dict(x=0.68, y=0.995, xref="paper", yref="paper", text=model_formula_latex(), showarrow=False, xanchor="center", yanchor="top", font=dict(size=22, color="white")),

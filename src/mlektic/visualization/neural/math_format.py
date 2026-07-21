@@ -91,7 +91,7 @@ def compact_parameter_line(
         flat = weights.ravel()
         shown = ",".join(f"{value:.{dec}f}" for value in flat[:values_per_layer])
         suffix = r",\ldots" if flat.size > values_per_layer else ""
-        parts.append(rf"W^{{({stage['index']})}}_t=[{shown}{suffix}]")
+        parts.append(rf"\Theta^{{({stage['index']})}}_t=[{shown}{suffix}]")
     return r"\quad{}".join(parts)
 
 

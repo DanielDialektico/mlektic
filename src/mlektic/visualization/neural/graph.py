@@ -316,10 +316,10 @@ def _graph_annotations(
     edge_color_mode: str,
 ) -> List[Dict[str, Any]]:
     phase_tex = (
-        r"\text{Feed forward: }\mathbf{z}^{(\ell)}=W^{(\ell)}\mathbf{a}^{(\ell-1)}+\mathbf{b}^{(\ell)},\;"
+        r"\text{Feed forward: }\mathbf{z}^{(\ell)}=\Theta^{(\ell)}\mathbf{a}^{(\ell-1)}+\boldsymbol{\theta}_0^{(\ell)},\;"
         r"\mathbf{a}^{(\ell)}=\phi_\ell(\mathbf{z}^{(\ell)})\qquad"
-        r"\text{Backpropagation: }\nabla_{W^{(\ell)}}\mathcal{L}="
-        r"\frac{\partial\mathcal{L}}{\partial W^{(\ell)}}"
+        r"\text{Backpropagation: }\nabla_{\Theta^{(\ell)}}\mathcal{L}="
+        r"\frac{\partial\mathcal{L}}{\partial\Theta^{(\ell)}}"
     )
     node_heatmap_tex = (
         r"\text{Node heatmap (exact): }a_j^{(\ell)}"
@@ -331,9 +331,9 @@ def _graph_annotations(
         )
     )
     edge_heatmap_tex = (
-        r"w_{ji}^{(\ell)}"
+        r"\theta_{ji}^{(\ell)}"
         if edge_color_mode == "weight"
-        else r"s_{ji}^{(\ell)}=w_{ji}^{(\ell)}a_i^{(\ell-1)}"
+        else r"s_{ji}^{(\ell)}=\theta_{ji}^{(\ell)}a_i^{(\ell-1)}"
     )
     node_scale_tex = (
         r"a_j^{(\ell)}" if node_color_mode == "value" else r"\widetilde a_j^{(\ell)}"
@@ -406,7 +406,7 @@ def _graph_annotations(
             stage = stages[column_index - 1]
             dimension_tex = (
                 rf"\mathbf{{a}}^{{({column_index})}}\in\mathbb{{R}}^{{{dimension}}}"
-                rf",\;W^{{({column_index})}}\in\mathbb{{R}}^{{{dimension}\times {stage['in_features']}}}"
+                rf",\;\Theta^{{({column_index})}}\in\mathbb{{R}}^{{{dimension}\times {stage['in_features']}}}"
             )
         annotations.append(
             {
@@ -489,10 +489,10 @@ def _edge_traces(
         edge_hover = (
             f"<b>{'Weight evolution' if edge_color_mode == 'weight' else 'Forward signal'}</b>"
             f"<br>layer={stage['index']}<br>"
-            f"w[{row + 1},{column + 1}]={weight:.{dec}f}<br>"
+            f"theta[{row + 1},{column + 1}]={weight:.{dec}f}<br>"
             f"source output={source_activation:.{dec}f}<br>"
             f"w * a={signal:+.{dec}f}<br>"
-            f"delta w={delta:+.{dec}f}"
+            f"delta theta={delta:+.{dec}f}"
         )
         traces.append(
             go.Scatter(
@@ -510,8 +510,8 @@ def _edge_traces(
         )
         gradient_hover = (
             f"<b>Backpropagation</b><br>layer={stage['index']}<br>"
-            f"dL/dw[{row + 1},{column + 1}]={gradient:+.{dec}f}<br>"
-            f"delta w={delta:+.{dec}f}"
+            f"dL/dtheta[{row + 1},{column + 1}]={gradient:+.{dec}f}<br>"
+            f"delta theta={delta:+.{dec}f}"
         )
         traces.append(
             go.Scatter(
@@ -582,8 +582,8 @@ def _node_traces(
                     else "heatmap uses the exact output<br>"
                 )
                 + f"bias={bias[node_index]:.{dec}f}<br>"
-                f"W[{node_index + 1},:]={_plain_vector(weight_row, dec)}<br>"
-                f"grad W[{node_index + 1},:]={_plain_vector(gradient_rows[node_index], dec)}"
+                f"Theta[{node_index + 1},:]={_plain_vector(weight_row, dec)}<br>"
+                f"grad Theta[{node_index + 1},:]={_plain_vector(gradient_rows[node_index], dec)}"
             )
         traces.append(
             go.Scatter(

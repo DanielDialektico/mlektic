@@ -55,7 +55,9 @@ Primer Ejemplo: Regresión Lineal
    fig = visualize_lr(
        model, X, y,
        steps=60,
-       frame_duration=80,
+       animation_mode="hybrid",
+       fps=30,
+       interpolation_frames=3,
        show_loss=True,
        title="Mi Primera Animación Mlektic",
    )
@@ -99,6 +101,7 @@ Primer Ejemplo: Regresión Logística
        steps=60,
        show_loss=True,
        frame_duration=80,
+       transition_duration=70,
        title="Regresión Logística Binaria",
    )
    fig.show()

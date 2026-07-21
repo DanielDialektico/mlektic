@@ -35,3 +35,18 @@ def test_fit_history_pipeline():
     assert "w_hist" in history
     if history["w_hist"] is not None:
         assert history["w_hist"].shape[0] == 3
+
+
+def test_ema_smooths_loss_without_changing_model_geometry():
+    rng = np.random.default_rng(9)
+    X = rng.normal(size=(60, 1))
+    y = 1.7 * X[:, 0] - 0.2 + rng.normal(0, 0.2, size=60)
+    model = SGDRegressor(max_iter=20, random_state=9).fit(X, y)
+
+    raw = fit_history(model, X, y, steps=6, smooth=None)
+    smoothed = fit_history(model, X, y, steps=6, smooth="ema", smooth_beta=0.8)
+
+    assert np.allclose(smoothed["w_hist"], raw["w_hist"])
+    assert np.allclose(smoothed["b_hist"], raw["b_hist"])
+    assert np.allclose(smoothed["y_line_hist"], raw["y_line_hist"])
+    assert not np.allclose(smoothed["loss_hist"], raw["loss_hist"])

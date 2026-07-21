@@ -4,7 +4,8 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 
-from ..utils.math import _sigmoid, _softmax
+from ..utils.math import _sigmoid
+from ..utils.probability import infer_multiclass_link, multiclass_probabilities
 from .base import BaseModelAdapter
 
 
@@ -56,7 +57,38 @@ class SklearnAdapter(BaseModelAdapter):
         if S.ndim == 1:
             p1 = _sigmoid(S)
             return np.column_stack([1.0 - p1, p1])
-        return _softmax(S)
+        return multiclass_probabilities(S, self.resolve_multiclass_link(X))
+
+    def decision_function(self, X: np.ndarray) -> np.ndarray | None:
+        """Return decision scores when the wrapped estimator exposes them."""
+        if hasattr(self.estimator, "decision_function"):
+            return np.asarray(self.estimator.decision_function(X), dtype=float)
+        if hasattr(self.final_estimator, "decision_function"):
+            values = self.transform_X(X) if self.is_pipeline else X
+            return np.asarray(self.final_estimator.decision_function(values), dtype=float)
+        return None
+
+    def resolve_multiclass_link(self, X: np.ndarray, requested: str = "auto") -> str:
+        """Resolve the multiclass probability link used by the estimator."""
+        if requested not in {"auto", "softmax", "ovr"}:
+            raise ValueError("multiclass_link must be 'auto', 'softmax', or 'ovr'.")
+        if requested != "auto":
+            return requested
+
+        sample = np.asarray(X)[: min(len(X), 64)]
+        scores = self.decision_function(sample)
+        if scores is None or scores.ndim != 2:
+            return "softmax"
+
+        if hasattr(self.estimator, "predict_proba"):
+            probabilities = np.asarray(self.estimator.predict_proba(sample), dtype=float)
+        elif hasattr(self.final_estimator, "predict_proba"):
+            values = self.transform_X(sample) if self.is_pipeline else sample
+            probabilities = np.asarray(self.final_estimator.predict_proba(values), dtype=float)
+        else:
+            estimator_name = self.final_estimator.__class__.__name__
+            return "ovr" if estimator_name in {"SGDClassifier", "OneVsRestClassifier"} else "softmax"
+        return infer_multiclass_link(scores, probabilities)
 
     def extract_linear_theta(self, d_expected=None):
         """Extract a flat linear-regression coefficient vector and intercept."""

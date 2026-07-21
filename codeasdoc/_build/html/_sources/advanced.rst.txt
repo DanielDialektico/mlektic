@@ -90,6 +90,93 @@ Si necesitas muestrear cada N pasos en vez de fijar un máximo, desactiva
 
    fig = visualize_logistic(model, X, y, steps=500, max_frames=None, frame_step=20)
 
+Las trazas 2D interpolan entre estados mediante ``transition_duration``. Un valor
+``None`` elige automaticamente una duracion menor que ``frame_duration`` para que
+la interpolacion termine antes del siguiente frame; los valores iguales o mayores
+tambien se limitan de forma segura. ``0`` desactiva la transicion. Las superficies
+3D requieren redibujado y obtienen su continuidad aumentando ``steps`` o el limite
+``max_frames``.
+
+Las lineas animadas conservan todos sus puntos durante la interpolacion. Esto evita
+que la simplificacion geometrica de Plotly cambie la ruta SVG entre frames y produzca
+segmentos parciales o parpadeos en renderizadores de Jupyter.
+
+Cuando un frame modifica ecuaciones LaTeX o tarjetas de metricas, la figura activa
+automaticamente el redibujado de layout requerido por Jupyter. Las animaciones que
+solo cambian trazas conservan la actualizacion ligera sin redibujado completo. En
+frames mixtos, el orden ``traces first`` interpola primero la recta o curva y aplica
+despues el nuevo estado matematico, evitando que el layout anule la fluidez visual.
+
+MathJax sustituye una expresion LaTeX completa; no interpola los digitos entre dos
+expresiones. Por eso una formula LaTeX que parece fluida es una secuencia densa de
+estados discretos. En curvas acotadas, como la sigmoide logistica, el redibujado
+puede ser menos perceptible que en una recta que recorre un rango amplio.
+
+Para regresion lineal 1D, ``animation_mode="auto"`` usa una estrategia hibrida:
+la formula simbolica queda fija en LaTeX y los coeficientes numericos, la recta,
+la perdida y las metricas avanzan como trazas sincronizadas. ``fps`` fija la
+cadencia y ``interpolation_frames`` controla cuantos intervalos visuales existen
+entre checkpoints. El slider sigue mostrando solo pasos semanticos reales.
+Sin ``fps``, cada subframe dura ``frame_duration / interpolation_frames``. Evita
+valores inferiores a unos 16 ms en el navegador; para Jupyter y Colab, ``fps=30``
+a ``45`` suele ofrecer una cadencia mas estable que solicitar 100 FPS.
+
+En clasificacion multiclase, ``multiclass_link="auto"`` compara los scores con
+``predict_proba`` para distinguir Softmax de sigmoides OvR normalizadas. El
+override ``"softmax"`` o ``"ovr"`` resulta util para estimadores personalizados.
+
+
+Control de Redes PyTorch
+========================
+
+``TorchTrainingRecorder`` limita por defecto los tensores completos a 4096
+elementos. Los tensores mayores conservan sus normas sin duplicarse en el historial.
+Para una red pequena cuyo grafo matematico deba mostrar todos los pesos, aumenta el
+limite de forma consciente:
+
+.. code-block:: python
+
+   recorder = TorchTrainingRecorder(
+       model,
+       max_tensor_elements=10_000,
+       max_activation_elements=512,
+       record_every=2,
+   )
+
+``max_frames`` selecciona pasos distribuidos uniformemente sin inventar estados
+intermedios. El ultimo frame siempre usa los tensores actuales del modelo:
+
+.. code-block:: python
+
+   fig = visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       max_frames=24,
+       frame_duration=180,
+       node_color_mode="value",
+       edge_color_mode="weight",
+   )
+
+El modo ``value`` usa un minimo y maximo global reales para todos los nodos y
+frames mostrados. Un nodo gris representa una salida cercana a cero dentro de esa
+escala; no implica que el nodo sea constante. El hover distingue ceros exactos,
+ReLU inactivas y valores pequenos expresados en notacion cientifica.
+
+Para inspeccionar el flujo en vez del parametro aislado:
+
+.. code-block:: python
+
+   signal_fig = visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       edge_color_mode="signal",  # w_ji * a_i
+   )
+
+La contribucion :math:`\theta_{ji}a_i` tampoco coincide necesariamente con la salida del
+nodo receptor, que agrega todas las entradas, suma el bias y aplica la activacion.
+
 Exportar a HTML
 ================
 
@@ -100,6 +187,21 @@ Para compartir animaciones sin depender de Jupyter:
    fig.write_html("mi_animacion.html", auto_play=False)
 
 El archivo HTML es autocontenido y puede abrirse en cualquier navegador.
+
+El reporte matematico completo de una red usa una API separada:
+
+.. code-block:: python
+
+   from IPython.display import display
+   from mlektic import display_nn_math_report, export_nn_math_report
+
+   display(display_nn_math_report(model, X[:1], history=history))
+   path = export_nn_math_report(
+       model,
+       X[:1],
+       history=history,
+       path="complex-network-mathematics.html",
+   )
 
 Configuración del Renderer
 ============================
@@ -173,9 +275,9 @@ Ejecución:
 Compatibilidad con Futuros Adapters
 ===================================
 
-La API de alto nivel trabaja contra adapters. Para soportar otro framework, el
-adapter debe traducir su modelo al contrato interno: predicción, probabilidades,
-extracción de parámetros cuando aplique, captura incremental o replay, y datos
-de escalado. Esta separación deja la librería preparada para modelos no
-Scikit-Learn y para una futura capa de visualización de redes neuronales sin
-acoplar cada figura a un framework específico.
+La API tabular de alto nivel trabaja contra adapters. Para soportar otro framework,
+el adapter debe traducir su modelo al contrato interno: prediccion, probabilidades,
+extraccion de parametros cuando aplique, captura incremental o replay, y datos de
+escalado. PyTorch ya cuenta con una integracion especializada mediante
+``TorchTrainingRecorder`` y builders neurales; otros frameworks pueden implementar
+un recorder equivalente o adaptarse al contrato tabular cuando corresponda.

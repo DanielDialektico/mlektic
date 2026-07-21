@@ -54,6 +54,7 @@ def fit_history_logistic(
     metrics=None,
     max_frames=60,
     frame_step=10,
+    multiclass_link="auto",
 ) -> dict:
     """Capture logistic history."""
     config = LogisticHistoryConfig(
@@ -68,6 +69,7 @@ def fit_history_logistic(
         metrics=metrics,
         max_frames=max_frames,
         frame_step=frame_step,
+        multiclass_link=multiclass_link,
     )
     engine = HistoryEngine(trained_estimator)
     return engine.capture_logistic(X, y, config)

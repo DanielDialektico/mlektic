@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ...utils.probability import multiclass_link_latex
 from ..theme import (
     get_base_layout,
     get_sliders,
@@ -30,6 +31,7 @@ def build_multiclass_multivar_logistic_figure(
     max_features_in_z=3,
     max_theta_cols=6,
     frame_duration=80,
+    probability_link="softmax",
     theme=None,
 ):
     """Internal method to build build_multiclass_multivar_logistic_figure."""
@@ -80,14 +82,15 @@ def build_multiclass_multivar_logistic_figure(
         loss_pad = 0.08 * ((loss_max - loss_min) + 1e-9)
 
     def row1_formula_latex():
-        return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}},\quad \mathbf{{x}}\in\mathbb{{R}}^{{{d}+1}},\quad \Theta\in\mathbb{{R}}^{{({d}+1)\times {K}}}$$"
+        return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \mathbf{{x}}\in\mathbb{{R}}^{{{d}}},\quad \Theta\in\mathbb{{R}}^{{{d}\times {K}}},\quad \boldsymbol{{\theta}}_0\in\mathbb{{R}}^{{{K}}}$$"
 
     def row3_formula_latex():
-        return rf"$$\hat{{\mathbf{{p}}}}=\mathrm{{softmax}}(\mathbf{{z}}),\quad \mathrm{{softmax}}(\mathbf{{z}})_k=\dfrac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{K}}}e^{{z_j}}}},\;\;k=1,\dots,{K},\quad z_k(\mathbf{{x}})=\sum_{{j=1}}^{{{d + 1}}}\theta_{{j,k}}x_j$$"
+        definition = multiclass_link_latex(probability_link, K)
+        return rf"$$z_k(\mathbf{{x}})=\theta_{{0,k}}+\sum_{{j=1}}^{{{d}}}\theta_{{j,k}}x_j,\quad {definition},\quad k=1,\ldots,{K}$$"
 
     def x_vector_latex_capped(d_local, max_rows=7, max_cols=4):
-        entries = [rf"x_{{{j}}}" for j in range(1, d_local + 1)] + [r"1"]
-        D = d_local + 1
+        entries = [rf"x_{{{j}}}" for j in range(1, d_local + 1)]
+        D = d_local
         capacity = max_rows * max_cols
 
         def vdots_row():
@@ -124,7 +127,7 @@ def build_multiclass_multivar_logistic_figure(
         return rf"$$\mathbf{{x}}=\begin{{bmatrix}} {body} \end{{bmatrix}}$$"
 
     def Theta_matrix_latex_capped(t, max_rows=7, max_cols=6, dec=dec):
-        Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])  # (d+1, K)
+        Theta = w_hist[t]
         R, C = Theta.shape
 
         def fmt(v):
@@ -161,11 +164,25 @@ def build_multiclass_multivar_logistic_figure(
         body = r" \\ ".join(lines)
         cols_spec = "c" * len(col_slots)
 
+        bias_slots = []
+        for c in col_slots:
+            bias_slots.append(r"\cdots" if c is None else fmt(b_hist[t, c]))
+        bias_body = " & ".join(bias_slots)
         return (
-            r"$$"
-            r"\Theta=\left[\begin{array}{" + cols_spec + r"}" + body + r"\end{array}\right]"
-            r"$$"
+            r"$$\begin{aligned}\Theta_t&=\left[\begin{array}{"
+            + cols_spec
+            + r"}"
+            + body
+            + rf"\end{{array}}\right]\in\mathbb{{R}}^{{{d}\times {K}}}\\"
+            + r"\boldsymbol{\theta}_{0,t}&=\begin{bmatrix}"
+            + bias_body
+            + rf"\end{{bmatrix}}\in\mathbb{{R}}^{{{K}}}\end{{aligned}}$$"
         )
+
+    def linked_term(expression):
+        if probability_link == "ovr":
+            return rf"\sigma\!\left({expression}\right)"
+        return rf"e^{{{expression}}}"
 
     def z_numeric_expr(Theta, class_idx, d_local, max_feat=max_features_in_z, dec=dec):
         def num(v):
@@ -185,18 +202,18 @@ def build_multiclass_multivar_logistic_figure(
         k = int(class_k)
         k = max(0, min(k, K_local - 1))
         z_k = z_numeric_expr(Theta, k, d_local, max_feat=max_feat, dec=dec)
-        num_tex = rf"e^{{{z_k}}}"
+        num_tex = linked_term(z_k)
         z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
         z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
         if K_local == 1:
-            denom_tex = rf"e^{{{z_first}}}"
+            denom_tex = linked_term(z_first)
         else:
-            denom_tex = rf"e^{{{z_first}}} + \cdots + e^{{{z_last_expr}}}"
+            denom_tex = rf"{linked_term(z_first)} + \cdots + {linked_term(z_last_expr)}"
         return (
             r"$$"
             r"\begin{aligned}"
-            + rf"\hat{{p}}(y=1\mid \mathbf{{x}}) &= \frac{{e^{{z_1(\mathbf{{x}})}}}}{{\sum_{{j=1}}^{{{K_local}}} e^{{z_j(\mathbf{{x}})}}}} \\[7pt]"
-            + rf"&= \frac{{{num_tex}}}{{{denom_tex}}}"
+            + rf"z_{{{k + 1}}}(\mathbf{{x}})&={z_k}\\[5pt]"
+            + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})&=\frac{{{num_tex}}}{{{denom_tex}}}"
             r"\end{aligned}"
             r"$$"
         )
@@ -210,26 +227,29 @@ def build_multiclass_multivar_logistic_figure(
         d_local = D - 1
         z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
         z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
-        num_tex_last = rf"e^{{{z_last_expr}}}"
+        num_tex_last = linked_term(z_last_expr)
         if K_local == 1:
-            denom_tex = rf"e^{{{z_first}}}"
+            denom_tex = linked_term(z_first)
         else:
-            denom_tex = rf"e^{{{z_first}}} + \cdots + e^{{{z_last_expr}}}"
+            denom_tex = rf"{linked_term(z_first)} + \cdots + {linked_term(z_last_expr)}"
         return (
             r"$$"
             r"\begin{aligned}"
-            + rf"\hat{{p}}(y={K_local}\mid \mathbf{{x}}) &= \frac{{{num_tex_last}}}{{{denom_tex}}}"
+            + rf"\hat{{p}}(Y=c_{{{K_local}}}\mid\mathbf{{x}})&=\frac{{{num_tex_last}}}{{{denom_tex}}}"
             r"\end{aligned}"
             r"$$"
         )
 
-    fig = make_subplots(
-        rows=1,
-        cols=2,
-        column_widths=[0.75, 0.25],
-        horizontal_spacing=0.06,
-        specs=[[{"type": "xy"}, {"type": "xy"}]],
-    )
+    if show_loss:
+        fig = make_subplots(
+            rows=1,
+            cols=2,
+            column_widths=[0.75, 0.25],
+            horizontal_spacing=0.06,
+            specs=[[{"type": "xy"}, {"type": "xy"}]],
+        )
+    else:
+        fig = make_subplots(rows=1, cols=1, specs=[[{"type": "xy"}]])
 
     fig.add_trace(
         go.Scatter(
@@ -239,14 +259,17 @@ def build_multiclass_multivar_logistic_figure(
             name="Cross-entropy",
             line=dict(width=3)
         ),
-        row=1, col=2
+        row=1, col=2 if show_loss else 1
     )
 
     def make_annotations(t):
+        math_center = 0.275 if show_loss else 0.5
+        theta_x = 0.24 if show_loss else 0.35
+        dots_x = 0.37 if show_loss else 0.5
         ann = [
             dict(
-                x=0.275,
-                y=1.12,
+                x=math_center,
+                y=1.04,
                 xref="paper",
                 yref="paper",
                 text=row1_formula_latex(),
@@ -267,7 +290,7 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=16, color="white"),
             ),
             dict(
-                x=0.24,
+                x=theta_x,
                 y=0.80,
                 xref="paper",
                 yref="paper",
@@ -300,7 +323,7 @@ def build_multiclass_multivar_logistic_figure(
                 font=dict(size=13, color="white"),
             ),
             dict(
-                x=0.37,
+                x=dots_x,
                 y=0.05,
                 xref="paper",
                 yref="paper",
@@ -412,9 +435,6 @@ def build_multiclass_multivar_logistic_figure(
     if show_loss:
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], domain=[0.15, 0.85], row=1, col=2)
-    else:
-        fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
-        fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
     return fig
 
 

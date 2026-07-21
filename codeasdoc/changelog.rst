@@ -13,7 +13,7 @@ Funcionalidades
 - **Redes Neuronales PyTorch**: soporte opcional mediante ``mlektic[torch]`` con
   grafo temporal de pesos y salidas neuronales como mapas de calor independientes,
   escalas globales reales por defecto, normalizacion temporal opcional por capa y
-  modo adicional para colorear aristas mediante la senal :math:`w_{ji}a_i`,
+  modo adicional para colorear aristas mediante la senal :math:`\theta_{ji}a_i`,
   gradientes de backpropagation simultaneos, arquitectura matematica, dimensiones y
   formulas LaTeX, cuadricula 2 por 2 para loss y tres metricas inferibles desde
   predicciones y objetivos, evolucion matricial de
@@ -49,7 +49,8 @@ Funcionalidades
   - ``IterativeCapture`` para modelos iterativos (``partial_fit`` / ``warm_start``).
   - ``InterpolationCapture`` para modelos no iterativos.
 
-- **Suavizado EMA**: Opción de suavizar curvas de pérdida y predicciones.
+- **Suavizado EMA**: Opción de suavizar la curva de pérdida sin modificar la
+  geometría ni los parámetros exactos del modelo.
 
 - **Espacio de visualización**: Soporte para ``display_space="original"`` y ``"scaled"``
   con transformación inversa automática de parámetros escalados.
@@ -59,6 +60,38 @@ Funcionalidades
 Fixes y Mejoras Recientes
 -------------------------
 
+- **Contrato de Animacion Documentado**: se distingue entre LaTeX simbolico fijo,
+  sustituciones MathJax nativas y trazas numericas hibridas; tambien se explica la
+  division de ``frame_duration`` entre subframes y la recomendacion de 30 a 45 FPS
+  para Jupyter y Colab.
+- **Controles Estables**: Play y Pause permanecen blancos con texto negro en
+  todos sus estados, incluso cuando Plotly reconstruye superficies 3D, sin
+  seguimiento JavaScript ni cambios en la interpolación híbrida.
+- **Métricas Laterales**: la vista híbrida 1D apila sus recuadros de métricas en
+  una columna independiente para evitar superposiciones.
+- **Predicciones sin Desbordes**: las sustituciones 2D usan notación científica
+  LaTeX y tipografía compacta; las vistas ND muestran vectores columna truncados
+  con ``\vdots`` en lugar de cuadrículas que pudieran confundirse con matrices.
+- **Notacion Unificada**: regresion lineal, logistica y redes neuronales usan
+  :math:`\theta`, :math:`\Theta` y :math:`\boldsymbol{\theta}_0` con dimensiones
+  independientes del acomodo visual de las matrices.
+- **Enlace Multiclase Riguroso**: deteccion automatica de Softmax frente a
+  sigmoides OvR normalizadas, aplicada a historiales, figuras y sustituciones.
+- **Transiciones Suaves**: interpolacion configurable para trazas 2D mediante
+  ``transition_duration``, con margen entre frames para evitar rectas parcialmente
+  dibujadas, rutas SVG estables sin simplificacion variable y redibujado estable
+  para superficies 3D.
+- **LaTeX Animado en Jupyter**: los frames que modifican ecuaciones o metricas en
+  el layout activan redibujado selectivo para que los valores de :math:`\theta`
+  evolucionen junto con el slider; el orden ``traces first`` preserva a la vez la
+  interpolacion suave de rectas y curvas 2D.
+- **Animacion Hibrida 1D**: recta, coeficientes numericos, perdida y metricas
+  comparten subframes sincronizados sin redibujar el layout; el slider conserva
+  exclusivamente checkpoints semanticos y la definicion simbolica sigue en LaTeX.
+- **EMA Matematicamente Consistente**: ``smooth="ema"`` suaviza solamente la
+  perdida y nunca modifica geometria, probabilidades o parametros del modelo.
+- **Layouts de Alta Dimension**: normalizadores compactos y paneles ND sin
+  columnas vacias ni formulas que invadan graficas adyacentes.
 - **Documentacion Neural Completa**: README, inicio rapido, arquitectura, modos
   del grafo, escalas globales exactas, metricas automaticas, ceros de ReLU,
   trazas animadas de parametros y visualizacion/exportacion de reportes HTML
