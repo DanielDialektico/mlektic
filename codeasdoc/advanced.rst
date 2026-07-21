@@ -90,6 +90,58 @@ Si necesitas muestrear cada N pasos en vez de fijar un máximo, desactiva
 
    fig = visualize_logistic(model, X, y, steps=500, max_frames=None, frame_step=20)
 
+
+Control de Redes PyTorch
+========================
+
+``TorchTrainingRecorder`` limita por defecto los tensores completos a 4096
+elementos. Los tensores mayores conservan sus normas sin duplicarse en el historial.
+Para una red pequena cuyo grafo matematico deba mostrar todos los pesos, aumenta el
+limite de forma consciente:
+
+.. code-block:: python
+
+   recorder = TorchTrainingRecorder(
+       model,
+       max_tensor_elements=10_000,
+       max_activation_elements=512,
+       record_every=2,
+   )
+
+``max_frames`` selecciona pasos distribuidos uniformemente sin inventar estados
+intermedios. El ultimo frame siempre usa los tensores actuales del modelo:
+
+.. code-block:: python
+
+   fig = visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       max_frames=24,
+       frame_duration=180,
+       node_color_mode="value",
+       edge_color_mode="weight",
+   )
+
+El modo ``value`` usa un minimo y maximo global reales para todos los nodos y
+frames mostrados. Un nodo gris representa una salida cercana a cero dentro de esa
+escala; no implica que el nodo sea constante. El hover distingue ceros exactos,
+ReLU inactivas y valores pequenos expresados en notacion cientifica.
+
+Para inspeccionar el flujo en vez del parametro aislado:
+
+.. code-block:: python
+
+   signal_fig = visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       edge_color_mode="signal",  # w_ji * a_i
+   )
+
+La contribucion :math:`w_{ji}a_i` tampoco coincide necesariamente con la salida del
+nodo receptor, que agrega todas las entradas, suma el bias y aplica la activacion.
+
 Exportar a HTML
 ================
 
@@ -100,6 +152,21 @@ Para compartir animaciones sin depender de Jupyter:
    fig.write_html("mi_animacion.html", auto_play=False)
 
 El archivo HTML es autocontenido y puede abrirse en cualquier navegador.
+
+El reporte matematico completo de una red usa una API separada:
+
+.. code-block:: python
+
+   from IPython.display import display
+   from mlektic import display_nn_math_report, export_nn_math_report
+
+   display(display_nn_math_report(model, X[:1], history=history))
+   path = export_nn_math_report(
+       model,
+       X[:1],
+       history=history,
+       path="complex-network-mathematics.html",
+   )
 
 Configuración del Renderer
 ============================
@@ -173,9 +240,9 @@ Ejecución:
 Compatibilidad con Futuros Adapters
 ===================================
 
-La API de alto nivel trabaja contra adapters. Para soportar otro framework, el
-adapter debe traducir su modelo al contrato interno: predicción, probabilidades,
-extracción de parámetros cuando aplique, captura incremental o replay, y datos
-de escalado. Esta separación deja la librería preparada para modelos no
-Scikit-Learn y para una futura capa de visualización de redes neuronales sin
-acoplar cada figura a un framework específico.
+La API tabular de alto nivel trabaja contra adapters. Para soportar otro framework,
+el adapter debe traducir su modelo al contrato interno: prediccion, probabilidades,
+extraccion de parametros cuando aplique, captura incremental o replay, y datos de
+escalado. PyTorch ya cuenta con una integracion especializada mediante
+``TorchTrainingRecorder`` y builders neurales; otros frameworks pueden implementar
+un recorder equivalente o adaptarse al contrato tabular cuando corresponda.

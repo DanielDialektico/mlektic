@@ -26,7 +26,11 @@ entre arquitectura, entrenamiento y prediccion.
   ``node_color_mode="relative"`` ofrece contraste normalizado por capa como modo
   opcional. ``edge_color_mode="signal"`` colorea cada arista mediante la
   contribucion forward :math:`w_{ji}a_i`; el modo predeterminado ``"weight"``
-  conserva la visualizacion de los parametros.
+  conserva la visualizacion de los parametros. El hover diferencia ``0 (exact)``
+  de ``0 (ReLU inactive)`` y usa notacion cientifica para valores no nulos que
+  serian redondeados a ``0.000``. Los valores compactos :math:`W_t` y el paso
+  temporal son trazas animadas, por lo que avanzan sin redibujar ni hacer
+  parpadear la red.
 - ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
   normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
   pequenos. Tambien puede inferir tres metricas al recibir ``predictions`` y
@@ -78,14 +82,87 @@ Ejemplo minimo
    visualize_nn_training(history, max_frames=24).show()
    visualize_nn_weights(history, max_rows=4, max_cols=5).show()
    explain_nn_prediction(model, X[0], history=history).show()
-   export_nn_math_report(model, X[:1], history=history, path="network-report.html")
+   report_path = export_nn_math_report(
+       model,
+       X[:1],
+       history=history,
+       path="network-report.html",
+   )
+
+Modos del grafo matematico
+--------------------------
+
+La configuracion predeterminada conserva unidades y valores reales en dos escalas
+globales independientes:
+
+.. code-block:: python
+
+   visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       node_color_mode="value",  # a_j real; default
+       edge_color_mode="weight", # w_ji real; default
+   ).show()
+
+La escala de nodos no debe compararse numericamente con la de aristas:
+
+.. math::
+
+   \text{peso}=w_{ji},\qquad
+   \text{senal}=w_{ji}a_i,\qquad
+   a_j=\phi\!\left(\sum_i w_{ji}a_i+b_j\right).
+
+Para resaltar cambios pequenos por capa puede usarse una escala relativa. Para
+visualizar lo que aporta cada conexion durante el forward pass puede colorearse
+por senal:
+
+.. code-block:: python
+
+   visualize_nn_graph(
+       model,
+       X[0],
+       history,
+       node_color_mode="relative",
+       edge_color_mode="signal",
+   ).show()
+
+``relative`` mejora el contraste, pero deja de expresar una escala absoluta comun.
+En ambos modos el hover conserva la salida, el peso, la senal transmitida, el
+gradiente y la actualizacion exactos.
+
+Reportes HTML en notebook
+-------------------------
+
+Para redes complejas, el reporte completo puede mostrarse directamente en Jupyter
+o Colab:
+
+.. code-block:: python
+
+   from IPython.display import display
+   from mlektic import display_nn_math_report
+
+   display(
+       display_nn_math_report(
+           model,
+           X[:1],
+           history=history,
+           title="Complex network mathematics",
+       )
+   )
+
+Si el archivo ya fue exportado, puede insertarse en Jupyter con
+``HTML(filename="network-report.html")`` o ``IFrame``. En Colab se recomienda
+``display_nn_math_report`` porque no depende de que el navegador pueda resolver
+una ruta local.
 
 Tema Visual Global
 ===================
 
-Todas las figuras comparten un tema definido en ``visualization/theme.py``:
+Las figuras Scikit-Learn comparten ``visualization/theme.py`` y las vistas neurales
+usan el lenguaje equivalente definido en ``visualization/neural/_style.py``:
 
-- **Template base**: ``plotly_dark`` con fuente Helvetica blanca.
+- **Template base**: ``plotly_dark`` con tipografia clara de alto contraste.
 - **Altura**: 720px por defecto.
 - **Controles**: Botones Play/Pause y slider temporal integrados.
 - **Leyenda**: Fondo semi-transparente con texto negro sobre blanco.

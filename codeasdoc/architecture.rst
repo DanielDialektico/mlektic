@@ -23,28 +23,21 @@ Diagrama General
 
 .. code-block:: text
 
-   ┌─────────────────────────────────────────────────────────┐
-   │                    API Pública                          │
-   │        visualize_lr()    visualize_logistic()           │
-   └──────────────┬─────────────────────┬────────────────────┘
-                  │                     │
-   ┌──────────────▼─────────────────────▼────────────────────┐
-   │                    Services                             │
-   │      fit_history()     fit_history_logistic()           │
-   └──────────────┬─────────────────────┬────────────────────┘
-                  │                     │
-   ┌──────────────▼─────────────────────▼────────────────────┐
-   │                  History Engine                         │
-   │    HistoryEngine → Strategy Pattern                     │
-   │    ├── IterativeCapture  (partial_fit / warm_start)     │
-   │    └── InterpolationCapture  (modelos no iterativos)    │
-   └──────────────┬─────────────────────┬────────────────────┘
-                  │                     │
-   ┌──────────────▼──────┐  ┌──────────▼────────────────────┐
-   │      Adapters       │  │      Visualization            │
-   │  BaseModelAdapter   │  │  Router → Builder por dim.    │
-   │  SklearnAdapter     │  │  theme.py (dark mode global)  │
-   └─────────────────────┘  └───────────────────────────────┘
+   ┌───────────────────────────────────────────────────────────────┐
+   │                         API Publica                           │
+   │  visualize_lr()  visualize_logistic()  visualize_nn()        │
+   └───────────────┬───────────────────────────┬───────────────────┘
+                   │                           │
+   ┌───────────────▼──────────────────┐  ┌─────▼───────────────────┐
+   │ Flujo tabular Scikit-Learn       │  │ Flujo neural PyTorch   │
+   │ Services + HistoryEngine         │  │ TorchTrainingRecorder  │
+   │ BaseModelAdapter                 │  │ snapshots + hooks       │
+   └───────────────┬──────────────────┘  └─────┬───────────────────┘
+                   │                           │
+   ┌───────────────▼───────────────────────────▼───────────────────┐
+   │                    Builders Plotly                            │
+   │ linear/  logistic/  neural/  + reporte HTML matematico       │
+   └───────────────────────────────────────────────────────────────┘
 
 
 Módulo ``api/``
@@ -54,8 +47,11 @@ Contiene las funciones de alto nivel que el usuario final invoca directamente.
 
 - ``linear.py`` → :func:`mlektic.api.linear.visualize_lr`
 - ``logistic.py`` → :func:`mlektic.api.logistic.visualize_logistic`
+- ``neural.py`` → ``visualize_nn()``, ``visualize_nn_graph()``,
+  ``visualize_nn_training()``, ``visualize_nn_weights()`` y
+  ``explain_nn_prediction()``.
 
-Estas funciones orquestan dos pasos:
+Las funciones tabulares orquestan dos pasos:
 
 1. **Captura de historial** (``fit_history`` / ``fit_history_logistic``).
 2. **Construcción de la figura** (``build_lr_figure`` / ``build_logistic_figure``).
@@ -73,8 +69,26 @@ Implementa el **patrón Adapter** para abstraer la interacción con diferentes f
   Incluye ``clone_for_replay()`` para crear copias con ``warm_start=True`` y ``max_iter=1``.
 
 .. note::
-   El diseño permite añadir adapters para otros frameworks (PyTorch, XGBoost, etc.)
-   implementando la interfaz ``BaseModelAdapter``.
+   ``BaseModelAdapter`` es la frontera del flujo tabular. La integracion PyTorch
+   usa una frontera especializada porque necesita hooks, gradientes y snapshots
+   de tensores; otros estimadores tabulares, como XGBoost, pueden implementar el
+   contrato del adapter.
+
+
+Módulo ``neural/``
+===================
+
+Implementa la captura y la descripcion matematica independiente de Plotly:
+
+- ``recorder.py`` — ``TorchTrainingRecorder`` captura perdida, metricas,
+  parametros, gradientes y activaciones alineados por paso.
+- ``introspection.py`` — inspecciona modulos hoja, formas y configuracion sin
+  convertir PyTorch en dependencia obligatoria.
+- ``metrics.py`` — infiere tres metricas educativas de clasificacion o regresion
+  cuando ``record()`` recibe ``predictions`` y ``targets``.
+- ``taxonomy.py`` — produce definiciones LaTeX, dimensiones y funciones
+  compuestas reutilizables.
+- ``report.py`` — construye, muestra o exporta el reporte HTML matematico.
 
 
 Módulo ``domain/``
@@ -160,16 +174,27 @@ Responsable de traducir el historial capturado en figuras Plotly animadas.
   - ``multiclass_2d.py`` → Multiclase 2D: superficies Softmax superpuestas.
   - ``multiclass_nd.py`` → Multiclase d > 2: matriz de pesos multiclase.
 
+- **``neural/``**:
+
+  - ``architecture.py`` → diagrama de capas, formas, funciones e hiperparametros.
+  - ``graph.py`` → grafo animado con salidas nodales, pesos o senales y gradientes.
+  - ``training.py`` → panel 2x2 de perdida y hasta tres metricas, matrices LaTeX
+    de parametros y resumen de activaciones.
+  - ``math_view.py`` → sustitucion matematica del forward pass por paso.
+  - ``_style.py`` → estilo comun, controles y reglas de espaciado del flujo neural.
+
 
 Escalabilidad hacia Nuevos Modelos
 ===================================
 
-La frontera de extensión principal es ``BaseModelAdapter``. La API pública y
-los builders de visualización no dependen directamente de Scikit-Learn; dependen
-del contrato del adapter y del payload de historial.
+Existen dos fronteras de extension. Los modelos tabulares reutilizan
+``BaseModelAdapter`` y el ``HistoryEngine``; una integracion neural reutiliza el
+contrato de historial de ``TorchTrainingRecorder``, la taxonomia y los builders
+neuronales. La API publica y las figuras consumen descripciones e historiales,
+no el estado global del framework.
 
-Para añadir nuevas familias de modelos, por ejemplo PyTorch, Keras, XGBoost o
-capas de redes neuronales artificiales, el nuevo adapter debe implementar:
+Para añadir nuevos estimadores tabulares, por ejemplo XGBoost, el adapter debe
+implementar:
 
 - ``predict()`` y, para clasificación, ``predict_proba()``.
 - Extracción de parámetros cuando exista una forma interpretable para la figura.
@@ -177,11 +202,11 @@ capas de redes neuronales artificiales, el nuevo adapter debe implementar:
 - Transformación de features y metadatos de escalado cuando el modelo use
   preprocesamiento externo.
 
-El ``HistoryEngine`` orquesta captura, métricas, suavizado, rescalado y
-decimación temporal. Las estrategias de captura producen historiales con una
-forma común, y los routers de visualización eligen el builder por dimensión y
-tipo de tarea. Este diseño permite sumar nuevos modelos sin duplicar la lógica
-de métricas ni las figuras por dimensión.
+El ``HistoryEngine`` orquesta captura, metricas, suavizado, rescalado y
+decimacion temporal para modelos tabulares. Para otro framework neural, como
+Keras, basta producir el payload equivalente de pasos, parametros, gradientes,
+activaciones y configuracion; las politicas de truncado y las vistas educativas
+se pueden reutilizar sin duplicar la capa visual.
 
 
 Módulo ``_internal/``

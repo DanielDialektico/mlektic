@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2026-06-04
+## [Unreleased]
 
 ### Added
 - Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
@@ -43,6 +43,7 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Completed the README, Sphinx guides, architecture reference, and public neural API docstrings for the PyTorch workflow, exact global heatmaps, optional relative/signal modes, inferred metrics, exact ReLU zeros, animated parameter readouts, and notebook/standalone HTML reports.
 - Refactored `HistoryEngine` so it orchestrates capture, metric building, temporal sampling, smoothing, and parameter scaling through smaller focused helpers.
 - Tightened Ruff configuration to lint the maintained package, tests, and Sphinx configuration while excluding generated, legacy, and manual-test directories.
 - Updated README and Sphinx documentation for metrics, frame controls, `multiclass_2d`, generated API reference, and future adapter scalability.

@@ -28,6 +28,12 @@ API de Alto Nivel
 Redes Neuronales PyTorch
 ========================
 
+PyTorch es una dependencia opcional instalada mediante ``mlektic[torch]``.
+``TorchTrainingRecorder`` produce el historial alineado por pasos que consumen
+las vistas animadas. El grafo usa salidas nodales y pesos exactos con escalas
+globales por defecto; los modos relativos y de senal son optativos. Los reportes
+pueden devolverse como HTML, mostrarse en notebook o exportarse a un archivo.
+
 .. module:: mlektic.api.neural
    :synopsis: Visualizacion y explicacion de redes neuronales PyTorch.
 

@@ -101,7 +101,22 @@ class TorchTrainingRecorder:
         targets: Any | None = None,
         task: str = "auto",
     ) -> bool:
-        """Save one frame and optionally infer three metrics from predictions."""
+        """Save one frame and optionally infer three performance metrics.
+
+        Args:
+            step: Training-step index. Frames outside ``record_every`` are skipped.
+            loss: Scalar loss for the current step.
+            metrics: Explicit scalar metrics to store or override inferred values.
+            predictions: Model outputs used with ``targets`` for metric inference.
+            targets: Ground-truth values paired with ``predictions``.
+            task: ``"classification"``, ``"regression"`` or ``"auto"``.
+
+        Returns:
+            ``True`` when a frame was captured and ``False`` when it was skipped.
+
+        Raises:
+            ValueError: If only one of ``predictions`` and ``targets`` is given.
+        """
         if step % self.record_every:
             return False
         self.steps.append(int(step))

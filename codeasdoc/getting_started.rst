@@ -19,6 +19,12 @@ Dependencias principales:
 - **scikit-learn** — Modelos de Machine Learning.
 - **plotly** — Motor de visualización interactiva.
 
+La integración con PyTorch es opcional:
+
+.. code-block:: bash
+
+   pip install "mlektic[torch]"
+
 Primer Ejemplo: Regresión Lineal
 ================================
 
@@ -96,6 +102,58 @@ Primer Ejemplo: Regresión Logística
        title="Regresión Logística Binaria",
    )
    fig.show()
+
+
+Primer Ejemplo: Red Neuronal PyTorch
+====================================
+
+El recorder debe guardar cada frame después de ``optimizer.step()`` y antes del
+siguiente ``zero_grad()``. Así conserva el peso actualizado junto con el gradiente
+que lo produjo.
+
+.. code-block:: python
+
+   import torch
+   from mlektic import TorchTrainingRecorder, visualize_nn_graph, visualize_nn_training
+
+   X = torch.tensor([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
+   y = torch.tensor([[0.], [1.], [1.], [0.]])
+   model = torch.nn.Sequential(
+       torch.nn.Linear(2, 4),
+       torch.nn.Tanh(),
+       torch.nn.Linear(4, 1),
+       torch.nn.Sigmoid(),
+   )
+   optimizer = torch.optim.Adam(model.parameters(), lr=0.08)
+   loss_fn = torch.nn.BCELoss()
+   recorder = TorchTrainingRecorder(model, optimizer=optimizer, loss_fn=loss_fn)
+
+   for step in range(80):
+       optimizer.zero_grad()
+       prediction = model(X)
+       loss = loss_fn(prediction, y)
+       loss.backward()
+       optimizer.step()
+
+       with torch.no_grad():
+           prediction = model(X)
+           recorded_loss = loss_fn(prediction, y)
+       recorder.record(
+           step,
+           loss=recorded_loss,
+           predictions=prediction,
+           targets=y,
+           task="classification",
+       )
+
+   history = recorder.to_history()
+   recorder.close()
+
+   visualize_nn_graph(model, X[0], history).show()
+   visualize_nn_training(history).show()
+
+``record`` infiere ``accuracy``, ``precision`` macro y ``recall`` macro para
+clasificación. Para regresión, ``task="regression"`` produce MSE, MAE y R2.
 
 
 Uso con Pipelines

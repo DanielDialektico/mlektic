@@ -35,13 +35,19 @@ def visualize_nn(
         model: A ``torch.nn.Module``.
         input_sample: One sample or a batch used to infer layer output shapes.
         history: Payload returned by :meth:`TorchTrainingRecorder.to_history`.
-        view: One of ``"architecture"``, ``"graph"``, ``"training"``, ``"weights"``, or ``"activations"``.
+        view: One of ``"architecture"``, ``"graph"``, ``"training"``,
+            ``"weights"``, or ``"activations"``.
         title: Optional figure title.
         max_neurons: Maximum individual nodes drawn per layer in the architecture view.
         max_frames: Maximum recorded training steps retained by animated views.
         frame_duration: Milliseconds per animation frame in the training view.
-        node_color_mode: ``"value"`` for exact global outputs or ``"relative"`` for per-layer contrast.
-        edge_color_mode: ``"weight"`` for parameters or ``"signal"`` for ``w_ji * a_i``.
+        node_color_mode: ``"value"`` for exact globally scaled outputs or
+            ``"relative"`` for per-layer contrast.
+        edge_color_mode: ``"weight"`` for globally scaled parameters or
+            ``"signal"`` for ``w_ji * a_i``.
+
+    Returns:
+        A Plotly figure for the selected view.
     """
     if view == "architecture":
         return build_nn_architecture_figure(
@@ -101,7 +107,18 @@ def visualize_nn_architecture(
     title: str | None = None,
     max_layers: int = 8,
 ):
-    """Show layer roles, formulas, tensor dimensions, and configured hyperparameters."""
+    """Show layer roles, formulas, tensor dimensions, and hyperparameters.
+
+    Args:
+        model: A ``torch.nn.Module``.
+        input_sample: Sample or batch used to infer tensor dimensions.
+        history: Optional recorder payload used to enrich the architecture.
+        title: Optional figure title.
+        max_layers: Maximum number of leaf layers rendered individually.
+
+    Returns:
+        A static Plotly architecture figure.
+    """
     return build_nn_architecture_figure(
         model,
         input_sample,
@@ -123,7 +140,28 @@ def visualize_nn_graph(
     node_color_mode: str = "value",
     edge_color_mode: str = "weight",
 ):
-    """Animate exact node outputs, edge values, and backpropagation gradients."""
+    """Animate node outputs, edge values, and backpropagation gradients.
+
+    The default modes use exact values and one global color scale per quantity
+    across every retained frame. Node and edge scales intentionally differ:
+    nodes encode activations while edges encode parameters. ``"relative"``
+    increases per-layer node contrast, and ``"signal"`` colors each edge by
+    ``w_ji * a_i`` instead of by its weight.
+
+    Args:
+        model: A ``torch.nn.Module``.
+        input_sample: Sample or batch used to compute node activations.
+        history: Payload returned by :meth:`TorchTrainingRecorder.to_history`.
+        title: Optional figure title.
+        max_neurons: Maximum visible nodes per layer.
+        max_frames: Maximum retained animation frames, or ``None`` for all.
+        frame_duration: Milliseconds per animation frame.
+        node_color_mode: ``"value"`` or ``"relative"``.
+        edge_color_mode: ``"weight"`` or ``"signal"``.
+
+    Returns:
+        An animated Plotly graph figure.
+    """
     return build_nn_graph_figure(
         model,
         input_sample,
@@ -145,7 +183,11 @@ def visualize_nn_training(
     max_metrics: int = 3,
     max_frames: int | None = 30,
 ):
-    """Animate loss above up to three user-provided metric plots."""
+    """Animate a compact 2x2 panel with loss and up to three metrics.
+
+    Metrics may be supplied explicitly to the recorder or inferred from
+    predictions and targets during :meth:`TorchTrainingRecorder.record`.
+    """
     return build_nn_training_figure(
         history,
         title=title,
@@ -166,7 +208,11 @@ def visualize_nn_weights(
     max_parameters: int = 6,
     max_frames: int | None = 30,
 ):
-    """Animate captured parameter tensors using truncated LaTeX matrices."""
+    """Animate captured parameter tensors using truncated LaTeX matrices.
+
+    ``max_rows``, ``max_cols`` and ``max_parameters`` bound the mathematical
+    display without modifying the values stored in the recorder history.
+    """
     return build_nn_weight_figure(
         history,
         parameter=parameter,
@@ -191,7 +237,12 @@ def explain_nn_prediction(
     max_frames: int | None = 12,
     frame_duration: int = 220,
 ):
-    """Explain and optionally animate a PyTorch forward pass mathematically."""
+    """Explain and optionally animate a PyTorch forward pass mathematically.
+
+    When ``history`` is provided, substitutions use retained parameter snapshots
+    and evolve over training. Large models are summarized with the configured
+    layer, neuron and frame limits.
+    """
     return build_nn_prediction_figure(
         model,
         x_query,

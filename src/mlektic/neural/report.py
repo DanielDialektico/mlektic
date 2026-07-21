@@ -110,7 +110,17 @@ def build_nn_math_report(
     history: Dict[str, Any] | None = None,
     title: str = "Mlektic neural-network mathematical report",
 ) -> str:
-    """Return a responsive standalone HTML report with complete layer taxonomy."""
+    """Build a responsive standalone HTML report with complete layer taxonomy.
+
+    Args:
+        model: A ``torch.nn.Module`` to inspect.
+        input_sample: Sample or batch used to infer input and output dimensions.
+        history: Optional recorder payload with training and parameter evolution.
+        title: Report title.
+
+    Returns:
+        A complete UTF-8 HTML document as a string.
+    """
     layers = describe_torch_model(model, input_sample)
     total_parameters = sum(layer["parameters"] for layer in layers)
     trainable_parameters = sum(layer["trainable_parameters"] for layer in layers)
@@ -180,7 +190,11 @@ def export_nn_math_report(
     path: str | Path = "mlektic_nn_math_report.html",
     title: str = "Mlektic neural-network mathematical report",
 ) -> Path:
-    """Write the complete mathematical report and return its resolved path."""
+    """Write the complete mathematical report and return its resolved path.
+
+    Parent directories are created when needed. The generated report includes
+    MathJax from a CDN, so formulas require network access when first displayed.
+    """
     destination = Path(path).expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(
@@ -197,7 +211,12 @@ def display_nn_math_report(
     history: Dict[str, Any] | None = None,
     title: str = "Mlektic neural-network mathematical report",
 ):
-    """Return an IPython HTML object suitable for Jupyter and Colab display."""
+    """Return an IPython HTML object suitable for Jupyter and Colab.
+
+    Pass the result to ``IPython.display.display`` when the call is not the final
+    expression of a notebook cell. Use :func:`export_nn_math_report` outside an
+    IPython environment.
+    """
     try:
         from IPython.display import HTML
     except ImportError as exc:

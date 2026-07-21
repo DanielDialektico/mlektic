@@ -42,7 +42,8 @@ Funcionalidades
 
 - **Adapter Pattern**: ``SklearnAdapter`` como implementación concreta del
   ``BaseModelAdapter`` (extensible a otros frameworks).
-- **Ruta de Escalabilidad**: Documentación del contrato de adapters para futuras familias de modelos, incluyendo frameworks no Scikit-Learn y visualizaciones de redes neuronales.
+- **Ruta de Escalabilidad**: contrato de adapters para futuras familias tabulares
+  y contrato especializado de historiales para PyTorch y otros frameworks neurales.
 
 - **Strategy Pattern**: Dos estrategias de captura de historial:
   - ``IterativeCapture`` para modelos iterativos (``partial_fit`` / ``warm_start``).
@@ -58,6 +59,10 @@ Funcionalidades
 Fixes y Mejoras Recientes
 -------------------------
 
+- **Documentacion Neural Completa**: README, inicio rapido, arquitectura, modos
+  del grafo, escalas globales exactas, metricas automaticas, ceros de ReLU,
+  trazas animadas de parametros y visualizacion/exportacion de reportes HTML
+  quedaron alineados con la API publica y sus docstrings.
 - **Estabilidad en Exportación HTML**: Corrección del "glitch" de redimensionamiento de arrays de JavaScript en Plotly; los arrays ahora se rellenan con ``None`` para garantizar un trazado de línea constante y evitar que las animaciones HTML se corten.
 - **Formateo Multivariable**: La función ``explain_lr_prediction()`` para 3 o más variables ahora formatea correctamente la coordenada resultante incluyendo ``y_hat`` al final (ej., ``(x_1, \dots, x_d, \hat{y})``), logrando consistencia matemática con las vistas de 1D y 2D.
 - **Exportaciones Públicas**: ``explain_lr_prediction`` ahora se importa correctamente desde ``mlektic``.
