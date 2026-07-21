@@ -98,9 +98,17 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     assert "grad W[1,:]=" in first_hover
     assert r"\begin" not in first_hover
     assert f"w[1,1]={model[0].weight[0, 0].item():.3f}" in last_hover
-    assert "final weights" in " ".join(
-        str(annotation.text) for annotation in figure.frames[-1].layout.annotations
+    first_parameter_text = next(
+        trace.text[0] for trace in figure.frames[0].data if trace.name == "parameter readout"
     )
+    last_parameter_text = next(
+        trace.text[0] for trace in figure.frames[-1].data if trace.name == "parameter readout"
+    )
+    final_step_text = next(
+        trace.text[0] for trace in figure.frames[-1].data if trace.name == "training step readout"
+    )
+    assert first_parameter_text != last_parameter_text
+    assert "final weights" in final_step_text
     assert "Feed forward" in _annotation_text(figure)
     assert "Backpropagation" in _annotation_text(figure)
     assert "Node heatmap (exact)" in _annotation_text(figure)

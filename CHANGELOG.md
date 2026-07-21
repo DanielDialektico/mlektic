@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Added an animated mathematical network graph with one stable frame per training step, true global min/max scales for node outputs and edge weights by default, optional relative node contrast and forward-signal edge modes, simultaneous wine-red backpropagation overlays, final model tensors, and readable hover data without raw LaTeX syntax.
 - Added a compact 2-by-2 learning-performance grid for loss and three independent metrics, automatic classification/regression metric inference from predictions and targets, and explicit empty metric panels when a history contains only loss.
 - Moved neural parameter and forward-pass animation controls to a reserved upper-left area so buttons never cover the displayed equations.
+- Fixed the mathematical-network parameter readout so weights and the training step update through animation traces without forcing a flickering redraw, and separated the title from the composed-function equation.
 - Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Wa + b`, and summarized representations for deeper networks.
 - Added standalone and notebook HTML mathematical reports with the complete taxonomy, definition, configuration, dimensions, parameter roles, and training evolution for every layer.
 - Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.

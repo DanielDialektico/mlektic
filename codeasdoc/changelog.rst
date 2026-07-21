@@ -19,6 +19,8 @@ Funcionalidades
   predicciones y objetivos, evolucion matricial de
   parametros, explicacion temporal del forward pass y reportes HTML completos para
   redes grandes.
+  La lectura compacta de pesos y el paso temporal se actualizan como trazas animadas
+  sin redibujar toda la red, y el titulo conserva separacion respecto a la ecuacion.
 
 - **Regresión Lineal**: Soporte completo para ``visualize_lr()`` con:
   - Renderizado 2D (1 variable): recta de regresión animada + curva MSE.

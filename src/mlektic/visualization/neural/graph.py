@@ -168,7 +168,7 @@ def _graph_geometry(stages: Sequence[Dict[str, Any]], max_neurons: int):
     dimensions = [stages[0]["in_features"], *[stage["out_features"] for stage in stages]]
     indices = [display_indices(dimension, max_neurons) for dimension in dimensions]
     x_positions = np.linspace(0.07, 0.93, len(dimensions))
-    y_positions = [np.linspace(0.22, 0.80, len(column)).tolist() for column in indices]
+    y_positions = [np.linspace(0.18, 0.70, len(column)).tolist() for column in indices]
     edges = []
     for stage_position, stage in enumerate(stages):
         for source_position, source_index in enumerate(indices[stage_position]):
@@ -303,10 +303,6 @@ def _graph_annotations(
     stages: Sequence[Dict[str, Any]],
     dimensions: Sequence[int],
     x_positions: Sequence[float],
-    parameters: Dict[str, np.ndarray],
-    step: int,
-    dec: int,
-    is_final: bool,
     node_color_mode: str,
     edge_color_mode: str,
 ) -> List[Dict[str, Any]]:
@@ -316,7 +312,6 @@ def _graph_annotations(
         r"\text{Backpropagation: }\nabla_{W^{(\ell)}}\mathcal{L}="
         r"\frac{\partial\mathcal{L}}{\partial W^{(\ell)}}"
     )
-    final_tex = r"\quad\text{(final weights)}" if is_final else ""
     node_heatmap_tex = (
         r"\text{Node heatmap (exact): }a_j^{(\ell)}"
         if node_color_mode == "value"
@@ -334,7 +329,7 @@ def _graph_annotations(
     annotations: List[Dict[str, Any]] = [
         {
             "x": 0.5,
-            "y": 1.19,
+            "y": 1.11,
             "xref": "paper",
             "yref": "paper",
             "text": f"${composed_dense_function(stages)}$",
@@ -342,27 +337,17 @@ def _graph_annotations(
             "font": {"size": 17, "color": NEURAL_COLORS["text"]},
         },
         {
-            "x": 0.5,
-            "y": 1.10,
+            "x": 0.56,
+            "y": 0.86,
             "xref": "paper",
             "yref": "paper",
-            "text": f"${compact_parameter_line(stages, parameters, dec=dec)}$",
+            "text": f"${phase_tex}$",
             "showarrow": False,
-            "font": {"size": 13, "color": NEURAL_COLORS["muted"]},
-        },
-        {
-            "x": 0.01,
-            "y": 1.01,
-            "xref": "paper",
-            "yref": "paper",
-            "text": rf"$t={step}{final_tex}\qquad {phase_tex}$",
-            "showarrow": False,
-            "xanchor": "left",
             "font": {"size": 12, "color": NEURAL_COLORS["text"]},
         },
         {
             "x": 0.01,
-            "y": 0.94,
+            "y": 0.77,
             "xref": "paper",
             "yref": "paper",
             "text": (
@@ -375,7 +360,7 @@ def _graph_annotations(
         },
         {
             "x": 0.99,
-            "y": 0.94,
+            "y": 0.77,
             "xref": "paper",
             "yref": "paper",
             "text": "<span style='color:#8f2942'>- -</span> backpropagation gradient",
@@ -396,7 +381,7 @@ def _graph_annotations(
         annotations.append(
             {
                 "x": x_position,
-                "y": 0.08,
+                "y": 0.05,
                 "xref": "x",
                 "yref": "y",
                 "text": f"${dimension_tex}$",
@@ -405,6 +390,43 @@ def _graph_annotations(
             }
         )
     return annotations
+
+
+def _dynamic_label_traces(
+    stages: Sequence[Dict[str, Any]],
+    parameters: Dict[str, np.ndarray],
+    step: int,
+    dec: int,
+    is_final: bool,
+) -> List[go.Scatter]:
+    final_tex = r"\quad\text{(final weights)}" if is_final else ""
+    readout_decimals = max(dec, 4)
+    return [
+        go.Scatter(
+            x=[0.5],
+            y=[0.96],
+            mode="text",
+            text=[f"${compact_parameter_line(stages, parameters, dec=readout_decimals)}$"],
+            textposition="middle center",
+            textfont={"size": 13, "color": NEURAL_COLORS["muted"]},
+            cliponaxis=False,
+            hoverinfo="skip",
+            showlegend=False,
+            name="parameter readout",
+        ),
+        go.Scatter(
+            x=[0.01],
+            y=[0.86],
+            mode="text",
+            text=[rf"$t={step}{final_tex}$"],
+            textposition="middle left",
+            textfont={"size": 12, "color": NEURAL_COLORS["text"]},
+            cliponaxis=False,
+            hoverinfo="skip",
+            showlegend=False,
+            name="training step readout",
+        ),
+    ]
 
 
 def _edge_traces(
@@ -700,20 +722,25 @@ def build_nn_graph_figure(
                 dec,
             )
         )
-        annotations = _graph_annotations(
-            stages,
-            dimensions,
-            x_positions,
-            parameters,
-            int(steps[frame_index]),
-            dec,
-            frame_index == steps.size - 1,
-            node_color_mode,
-            edge_color_mode,
+        data.extend(
+            _dynamic_label_traces(
+                stages,
+                parameters,
+                int(steps[frame_index]),
+                dec,
+                frame_index == steps.size - 1,
+            )
         )
-        return data, annotations
+        return data
 
-    first_data, first_annotations = frame_payload(int(selected_frames[0]))
+    first_data = frame_payload(int(selected_frames[0]))
+    annotations = _graph_annotations(
+        stages,
+        dimensions,
+        x_positions,
+        node_color_mode,
+        edge_color_mode,
+    )
     figure = go.Figure(
         data=[
             *first_data,
@@ -757,14 +784,13 @@ def build_nn_graph_figure(
     frames = []
     slider_steps = []
     for source_index in selected_frames:
-        data, annotations = frame_payload(int(source_index))
+        data = frame_payload(int(source_index))
         frame_name = str(int(source_index))
         frames.append(
             go.Frame(
                 name=frame_name,
                 data=data,
                 traces=dynamic_trace_indices,
-                layout=go.Layout(annotations=annotations),
             )
         )
         is_final = int(source_index) == steps.size - 1
@@ -779,10 +805,12 @@ def build_nn_graph_figure(
     if title is None:
         title = "Mathematical network: parameter and signal evolution"
     layout = neural_layout(title, height=740)
-    layout["margin"] = {"t": 165, "r": 105, "b": 115, "l": 45}
+    layout["title"]["y"] = 0.985
+    layout["title"]["yanchor"] = "top"
+    layout["margin"] = {"t": 120, "r": 105, "b": 115, "l": 45}
     figure.update_layout(
         **layout,
-        annotations=first_annotations,
+        annotations=annotations,
         updatemenus=[
             {
                 "type": "buttons",
