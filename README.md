@@ -50,13 +50,22 @@ for step in range(80):
     prediction = model(X)
     loss = loss_fn(prediction, y)
     loss.backward()
-    accuracy = ((prediction >= 0.5) == y.bool()).float().mean()
+    optimizer.step()
+
+    with torch.no_grad():
+        prediction = model(X)
+        recorded_loss = loss_fn(prediction, y)
+        predicted = prediction >= 0.5
+        target = y.bool()
+        true_positive = (predicted & target).float().sum()
+        accuracy = (predicted == target).float().mean()
+        precision = true_positive / (predicted.float().sum() + 1e-8)
+        recall = true_positive / (target.float().sum() + 1e-8)
     recorder.record(
         step,
-        loss=loss,
-        metrics={"accuracy": accuracy},
-    )  # After backward, before optimizer.step.
-    optimizer.step()
+        loss=recorded_loss,
+        metrics={"accuracy": accuracy, "precision": precision, "recall": recall},
+    )  # After optimizer.step(), before the next zero_grad().
 
 recorder.close()
 history = recorder.to_history()
@@ -77,10 +86,16 @@ report_path = export_nn_math_report(
 )
 ```
 
-In the graph, each recorded step has a forward frame (`F`) and a backpropagation
-frame (`B`). Hovering shows exact weights, gradients, updates, activations, and
-dimensions. Positive and negative values use different colors, while the
-formula above the graph updates with representative parameter values.
+In the graph, each recorded step is one stable frame. Connection colors form a
+global heatmap from the minimum to maximum weight across training, while thin
+wine-red dotted lines encode backpropagated gradient magnitude. Hovering shows
+exact weights, gradients, updates, activations, and dimensions. The final frame
+uses the model's current tensors so the last slider position always represents
+the trained network.
+
+`visualize_nn_training` places loss above as many as three independent metric
+plots. Record metrics such as accuracy, precision, and recall to obtain the full
+four-row learning view.
 
 For small networks, `explain_nn_prediction` substitutes actual values in every
 `z = Wa + b` computation. Larger models are summarized with ellipses in Plotly

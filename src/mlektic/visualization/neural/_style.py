@@ -17,7 +17,24 @@ NEURAL_COLORS = {
     "output": "#ff7d8e",
     "positive": "#55d6be",
     "negative": "#ff7d8e",
+    "weight_min": "#5b8ff9",
+    "weight_mid": "#4b4e57",
+    "weight_max": "#f6bd60",
+    "backprop": "#8f2942",
+    "button_bg": "#eef1f5",
+    "button_text": "#15171b",
 }
+
+
+def animation_button_style() -> Dict[str, Any]:
+    """Keep Plotly animation labels readable in normal and hover states."""
+    return {
+        "bgcolor": NEURAL_COLORS["button_bg"],
+        "bordercolor": NEURAL_COLORS["grid"],
+        "borderwidth": 1,
+        "font": {"color": NEURAL_COLORS["button_text"], "size": 12},
+        "showactive": False,
+    }
 
 
 def neural_layout(title: str, *, height: int = 680) -> Dict[str, Any]:

@@ -13,8 +13,8 @@ from .introspection import _leaf_modules, _require_torch
 class TorchTrainingRecorder:
     """Capture compact, frame-aligned training data from a PyTorch model.
 
-    Call :meth:`record` after ``loss.backward()`` and before ``optimizer.step()``
-    to retain the gradient responsible for each parameter update.
+    Call :meth:`record` after ``optimizer.step()`` and before ``zero_grad()`` to
+    retain both the updated parameters and the gradient that produced them.
     """
 
     def __init__(
@@ -97,7 +97,9 @@ class TorchTrainingRecorder:
         self.steps.append(int(step))
         self.loss.append(self._scalar(loss))
         provided = metrics or {}
-        for name in set(self.metrics) | set(provided):
+        metric_names = list(self.metrics)
+        metric_names.extend(name for name in provided if name not in self.metrics)
+        for name in metric_names:
             values = self.metrics[name]
             while len(values) < len(self.steps) - 1:
                 values.append(float("nan"))
@@ -115,12 +117,11 @@ class TorchTrainingRecorder:
             else:
                 gradient_values = gradient.detach().float().cpu().numpy().copy()
                 self.gradient_norms[name].append(float(np.linalg.norm(gradient_values)))
-            if (
-                self.capture_gradients
-                and gradient_values is not None
-                and gradient_values.size <= self.max_tensor_elements
-            ):
-                self.gradients[name].append(gradient_values)
+            if self.capture_gradients and values.size <= self.max_tensor_elements:
+                aligned_gradient = (
+                    np.zeros_like(values) if gradient_values is None else gradient_values
+                )
+                self.gradients[name].append(aligned_gradient)
 
         if self.capture_activations:
             for name, summary in self._latest_activations.items():

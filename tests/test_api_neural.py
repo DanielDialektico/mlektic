@@ -37,9 +37,18 @@ def trained_small_network():
         prediction = model(X)
         loss = criterion(prediction, y)
         loss.backward()
-        accuracy = ((prediction >= 0.5) == y.bool()).float().mean()
-        recorder.record(step, loss=loss, metrics={"accuracy": accuracy})
         optimizer.step()
+        predicted = prediction >= 0.5
+        target = y.bool()
+        true_positive = (predicted & target).float().sum()
+        precision = true_positive / (predicted.float().sum() + 1e-8)
+        recall = true_positive / (target.float().sum() + 1e-8)
+        accuracy = (predicted == target).float().mean()
+        recorder.record(
+            step,
+            loss=loss,
+            metrics={"accuracy": accuracy, "precision": precision, "recall": recall},
+        )
     recorder.close()
     return model, X, recorder.to_history()
 
@@ -75,21 +84,28 @@ def test_architecture_has_dimensions_formulas_and_hyperparameters(trained_small_
     assert "SGD" in text
 
 
-def test_graph_animates_forward_and_backprop_with_exact_values(trained_small_network):
+def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small_network):
     model, X, history = trained_small_network
     figure = visualize_nn_graph(model, X[0], history, max_frames=3)
 
     assert isinstance(figure, go.Figure)
-    assert len(figure.frames) == 6
-    assert [frame.name.split("-")[-1] for frame in figure.frames[:2]] == ["forward", "backward"]
-    forward_hover = " ".join(str(value) for trace in figure.frames[0].data for value in (trace.customdata or []))
-    backward_hover = " ".join(str(value) for trace in figure.frames[1].data for value in (trace.customdata or []))
-    assert "Feed forward" in forward_hover
-    assert "Backpropagation" in backward_hover
-    assert r"W_{1,:}" in forward_hover
-    assert r"\partial\mathcal{L}" in backward_hover
-    assert r"\nabla W_{1,:}" in backward_hover
+    assert len(figure.frames) == 3
+    first_hover = " ".join(str(value) for trace in figure.frames[0].data for value in (trace.customdata or []))
+    last_hover = " ".join(str(value) for trace in figure.frames[-1].data for value in (trace.customdata or []))
+    assert "Weight evolution" in first_hover
+    assert "Backpropagation" in first_hover
+    assert r"W_{1,:}" in first_hover
+    assert r"\nabla W_{1,:}" in first_hover
+    assert f"w[1,1]={model[0].weight[0, 0].item():.3f}" in last_hover
+    assert "final weights" in " ".join(
+        str(annotation.text) for annotation in figure.frames[-1].layout.annotations
+    )
+    assert "Feed forward" in _annotation_text(figure)
+    assert "Backpropagation" in _annotation_text(figure)
     assert r"\mathbb{R}" in _annotation_text(figure)
+    assert figure.data[-1].marker.showscale is True
+    assert figure.layout.updatemenus[0].buttons[0].args[1]["frame"]["redraw"] is False
+    assert all(" F" not in step.label and " B" not in step.label for step in figure.layout.sliders[0].steps)
 
 
 def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_network):
@@ -98,9 +114,12 @@ def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_
 
     assert isinstance(figure, go.Figure)
     assert len(figure.frames) == 3
-    assert "accuracy" in [trace.name for trace in figure.data]
+    assert {"accuracy", "precision", "recall"}.issubset({trace.name for trace in figure.data})
     assert figure.layout.yaxis.title.text == r"$\mathcal{L}$"
-    assert figure.layout.yaxis2.title.text == "Metric value"
+    assert figure.layout.yaxis2.title.text == "accuracy"
+    assert figure.layout.yaxis3.title.text == "precision"
+    assert figure.layout.yaxis4.title.text == "recall"
+    assert figure.layout.updatemenus[0].font.color == "#15171b"
 
 
 def test_weights_are_latex_matrices_with_dimensions_and_ellipsis(trained_small_network):
@@ -179,3 +198,18 @@ def test_recorder_skips_oversized_tensors_without_losing_norms():
 
     assert history["parameters"] == {}
     assert np.isfinite(history["parameter_norms"]["0.weight"][0])
+
+
+def test_recorder_keeps_initial_gradient_frame_aligned():
+    model = torch.nn.Sequential(torch.nn.Linear(2, 1))
+    recorder = TorchTrainingRecorder(model, capture_activations=False)
+    initial_loss = model(torch.ones(1, 2)).sum()
+    recorder.record(0, loss=initial_loss)
+    initial_loss.backward()
+    recorder.record(1, loss=initial_loss)
+    history = recorder.to_history()
+    recorder.close()
+
+    assert len(history["gradients"]["0.weight"]) == 2
+    assert np.allclose(history["gradients"]["0.weight"][0], 0.0)
+    assert not np.allclose(history["gradients"]["0.weight"][1], 0.0)

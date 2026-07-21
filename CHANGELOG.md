@@ -7,8 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
 - Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
-- Added an animated mathematical network graph with paired feed-forward/backpropagation frames, signed node and edge colors, and hover details for weights, activations, gradients, parameter updates, biases, and dimensions.
-- Added separate animated loss and performance-metric panels, plus fully mathematical LaTeX views for parameter matrices and activation evolution with automatic ellipses.
+- Added an animated mathematical network graph with one stable frame per training step, a global min-to-max weight heatmap, simultaneous wine-red backpropagation overlays, final model tensors, and detailed weight/gradient hover data.
+- Added a loss panel followed by up to three independent performance-metric plots, plus fully mathematical LaTeX views for parameter matrices and activation evolution with automatic ellipses.
 - Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Wa + b`, and summarized representations for deeper networks.
 - Added standalone and notebook HTML mathematical reports with the complete taxonomy, definition, configuration, dimensions, parameter roles, and training evolution for every layer.
 - Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.
@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Kept neural animation button labels readable when Plotly applies its light hover state.
 - Fixed root-package exports so `from mlektic import explain_lr_prediction` matches the documented public API.
 - Fixed logistic metric histories so classification metrics map predictions back to the original class labels instead of assuming zero-based label indexes.
 - Preserved scaler metadata in interpolation histories so pipeline visualizations can evaluate metrics in the requested display space.

@@ -115,7 +115,7 @@ def visualize_nn_graph(
     max_frames: int | None = 20,
     frame_duration: int = 180,
 ):
-    """Animate feed-forward activations and backpropagated parameter changes."""
+    """Animate a weight heatmap with simultaneous backpropagation gradients."""
     return build_nn_graph_figure(
         model,
         input_sample,
@@ -132,10 +132,10 @@ def visualize_nn_training(
     *,
     title: str | None = None,
     frame_duration: int = 120,
-    max_metrics: int = 5,
+    max_metrics: int = 3,
     max_frames: int | None = 30,
 ):
-    """Animate loss and user-provided performance metrics on aligned axes."""
+    """Animate loss above up to three user-provided metric plots."""
     return build_nn_training_figure(
         history,
         title=title,

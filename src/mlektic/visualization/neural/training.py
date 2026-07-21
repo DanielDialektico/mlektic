@@ -10,7 +10,7 @@ from plotly.subplots import make_subplots
 
 from ...neural.introspection import describe_torch_model
 from ...neural.taxonomy import select_with_ellipsis, shape_tex
-from ._style import NEURAL_COLORS, neural_layout
+from ._style import NEURAL_COLORS, animation_button_style, neural_layout
 from .math_format import matrix_latex, parameter_snapshot, vector_latex
 
 
@@ -40,13 +40,9 @@ def _animation_controls(
         {
             "type": "buttons",
             "direction": "left",
-            "x": 0.0,
+            "x": 0.34,
             "y": 1.08,
-            "bgcolor": NEURAL_COLORS["panel"],
-            "bordercolor": NEURAL_COLORS["grid"],
-            "borderwidth": 1,
-            "font": {"color": NEURAL_COLORS["text"], "size": 12},
-            "showactive": False,
+            **animation_button_style(),
             "buttons": [
                 {
                     "label": "Play",
@@ -104,10 +100,10 @@ def build_nn_training_figure(
     *,
     title: str | None = None,
     frame_duration: int = 120,
-    max_metrics: int = 5,
+    max_metrics: int = 3,
     max_frames: int | None = 30,
 ) -> go.Figure:
-    """Animate loss and user-provided performance metrics on separate aligned rows."""
+    """Animate loss above up to three independent performance-metric plots."""
     steps = _history_array(history, "steps").astype(int)
     loss = np.asarray(history.get("loss", np.full(steps.size, np.nan)), dtype=float)
     metrics = [
@@ -117,15 +113,21 @@ def build_nn_training_figure(
     ][:max_metrics]
     if not np.isfinite(loss).any() and not metrics:
         raise ValueError("History needs a loss or at least one performance metric.")
-    rows = 2 if metrics else 1
-    subplot_titles = (r"Training objective: $\mathcal{L}(\theta_t)$", "Performance metrics") if metrics else (r"Training objective: $\mathcal{L}(\theta_t)$",)
+    rows = 1 + len(metrics)
+    subplot_titles = [r"Training objective: $\mathcal{L}(\theta_t)$"]
+    subplot_titles.extend(name.replace("_", " ").title() for name, _ in metrics)
+    if metrics:
+        metric_height = 0.62 / len(metrics)
+        row_heights = [0.38, *[metric_height] * len(metrics)]
+    else:
+        row_heights = [1.0]
     figure = make_subplots(
         rows=rows,
         cols=1,
         shared_xaxes=True,
         subplot_titles=subplot_titles,
-        vertical_spacing=0.16 if metrics else 0.08,
-        row_heights=[0.56, 0.44] if metrics else [1.0],
+        vertical_spacing=0.055 if metrics else 0.08,
+        row_heights=row_heights,
     )
     figure.add_trace(
         go.Scatter(
@@ -161,6 +163,7 @@ def build_nn_training_figure(
         NEURAL_COLORS["output"],
     ]
     for index, (name, values) in enumerate(metrics):
+        metric_row = index + 2
         figure.add_trace(
             go.Scatter(
                 x=steps,
@@ -171,7 +174,7 @@ def build_nn_training_figure(
                 hoverinfo="skip",
                 showlegend=False,
             ),
-            row=2,
+            row=metric_row,
             col=1,
         )
         figure.add_trace(
@@ -183,8 +186,9 @@ def build_nn_training_figure(
                 line={"color": palette[index % len(palette)], "width": 2.5},
                 marker={"size": 5},
                 hovertemplate=f"step=%{{x}}<br>{name}=%{{y:.5f}}<extra></extra>",
+                showlegend=False,
             ),
-            row=2,
+            row=metric_row,
             col=1,
         )
     dynamic_trace_indices = [1, *[3 + 2 * index for index in range(len(metrics))]]
@@ -219,7 +223,7 @@ def build_nn_training_figure(
     )
     if title is None:
         title = "Learning performance"
-    layout = neural_layout(title, height=690 if metrics else 520)
+    layout = neural_layout(title, height=530 + 145 * len(metrics))
     layout["margin"] = {"t": 110, "r": 35, "b": 100, "l": 75}
     first_metrics = [(name, float(values[0])) for name, values in metrics]
     figure.update_layout(
@@ -230,7 +234,7 @@ def build_nn_training_figure(
             *list(figure.layout.annotations),
             _metric_annotation(int(steps[0]), float(loss[0]), first_metrics),
         ],
-        legend={"orientation": "h", "x": 0.5, "xanchor": "center", "y": -0.16},
+        showlegend=False,
     )
     figure.update_xaxes(title_text="Training step", gridcolor=NEURAL_COLORS["grid"], row=rows, col=1)
     if steps.size > 1:
@@ -240,10 +244,16 @@ def build_nn_training_figure(
     if loss_range:
         figure.update_yaxes(range=loss_range, row=1, col=1)
     if metrics:
-        figure.update_yaxes(title_text="Metric value", gridcolor=NEURAL_COLORS["grid"], row=2, col=1)
-        metric_range = _stable_range([values for _, values in metrics])
-        if metric_range:
-            figure.update_yaxes(range=metric_range, row=2, col=1)
+        for metric_index, (name, values) in enumerate(metrics, start=2):
+            figure.update_yaxes(
+                title_text=name.replace("_", " "),
+                gridcolor=NEURAL_COLORS["grid"],
+                row=metric_index,
+                col=1,
+            )
+            metric_range = _stable_range([values])
+            if metric_range:
+                figure.update_yaxes(range=metric_range, row=metric_index, col=1)
     return figure
 
 

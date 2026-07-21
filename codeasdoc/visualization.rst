@@ -14,15 +14,17 @@ entre arquitectura, entrenamiento y prediccion.
 - ``visualize_nn_architecture`` representa cada tipo de capa con una forma semantica
   y muestra formulas LaTeX, dimensiones de entrada/salida, parametros e
   hiperparametros. En arquitecturas extensas intercala puntos suspensivos.
-- ``visualize_nn_graph`` crea dos frames por paso: ``F`` para feed forward y ``B``
-  para backpropagation. El color codifica signo y magnitud; el hover muestra pesos,
-  activaciones, bias, gradientes, actualizaciones y dimensiones exactas.
+- ``visualize_nn_graph`` crea un frame estable por paso. Las conexiones forman un
+  mapa de calor global entre el peso minimo y maximo; las lineas punteadas color
+  tinto superpuestas representan la magnitud del gradiente de backpropagation. El
+  ultimo frame usa los tensores finales del modelo.
 - ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
   normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
-  pequenos. ``record`` se llama despues de ``loss.backward()`` y antes de
-  ``optimizer.step()`` para conservar el gradiente que origina la actualizacion.
-- ``visualize_nn_training`` separa la funcion de perdida de las metricas de
-  rendimiento. ``visualize_nn_weights`` reemplaza el heatmap por matrices LaTeX con
+  pequenos. ``record`` se llama despues de ``optimizer.step()`` y antes del siguiente
+  ``zero_grad()`` para conservar tanto el peso actualizado como el gradiente que lo
+  origino.
+- ``visualize_nn_training`` coloca loss arriba y hasta tres metricas de rendimiento
+  en graficas independientes debajo. ``visualize_nn_weights`` muestra matrices LaTeX con
   definiciones, dimensiones y truncado explicito. La vista ``activations`` muestra
   formulas, vectores y estadisticas compactas por capa.
 - ``explain_nn_prediction`` anima la composicion de funciones y sustituye valores
@@ -49,8 +51,12 @@ Ejemplo minimo
        record_every=2,
    )
 
-   # Dentro del entrenamiento, despues de backward y antes de optimizer.step:
-   recorder.record(step, loss=loss, metrics={"accuracy": accuracy})
+   # Dentro del entrenamiento, despues de optimizer.step y antes de zero_grad:
+   recorder.record(
+       step,
+       loss=loss,
+       metrics={"accuracy": accuracy, "precision": precision, "recall": recall},
+   )
 
    history = recorder.to_history()
    visualize_nn_architecture(model, X[:1], history=history).show()
