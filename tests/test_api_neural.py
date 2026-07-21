@@ -94,21 +94,22 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     last_hover = " ".join(str(value) for trace in figure.frames[-1].data for value in (trace.customdata or []))
     assert "Weight evolution" in first_hover
     assert "Backpropagation" in first_hover
-    assert r"W_{1,:}" in first_hover
-    assert r"\nabla W_{1,:}" in first_hover
+    assert "W[1,:]=" in first_hover
+    assert "grad W[1,:]=" in first_hover
+    assert r"\begin" not in first_hover
     assert f"w[1,1]={model[0].weight[0, 0].item():.3f}" in last_hover
     assert "final weights" in " ".join(
         str(annotation.text) for annotation in figure.frames[-1].layout.annotations
     )
     assert "Feed forward" in _annotation_text(figure)
     assert "Backpropagation" in _annotation_text(figure)
-    assert "Node fill = numerical output" in _annotation_text(figure)
+    assert r"\widetilde a_j^{(\ell)}" in _annotation_text(figure)
     assert r"\mathbb{R}" in _annotation_text(figure)
     first_node_colors = [tuple(trace.marker.color) for trace in figure.frames[0].data if trace.mode == "markers"]
     last_node_colors = [tuple(trace.marker.color) for trace in figure.frames[-1].data if trace.mode == "markers"]
     assert any(first != last for first, last in zip(first_node_colors[1:], last_node_colors[1:]))
     assert figure.data[-2].marker.colorbar.title.text == "Weight value"
-    assert figure.data[-1].marker.colorbar.title.text == "Node output"
+    assert figure.data[-1].marker.colorbar.title.text == r"$\widetilde{a}_j^{(\ell)}$"
     assert figure.data[-1].marker.showscale is True
     assert figure.layout.updatemenus[0].buttons[0].args[1]["frame"]["redraw"] is False
     assert all(" F" not in step.label and " B" not in step.label for step in figure.layout.sliders[0].steps)
@@ -126,6 +127,22 @@ def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_
     assert figure.layout.yaxis3.title.text == "precision"
     assert figure.layout.yaxis4.title.text == "recall"
     assert figure.layout.updatemenus[0].font.color == "#15171b"
+    assert figure.layout.updatemenus[0].x == 0.0
+    assert figure.layout.xaxis.domain != figure.layout.xaxis2.domain
+    assert figure.layout.yaxis.domain != figure.layout.yaxis3.domain
+
+
+def test_training_keeps_four_panels_when_metrics_are_missing():
+    history = {"steps": np.arange(3), "loss": np.asarray([1.0, 0.8, 0.6]), "metrics": {}}
+    figure = visualize_nn_training(history)
+    text = _annotation_text(figure)
+    frame_text = " ".join(str(annotation.text) for annotation in figure.frames[0].layout.annotations)
+
+    assert figure.layout.xaxis4 is not None
+    assert figure.layout.yaxis4 is not None
+    assert text.count("Metric not recorded") == 3
+    assert text.count("Pass predictions and targets to recorder.record()") == 3
+    assert frame_text.count("Pass predictions and targets to recorder.record()") == 3
 
 
 def test_weights_are_latex_matrices_with_dimensions_and_ellipsis(trained_small_network):
@@ -138,6 +155,8 @@ def test_weights_are_latex_matrices_with_dimensions_and_ellipsis(trained_small_n
     assert r"\begin{bmatrix}" in text
     assert r"\mathbb{R}^{4 \times 2}" in text
     assert r"\cdots" in text or r"\vdots" in text
+    assert figure.layout.updatemenus[0].x == 0.0
+    assert figure.layout.title.x == 0.16
 
 
 def test_activations_and_forward_math_evolve_over_time(trained_small_network):
@@ -152,6 +171,8 @@ def test_activations_and_forward_math_evolve_over_time(trained_small_network):
     assert len(explanation.frames) == 3
     assert "Forward" in explanation.layout.title.text
     assert r"\hat{\mathbf{y}}=f_\theta" in _annotation_text(explanation)
+    assert explanation.layout.updatemenus[0].x == 0.0
+    assert explanation.layout.title.x == 0.16
 
 
 def test_large_forward_view_summarizes_layers_instead_of_failing():
@@ -219,3 +240,16 @@ def test_recorder_keeps_initial_gradient_frame_aligned():
     assert len(history["gradients"]["0.weight"]) == 2
     assert np.allclose(history["gradients"]["0.weight"][0], 0.0)
     assert not np.allclose(history["gradients"]["0.weight"][1], 0.0)
+
+
+def test_recorder_infers_three_classification_metrics():
+    model = torch.nn.Sequential(torch.nn.Linear(2, 3))
+    recorder = TorchTrainingRecorder(model, capture_activations=False)
+    predictions = torch.tensor([[4.0, 1.0, 0.0], [0.0, 3.0, 1.0], [0.0, 2.0, 3.0]])
+    targets = torch.tensor([0, 1, 1])
+    recorder.record(0, predictions=predictions, targets=targets, task="classification")
+    history = recorder.to_history()
+    recorder.close()
+
+    assert list(history["metrics"]) == ["accuracy", "precision", "recall"]
+    assert history["metrics"]["accuracy"][0] == pytest.approx(2 / 3)

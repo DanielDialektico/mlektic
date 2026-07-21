@@ -15,7 +15,6 @@ from .math_format import (
     display_indices,
     gradient_snapshot,
     parameter_snapshot,
-    vector_latex,
 )
 
 WEIGHT_COLORSCALE = [
@@ -190,14 +189,32 @@ def _node_values(
     ]
 
 
-def _activation_limits(states: Sequence[Sequence[np.ndarray]]) -> Tuple[float, float]:
-    values = [np.asarray(vector, dtype=float).ravel() for state in states for vector in state]
-    combined = np.concatenate(values) if values else np.asarray([0.0])
-    minimum = float(np.min(combined))
-    maximum = float(np.max(combined))
-    if maximum <= minimum:
-        maximum = minimum + 1e-9
-    return minimum, maximum
+def _activation_limits(states: Sequence[Sequence[np.ndarray]]) -> List[Tuple[float, float]]:
+    if not states:
+        return [(0.0, 1.0)]
+    limits: List[Tuple[float, float]] = []
+    for column_index in range(len(states[0])):
+        values = [np.asarray(state[column_index], dtype=float).ravel() for state in states]
+        combined = np.concatenate(values) if values else np.asarray([0.0])
+        minimum = float(np.min(combined))
+        maximum = float(np.max(combined))
+        if maximum <= minimum:
+            maximum = minimum + 1e-9
+        limits.append((minimum, maximum))
+    return limits
+
+
+def _plain_vector(values: Any, dec: int, limit: int = 6) -> str:
+    flat = np.asarray(values, dtype=float).ravel()
+    if flat.size <= limit:
+        cells = [f"{value:.{dec}f}" for value in flat]
+    else:
+        selected = display_indices(flat.size, limit)
+        split = len(selected) // 2
+        cells = [f"{flat[index]:.{dec}f}" for index in selected[:split]]
+        cells.append("...")
+        cells.extend(f"{flat[index]:.{dec}f}" for index in selected[split:])
+    return "[" + ", ".join(cells) + "]"
 
 
 def _stage_bias(stage: Dict[str, Any], parameters: Dict[str, np.ndarray]) -> np.ndarray:
@@ -257,7 +274,11 @@ def _graph_annotations(
             "y": 0.94,
             "xref": "paper",
             "yref": "paper",
-            "text": "Node fill = numerical output",
+            "text": (
+                r"$\text{Node heatmap: }\widetilde a_j^{(\ell)}="
+                r"\frac{a_j^{(\ell)}-a_{\min}^{(\ell)}}"
+                r"{a_{\max}^{(\ell)}-a_{\min}^{(\ell)}}$"
+            ),
             "showarrow": False,
             "xanchor": "left",
             "font": {"size": 11, "color": NEURAL_COLORS["muted"]},
@@ -369,21 +390,24 @@ def _node_traces(
     node_values: Sequence[np.ndarray],
     parameters: Dict[str, np.ndarray],
     gradients: Dict[str, np.ndarray],
-    activation_minimum: float,
-    activation_maximum: float,
+    activation_limits: Sequence[Tuple[float, float]],
     dec: int,
 ) -> List[go.Scatter]:
     traces: List[go.Scatter] = []
     for column_index, (column_indices, y_values) in enumerate(zip(indices, y_positions)):
         values = node_values[column_index]
+        activation_minimum, activation_maximum = activation_limits[column_index]
         hover_data = []
         visible_values = []
         for node_index in column_indices:
             value = float(values[node_index]) if node_index < values.size else float(np.mean(values))
             visible_values.append(value)
+            normalized = (value - activation_minimum) / (activation_maximum - activation_minimum)
             if column_index == 0:
                 hover_data.append(
-                    f"<b>Input node {node_index + 1}</b><br>output x[{node_index + 1}]={value:.{dec}f}"
+                    f"<b>Input node {node_index + 1}</b><br>"
+                    f"output x[{node_index + 1}] = {value:.{dec}f}<br>"
+                    f"heatmap value = {normalized:.3f}"
                 )
                 continue
             stage = stages[column_index - 1]
@@ -395,10 +419,10 @@ def _node_traces(
             )
             hover_data.append(
                 f"<b>Neuron {node_index + 1}</b><br>numerical output={value:.{dec}f}<br>"
+                f"heatmap value={normalized:.3f}<br>"
                 f"bias={bias[node_index]:.{dec}f}<br>"
-                rf"$W_{{{node_index + 1},:}}={vector_latex(weight_row, dec=dec, limit=6)}$<br>"
-                rf"$\nabla W_{{{node_index + 1},:}}="
-                rf"{vector_latex(gradient_rows[node_index], dec=dec, limit=6)}$"
+                f"W[{node_index + 1},:]={_plain_vector(weight_row, dec)}<br>"
+                f"grad W[{node_index + 1},:]={_plain_vector(gradient_rows[node_index], dec)}"
             )
         traces.append(
             go.Scatter(
@@ -513,7 +537,7 @@ def build_nn_graph_figure(
         _, records = run_torch_forward(model, input_sample, parameters)
         node_values = _node_values(stages, input_values, records)
         frame_states[frame_index] = (parameters, previous, gradients, node_values)
-    activation_minimum, activation_maximum = _activation_limits(
+    activation_limits = _activation_limits(
         [state[3] for state in frame_states.values()]
     )
 
@@ -538,8 +562,7 @@ def build_nn_graph_figure(
                 node_values,
                 parameters,
                 gradients,
-                activation_minimum,
-                activation_maximum,
+                activation_limits,
                 dec,
             )
         )
@@ -566,10 +589,10 @@ def build_nn_graph_figure(
                 y=0.70,
             ),
             _colorbar_trace(
-                activation_minimum,
-                activation_maximum,
+                0.0,
+                1.0,
                 colorscale=ACTIVATION_COLORSCALE,
-                title="Node output",
+                title=r"$\widetilde{a}_j^{(\ell)}$",
                 y=0.29,
             ),
         ]

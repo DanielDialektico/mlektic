@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 import numpy as np
 
 from .introspection import _leaf_modules, _require_torch
+from .metrics import infer_performance_metrics
 
 
 class TorchTrainingRecorder:
@@ -90,13 +91,29 @@ class TorchTrainingRecorder:
 
         return hook
 
-    def record(self, step: int, *, loss: Any | None = None, metrics: Dict[str, Any] | None = None) -> bool:
-        """Save one frame and return whether it was retained by ``record_every``."""
+    def record(
+        self,
+        step: int,
+        *,
+        loss: Any | None = None,
+        metrics: Dict[str, Any] | None = None,
+        predictions: Any | None = None,
+        targets: Any | None = None,
+        task: str = "auto",
+    ) -> bool:
+        """Save one frame and optionally infer three metrics from predictions."""
         if step % self.record_every:
             return False
         self.steps.append(int(step))
         self.loss.append(self._scalar(loss))
-        provided = metrics or {}
+        if (predictions is None) != (targets is None):
+            raise ValueError("predictions and targets must be provided together.")
+        provided = (
+            infer_performance_metrics(predictions, targets, task=task)
+            if predictions is not None
+            else {}
+        )
+        provided.update(metrics or {})
         metric_names = list(self.metrics)
         metric_names.extend(name for name in provided if name not in self.metrics)
         for name in metric_names:

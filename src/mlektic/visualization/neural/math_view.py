@@ -290,7 +290,9 @@ def build_nn_prediction_figure(
     if title is None:
         title = "Forward-pass mathematics"
     layout = neural_layout(title, height=max(650, 220 + 115 * len(selected_layers)))
-    layout["margin"] = {"t": 115, "r": 35, "b": 100 if sliders else 45, "l": 35}
+    if sliders:
+        layout["title"]["x"] = 0.16
+    layout["margin"] = {"t": 125, "r": 35, "b": 100 if sliders else 45, "l": 35}
     figure.update_layout(
         **layout,
         annotations=annotations_by_frame[0],

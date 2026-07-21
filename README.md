@@ -55,16 +55,12 @@ for step in range(80):
     with torch.no_grad():
         prediction = model(X)
         recorded_loss = loss_fn(prediction, y)
-        predicted = prediction >= 0.5
-        target = y.bool()
-        true_positive = (predicted & target).float().sum()
-        accuracy = (predicted == target).float().mean()
-        precision = true_positive / (predicted.float().sum() + 1e-8)
-        recall = true_positive / (target.float().sum() + 1e-8)
     recorder.record(
         step,
         loss=recorded_loss,
-        metrics={"accuracy": accuracy, "precision": precision, "recall": recall},
+        predictions=prediction,
+        targets=y,
+        task="classification",
     )  # After optimizer.step(), before the next zero_grad().
 
 recorder.close()
@@ -90,13 +86,20 @@ In the graph, each recorded step is one stable frame. Connection colors form a
 global heatmap from the minimum to maximum weight across training, while thin
 wine-red dotted lines encode backpropagated gradient magnitude. Hovering shows
 exact weights, gradients, updates, node outputs, and dimensions. Every node fill
-also evolves on its own global output scale using the exact forward pass for the
-selected input. The final frame uses the model's current tensors so the last
-slider position always represents the trained network.
+also evolves from the exact forward pass for the selected input. Node colors are
+normalized per layer over the displayed timeline so small but meaningful changes
+remain visible; the hover keeps the unscaled numerical output. Edge and node
+palettes intentionally encode different quantities: an edge is a weight
+`w[j, i]`, whereas a neuron produces `a[j] = phi(sum_i w[j, i] a[i] + b[j])`.
+The final frame uses the model's current tensors so the last slider position
+always represents the trained network.
 
-`visualize_nn_training` places loss above as many as three independent metric
-plots. Record metrics such as accuracy, precision, and recall to obtain the full
-four-row learning view.
+`visualize_nn_training` uses a compact 2-by-2 grid for loss and three independent
+performance metrics. Passing `predictions` and `targets` to `record()` infers
+accuracy, macro precision, and macro recall for classification, or MSE, MAE, and
+R2 for regression. Explicit `metrics={...}` values can still override or extend
+the inferred metrics. Histories without metrics keep all four panels and show
+which recorder arguments are missing.
 
 For small networks, `explain_nn_prediction` substitutes actual values in every
 `z = Wa + b` computation. Larger models are summarized with ellipses in Plotly

@@ -18,15 +18,21 @@ entre arquitectura, entrenamiento y prediccion.
   mapa de calor global entre el peso minimo y maximo; las lineas punteadas color
   tinto superpuestas representan la magnitud del gradiente de backpropagation. El
   color de cada nodo representa su salida numerica exacta para la entrada elegida,
-  con una escala global independiente. El ultimo frame usa los tensores finales
-  del modelo.
+  normalizada por capa a lo largo del intervalo temporal mostrado para hacer
+  visibles cambios pequenos. El hover conserva la salida sin normalizar y evita
+  mostrar sintaxis LaTeX cruda. Las aristas codifican :math:`w_{ji}` y los nodos
+  :math:`a_j=\phi(\sum_i w_{ji}a_i+b_j)`, por lo que usan escalas distintas. El
+  ultimo frame usa los tensores finales del modelo.
 - ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
   normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
-  pequenos. ``record`` se llama despues de ``optimizer.step()`` y antes del siguiente
-  ``zero_grad()`` para conservar tanto el peso actualizado como el gradiente que lo
-  origino.
-- ``visualize_nn_training`` coloca loss arriba y hasta tres metricas de rendimiento
-  en graficas independientes debajo. ``visualize_nn_weights`` muestra matrices LaTeX con
+  pequenos. Tambien puede inferir tres metricas al recibir ``predictions`` y
+  ``targets``: accuracy, precision macro y recall macro para clasificacion; MSE,
+  MAE y R2 para regresion. ``record`` se llama despues de ``optimizer.step()`` y
+  antes del siguiente ``zero_grad()`` para conservar tanto el peso actualizado
+  como el gradiente que lo origino.
+- ``visualize_nn_training`` distribuye loss y tres metricas de rendimiento en una
+  cuadricula compacta de 2 por 2. Si el historial no contiene metricas, mantiene
+  los cuatro paneles e indica como registrarlas. ``visualize_nn_weights`` muestra matrices LaTeX con
   definiciones, dimensiones y truncado explicito. La vista ``activations`` muestra
   formulas, vectores y estadisticas compactas por capa.
 - ``explain_nn_prediction`` anima la composicion de funciones y sustituye valores
@@ -57,7 +63,9 @@ Ejemplo minimo
    recorder.record(
        step,
        loss=loss,
-       metrics={"accuracy": accuracy, "precision": precision, "recall": recall},
+       predictions=prediction,
+       targets=y,
+       task="classification",
    )
 
    history = recorder.to_history()

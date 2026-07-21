@@ -7,8 +7,9 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
 - Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
-- Added an animated mathematical network graph with one stable frame per training step, independent global heatmaps for edge weights and exact node outputs, simultaneous wine-red backpropagation overlays, final model tensors, and detailed hover data.
-- Added a loss panel followed by up to three independent performance-metric plots, plus fully mathematical LaTeX views for parameter matrices and activation evolution with automatic ellipses.
+- Added an animated mathematical network graph with one stable frame per training step, a global edge-weight heatmap, a vivid per-layer temporal heatmap for exact node outputs, simultaneous wine-red backpropagation overlays, final model tensors, and readable hover data without raw LaTeX syntax.
+- Added a compact 2-by-2 learning-performance grid for loss and three independent metrics, automatic classification/regression metric inference from predictions and targets, and explicit empty metric panels when a history contains only loss.
+- Moved neural parameter and forward-pass animation controls to a reserved upper-left area so buttons never cover the displayed equations.
 - Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Wa + b`, and summarized representations for deeper networks.
 - Added standalone and notebook HTML mathematical reports with the complete taxonomy, definition, configuration, dimensions, parameter roles, and training evolution for every layer.
 - Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.
