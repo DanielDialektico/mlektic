@@ -104,6 +104,11 @@ class InterpolationCapture(HistoryCaptureStrategy):
         classes = adapter.classes if adapter.classes is not None else np.unique(y)
         K = len(classes)
         is_multiclass = K > 2
+        probability_link = (
+            adapter.resolve_multiclass_link(X, config.multiclass_link)
+            if is_multiclass
+            else "sigmoid"
+        )
 
         grid = {}
         p_line_hist = p_plane_hist = p_curves_hist = p_surfaces_hist = None
@@ -216,6 +221,7 @@ class InterpolationCapture(HistoryCaptureStrategy):
             "history_kind": "final_interp",
             "classes": classes,
             "is_multiclass": is_multiclass,
+            "probability_link": probability_link,
             "loss_hist": loss_hist,
             "grid": grid,
             "p_line_hist": p_line_hist,

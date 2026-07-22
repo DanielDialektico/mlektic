@@ -21,14 +21,15 @@ entre arquitectura, entrenamiento y prediccion.
   usando por defecto una sola escala global con los minimos y maximos reales de
   todos los nodos y frames, incluidos valores negativos. El hover conserva la
   salida exacta y evita mostrar sintaxis LaTeX cruda. Las aristas codifican
-  :math:`w_{ji}` y los nodos :math:`a_j=\phi(\sum_i w_{ji}a_i+b_j)`, por lo que
+  :math:`\theta_{ji}` y los nodos
+  :math:`a_j=\phi(\sum_i\theta_{ji}a_i+\theta_{0,j})`, por lo que
   usan escalas distintas. El ultimo frame usa los tensores finales del modelo.
   ``node_color_mode="relative"`` ofrece contraste normalizado por capa como modo
   opcional. ``edge_color_mode="signal"`` colorea cada arista mediante la
-  contribucion forward :math:`w_{ji}a_i`; el modo predeterminado ``"weight"``
+  contribucion forward :math:`\theta_{ji}a_i`; el modo predeterminado ``"weight"``
   conserva la visualizacion de los parametros. El hover diferencia ``0 (exact)``
   de ``0 (ReLU inactive)`` y usa notacion cientifica para valores no nulos que
-  serian redondeados a ``0.000``. Los valores compactos :math:`W_t` y el paso
+  serian redondeados a ``0.000``. Los valores compactos :math:`\Theta_t` y el paso
   temporal son trazas animadas, por lo que avanzan sin redibujar ni hacer
   parpadear la red.
 - ``TorchTrainingRecorder`` registra loss, metricas proporcionadas por el usuario,
@@ -44,7 +45,7 @@ entre arquitectura, entrenamiento y prediccion.
   definiciones, dimensiones y truncado explicito. La vista ``activations`` muestra
   formulas, vectores y estadisticas compactas por capa.
 - ``explain_nn_prediction`` anima la composicion de funciones y sustituye valores
-  numericos en ``z = Wa + b``. En redes profundas conserva primeras y ultimas capas
+  numericos en ``z = Theta a + theta_0``. En redes profundas conserva primeras y ultimas capas
   y marca el tramo omitido con puntos suspensivos.
 - ``display_nn_math_report`` inserta en Jupyter un reporte con la taxonomia completa.
   ``export_nn_math_report`` genera el mismo documento HTML independiente, con una
@@ -109,9 +110,9 @@ La escala de nodos no debe compararse numericamente con la de aristas:
 
 .. math::
 
-   \text{peso}=w_{ji},\qquad
-   \text{senal}=w_{ji}a_i,\qquad
-   a_j=\phi\!\left(\sum_i w_{ji}a_i+b_j\right).
+   \text{peso}=\theta_{ji},\qquad
+   \text{senal}=\theta_{ji}a_i,\qquad
+   a_j=\phi\!\left(\sum_i\theta_{ji}a_i+\theta_{0,j}\right).
 
 Para resaltar cambios pequenos por capa puede usarse una escala relativa. Para
 visualizar lo que aporta cada conexion durante el forward pass puede colorearse
@@ -182,13 +183,19 @@ d = 2: Visualización 3D
 
 - **Lineal**: Scatter 3D + plano predictivo animado.
 - **Logística Binaria**: Scatter 3D + superficie de probabilidad.
-- **Logística Multiclase**: Scatter 3D + ``K`` superficies de probabilidad translúcidas superpuestas, acompañadas de un panel LaTeX que muestra dinámicamente la matriz de pesos :math:`\Theta \in \mathbb{R}^{3 \times K}` y las ecuaciones softmax evaluadas.
+- **Logística Multiclase**: Scatter 3D + ``K`` superficies de probabilidad y un
+  panel LaTeX con :math:`\Theta\in\mathbb{R}^{2\times K}`,
+  :math:`\boldsymbol{\theta}_0\in\mathbb{R}^{K}` y el enlace real del estimador.
+  ``multiclass_link="auto"`` distingue Softmax multinomial de OvR mediante
+  sigmoides normalizadas; ``"softmax"`` y ``"ovr"`` permiten forzarlo.
 
 d > 2: Matriz de Parámetros LaTeX
 -----------------------------------
 
 - Tabla/fórmula LaTeX interactiva con ``θ`` actualizado por frame.
-- Multiclase: Matriz ``W`` (d × K) y vector ``b`` (K).
+- Multiclase: :math:`\Theta\in\mathbb{R}^{d\times K}` y
+  :math:`\boldsymbol{\theta}_0\in\mathbb{R}^{K}`, aunque la matriz se trunque o
+  redistribuya visualmente.
 
 Estrategias de Captura
 =======================
@@ -222,9 +229,52 @@ Cuando ``smooth="ema"``:
 
 .. math::
 
-   y_t = \beta \cdot y_{t-1} + (1 - \beta) \cdot x_t
+   \widetilde{\mathcal{L}}_t = \beta \widetilde{\mathcal{L}}_{t-1}
+   + (1 - \beta)\mathcal{L}_t
 
 ``smooth_beta`` controla la agresividad (0.95 = muy suave, 0.5 = más detalle).
+El suavizado solo afecta a la pérdida: las predicciones, probabilidades y
+parámetros conservan los checkpoints exactos para no romper su correspondencia
+matemática.
+
+Transiciones y muestreo temporal
+================================
+
+``steps`` controla los estados capturados; ``max_frames`` y ``frame_step``
+reducen el historial sin perder el primer ni el ultimo estado. Para trazas 2D,
+``transition_duration`` interpola visualmente entre frames y puede fijarse en
+``0`` para desactivarla. Plotly redibuja las superficies 3D porque no admite la
+misma interpolacion estable; en ese caso la suavidad depende principalmente de
+``steps``, ``max_frames`` y ``frame_duration``.
+
+Animación híbrida 1D
+====================
+
+En regresión lineal de una variable, ``animation_mode="auto"`` selecciona el
+modo híbrido. ``steps`` y ``max_frames`` siguen describiendo checkpoints reales;
+``interpolation_frames`` agrega subframes visuales entre ellos y ``fps`` controla
+su cadencia. La recta, la pérdida, las métricas y los coeficientes numéricos usan
+el mismo parámetro interpolado. La definición simbólica permanece en LaTeX y no
+obliga a redibujar el layout, por lo que funciona con ``redraw=False`` en Jupyter,
+Colab y HTML exportado.
+
+Si ``fps`` es ``None``, la duración visual se calcula como
+``frame_duration / interpolation_frames``. Por ejemplo, ``30 / 3 = 10 ms``
+solicita 100 FPS, una cadencia que suele superar la capacidad de Jupyter y causa
+cuadros descartados. Para notebooks se recomienda ``fps=30`` a ``45``, o
+``frame_duration=60`` a ``80`` con tres subframes.
+
+El texto numérico del modo híbrido usa una fuente matemática dentro de una traza:
+MathJax no puede interpolar glifos LaTeX entre frames. ``animation_mode="native"``
+conserva la sustitución dinámica en LaTeX, pero cada cambio obliga a redibujar el
+layout. La regresión logística 1D utiliza actualmente este mecanismo nativo; una
+sigmoide acotada puede percibirse fluida con suficientes frames, aunque sus
+fórmulas se sustituyen discretamente y no se interpolan.
+
+Las métricas se apilan en una columna lateral independiente para que sus valores
+no compitan por espacio con la curva de pérdida. Play y Pause permanecen blancos
+con texto negro en reposo, hover y reproducción, incluso si Plotly reconstruye
+los controles durante una animación 3D.
 
 Espacio de Visualización
 =========================
@@ -241,7 +291,13 @@ Mediante las funciones ``explain_lr_prediction`` y ``explain_logistic_prediction
 
 - **1D**: Punto verde sobre la recta de regresión.
 - **2D**: Punto verde anclado espacialmente en un plano 3D.
-- **ND**: Presentación dinámica de fórmulas en LaTeX que despliega el producto punto completo, truncando automáticamente parámetros desbordados y manejando el espacio dimensional especificado.
+- **ND**: Presentación dinámica de fórmulas en LaTeX que despliega el producto
+  punto mediante vectores columna. ``\vdots`` omite componentes intermedias sin
+  cambiar su orden ni introducir semántica matricial.
+
+Las vistas de predicción usan notación científica LaTeX para magnitudes grandes,
+por ejemplo :math:`1.6609\times 10^7`, y reservan tamaños tipográficos menores en
+los paneles de sustitución y resultado de dos variables.
 
 Métricas Dinámicas
 ===================
@@ -254,5 +310,5 @@ métricas en tiempo real.
 - Métricas personalizadas: ``metrics={"Nombre": callable}``, donde ``callable``
   recibe ``(y_true, y_pred)`` y devuelve un escalar.
 
-Mlektic computa y muestra estas métricas como subtítulos o recuadros separados,
-según el builder de visualización usado.
+Mlektic computa y muestra estas métricas como subtítulos o recuadros separados.
+La animación híbrida 1D coloca sus recuadros en una columna vertical dedicada.

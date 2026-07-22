@@ -299,9 +299,9 @@ def _weight_annotations(
             "xref": "paper",
             "yref": "paper",
             "text": (
-                r"$\mathbf{z}^{(\ell)}_t=W^{(\ell)}_t\mathbf{a}^{(\ell-1)}_t+\mathbf{b}^{(\ell)}_t,\quad "
-                r"W^{(\ell)}_t\in\mathbb{R}^{d_\ell\times d_{\ell-1}},\quad "
-                r"\mathbf{b}^{(\ell)}_t\in\mathbb{R}^{d_\ell}$"
+                r"$\mathbf{z}^{(\ell)}_t=\Theta^{(\ell)}_t\mathbf{a}^{(\ell-1)}_t+\boldsymbol{\theta}^{(\ell)}_{0,t},\quad "
+                r"\Theta^{(\ell)}_t\in\mathbb{R}^{d_\ell\times d_{\ell-1}},\quad "
+                r"\boldsymbol{\theta}^{(\ell)}_{0,t}\in\mathbb{R}^{d_\ell}$"
             ),
             "showarrow": False,
             "font": {"size": 16, "color": NEURAL_COLORS["text"]},
@@ -311,7 +311,7 @@ def _weight_annotations(
             "y": 1.02,
             "xref": "paper",
             "yref": "paper",
-            "text": rf"$t={step}\quad\text{{Each row of }}W^{{(\ell)}}\text{{ produces one output pre-activation }}z_j^{{(\ell)}}.$",
+            "text": rf"$t={step}\quad\text{{Each row of }}\Theta^{{(\ell)}}\text{{ produces one output pre-activation }}z_j^{{(\ell)}}.$",
             "showarrow": False,
             "font": {"size": 13, "color": NEURAL_COLORS["muted"]},
         },

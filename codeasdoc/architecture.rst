@@ -114,7 +114,7 @@ Corazón del proceso de captura de entrenamiento.
 - ``engine.py`` — ``HistoryEngine``: fachada que:
 
   1. Selecciona la estrategia (iterativa vs. interpolación) según el modo.
-  2. Aplica suavizado EMA a las series temporales.
+  2. Aplica suavizado EMA exclusivamente al historial de perdida.
   3. Aplica el rescalado de ``θ`` al espacio de visualización solicitado.
 
 - ``strategy_iterative.py`` — ``IterativeCapture``: clona el modelo, configura
@@ -144,6 +144,8 @@ Funciones matemáticas y de utilidad puras:
 
 - ``math.py`` — ``_sigmoid()``, ``_softmax()``, ``_binary_log_loss_from_p()``,
   ``_multiclass_cross_entropy()``, ``_one_hot()``, ``_ema_smooth()``.
+- ``probability.py`` — enlace multiclase Softmax u OvR, inferencia desde
+  ``decision_function``/``predict_proba`` y definiciones LaTeX compartidas.
 - ``grids.py`` — ``build_1d_grid()`` y ``build_2d_grid()`` para crear los meshgrids
   sobre los cuales se evalúan las predicciones.
 
@@ -171,7 +173,7 @@ Responsable de traducir el historial capturado en figuras Plotly animadas.
   - ``binary_2d.py`` → Clasificación binaria 2D: superficie de probabilidad 3D.
   - ``binary_nd.py`` → Clasificación binaria d > 2: matriz LaTeX de pesos.
   - ``multiclass_1d.py`` → Multiclase 1D: curvas de probabilidad por clase.
-  - ``multiclass_2d.py`` → Multiclase 2D: superficies Softmax superpuestas.
+  - ``multiclass_2d.py`` → Multiclase 2D: superficies Softmax u OvR superpuestas.
   - ``multiclass_nd.py`` → Multiclase d > 2: matriz de pesos multiclase.
 
 - **``neural/``**:

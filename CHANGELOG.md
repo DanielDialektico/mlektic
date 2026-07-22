@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added hybrid 1D linear-regression animation with synchronized visual subframes for the model line, numeric coefficients, loss, and metrics; semantic checkpoints remain distinct in the slider and the symbolic definition stays in LaTeX.
 - Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
 - Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
 - Added an animated mathematical network graph with one stable frame per training step, true global min/max scales for node outputs and edge weights by default, optional relative node contrast and forward-signal edge modes, simultaneous wine-red backpropagation overlays, final model tensors, and readable hover data without raw LaTeX syntax.
@@ -12,13 +13,13 @@ All notable changes to this project will be documented in this file.
 - Moved neural parameter and forward-pass animation controls to a reserved upper-left area so buttons never cover the displayed equations.
 - Fixed the mathematical-network parameter readout so weights and the training step update through animation traces without forcing a flickering redraw, and separated the title from the composed-function equation.
 - Added explicit exact-zero and inactive-ReLU hover labels, inset the animated step readout, softened node outlines, and moved mathematical colorbar titles above their scales with wider outer margins.
-- Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Wa + b`, and summarized representations for deeper networks.
+- Added `explain_nn_prediction()` for time-aware layer-by-layer forward-pass mathematics, numerical substitutions for `z = Theta a + theta_0`, and summarized representations for deeper networks.
 - Added standalone and notebook HTML mathematical reports with the complete taxonomy, definition, configuration, dimensions, parameter roles, and training evolution for every layer.
 - Added reusable history metric builders for linear and logistic animations, including built-in support for `loss`, `mse`, `r2`, `mae`, `accuracy`, and `f1`, plus custom metric callables.
 - Added reusable history sampling utilities to decimate long animation histories through `max_frames` or `frame_step`.
 - Documented the adapter extension path for future model families, including non-Scikit-Learn estimators and upcoming neural-network visualization work.
 - **2D Multiclass Logistic Regression Visualization**: Added full support for visualizing multi-class logistic regression in 2-dimensional feature spaces. The builder dynamically generates a 3D plot displaying the actual data points on the floor grid and $K$ distinct translucent, colored probability surfaces hovering and adjusting over time.
-- Integrated a live LaTeX panel directly into the 2D Multiclass layout, showcasing the $\mathbf{z} = \Theta^\top\mathbf{x}$ formula, the dynamic parameter matrix $\Theta \in \mathbb{R}^{3 \times K}$, the explicit Softmax formulation, and a live step-by-step mathematical evaluation of a sample probability curve $\hat{p}(y=k \mid \mathbf{x})$.
+- Integrated a live LaTeX panel directly into the 2D multiclass layout, including the parameter matrix, bias vector, probability link, and step-by-step evaluation of representative class probabilities.
 - Modified capture engines (`strategy_iterative.py` and `strategy_interp.py`) to systematically extract and cache a multidimensional probability surface history (`p_surfaces_hist`) required for $K$-class 3D rendering.
 - Comprehensive `pytest` test suite covering `visualize_lr`, `visualize_logistic`, and `explain_lr_prediction` across 1D, 2D, and ND dimensional boundaries, including Pipeline scenarios.
 - Moved legacy tests and old modules that were incompatible with Scikit-Learn to `old_mlektic_core`.
@@ -31,6 +32,17 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Stabilized Play/Pause styling during 3D redraw animations by keeping buttons white with black text in every interaction state, without JavaScript state tracking or changes to interpolation.
+- Moved hybrid 1D metric cards into a dedicated vertical side column so longer values cannot overlap each other or the loss plot.
+- Prevented 2D prediction substitutions and results from overflowing by using compact LaTeX scientific notation, smaller panel typography, and a wrapped output tuple.
+- Replaced display-only multicolumn grids for high-dimensional inputs and parameters with mathematically faithful truncated column vectors in linear and multiclass-logistic prediction explanations.
+- Restored high-contrast metric cards in hybrid 1D animations using synchronized marker-and-text traces, preserving smooth playback without layout redraws.
+- Restored animated LaTeX parameter and metric updates in Jupyter for layout-driven views; simple 1D regression now avoids layout redraws through synchronized numeric traces.
+- Limited EMA smoothing to loss histories so displayed parameters always remain mathematically consistent with model geometry and probabilities.
+- Prevented 2D regression lines from appearing partially drawn or blinking during playback by preserving every SVG line point and ensuring Plotly transitions finish before the next animation frame begins.
+- Fixed multiclass logistic mathematics so figures and prediction explanations detect Softmax versus normalized one-vs-rest sigmoids instead of always claiming Softmax.
+- Corrected ND parameter dimensions, matrix orientation, scalar output spaces, generic class notation, and the separation between `Theta` and `theta_0` across linear and logistic views.
+- Replaced repeated expanded OvR denominators with compact exact normalizers to prevent LaTeX substitutions from overflowing into adjacent plots.
 - Kept neural animation button labels readable when Plotly applies its light hover state.
 - Fixed root-package exports so `from mlektic import explain_lr_prediction` matches the documented public API.
 - Fixed logistic metric histories so classification metrics map predictions back to the original class labels instead of assuming zero-based label indexes.
@@ -43,6 +55,9 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Documented the animation rendering contract: hybrid 1D linear views keep symbolic LaTeX fixed and animate synchronized numeric traces, native views redraw dynamic MathJax substitutions, and notebook-friendly hybrid cadence is typically 30-45 FPS.
+- Unified learnable-parameter notation across linear, logistic, and neural models: vectors use `theta`, matrices use `Theta`, and bias vectors use `theta_0`.
+- Added configurable 2D animation transitions while preserving redraws for Plotly 3D traces; existing `steps`, `max_frames`, and `frame_step` controls remain available for temporal sampling.
 - Completed the README, Sphinx guides, architecture reference, and public neural API docstrings for the PyTorch workflow, exact global heatmaps, optional relative/signal modes, inferred metrics, exact ReLU zeros, animated parameter readouts, and notebook/standalone HTML reports.
 - Refactored `HistoryEngine` so it orchestrates capture, metric building, temporal sampling, smoothing, and parameter scaling through smaller focused helpers.
 - Tightened Ruff configuration to lint the maintained package, tests, and Sphinx configuration while excluding generated, legacy, and manual-test directories.

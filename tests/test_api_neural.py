@@ -94,10 +94,10 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     last_hover = " ".join(str(value) for trace in figure.frames[-1].data for value in (trace.customdata or []))
     assert "Weight evolution" in first_hover
     assert "Backpropagation" in first_hover
-    assert "W[1,:]=" in first_hover
-    assert "grad W[1,:]=" in first_hover
+    assert "Theta[1,:]=" in first_hover
+    assert "grad Theta[1,:]=" in first_hover
     assert r"\begin" not in first_hover
-    assert f"w[1,1]={model[0].weight[0, 0].item():.3f}" in last_hover
+    assert f"theta[1,1]={model[0].weight[0, 0].item():.3f}" in last_hover
     first_parameter_text = next(
         trace.text[0] for trace in figure.frames[0].data if trace.name == "parameter readout"
     )
@@ -117,7 +117,7 @@ def test_graph_animates_stable_weight_heatmap_and_backprop_overlay(trained_small
     first_node_colors = [tuple(trace.marker.color) for trace in figure.frames[0].data if trace.mode == "markers"]
     last_node_colors = [tuple(trace.marker.color) for trace in figure.frames[-1].data if trace.mode == "markers"]
     assert any(first != last for first, last in zip(first_node_colors[1:], last_node_colors[1:]))
-    assert r"w_{ji}^{(\ell)}" in _annotation_text(figure)
+    assert r"\theta_{ji}^{(\ell)}" in _annotation_text(figure)
     assert r"a_j^{(\ell)}" in _annotation_text(figure)
     assert figure.data[-1].marker.cmin < 0.0
     assert figure.data[-1].marker.cmax > 0.0
@@ -148,7 +148,7 @@ def test_graph_supports_relative_nodes_and_forward_signal_edges(trained_small_ne
         str(value) for trace in figure.frames[0].data for value in (trace.customdata or [])
     )
 
-    assert r"s_{ji}^{(\ell)}=w_{ji}^{(\ell)}a_i^{(\ell-1)}" in _annotation_text(figure)
+    assert r"s_{ji}^{(\ell)}=\theta_{ji}^{(\ell)}a_i^{(\ell-1)}" in _annotation_text(figure)
     assert r"\widetilde a_j^{(\ell)}" in _annotation_text(figure)
     assert figure.data[-1].marker.cmin == 0.0
     assert figure.data[-1].marker.cmax == 1.0

@@ -30,6 +30,8 @@ def build_lr_figure(
     strict_loss=False,
     dec=4,
     frame_duration=80,
+    animation_mode="native",
+    interpolation_frames=3,
     theme=None,
 ):
     """
@@ -57,6 +59,8 @@ def build_lr_figure(
         strict_loss (bool, optional): If True, strictly enforce loss display rules. Defaults to False.
         dec (int, optional): Number of decimal places to show for parameters. Defaults to 4.
         frame_duration (int, optional): Duration of animation frames in milliseconds. Defaults to 80.
+        animation_mode (str, optional): Animation strategy for the 1D builder.
+        interpolation_frames (int, optional): Visual intervals between 1D checkpoints.
         theme (str | None, optional): Visualization theme name. Defaults to None.
 
     Returns:
@@ -120,6 +124,8 @@ def build_lr_figure(
             strict_loss=strict_loss,
             dec=dec,
             frame_duration=frame_duration,
+            animation_mode=animation_mode,
+            interpolation_frames=interpolation_frames,
             theme=theme,
         )
 

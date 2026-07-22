@@ -77,8 +77,8 @@ def module_formula(module: Any, layer_index: int | None = None) -> str:
     previous = r"\ell-1" if layer_index is None else str(layer_index - 1)
     formulas = {
         "Linear": (
-            rf"\mathbf{{z}}^{{({index})}}=W^{{({index})}}"
-            rf"\mathbf{{a}}^{{({previous})}}+\mathbf{{b}}^{{({index})}}"
+            rf"\mathbf{{z}}^{{({index})}}=\Theta^{{({index})}}"
+            rf"\mathbf{{a}}^{{({previous})}}+\boldsymbol{{\theta}}_0^{{({index})}}"
         ),
         "ReLU": rf"\mathbf{{a}}^{{({index})}}=\max(0,\mathbf{{z}}^{{({index})}})",
         "Sigmoid": (
@@ -109,12 +109,12 @@ def module_formula(module: Any, layer_index: int | None = None) -> str:
             rf"+\boldsymbol{{\beta}}"
         ),
         "Conv1d": (
-            rf"z_{{c,t}}^{{({index})}}=\sum_{{k,r}}K_{{c,k,r}}^{{({index})}}"
-            rf"a_{{k,t+r}}^{{({previous})}}+b_c^{{({index})}}"
+            rf"z_{{c,t}}^{{({index})}}=\sum_{{k,r}}\theta_{{c,k,r}}^{{({index})}}"
+            rf"a_{{k,t+r}}^{{({previous})}}+\theta_{{0,c}}^{{({index})}}"
         ),
         "Conv2d": (
-            rf"z_{{c,i,j}}^{{({index})}}=\sum_{{k,r,s}}K_{{c,k,r,s}}^{{({index})}}"
-            rf"a_{{k,i+r,j+s}}^{{({previous})}}+b_c^{{({index})}}"
+            rf"z_{{c,i,j}}^{{({index})}}=\sum_{{k,r,s}}\theta_{{c,k,r,s}}^{{({index})}}"
+            rf"a_{{k,i+r,j+s}}^{{({previous})}}+\theta_{{0,c}}^{{({index})}}"
         ),
         "MaxPool1d": rf"a_{{c,t}}^{{({index})}}=\max_{{r\in\mathcal{{K}}}}z_{{c,t+r}}^{{({index})}}",
         "MaxPool2d": rf"a_{{c,i,j}}^{{({index})}}=\max_{{(r,s)\in\mathcal{{K}}}}z_{{c,i+r,j+s}}^{{({index})}}",
@@ -126,11 +126,14 @@ def parameter_definition(parameter_name: str, shape: Sequence[int], layer_index:
     """Explain the role and dimensionality of one learnable tensor."""
     dims = shape_tex(shape, drop_batch=False)
     if parameter_name == "weight" and len(shape) == 2:
-        return rf"W^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}\;\text{{maps inputs to output neurons}}"
+        return rf"\Theta^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}\;\text{{maps inputs to output neurons}}"
     if parameter_name == "weight" and len(shape) >= 3:
-        return rf"K^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}\;\text{{contains convolution kernels}}"
+        return rf"\Theta^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}\;\text{{contains convolution kernels}}"
     if parameter_name == "bias":
-        return rf"\mathbf{{b}}^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}\;\text{{shifts the pre-activation}}"
+        return (
+            rf"\boldsymbol{{\theta}}_0^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}"
+            r"\;\text{shifts the pre-activation}"
+        )
     return rf"\theta_{{\mathrm{{{parameter_name}}}}}^{{({layer_index})}}\in\mathbb{{R}}^{{{dims}}}"
 
 
@@ -237,7 +240,7 @@ def composed_dense_function(stages: Sequence[Dict[str, Any]]) -> str:
     expression = r"\mathbf{x}"
     for stage in stages:
         layer = stage["index"]
-        affine = rf"W^{{({layer})}}{expression}+\mathbf{{b}}^{{({layer})}}"
+        affine = rf"\Theta^{{({layer})}}{expression}+\boldsymbol{{\theta}}_0^{{({layer})}}"
         symbol = activation_symbol(stage.get("activation_type") or "")
         expression = rf"{symbol}\!\left({affine}\right)" if symbol != r"\operatorname{id}" else affine
     return rf"\hat{{\mathbf{{y}}}}=f_\theta(\mathbf{{x}})={expression}"

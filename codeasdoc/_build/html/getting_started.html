@@ -49,6 +49,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#instalacion">Instalación</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#primer-ejemplo-regresion-lineal">Primer Ejemplo: Regresión Lineal</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#primer-ejemplo-regresion-logistica">Primer Ejemplo: Regresión Logística</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#primer-ejemplo-red-neuronal-pytorch">Primer Ejemplo: Red Neuronal PyTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#uso-con-pipelines">Uso con Pipelines</a></li>
 </ul>
 </li>
@@ -99,6 +100,10 @@ uv<span class="w"> </span>sync
 <li><p><strong>scikit-learn</strong> — Modelos de Machine Learning.</p></li>
 <li><p><strong>plotly</strong> — Motor de visualización interactiva.</p></li>
 </ul>
+<p>La integración con PyTorch es opcional:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;mlektic[torch]&quot;</span>
+</pre></div>
+</div>
 </section>
 <section id="primer-ejemplo-regresion-lineal">
 <h2>Primer Ejemplo: Regresión Lineal<a class="headerlink" href="#primer-ejemplo-regresion-lineal" title="Link to this heading"></a></h2>
@@ -127,7 +132,9 @@ uv<span class="w"> </span>sync
 <span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_lr</span><span class="p">(</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
     <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
-    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">animation_mode</span><span class="o">=</span><span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
+    <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="n">interpolation_frames</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
     <span class="n">show_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Mi Primera Animación Mlektic&quot;</span><span class="p">,</span>
 <span class="p">)</span>
@@ -167,11 +174,60 @@ uv<span class="w"> </span>sync
     <span class="n">steps</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
     <span class="n">show_loss</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">frame_duration</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">transition_duration</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span>
     <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Regresión Logística Binaria&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
+</section>
+<section id="primer-ejemplo-red-neuronal-pytorch">
+<h2>Primer Ejemplo: Red Neuronal PyTorch<a class="headerlink" href="#primer-ejemplo-red-neuronal-pytorch" title="Link to this heading"></a></h2>
+<p>El recorder debe guardar cada frame después de <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code> y antes del
+siguiente <code class="docutils literal notranslate"><span class="pre">zero_grad()</span></code>. Así conserva el peso actualizado junto con el gradiente
+que lo produjo.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mlektic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchTrainingRecorder</span><span class="p">,</span> <span class="n">visualize_nn_graph</span><span class="p">,</span> <span class="n">visualize_nn_training</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]])</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]])</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Tanh</span><span class="p">(),</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">(),</span>
+<span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.08</span><span class="p">)</span>
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCELoss</span><span class="p">()</span>
+<span class="n">recorder</span> <span class="o">=</span> <span class="n">TorchTrainingRecorder</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">80</span><span class="p">):</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">recorded_loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">recorder</span><span class="o">.</span><span class="n">record</span><span class="p">(</span>
+        <span class="n">step</span><span class="p">,</span>
+        <span class="n">loss</span><span class="o">=</span><span class="n">recorded_loss</span><span class="p">,</span>
+        <span class="n">predictions</span><span class="o">=</span><span class="n">prediction</span><span class="p">,</span>
+        <span class="n">targets</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="n">history</span> <span class="o">=</span> <span class="n">recorder</span><span class="o">.</span><span class="n">to_history</span><span class="p">()</span>
+<span class="n">recorder</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="n">visualize_nn_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">visualize_nn_training</span><span class="p">(</span><span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">record</span></code> infiere <code class="docutils literal notranslate"><span class="pre">accuracy</span></code>, <code class="docutils literal notranslate"><span class="pre">precision</span></code> macro y <code class="docutils literal notranslate"><span class="pre">recall</span></code> macro para
+clasificación. Para regresión, <code class="docutils literal notranslate"><span class="pre">task=&quot;regression&quot;</span></code> produce MSE, MAE y R2.</p>
 </section>
 <section id="uso-con-pipelines">
 <h2>Uso con Pipelines<a class="headerlink" href="#uso-con-pipelines" title="Link to this heading"></a></h2>

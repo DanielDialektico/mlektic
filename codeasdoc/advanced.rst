@@ -90,6 +90,41 @@ Si necesitas muestrear cada N pasos en vez de fijar un máximo, desactiva
 
    fig = visualize_logistic(model, X, y, steps=500, max_frames=None, frame_step=20)
 
+Las trazas 2D interpolan entre estados mediante ``transition_duration``. Un valor
+``None`` elige automaticamente una duracion menor que ``frame_duration`` para que
+la interpolacion termine antes del siguiente frame; los valores iguales o mayores
+tambien se limitan de forma segura. ``0`` desactiva la transicion. Las superficies
+3D requieren redibujado y obtienen su continuidad aumentando ``steps`` o el limite
+``max_frames``.
+
+Las lineas animadas conservan todos sus puntos durante la interpolacion. Esto evita
+que la simplificacion geometrica de Plotly cambie la ruta SVG entre frames y produzca
+segmentos parciales o parpadeos en renderizadores de Jupyter.
+
+Cuando un frame modifica ecuaciones LaTeX o tarjetas de metricas, la figura activa
+automaticamente el redibujado de layout requerido por Jupyter. Las animaciones que
+solo cambian trazas conservan la actualizacion ligera sin redibujado completo. En
+frames mixtos, el orden ``traces first`` interpola primero la recta o curva y aplica
+despues el nuevo estado matematico, evitando que el layout anule la fluidez visual.
+
+MathJax sustituye una expresion LaTeX completa; no interpola los digitos entre dos
+expresiones. Por eso una formula LaTeX que parece fluida es una secuencia densa de
+estados discretos. En curvas acotadas, como la sigmoide logistica, el redibujado
+puede ser menos perceptible que en una recta que recorre un rango amplio.
+
+Para regresion lineal 1D, ``animation_mode="auto"`` usa una estrategia hibrida:
+la formula simbolica queda fija en LaTeX y los coeficientes numericos, la recta,
+la perdida y las metricas avanzan como trazas sincronizadas. ``fps`` fija la
+cadencia y ``interpolation_frames`` controla cuantos intervalos visuales existen
+entre checkpoints. El slider sigue mostrando solo pasos semanticos reales.
+Sin ``fps``, cada subframe dura ``frame_duration / interpolation_frames``. Evita
+valores inferiores a unos 16 ms en el navegador; para Jupyter y Colab, ``fps=30``
+a ``45`` suele ofrecer una cadencia mas estable que solicitar 100 FPS.
+
+En clasificacion multiclase, ``multiclass_link="auto"`` compara los scores con
+``predict_proba`` para distinguir Softmax de sigmoides OvR normalizadas. El
+override ``"softmax"`` o ``"ovr"`` resulta util para estimadores personalizados.
+
 
 Control de Redes PyTorch
 ========================
@@ -139,7 +174,7 @@ Para inspeccionar el flujo en vez del parametro aislado:
        edge_color_mode="signal",  # w_ji * a_i
    )
 
-La contribucion :math:`w_{ji}a_i` tampoco coincide necesariamente con la salida del
+La contribucion :math:`\theta_{ji}a_i` tampoco coincide necesariamente con la salida del
 nodo receptor, que agrega todas las entradas, suma el bias y aplica la activacion.
 
 Exportar a HTML

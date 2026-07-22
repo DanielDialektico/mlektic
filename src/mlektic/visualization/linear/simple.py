@@ -17,6 +17,278 @@ from ..theme import (
     model_line_style,
 )
 
+_MATH_TEXT_FONT = "STIX Two Math, Cambria Math, Times New Roman, serif"
+
+
+def _interpolate_at(values, position):
+    """Interpolate an array along its first, semantic-step axis."""
+    array = np.asarray(values, dtype=float)
+    lower = min(int(np.floor(position + 1e-12)), array.shape[0] - 1)
+    upper = min(lower + 1, array.shape[0] - 1)
+    alpha = float(np.clip(position - lower, 0.0, 1.0))
+    return (1.0 - alpha) * array[lower] + alpha * array[upper]
+
+
+def _hybrid_timeline(steps_n, interpolation_frames):
+    """Return visual positions, frame names, and exact checkpoint names."""
+    positions = [0.0]
+    checkpoint_names = ["visual-0"]
+    for step in range(steps_n - 1):
+        for subframe in range(1, interpolation_frames + 1):
+            positions.append(step + subframe / interpolation_frames)
+            if subframe == interpolation_frames:
+                checkpoint_names.append(f"visual-{len(positions) - 1}")
+    frame_names = [f"visual-{index}" for index in range(len(positions))]
+    return positions, frame_names, checkpoint_names
+
+
+def _progressive_series(values, position):
+    """Build a constant-length line ending at an interpolated position."""
+    values = np.asarray(values, dtype=float).ravel()
+    current = float(_interpolate_at(values, position))
+    lower = min(int(np.floor(position + 1e-12)), values.size - 1)
+    x_values = np.full(values.size, position, dtype=float)
+    y_values = np.full(values.size, current, dtype=float)
+    completed = lower + 1
+    x_values[:completed] = np.arange(completed, dtype=float)
+    y_values[:completed] = values[:completed]
+    if position > lower + 1e-12 and completed < values.size:
+        x_values[completed] = position
+        y_values[completed] = current
+    return x_values, y_values
+
+
+def _format_math_number(value, dec):
+    return f"{float(value):.{dec}f}".replace("-", "\u2212")
+
+
+def _numeric_equation_text(w_values, b_values, position, dec):
+    if w_values is None or b_values is None:
+        return "\u0177 = f<sub>t</sub>(x<sub>1</sub>)"
+    weight = _format_math_number(_interpolate_at(w_values, position), dec)
+    bias = _format_math_number(_interpolate_at(b_values, position), dec)
+    return f"\u0177 = ({weight})x<sub>1</sub> + ({bias})"
+
+
+def _metric_card_texts(metrics_hist, position):
+    if not metrics_hist:
+        return []
+    cards = []
+    for name, values in metrics_hist.items():
+        value = float(_interpolate_at(values, position))
+        label = str(name).upper().replace("R2", "R\u00b2")
+        precision = 6 if str(name).lower() == "loss" else 4
+        cards.append(f"<b>{label}</b><br>{value:.{precision}f}")
+    return cards
+
+
+def _hybrid_sliders(checkpoint_names, *, theme=None):
+    """Create a slider containing semantic checkpoints rather than subframes."""
+    slider = get_sliders(len(checkpoint_names), theme=theme)[0]
+    slider["steps"] = [
+        dict(
+            method="animate",
+            args=[
+                [frame_name],
+                {
+                    "mode": "immediate",
+                    "frame": {"duration": 0, "redraw": False},
+                    "transition": {"duration": 0},
+                },
+            ],
+            label=str(step),
+        )
+        for step, frame_name in enumerate(checkpoint_names)
+    ]
+    return [slider]
+
+
+def _build_hybrid_figure(
+    x1,
+    y,
+    x1_grid,
+    line_history,
+    w_values,
+    b_values,
+    *,
+    loss_hist,
+    metrics_hist,
+    show_loss,
+    title,
+    dec,
+    frame_duration,
+    interpolation_frames,
+    theta_formula_annotation,
+    x_range,
+    y_range,
+    y_text,
+    theme,
+):
+    """Build a trace-only 1D animation with interpolated visual subframes."""
+    steps_n = line_history.shape[0]
+    positions, frame_names, checkpoint_names = _hybrid_timeline(steps_n, interpolation_frames)
+
+    def equation_trace(position):
+        return go.Scatter(
+            x=[float(np.mean(x_range))],
+            y=[y_text],
+            mode="text",
+            text=[_numeric_equation_text(w_values, b_values, position, dec)],
+            textfont=dict(family=_MATH_TEXT_FONT, size=18, color="white"),
+            cliponaxis=False,
+            hoverinfo="skip",
+            showlegend=False,
+            uid="NUMERIC_EQUATION",
+        )
+
+    def model_trace(position):
+        return go.Scatter(
+            x=x1_grid,
+            y=_interpolate_at(line_history, position),
+            mode="lines",
+            name="Model",
+            line=model_line_style(theme=theme),
+            hoverlabel=dict(bgcolor="white", font=dict(color="black")),
+            legendgroup="fit",
+            showlegend=True,
+            uid="MODEL_LINE",
+        )
+
+    if show_loss:
+        loss_hist = np.asarray(loss_hist, dtype=float).ravel()
+        lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
+        lspan = lmax - lmin + 1e-9
+        lpad = 0.10 * lspan
+        metric_count = len(metrics_hist or {})
+        if metric_count > 1:
+            metric_y = np.linspace(0.84, 0.16, metric_count)
+        elif metric_count == 1:
+            metric_y = np.asarray([0.5])
+        else:
+            metric_y = np.asarray([])
+
+        def loss_trace(position):
+            loss_x, loss_y = _progressive_series(loss_hist, position)
+            return go.Scatter(
+                x=loss_x,
+                y=loss_y,
+                mode="lines+markers",
+                name="Loss",
+                line=loss_line_style(theme=theme),
+                marker=dict(size=3),
+                legendgroup="loss",
+                showlegend=True,
+                uid="LOSS_LINE",
+            )
+
+        def metric_trace(position):
+            return go.Scatter(
+                x=np.full(metric_count, 0.5),
+                y=metric_y,
+                mode="markers+text",
+                text=_metric_card_texts(metrics_hist, position),
+                textposition="middle center",
+                textfont=dict(family="Helvetica", size=12, color="black"),
+                marker=dict(
+                    symbol="square",
+                    size=68,
+                    color="white",
+                    line=dict(color="#641E2E", width=1.5),
+                ),
+                cliponaxis=False,
+                hoverinfo="skip",
+                showlegend=False,
+                uid="METRIC_VALUES",
+            )
+
+        fig = make_subplots(
+            rows=1,
+            cols=3,
+            column_widths=[0.58, 0.30, 0.12],
+            horizontal_spacing=0.05,
+            specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=x1,
+                y=y,
+                mode="markers",
+                name="Data",
+                marker=data_marker_style(theme=theme),
+                legendgroup="fit",
+                showlegend=True,
+            ),
+            row=1,
+            col=1,
+        )
+        fig.add_trace(model_trace(0.0), row=1, col=1)
+        fig.add_trace(loss_trace(0.0), row=1, col=2)
+        fig.add_trace(equation_trace(0.0), row=1, col=1)
+        fig.add_trace(metric_trace(0.0), row=1, col=3)
+
+        frames = []
+        for name, position in zip(frame_names, positions):
+            frames.append(
+                go.Frame(
+                    name=name,
+                    data=[
+                        model_trace(position),
+                        loss_trace(position),
+                        equation_trace(position),
+                        metric_trace(position),
+                    ],
+                    traces=[1, 2, 3, 4],
+                )
+            )
+        fig.frames = frames
+        fig.update_layout(
+            **get_base_layout(title=title, margin_t=170, theme=theme),
+            annotations=[theta_formula_annotation()],
+            legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.85, y=0.05, theme=theme)),
+            sliders=_hybrid_sliders(checkpoint_names, theme=theme),
+            updatemenus=get_updatemenus(frame_duration, theme=theme),
+        )
+        fig.data[2].update(legend="legend2")
+        fig.update_xaxes(title="x\u2081", range=x_range, row=1, col=1)
+        fig.update_yaxes(title="\u0177", range=y_range, row=1, col=1)
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
+        fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
+        fig.update_xaxes(visible=False, range=[0, 1], row=1, col=3)
+        fig.update_yaxes(visible=False, range=[0, 1], row=1, col=3)
+        return fig
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=x1,
+            y=y,
+            mode="markers",
+            name="Data",
+            marker=data_marker_style(theme=theme),
+        )
+    )
+    fig.add_trace(model_trace(0.0))
+    fig.add_trace(equation_trace(0.0))
+    fig.frames = [
+        go.Frame(
+            name=name,
+            data=[model_trace(position), equation_trace(position)],
+            traces=[1, 2],
+        )
+        for name, position in zip(frame_names, positions)
+    ]
+    fig.update_layout(
+        **get_base_layout(title=title, margin_t=160, theme=theme),
+        annotations=[theta_formula_annotation()],
+        legend=get_legend_props(theme=theme),
+        xaxis=dict(title="x\u2081", range=x_range),
+        yaxis=dict(title="\u0177", range=y_range),
+        sliders=_hybrid_sliders(checkpoint_names, theme=theme),
+        updatemenus=get_updatemenus(frame_duration, theme=theme),
+    )
+    return fig
+
 
 def build_simple_lr_figure(
     x1,
@@ -36,6 +308,8 @@ def build_simple_lr_figure(
     strict_loss=False,
     dec=4,
     frame_duration=80,
+    animation_mode="native",
+    interpolation_frames=3,
     theme=None,
 ):
     """
@@ -134,6 +408,9 @@ def build_simple_lr_figure(
             b = float(b_hist[t])
             return rf"$\hat{{y}} = ({w1:.{dec}f})x_1 + ({b:.{dec}f})$"
 
+        w_disp = w_hist[:, 0]
+        b_disp = b_hist
+
     if steps_n < 1:
         raise ValueError("Need at least 1 step to animate.")
 
@@ -185,6 +462,31 @@ def build_simple_lr_figure(
         return [lo - frac * span, hi + frac * span]
 
     x_range = _pad(x_min, x_max)
+    y_range = [y_min - y_pad, y_max + y_pad]
+
+    if animation_mode == "hybrid":
+        line_history = np.vstack([np.asarray(y_line(t), dtype=float).ravel() for t in range(steps_n)])
+        y_span = y_max - y_min + 1e-9
+        return _build_hybrid_figure(
+            x1,
+            y,
+            x1_grid,
+            line_history,
+            w_disp,
+            b_disp,
+            loss_hist=loss_hist,
+            metrics_hist=metrics_hist,
+            show_loss=show_loss,
+            title=title,
+            dec=dec,
+            frame_duration=frame_duration,
+            interpolation_frames=interpolation_frames,
+            theta_formula_annotation=theta_formula_annotation,
+            x_range=x_range,
+            y_range=[y_range[0], y_max + 0.32 * y_span],
+            y_text=y_max + 0.22 * y_span,
+            theme=theme,
+        )
 
     if show_loss:
         lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
@@ -303,7 +605,7 @@ def build_simple_lr_figure(
         fig.data[2].update(legend="legend2")
 
         fig.update_xaxes(title="x₁", range=x_range, row=1, col=1)
-        fig.update_yaxes(title="ŷ", range=[y_min - y_pad, y_max + y_pad], row=1, col=1)
+        fig.update_yaxes(title="ŷ", range=y_range, row=1, col=1)
 
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
@@ -354,7 +656,7 @@ def build_simple_lr_figure(
         annotations=[theta_formula_annotation(), eq_annotation(0)],
         legend=get_legend_props(theme=theme),
         xaxis=dict(title="x₁", range=x_range),
-        yaxis=dict(title="ŷ", range=[y_min - y_pad, y_max + y_pad]),
+        yaxis=dict(title="ŷ", range=y_range),
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )

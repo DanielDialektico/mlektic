@@ -36,6 +36,7 @@ def build_logistic_figure(
     dec=4,
     frame_duration=80,
     max_theta_cols=8,
+    probability_link="softmax",
     theme=None,
 ):
     """Build logistic figure based on data dimensionality."""
@@ -62,6 +63,7 @@ def build_logistic_figure(
         grid = history.get("grid", {}) or {}
 
         metrics_hist = history.get("metrics_hist", None)
+        probability_link = history.get("probability_link", probability_link)
 
         w_hist = _first_not_none(history.get("w_hist", None), w_hist)
         b_hist = _first_not_none(history.get("b_hist", None), b_hist)
@@ -168,6 +170,7 @@ def build_logistic_figure(
             dec=min(dec, 4),
             frame_duration=frame_duration,
             max_theta_cols=max_theta_cols,
+            probability_link=probability_link,
             theme=theme,
         )
 
@@ -192,6 +195,7 @@ def build_logistic_figure(
             dec=min(dec, 4),
             frame_duration=frame_duration,
             max_theta_cols=max_theta_cols,
+            probability_link=probability_link,
             theme=theme,
         )
 
@@ -211,6 +215,7 @@ def build_logistic_figure(
         dec=min(dec, 4),
         frame_duration=frame_duration,
         max_theta_cols=max_theta_cols,
+        probability_link=probability_link,
         theme=theme,
     )
 

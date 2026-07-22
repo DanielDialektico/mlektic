@@ -33,3 +33,4 @@ class LogisticHistoryConfig:
     metrics: dict | None = None
     max_frames: int | None = 60
     frame_step: int | None = 10
+    multiclass_link: str = "auto"

@@ -17,6 +17,7 @@
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/translations.js?v=f85f4cfb"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Índice" href="genindex.html" />
     <link rel="search" title="Búsqueda" href="search.html" />
@@ -53,6 +54,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#uso-granular-de-la-api">Uso Granular de la API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#metricas-personalizadas">Métricas Personalizadas</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#control-de-frames">Control de Frames</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#control-de-redes-pytorch">Control de Redes PyTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#exportar-a-html">Exportar a HTML</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#configuracion-del-renderer">Configuración del Renderer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dimensionalidad-alta">Dimensionalidad Alta</a></li>
@@ -161,6 +163,78 @@ antes de construir la figura:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_logistic</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">max_frames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">frame_step</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Las trazas 2D interpolan entre estados mediante <code class="docutils literal notranslate"><span class="pre">transition_duration</span></code>. Un valor
+<code class="docutils literal notranslate"><span class="pre">None</span></code> elige automaticamente una duracion menor que <code class="docutils literal notranslate"><span class="pre">frame_duration</span></code> para que
+la interpolacion termine antes del siguiente frame; los valores iguales o mayores
+tambien se limitan de forma segura. <code class="docutils literal notranslate"><span class="pre">0</span></code> desactiva la transicion. Las superficies
+3D requieren redibujado y obtienen su continuidad aumentando <code class="docutils literal notranslate"><span class="pre">steps</span></code> o el limite
+<code class="docutils literal notranslate"><span class="pre">max_frames</span></code>.</p>
+<p>Las lineas animadas conservan todos sus puntos durante la interpolacion. Esto evita
+que la simplificacion geometrica de Plotly cambie la ruta SVG entre frames y produzca
+segmentos parciales o parpadeos en renderizadores de Jupyter.</p>
+<p>Cuando un frame modifica ecuaciones LaTeX o tarjetas de metricas, la figura activa
+automaticamente el redibujado de layout requerido por Jupyter. Las animaciones que
+solo cambian trazas conservan la actualizacion ligera sin redibujado completo. En
+frames mixtos, el orden <code class="docutils literal notranslate"><span class="pre">traces</span> <span class="pre">first</span></code> interpola primero la recta o curva y aplica
+despues el nuevo estado matematico, evitando que el layout anule la fluidez visual.</p>
+<p>MathJax sustituye una expresion LaTeX completa; no interpola los digitos entre dos
+expresiones. Por eso una formula LaTeX que parece fluida es una secuencia densa de
+estados discretos. En curvas acotadas, como la sigmoide logistica, el redibujado
+puede ser menos perceptible que en una recta que recorre un rango amplio.</p>
+<p>Para regresion lineal 1D, <code class="docutils literal notranslate"><span class="pre">animation_mode=&quot;auto&quot;</span></code> usa una estrategia hibrida:
+la formula simbolica queda fija en LaTeX y los coeficientes numericos, la recta,
+la perdida y las metricas avanzan como trazas sincronizadas. <code class="docutils literal notranslate"><span class="pre">fps</span></code> fija la
+cadencia y <code class="docutils literal notranslate"><span class="pre">interpolation_frames</span></code> controla cuantos intervalos visuales existen
+entre checkpoints. El slider sigue mostrando solo pasos semanticos reales.
+Sin <code class="docutils literal notranslate"><span class="pre">fps</span></code>, cada subframe dura <code class="docutils literal notranslate"><span class="pre">frame_duration</span> <span class="pre">/</span> <span class="pre">interpolation_frames</span></code>. Evita
+valores inferiores a unos 16 ms en el navegador; para Jupyter y Colab, <code class="docutils literal notranslate"><span class="pre">fps=30</span></code>
+a <code class="docutils literal notranslate"><span class="pre">45</span></code> suele ofrecer una cadencia mas estable que solicitar 100 FPS.</p>
+<p>En clasificacion multiclase, <code class="docutils literal notranslate"><span class="pre">multiclass_link=&quot;auto&quot;</span></code> compara los scores con
+<code class="docutils literal notranslate"><span class="pre">predict_proba</span></code> para distinguir Softmax de sigmoides OvR normalizadas. El
+override <code class="docutils literal notranslate"><span class="pre">&quot;softmax&quot;</span></code> o <code class="docutils literal notranslate"><span class="pre">&quot;ovr&quot;</span></code> resulta util para estimadores personalizados.</p>
+</section>
+<section id="control-de-redes-pytorch">
+<h2>Control de Redes PyTorch<a class="headerlink" href="#control-de-redes-pytorch" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">TorchTrainingRecorder</span></code> limita por defecto los tensores completos a 4096
+elementos. Los tensores mayores conservan sus normas sin duplicarse en el historial.
+Para una red pequena cuyo grafo matematico deba mostrar todos los pesos, aumenta el
+limite de forma consciente:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recorder</span> <span class="o">=</span> <span class="n">TorchTrainingRecorder</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">max_tensor_elements</span><span class="o">=</span><span class="mi">10_000</span><span class="p">,</span>
+    <span class="n">max_activation_elements</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+    <span class="n">record_every</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">max_frames</span></code> selecciona pasos distribuidos uniformemente sin inventar estados
+intermedios. El ultimo frame siempre usa los tensores actuales del modelo:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">visualize_nn_graph</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">history</span><span class="p">,</span>
+    <span class="n">max_frames</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="n">frame_duration</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
+    <span class="n">node_color_mode</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">,</span>
+    <span class="n">edge_color_mode</span><span class="o">=</span><span class="s2">&quot;weight&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>El modo <code class="docutils literal notranslate"><span class="pre">value</span></code> usa un minimo y maximo global reales para todos los nodos y
+frames mostrados. Un nodo gris representa una salida cercana a cero dentro de esa
+escala; no implica que el nodo sea constante. El hover distingue ceros exactos,
+ReLU inactivas y valores pequenos expresados en notacion cientifica.</p>
+<p>Para inspeccionar el flujo en vez del parametro aislado:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">signal_fig</span> <span class="o">=</span> <span class="n">visualize_nn_graph</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+    <span class="n">history</span><span class="p">,</span>
+    <span class="n">edge_color_mode</span><span class="o">=</span><span class="s2">&quot;signal&quot;</span><span class="p">,</span>  <span class="c1"># w_ji * a_i</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>La contribucion <span class="math notranslate nohighlight">\(\theta_{ji}a_i\)</span> tampoco coincide necesariamente con la salida del
+nodo receptor, que agrega todas las entradas, suma el bias y aplica la activacion.</p>
 </section>
 <section id="exportar-a-html">
 <h2>Exportar a HTML<a class="headerlink" href="#exportar-a-html" title="Link to this heading"></a></h2>
@@ -169,6 +243,19 @@ antes de construir la figura:</p>
 </pre></div>
 </div>
 <p>El archivo HTML es autocontenido y puede abrirse en cualquier navegador.</p>
+<p>El reporte matematico completo de una red usa una API separada:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mlektic</span><span class="w"> </span><span class="kn">import</span> <span class="n">display_nn_math_report</span><span class="p">,</span> <span class="n">export_nn_math_report</span>
+
+<span class="n">display</span><span class="p">(</span><span class="n">display_nn_math_report</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">))</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">export_nn_math_report</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">X</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span>
+    <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
+    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;complex-network-mathematics.html&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="configuracion-del-renderer">
 <h2>Configuración del Renderer<a class="headerlink" href="#configuracion-del-renderer" title="Link to this heading"></a></h2>
@@ -233,12 +320,12 @@ python<span class="w"> </span>test_1_var.py
 </section>
 <section id="compatibilidad-con-futuros-adapters">
 <h2>Compatibilidad con Futuros Adapters<a class="headerlink" href="#compatibilidad-con-futuros-adapters" title="Link to this heading"></a></h2>
-<p>La API de alto nivel trabaja contra adapters. Para soportar otro framework, el
-adapter debe traducir su modelo al contrato interno: predicción, probabilidades,
-extracción de parámetros cuando aplique, captura incremental o replay, y datos
-de escalado. Esta separación deja la librería preparada para modelos no
-Scikit-Learn y para una futura capa de visualización de redes neuronales sin
-acoplar cada figura a un framework específico.</p>
+<p>La API tabular de alto nivel trabaja contra adapters. Para soportar otro framework,
+el adapter debe traducir su modelo al contrato interno: prediccion, probabilidades,
+extraccion de parametros cuando aplique, captura incremental o replay, y datos de
+escalado. PyTorch ya cuenta con una integracion especializada mediante
+<code class="docutils literal notranslate"><span class="pre">TorchTrainingRecorder</span></code> y builders neurales; otros frameworks pueden implementar
+un recorder equivalente o adaptarse al contrato tabular cuando corresponda.</p>
 </section>
 </section>
 

@@ -90,21 +90,22 @@ exact weights, gradients, updates, node outputs, and dimensions. Every node fill
 also evolves from the exact forward pass for the selected input. By default,
 node colors share one global scale whose ticks are the real minimum and maximum
 outputs across all displayed nodes and frames, including negative values. Edge
-and node palettes intentionally encode different quantities: an edge is a weight
-`w[j, i]`, whereas a neuron produces `a[j] = phi(sum_i w[j, i] a[i] + b[j])`.
+and node palettes intentionally encode different quantities: an edge is a parameter
+`theta[j, i]`, whereas a neuron produces
+`a[j] = phi(sum_i theta[j, i] a[i] + theta_0[j])`.
 The final frame uses the model's current tensors so the last slider position
 always represents the trained network.
 
 For additional contrast, `node_color_mode="relative"` normalizes each layer over
 the displayed timeline and labels the scale as `a_tilde`. The optional
 `edge_color_mode="signal"` colors each connection by the actual forward
-contribution `w[j, i] * a[i]`; the default `"weight"` mode continues to show the
+contribution `theta[j, i] * a[i]`; the default `"weight"` mode continues to show the
 parameter itself. Both modes retain the exact weight, source output, transmitted
 signal, and node output in hover data.
 
 The graph distinguishes a true zero from a rounded value. A ReLU output equal to
 zero is labeled `0 (ReLU inactive)`; other exact zeros are labeled `0 (exact)`,
-and tiny nonzero values use scientific notation. The compact `W_t` readout and
+and tiny nonzero values use scientific notation. The compact `Theta_t` readout and
 training-step label are animated traces, so they update without forcing a full
 redraw or making the network blink.
 
@@ -116,7 +117,7 @@ the inferred metrics. Histories without metrics keep all four panels and show
 which recorder arguments are missing.
 
 For small networks, `explain_nn_prediction` substitutes actual values in every
-`z = Wa + b` computation. Larger models are summarized with ellipses in Plotly
+`z = Theta a + theta_0` computation. Larger models are summarized with ellipses in Plotly
 and remain fully documented in the standalone HTML report. The recorder keeps
 full tensors only up to `max_tensor_elements` values (4096 by default), so large
 runs still retain loss, metrics, and tensor norms without overloading a notebook.
@@ -133,7 +134,7 @@ runs still retain loss, metrics, and tensor norms without overloading a notebook
 *   **Regresión Lineal y Logística**: Soporte completo para los dos tipos de regresión más fundamentales del ML, cada uno con su propia función pública.
 *   **Renderizado Inteligente por Dimensión**:
     *   **1 Variable (2D)**: Dibuja la recta de regresión / curva sigmoide ajustándose punto a punto junto a la curva de pérdida.
-    *   **2 Variables (3D)**: Renderiza un plano predictivo / superficie de probabilidad en 3D interactivo que se inclina y eleva iteración por iteración. En el caso de logística multiclase, renderiza $K$ superficies superpuestas evaluando el clasificador Softmax de forma dinámica sobre los datos.
+    *   **2 Variables (3D)**: Renderiza un plano predictivo o una superficie de probabilidad 3D. En logística multiclase muestra $K$ superficies usando el enlace real del estimador: Softmax multinomial o sigmoides OvR normalizadas.
     *   **Múltiples Variables (d > 2)**: Al no ser posible graficar predicciones de alta dimensión, `mlektic` construye dinámicamente una matriz matemática en LaTeX interactiva que actualiza los pesos de tu vector `θ` en tiempo real.
 *   **Clasificación Multiclase**: Visualización automática de curvas de probabilidad por clase (1D), matrices de pesos multiclase (d > 2), y superficies múltiples simultáneas con paneles de ecuaciones (2D).
 *   **Inspección de Pipelines**: Capacidad de proyectar el aprendizaje visualmente tanto en el **"espacio local/escalado"** como de vuelta al **"espacio original"** cuando usas funciones como `StandardScaler`.
@@ -185,8 +186,10 @@ model.fit(X, y)
 # 3. Animar la magia
 fig = visualize_lr(
     model, X, y,
-    steps=60,               # Cantidad de cuadros (frames) a simular
-    frame_duration=80,      # Velocidad (ms por frame). Ej: 10 para super rápido
+    steps=60,               # Checkpoints semánticos capturados
+    animation_mode="hybrid",# Subframes sincronizados para la vista 1D
+    fps=30,                 # Cadencia visual en Jupyter/Colab
+    interpolation_frames=3, # Intervalos visuales entre checkpoints
     show_loss=True,         # Muestra la curva MSE/Loss al costado
     title="Mi Primera Animación Mlektic"
 )
@@ -195,6 +198,16 @@ fig.show()
 # (Opcional) Si la animación en tu editor es lenta, expórtalo a HTML puro:
 # fig.write_html("animacion.html", auto_play=False) 
 ```
+
+En una regresión lineal 1D, `animation_mode="auto"` selecciona el modo
+híbrido: la definición simbólica permanece en LaTeX, mientras la recta, los
+coeficientes numéricos, la pérdida y las métricas avanzan como trazas Plotly
+sin redibujar el layout. Si no se especifica `fps`, `frame_duration` se divide
+entre `interpolation_frames`; por ejemplo, `30 / 3 = 10 ms` solicita 100 FPS y
+puede provocar cuadros descartados en Jupyter. Para notebooks se recomienda
+`fps=30` a `fps=45`, o conservar `frame_duration=60` a `80` con tres subframes.
+El modo `animation_mode="native"` actualiza la sustitución en LaTeX en cada
+checkpoint, pero requiere que MathJax y Plotly redibujen el layout.
 
 ---
 
@@ -248,7 +261,7 @@ fig.show()
 | `trained_estimator` | estimator / Pipeline | — | Modelo de Scikit-Learn ya entrenado. |
 | `X` | `np.ndarray` | — | Matriz de features de entrenamiento. |
 | `y` | `np.ndarray` | — | Vector objetivo. |
-| `steps` | `int` | `60` | Número de frames de animación. |
+| `steps` | `int` | `60` | Número de checkpoints semánticos capturados. |
 | `mode` | `str` | `"auto"` | Estrategia de captura: `"auto"`, `"iterative"` o `"final_interp"`. |
 | `show_loss` | `bool` | `True` | Muestra la curva de pérdida junto al gráfico principal. |
 | `title` | `str` | `None` | Título personalizado del gráfico. |
@@ -259,7 +272,11 @@ fig.show()
 | `display_space` | `str` | `"original"` | Espacio de visualización de parámetros (`"original"` o `"scaled"`). |
 | `metrics` | `list[str]` | `["loss", "mse", "r2"]` | Lista de métricas a calcular y mostrar ("loss", "mse", "r2", "mae"). |
 | `dec` | `int` | `4` | Decimales para formatear los parámetros. |
-| `frame_duration` | `int` | `80` | Duración de cada frame en ms. Disminuir para más velocidad. |
+| `frame_duration` | `int` | `80` | Duración del frame nativo; en modo híbrido se divide entre `interpolation_frames` cuando `fps=None`. |
+| `transition_duration` | `int \| None` | `None` | Duración de la interpolación visual 2D; `0` la desactiva. |
+| `animation_mode` | `str` | `"auto"` | Usa animación híbrida en regresión 1D y modo nativo en dimensiones mayores. |
+| `fps` | `int \| None` | `None` | FPS visuales del modo híbrido. En Jupyter/Colab se recomiendan valores entre 30 y 45. |
+| `interpolation_frames` | `int` | `3` | Intervalos visuales entre checkpoints reales en modo híbrido. |
 | `max_frames` | `int \| None` | `60` | Límite de frames renderizados para mantener animaciones livianas. |
 | `frame_step` | `int \| None` | `10` | Salto temporal usado cuando `max_frames=None`. |
 | `theme` | `str \| None` | `None` | Tema visual. `None` usa el tema clásico oscuro. |
@@ -273,7 +290,7 @@ fig.show()
 | `y` | `np.ndarray` | — | Vector de etiquetas. |
 | `steps` | `int` | `60` | Número de frames de animación. |
 | `mode` | `str` | `"auto"` | Estrategia de captura: `"auto"`, `"iterative"` o `"final_interp"`. |
-| `show_loss` | `bool` | `True` | Muestra la curva de log-loss junto al gráfico principal. |
+| `show_loss` | `bool` | `False` | Muestra la curva de log-loss cuando existe un historial iterativo real. |
 | `title` | `str` | `None` | Título personalizado del gráfico. |
 | `smooth` | `str \| None` | `"ema"` | Suavizado de la curva de pérdida (`"ema"` o `None`). |
 | `smooth_beta` | `float` | `0.85` | Parámetro beta para el suavizado EMA. |
@@ -283,9 +300,11 @@ fig.show()
 | `metrics` | `list[str]` | `["loss", "accuracy"]` | Lista de métricas a mostrar durante el entrenamiento. |
 | `dec` | `int` | `4` | Decimales para formatear los parámetros. |
 | `frame_duration` | `int` | `80` | Duración de cada frame en ms. |
+| `transition_duration` | `int \| None` | `None` | Duración de la interpolación visual 2D; las superficies 3D conservan redibujado estable. |
 | `max_frames` | `int \| None` | `60` | Límite de frames renderizados para mantener animaciones livianas. |
 | `frame_step` | `int \| None` | `10` | Salto temporal usado cuando `max_frames=None`. |
 | `max_theta_cols` | `int` | `5` | Máximo de columnas de pesos visibles antes de truncar matrices LaTeX. |
+| `multiclass_link` | `str` | `"auto"` | Detecta `"softmax"` u `"ovr"`; permite forzar cualquiera de los dos. |
 | `theme` | `str \| None` | `None` | Tema visual. `None` usa el tema clásico oscuro. |
 
 `metrics` acepta nombres de métricas integradas o un diccionario de funciones
@@ -299,6 +318,12 @@ Si pasas un diccionario como `{"Mi métrica": callable}`, la función debe recib
 ## 🔍 Explicación Visual de Predicciones (`explain_lr_prediction`, `explain_logistic_prediction`)
 
 `mlektic` incluye herramientas diseñadas para explicar de forma matemática y geométrica una predicción puntual de tu modelo ya entrenado. Soporta Scikit-Learn pipelines y formatea inteligentemente los pesos.
+
+En dos variables, las sustituciones y resultados grandes se expresan en
+notación científica LaTeX para conservar su magnitud sin desbordar los paneles.
+En dimensiones mayores, `x` y `θ` se muestran como vectores columna; `⋮` omite
+solamente componentes intermedias y no representa una matriz ni altera el orden
+del producto punto `θᵀx`.
 
 ```python
 from mlektic import explain_lr_prediction, explain_logistic_prediction
@@ -368,7 +393,7 @@ src/mlektic/
 │       ├── binary_2d.py     # Binaria, 2 variables (superficie 3D)
 │       ├── binary_nd.py     # Binaria, d > 2 (matriz LaTeX)
 │       ├── multiclass_1d.py # Multiclase, 1 variable (curvas de probabilidad)
-│       ├── multiclass_2d.py # Multiclase, 2 variables (superficies softmax)
+│       ├── multiclass_2d.py # Multiclase, 2 variables (Softmax u OvR)
 │   │   └── multiclass_nd.py # Multiclase, d > 2 (matriz de pesos)
 │   └── neural/
 │       ├── architecture.py  # Diagrama matemático de arquitectura

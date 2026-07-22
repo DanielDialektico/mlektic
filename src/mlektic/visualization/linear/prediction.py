@@ -13,15 +13,15 @@ from ..theme import (
 
 
 def _fmt(val, dec=4):
-    s = f"{float(val):.{dec}f}"
+    number = float(val)
+    if number != 0 and abs(number) >= 1_000_000:
+        exponent = int(np.floor(np.log10(abs(number))))
+        mantissa = number / (10**exponent)
+        mantissa_text = f"{mantissa:.{min(dec, 4)}f}".rstrip('0').rstrip('.')
+        return rf"{mantissa_text}\times 10^{{{exponent}}}"
+    s = f"{number:.{dec}f}"
     if '.' in s:
         s = s.rstrip('0').rstrip('.')
-    parts = s.split('.')
-    int_part = parts[0]
-    num_digits = len(int_part) if int_part[0] != '-' else len(int_part) - 1
-    if num_digits > 7:
-        limit = 8 if int_part[0] == '-' else 7
-        return int_part[:limit] + r"\dots"
     return s
 
 def _get_last_estimator(est):
@@ -303,13 +303,14 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     res_tex = (
         r"$\begin{aligned}"
         rf"\hat{{y}} &= {_fmt(yhat, dec)}\\"
-        rf"(x_1, x_2, \hat{{y}}) &= ({_fmt(xq1_disp, dec)}, {_fmt(xq2_disp, dec)}, {_fmt(yhat, dec)})"
+        r"(x_1, x_2, \hat{y}) &= \\"
+        rf"&\quad ({_fmt(xq1_disp, dec)}, {_fmt(xq2_disp, dec)}, {_fmt(yhat, dec)})"
         r"\end{aligned}$"
     )
 
     fig = make_subplots(
-        rows=1, cols=2, column_widths=[0.36, 0.64],
-        horizontal_spacing=0.14, specs=[[{"type": "xy"}, {"type": "scene"}]],
+        rows=1, cols=2, column_widths=[0.40, 0.60],
+        horizontal_spacing=0.10, specs=[[{"type": "xy"}, {"type": "scene"}]],
     )
     fig.update_xaxes(visible=False, range=[0, 1], row=1, col=1)
     fig.update_yaxes(visible=False, range=[0, 1], row=1, col=1)
@@ -357,12 +358,12 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
             font=dict(size=16, color=text_color),
         )
 
-    def body_annot(tex_body, y):
+    def body_annot(tex_body, y, size=15):
         return dict(
             x=0.06, y=y, xref="x1", yref="y1",
             text=tex_body, showarrow=False,
             xanchor="left", yanchor="top", align="left",
-            font=dict(size=15, color=text_color),
+            font=dict(size=size, color=text_color),
         )
 
     T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
@@ -373,8 +374,8 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         r_body = "" if stage < 3 else res_tex
         return [
             title_annot(T1, 0.96), body_annot(v_body, 0.89),
-            title_annot(T2, 0.63), body_annot(s_body, 0.56),
-            title_annot(T3, 0.30), body_annot(r_body, 0.23),
+            title_annot(T2, 0.63), body_annot(s_body, 0.56, size=13),
+            title_annot(T3, 0.30), body_annot(r_body, 0.23, size=12),
         ]
 
     def scene_ann(stage: int):
@@ -420,16 +421,6 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         ),
     )
     return fig
-
-def _needs_single_col(values, max_digits=5):
-    for v in np.asarray(values, dtype=float).ravel():
-        try:
-            int_digits = len(str(int(abs(float(v)))))
-        except Exception:
-            int_digits = 10**9
-        if int_digits > max_digits:
-            return True
-    return False
 
 def _matrix_compact(items, rows, cols, head_rows, tail_rows):
     cap = rows * cols
@@ -549,24 +540,22 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
         return fig
 
     # ---- MODE: d > 12 => matrix view ----
-    x_rows, x_force_1col = 11, _needs_single_col(x_disp, max_digits=5)
-    x_cols = 1 if x_force_1col else 3
+    x_rows, x_cols = 11, 1
     x_items = [rf"{_fmt(x_disp[j], dec)}" for j in range(d)]
     x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 5, 5))
     x_mat_tex = rf"$\mathbf{{x}}=\begin{{bmatrix}} {x_mat_inner} \end{{bmatrix}}$"
 
-    th_rows, th_force_1col = 9, _needs_single_col(w_disp, max_digits=5)
-    th_cols = 1 if th_force_1col else 3
+    th_rows, th_cols = 9, 1
     th_items = [rf"{_fmt(w_disp[j], dec)}" for j in range(d)]
     th_mat_inner = r" \\ ".join(_matrix_compact(th_items, th_rows, th_cols, 4, 4))
     th_mat_tex = rf"$\boldsymbol{{\theta}}=\begin{{bmatrix}} {th_mat_inner} \end{{bmatrix}}$"
 
-    x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}\times {x_cols}}}$"
-    th_dim_tex = rf"$\boldsymbol{{\theta}}\in\mathbb{{R}}^{{{d}\times {th_cols}}}$"
-    y_dim_tex = r"$\hat{y}\in\mathbb{R}^{1\times 1}$"
+    x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}}}$"
+    th_dim_tex = rf"$\boldsymbol{{\theta}}\in\mathbb{{R}}^{{{d}}}$"
+    y_dim_tex = r"$\hat{y}\in\mathbb{R}$"
     theta0_tex = rf"$\theta_0 = {_fmt(b_disp, dec)}$"
 
-    model_formula_tex = r"$\hat{y}=\theta_0 + \operatorname{vec}(\boldsymbol{\theta})^\top\operatorname{vec}(\mathbf{x})$"
+    model_formula_tex = r"$\hat{y}=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0$"
     subst_eq_tex = (
         r"$\begin{aligned}"
         rf"&\hat{{y}} = ({_fmt(w_disp[0], dec)})\cdot({_fmt(x_disp[0], dec)}) \\"
