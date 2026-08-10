@@ -1,497 +1,320 @@
 # Mlektic
 
-## PyTorch neural networks
+Mlektic is an interactive Python library for learning the mathematics of fitted machine-learning models. It connects Scikit-learn linear and logistic estimators and PyTorch networks to Plotly views of model geometry, parameters, probabilities, training records, and individual predictions.
 
-Install the optional PyTorch integration only in environments that need it:
+Its central rule is simple: an animation must say where its states came from. A sequence reconstructed over a cloned estimator is labeled as a replay. A baseline-to-model path is labeled as synthetic interpolation. Only states observed during the actual training process are called recorded.
+
+## What Mlektic provides
+
+- Linear regression in 1D, 2D, and high-dimensional report views.
+- Binary and multiclass logistic regression in 1D, 2D, and high-dimensional views.
+- Model-aware prediction explanations with mathematical substitution.
+- Original/scaled coefficient views for recognized affine Scikit-learn pipelines.
+- Explicit history provenance, retained checkpoint coordinates, and smoothing metadata.
+- Fluid native and hybrid Plotly animation without presenting visual subframes as optimizer updates.
+- PyTorch architecture, computational graph, training, parameter, activation, forward-pass report, and prediction views.
+- Complete HTML export with explicit Plotly and MathJax dependency choices.
+
+## Installation
 
 ```bash
-pip install "mlektic[torch]"
+pip install -e .
 ```
 
-The neural API is designed for notebooks and Colab. It combines a mathematical
-architecture map, an animated forward/backpropagation graph, training metrics,
-LaTeX parameter evolution, numerical forward-pass substitutions, and a scalable
-HTML taxonomy report.
+PyTorch support is optional:
+
+```bash
+pip install -e ".[torch]"
+```
+
+Core dependencies are NumPy, Scikit-learn, and Plotly. Notebook-specific IPython functionality is loaded only when requested.
+
+## Linear regression quickstart
+
+```python
+import numpy as np
+from sklearn.linear_model import SGDRegressor
+
+from mlektic import visualize_lr
+
+X = np.linspace(-2, 2, 80).reshape(-1, 1)
+y = 1.5 + 2.2 * X[:, 0]
+
+model = SGDRegressor(max_iter=200, random_state=7).fit(X, y)
+
+fig = visualize_lr(
+    model,
+    X,
+    y,
+    steps=100,          # K reconstructed checkpoints
+    max_frames=30,      # N displayed checkpoints
+    smooth="ema",
+    animation_mode="auto",
+)
+fig.show()
+```
+
+`SGDRegressor` supports `partial_fit`, so Mlektic constructs a replay over a clone. The figure identifies the replay, shows N/K, preserves retained source indices, and reports whether the final replay parameters match the supplied fitted estimator.
+
+For a non-incremental estimator:
+
+```python
+from sklearn.linear_model import LinearRegression
+
+closed_form_model = LinearRegression().fit(X, y)
+fig = visualize_lr(closed_form_model, X, y, steps=30)
+```
+
+This path is a synthetic interpolation from a documented baseline to the fitted model. The slider uses interpolation progress rather than “training step.”
+
+## Logistic regression quickstart
+
+```python
+from sklearn.linear_model import LogisticRegression
+
+from mlektic import visualize_logistic
+
+labels = np.where(X[:, 0] >= 0, "accepted", "rejected")
+classifier = LogisticRegression().fit(X, labels)
+
+fig = visualize_logistic(
+    classifier,
+    X,
+    labels,
+    steps=30,
+    multiclass_link="auto",
+)
+fig.show()
+```
+
+Binary views connect the linear score, sigmoid probability, fitted class order, and decision. Multiclass views resolve supported Softmax or normalized one-vs-rest probability semantics and retain the estimator's `classes_` ordering.
+
+## Prediction explanations
+
+```python
+from mlektic import explain_lr_prediction, explain_logistic_prediction
+
+linear_explanation = explain_lr_prediction(
+    closed_form_model,
+    X,
+    y,
+    x_query=[[1.25]],
+)
+
+logistic_explanation = explain_logistic_prediction(
+    classifier,
+    X,
+    labels,
+    x_query=[[0.75]],
+    show_class_labels=False,
+)
+```
+
+The explainers always compute the estimator output. Supplied `yhat`, `p_hat`, or `y_hat` values are verified by default:
+
+```python
+predicted = closed_form_model.predict([[1.25]])[0]
+fig = explain_lr_prediction(
+    closed_form_model,
+    X,
+    y,
+    x_query=[[1.25]],
+    yhat=predicted,
+)
+```
+
+Use `prediction_source="provided"` only for an intentional counterfactual lesson. The figure will identify it as user-provided. Queries outside any observed per-feature training range are marked as extrapolations and remain visible in 1D/2D plots.
+
+Logistic figures use class indices by default. In a binary explanation, the displayed sigmoid value is `p_1`, the output compares `(p_0, p_1)`, and the winning index is reported without semantic labels. Set `show_class_labels=True` to append fitted labels from `classes_` to the indexed axes, legends, and winning class. Labels and fitted order remain available in `layout.meta` in either mode. For two features, observed class targets are plotted numerically at 0 and 1, the trained model is a probability surface, and the decision boundary is the line where that surface crosses `p_1 = 0.5`.
+
+## History contract
+
+Tabular history payloads expose an auditable contract:
+
+```python
+history["metadata"]
+# {
+#   "source": "replayed" | "interpolated",
+#   "requested_mode": "auto",
+#   "resolved_mode": "iterative",
+#   "requested_steps": 100,
+#   "training_total_steps": 200,
+#   "captured_steps": 100,
+#   "displayed_steps": 30,
+#   "step_indices": array([...]),
+#   "displayed_step_indices": array([...]),
+#   "final_state_matches_estimator": False,
+#   "display_space": "original",
+#   "smoothing": {"method": "ema", "beta": 0.85},
+#   "warnings": [...],
+# }
+```
+
+Time vocabulary:
+
+- **T** — actual/reported training updates, when known.
+- **K** — semantic checkpoints recorded or constructed before display sampling.
+- **N** — retained checkpoints displayed after sampling.
+- **q** — perceptual intervals inserted between displayed checkpoints.
+- **F** — Plotly visual frames; these are not additional optimizer updates.
+
+Read [History provenance and time semantics](codeasdoc/history_semantics.rst) before interpreting convergence from an animation.
+
+## Raw and displayed loss
+
+```python
+history["loss_raw"]
+history["loss_display"]
+history["loss_hist"]       # backward-compatible alias of loss_display
+```
+
+EMA never overwrites the empirical series. A visible Loss/Log-loss metric and the loss curve use the same display values, while metadata records the method and beta.
+
+## Animation controls
+
+Important linear controls include:
+
+- `animation_mode="auto" | "native" | "hybrid"`
+- `frame_duration`
+- `transition_duration`
+- `fps`
+- `interpolation_frames`
+- `max_frames`
+- `frame_step`
+
+`auto` uses hybrid trace-only motion for one-dimensional linear regression and native animation elsewhere. Hybrid subframes improve continuity; semantic labels advance only at retained checkpoints.
+
+Important shared history controls include:
+
+- `mode="auto" | "iterative" | "final_interp"`
+- `baseline="mean" | "zeros"` for linear interpolation
+- `baseline="prior" | "uniform"` for logistic interpolation
+- `display_space="original" | "scaled"`
+- `smooth=None | "ema"`
+- built-in metric sequences or custom callable mappings
+- `show_history_context=True | False` to show or hide only the provenance/N-K
+  subtitle; the slider and `layout.meta` always retain the context
+
+Unsupported values fail early with an English error. Explicit iterative mode requires an estimator with `partial_fit`.
+
+## PyTorch neural networks
 
 ```python
 import torch
-from IPython.display import display
+from torch import nn
+
 from mlektic import (
     TorchTrainingRecorder,
-    display_nn_math_report,
+    build_nn_math_report,
     explain_nn_prediction,
-    export_nn_math_report,
     visualize_nn_architecture,
     visualize_nn_graph,
     visualize_nn_training,
     visualize_nn_weights,
 )
 
-torch.manual_seed(7)
-X = torch.tensor([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
-y = torch.tensor([[0.], [1.], [1.], [0.]])
-
-model = torch.nn.Sequential(
-    torch.nn.Linear(2, 4),
-    torch.nn.Tanh(),
-    torch.nn.Linear(4, 1),
-    torch.nn.Sigmoid(),
-)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.08)
-loss_fn = torch.nn.BCELoss()
-recorder = TorchTrainingRecorder(
-    model,
-    optimizer=optimizer,
-    loss_fn=loss_fn,
-    record_every=2,
+network = nn.Sequential(
+    nn.Linear(4, 8),
+    nn.ReLU(),
+    nn.Linear(8, 1),
 )
 
-for step in range(80):
+architecture = visualize_nn_architecture(network, input_shape=(4,))
+graph = visualize_nn_graph(network, input_shape=(4,))
+weights = visualize_nn_weights(network)
+```
+
+For genuine training history, create a recorder and call it from the training loop at a consistent point:
+
+```python
+recorder = TorchTrainingRecorder(network, record_every=5)
+
+for epoch in range(100):
     optimizer.zero_grad()
-    prediction = model(X)
-    loss = loss_fn(prediction, y)
+    predictions = network(inputs)
+    loss = criterion(predictions, targets)
     loss.backward()
     optimizer.step()
 
-    with torch.no_grad():
-        prediction = model(X)
-        recorded_loss = loss_fn(prediction, y)
-    recorder.record(
-        step,
-        loss=recorded_loss,
-        predictions=prediction,
-        targets=y,
-        task="classification",
-    )  # After optimizer.step(), before the next zero_grad().
+    recorder.record(step=epoch + 1, loss=float(loss.detach()))
 
-recorder.close()
-history = recorder.to_history()
-
-visualize_nn_architecture(model, X[:1], history=history).show()
-visualize_nn_graph(model, X[0], history, max_frames=16).show()
-visualize_nn_training(history, max_frames=24, frame_duration=90).show()
-visualize_nn_weights(history, max_rows=4, max_cols=5, max_frames=24).show()
-explain_nn_prediction(model, X[0], history=history, max_frames=12).show()
-
-# Inline in Jupyter/Colab, or export a standalone report for a large network.
-display(display_nn_math_report(model, X[:1], history=history))
-report_path = export_nn_math_report(
-    model,
-    X[:1],
-    history=history,
-    path="xor-mathematics.html",
-)
+training_figure = visualize_nn_training(recorder)
 ```
 
-In the graph, each recorded step is one stable frame. Connection colors form a
-global heatmap from the minimum to maximum weight across training, while thin
-wine-red dotted lines encode backpropagated gradient magnitude. Hovering shows
-exact weights, gradients, updates, node outputs, and dimensions. Every node fill
-also evolves from the exact forward pass for the selected input. By default,
-node colors share one global scale whose ticks are the real minimum and maximum
-outputs across all displayed nodes and frames, including negative values. Edge
-and node palettes intentionally encode different quantities: an edge is a parameter
-`theta[j, i]`, whereas a neuron produces
-`a[j] = phi(sum_i theta[j, i] a[i] + theta_0[j])`.
-The final frame uses the model's current tensors so the last slider position
-always represents the trained network.
+The mathematical report and prediction explainer are separate APIs so large derivations do not overload one interactive plot.
 
-For additional contrast, `node_color_mode="relative"` normalizes each layer over
-the displayed timeline and labels the scale as `a_tilde`. The optional
-`edge_color_mode="signal"` colors each connection by the actual forward
-contribution `theta[j, i] * a[i]`; the default `"weight"` mode continues to show the
-parameter itself. Both modes retain the exact weight, source output, transmitted
-signal, and node output in hover data.
-
-The graph distinguishes a true zero from a rounded value. A ReLU output equal to
-zero is labeled `0 (ReLU inactive)`; other exact zeros are labeled `0 (exact)`,
-and tiny nonzero values use scientific notation. The compact `Theta_t` readout and
-training-step label are animated traces, so they update without forcing a full
-redraw or making the network blink.
-
-`visualize_nn_training` uses a compact 2-by-2 grid for loss and three independent
-performance metrics. Passing `predictions` and `targets` to `record()` infers
-accuracy, macro precision, and macro recall for classification, or MSE, MAE, and
-R2 for regression. Explicit `metrics={...}` values can still override or extend
-the inferred metrics. Histories without metrics keep all four panels and show
-which recorder arguments are missing.
-
-For small networks, `explain_nn_prediction` substitutes actual values in every
-`z = Theta a + theta_0` computation. Larger models are summarized with ellipses in Plotly
-and remain fully documented in the standalone HTML report. The recorder keeps
-full tensors only up to `max_tensor_elements` values (4096 by default), so large
-runs still retain loss, metrics, and tensor norms without overloading a notebook.
-
-**Mlektic** es una librería de Python diseñada para demostrar visual y matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su fase de entrenamiento. Provee gráficos y animaciones interactivas impulsadas por `plotly` para regresión lineal y logística de Scikit-Learn, además de arquitectura, entrenamiento y matemáticas de redes neuronales PyTorch.
-
----
-
-## 🚀 Características Principales
-
-*   **Redes Neuronales PyTorch**: Arquitectura matemática, grafo temporal de parámetros y señales, métricas de entrenamiento, matrices LaTeX, explicación del forward pass y reportes HTML para redes grandes.
-*   **Integración Nivel-Cero con Scikit-Learn**: Compatible directamente con estimadores iterativos (como `SGDRegressor`, `SGDClassifier`) y `Pipelines` estándar.
-*   **Animaciones Fluidas**: Visualiza en tiempo real cómo los parámetros (`θ`), la recta/curva de predicción y la función de pérdida (Loss) convergen.
-*   **Regresión Lineal y Logística**: Soporte completo para los dos tipos de regresión más fundamentales del ML, cada uno con su propia función pública.
-*   **Renderizado Inteligente por Dimensión**:
-    *   **1 Variable (2D)**: Dibuja la recta de regresión / curva sigmoide ajustándose punto a punto junto a la curva de pérdida.
-    *   **2 Variables (3D)**: Renderiza un plano predictivo o una superficie de probabilidad 3D. En logística multiclase muestra $K$ superficies usando el enlace real del estimador: Softmax multinomial o sigmoides OvR normalizadas.
-    *   **Múltiples Variables (d > 2)**: Al no ser posible graficar predicciones de alta dimensión, `mlektic` construye dinámicamente una matriz matemática en LaTeX interactiva que actualiza los pesos de tu vector `θ` en tiempo real.
-*   **Clasificación Multiclase**: Visualización automática de curvas de probabilidad por clase (1D), matrices de pesos multiclase (d > 2), y superficies múltiples simultáneas con paneles de ecuaciones (2D).
-*   **Inspección de Pipelines**: Capacidad de proyectar el aprendizaje visualmente tanto en el **"espacio local/escalado"** como de vuelta al **"espacio original"** cuando usas funciones como `StandardScaler`.
-
----
-
-## 📦 Instalación y Configuración
-
-El proyecto está diseñado usando las mejores prácticas de Python modernas (PEP 621) y `uv` como gestor ultrarrápido de dependencias.
-
-Para desarrollar o instalar localmente:
-```bash
-git clone https://github.com/DanielDialektico/mlektic.git
-cd mlektic
-
-# Crear entorno virtual e instalar dependencias 
-uv sync
-```
-
----
-
-## 💡 Quickstart — Regresión Lineal
-
-La API pública para regresión lineal se resume en `visualize_lr`. Todo el trazado dimensional es manejado de manera automática.
+## HTML export
 
 ```python
-import numpy as np
-import plotly.io as pio
-from sklearn.linear_model import SGDRegressor
-from mlektic import visualize_lr
+from mlektic import export_figure
 
-# Fuerza el renderizador incrustado si usas VS Code Jupyter
-pio.renderers.default = "notebook" 
-
-# 1. Generar datos de juguete
-X = np.sort(np.random.rand(100, 1)) * 10
-y = 2.5 * X.ravel() + 1.0 + np.random.randn(100) * 2
-
-# 2. Tu modelo de Scikit-Learn
-model = SGDRegressor(
-    loss="squared_error",
-    max_iter=50,
-    learning_rate="constant",
-    eta0=0.005,
-    random_state=42
+path = export_figure(
+    fig,
+    "linear-lesson.html",
+    include_plotly="inline",
+    include_mathjax="cdn",
+    responsive=False,
+    auto_play=False,
 )
-model.fit(X, y)
-
-# 3. Animar la magia
-fig = visualize_lr(
-    model, X, y,
-    steps=60,               # Checkpoints semánticos capturados
-    animation_mode="hybrid",# Subframes sincronizados para la vista 1D
-    fps=30,                 # Cadencia visual en Jupyter/Colab
-    interpolation_frames=3, # Intervalos visuales entre checkpoints
-    show_loss=True,         # Muestra la curva MSE/Loss al costado
-    title="Mi Primera Animación Mlektic"
-)
-fig.show()
-
-# (Opcional) Si la animación en tu editor es lenta, expórtalo a HTML puro:
-# fig.write_html("animacion.html", auto_play=False) 
 ```
 
-En una regresión lineal 1D, `animation_mode="auto"` selecciona el modo
-híbrido: la definición simbólica permanece en LaTeX, mientras la recta, los
-coeficientes numéricos, la pérdida y las métricas avanzan como trazas Plotly
-sin redibujar el layout. Si no se especifica `fps`, `frame_duration` se divide
-entre `interpolation_frames`; por ejemplo, `30 / 3 = 10 ms` solicita 100 FPS y
-puede provocar cuadros descartados en Jupyter. Para notebooks se recomienda
-`fps=30` a `fps=45`, o conservar `frame_duration=60` a `80` con tres subframes.
-El modo `animation_mode="native"` actualiza la sustitución en LaTeX en cada
-checkpoint, pero requiere que MathJax y Plotly redibujen el layout.
+The default inlines Plotly but loads MathJax from a CDN. The Plotly runtime is offline-capable; equation rendering still requires network access. Passing `include_mathjax=False` preserves the LaTeX source but does not guarantee rendered equations. Fully self-contained MathJax is not currently promised.
 
----
+Current classic width, height, styling, and motion remain the defaults. Optional academic, compact, classroom, accessible, and responsive/reflow formats are planned in [`mejoras`](mejoras/README.md), not exposed as current APIs.
 
-## 💡 Quickstart — Regresión Logística
+## Project architecture
 
-La API pública para regresión logística es `visualize_logistic`. Soporta clasificación binaria y multiclase.
-
-```python
-import numpy as np
-import plotly.io as pio
-from sklearn.linear_model import SGDClassifier
-from mlektic import visualize_logistic
-
-pio.renderers.default = "notebook"
-
-# 1. Generar datos de clasificación binaria
-np.random.seed(42)
-n = 200
-X = np.random.randn(n, 1)
-y = (X.ravel() > 0).astype(int)
-
-# 2. Tu clasificador de Scikit-Learn
-model = SGDClassifier(
-    loss="log_loss",
-    learning_rate="constant",
-    eta0=0.05,
-    max_iter=500,
-    random_state=42
-)
-model.fit(X, y)
-
-# 3. Animar la curva sigmoide convergiendo
-fig = visualize_logistic(
-    model, X, y,
-    steps=60,
-    show_loss=True,
-    frame_duration=80,
-    title="Regresión Logística Binaria"
-)
-fig.show()
-```
-
----
-
-## 🛠 Opciones Avanzadas de Visualización
-
-### Parámetros de `visualize_lr`
-
-| Parámetro | Tipo | Default | Descripción |
-|---|---|---|---|
-| `trained_estimator` | estimator / Pipeline | — | Modelo de Scikit-Learn ya entrenado. |
-| `X` | `np.ndarray` | — | Matriz de features de entrenamiento. |
-| `y` | `np.ndarray` | — | Vector objetivo. |
-| `steps` | `int` | `60` | Número de checkpoints semánticos capturados. |
-| `mode` | `str` | `"auto"` | Estrategia de captura: `"auto"`, `"iterative"` o `"final_interp"`. |
-| `show_loss` | `bool` | `True` | Muestra la curva de pérdida junto al gráfico principal. |
-| `title` | `str` | `None` | Título personalizado del gráfico. |
-| `smooth` | `str \| None` | `"ema"` | Suavizado de la curva de pérdida (`"ema"` o `None`). |
-| `smooth_beta` | `float` | `0.85` | Parámetro beta para el suavizado EMA. |
-| `strict_loss` | `bool` | `False` | Si `True`, lanza error si el loss no se puede animar correctamente. |
-| `baseline` | `str` | `"mean"` | Referencia inicial del gráfico de pérdida (`"mean"` o `"zeros"`). |
-| `display_space` | `str` | `"original"` | Espacio de visualización de parámetros (`"original"` o `"scaled"`). |
-| `metrics` | `list[str]` | `["loss", "mse", "r2"]` | Lista de métricas a calcular y mostrar ("loss", "mse", "r2", "mae"). |
-| `dec` | `int` | `4` | Decimales para formatear los parámetros. |
-| `frame_duration` | `int` | `80` | Duración del frame nativo; en modo híbrido se divide entre `interpolation_frames` cuando `fps=None`. |
-| `transition_duration` | `int \| None` | `None` | Duración de la interpolación visual 2D; `0` la desactiva. |
-| `animation_mode` | `str` | `"auto"` | Usa animación híbrida en regresión 1D y modo nativo en dimensiones mayores. |
-| `fps` | `int \| None` | `None` | FPS visuales del modo híbrido. En Jupyter/Colab se recomiendan valores entre 30 y 45. |
-| `interpolation_frames` | `int` | `3` | Intervalos visuales entre checkpoints reales en modo híbrido. |
-| `max_frames` | `int \| None` | `60` | Límite de frames renderizados para mantener animaciones livianas. |
-| `frame_step` | `int \| None` | `10` | Salto temporal usado cuando `max_frames=None`. |
-| `theme` | `str \| None` | `None` | Tema visual. `None` usa el tema clásico oscuro. |
-
-### Parámetros de `visualize_logistic`
-
-| Parámetro | Tipo | Default | Descripción |
-|---|---|---|---|
-| `trained_estimator` | estimator / Pipeline | — | Clasificador de Scikit-Learn ya entrenado. |
-| `X` | `np.ndarray` | — | Matriz de features de entrenamiento. |
-| `y` | `np.ndarray` | — | Vector de etiquetas. |
-| `steps` | `int` | `60` | Número de frames de animación. |
-| `mode` | `str` | `"auto"` | Estrategia de captura: `"auto"`, `"iterative"` o `"final_interp"`. |
-| `show_loss` | `bool` | `False` | Muestra la curva de log-loss cuando existe un historial iterativo real. |
-| `title` | `str` | `None` | Título personalizado del gráfico. |
-| `smooth` | `str \| None` | `"ema"` | Suavizado de la curva de pérdida (`"ema"` o `None`). |
-| `smooth_beta` | `float` | `0.85` | Parámetro beta para el suavizado EMA. |
-| `strict_loss` | `bool` | `False` | Si `True`, lanza error si el loss no se puede animar correctamente. |
-| `baseline` | `str` | `"prior"` | Referencia inicial del loss: `"prior"` (proporciones de clase) o `"uniform"`. |
-| `display_space` | `str` | `"original"` | Espacio de visualización de parámetros (`"original"` o `"scaled"`). |
-| `metrics` | `list[str]` | `["loss", "accuracy"]` | Lista de métricas a mostrar durante el entrenamiento. |
-| `dec` | `int` | `4` | Decimales para formatear los parámetros. |
-| `frame_duration` | `int` | `80` | Duración de cada frame en ms. |
-| `transition_duration` | `int \| None` | `None` | Duración de la interpolación visual 2D; las superficies 3D conservan redibujado estable. |
-| `max_frames` | `int \| None` | `60` | Límite de frames renderizados para mantener animaciones livianas. |
-| `frame_step` | `int \| None` | `10` | Salto temporal usado cuando `max_frames=None`. |
-| `max_theta_cols` | `int` | `5` | Máximo de columnas de pesos visibles antes de truncar matrices LaTeX. |
-| `multiclass_link` | `str` | `"auto"` | Detecta `"softmax"` u `"ovr"`; permite forzar cualquiera de los dos. |
-| `theme` | `str \| None` | `None` | Tema visual. `None` usa el tema clásico oscuro. |
-
-`metrics` acepta nombres de métricas integradas o un diccionario de funciones
-personalizadas. En regresión lineal están disponibles `"loss"`, `"mse"`,
-`"r2"` y `"mae"`; en regresión logística, `"loss"`, `"accuracy"` y `"f1"`.
-Si pasas un diccionario como `{"Mi métrica": callable}`, la función debe recibir
-`(y_true, y_pred)` y devolver un escalar.
-
----
-
-## 🔍 Explicación Visual de Predicciones (`explain_lr_prediction`, `explain_logistic_prediction`)
-
-`mlektic` incluye herramientas diseñadas para explicar de forma matemática y geométrica una predicción puntual de tu modelo ya entrenado. Soporta Scikit-Learn pipelines y formatea inteligentemente los pesos.
-
-En dos variables, las sustituciones y resultados grandes se expresan en
-notación científica LaTeX para conservar su magnitud sin desbordar los paneles.
-En dimensiones mayores, `x` y `θ` se muestran como vectores columna; `⋮` omite
-solamente componentes intermedias y no representa una matriz ni altera el orden
-del producto punto `θᵀx`.
-
-```python
-from mlektic import explain_lr_prediction, explain_logistic_prediction
-
-# 1. Escoge un punto de prueba (forma 2D)
-x_query = np.array([[150.0, 25.0]])
-
-# 2. Haz la predicción con tu modelo lineal o logístico
-yhat = model.predict(x_query)[0]
-
-# 3. Explica visualmente de dónde salió el valor
-fig = explain_lr_prediction( # o explain_logistic_prediction
-    model, X_train, y_train,
-    x_query=x_query,
-    yhat=yhat,
-    display_space="original" # Permite ver cómo opera en espacio escalado o nativo
-)
-fig.show()
-```
-
----
-
-## 🏗 Arquitectura del Proyecto
-
-```
+```text
 src/mlektic/
-├── __init__.py              # Exportaciones públicas
-├── core.py                  # Fachada para regresión lineal
-├── logistic.py              # Fachada para regresión logística
-├── api/
-│   ├── linear.py            # API pública: visualize_lr()
-│   ├── logistic.py          # API pública: visualize_logistic()
-│   └── neural.py            # API pública para redes PyTorch
-├── adapters/
-│   ├── base.py              # BaseModelAdapter (ABC)
-│   └── sklearn.py           # SklearnAdapter (Scikit-Learn)
-├── domain/
-│   ├── config.py            # LinearHistoryConfig, LogisticHistoryConfig
-│   └── history.py           # TypedDicts: LinearHistoryPayload, LogisticHistoryPayload
-├── history/
-│   ├── base.py              # HistoryCaptureStrategy (ABC) + funciones de rescalado θ
-│   ├── engine.py            # HistoryEngine: orquesta captura + suavizado + rescalado
-│   ├── strategy_interp.py   # InterpolationCapture (modelos no iterativos)
-│   └── strategy_iterative.py# IterativeCapture (modelos con partial_fit/warm_start)
-├── neural/
-│   ├── introspection.py     # Hooks, shapes y forward pass reproducible
-│   ├── metrics.py           # Métricas ligeras de clasificación/regresión
-│   ├── recorder.py          # Historial frame-aligned de PyTorch
-│   ├── report.py            # Reportes HTML matemáticos
-│   └── taxonomy.py          # Definiciones y taxonomía de capas
-├── services/
-│   ├── linear_history.py    # fit_history() y fit_history_logistic()
-│   └── logistic_history.py  # Re-export de fit_history_logistic
-├── utils/
-│   ├── math.py              # sigmoid, softmax, log-loss, EMA, one-hot
-│   └── grids.py             # Generación de meshgrids 1D y 2D
-├── visualization/
-│   ├── theme.py             # Tema visual (dark mode, sliders, play/pause)
-│   ├── linear/
-│   │   ├── router.py        # build_lr_figure(): enruta por dimensión
-│   │   ├── simple.py        # 1 variable (recta + scatter 2D)
-│   │   ├── plane.py         # 2 variables (plano 3D)
-│   │   └── multivar.py      # d > 2 (matriz LaTeX interactiva)
-│   ├── logistic/
-│       ├── router.py        # build_logistic_figure(): enruta por dimensión y clases
-│       ├── binary_1d.py     # Binaria, 1 variable (curva sigmoide)
-│       ├── binary_2d.py     # Binaria, 2 variables (superficie 3D)
-│       ├── binary_nd.py     # Binaria, d > 2 (matriz LaTeX)
-│       ├── multiclass_1d.py # Multiclase, 1 variable (curvas de probabilidad)
-│       ├── multiclass_2d.py # Multiclase, 2 variables (Softmax u OvR)
-│   │   └── multiclass_nd.py # Multiclase, d > 2 (matriz de pesos)
-│   └── neural/
-│       ├── architecture.py  # Diagrama matemático de arquitectura
-│       ├── graph.py         # Grafo temporal de pesos, señales y nodos
-│       ├── math_view.py     # Sustitución numérica del forward pass
-│       └── training.py      # Loss, métricas, parámetros y activaciones
-└── _internal/
-    └── common.py            # Helpers compartidos (legacy/compatibilidad)
+  api/              public orchestration and export
+  services/         history service facades
+  adapters/         Scikit-learn estimator/pipeline normalization
+  domain/           validated config and payload contracts
+  history/          replay, interpolation, metrics, sampling, provenance
+  visualization/    linear, logistic, neural Plotly builders
+  neural/           recorder, introspection, reports
+  utils/            numerical and probability helpers
 ```
 
-### Escalabilidad hacia nuevos modelos
+See [Architecture](codeasdoc/architecture.rst), [API reference](codeasdoc/api_reference.rst), and [advanced usage](codeasdoc/advanced.rst).
 
-Para estimadores tabulares, la frontera de extensión principal sigue siendo
-`BaseModelAdapter`. Para soportar otro ecosistema (por ejemplo Keras o XGBoost),
-añade un adapter que implemente:
-
-* `predict()` y, para clasificación, `predict_proba()`.
-* Extracción de parámetros cuando exista una forma lineal interpretable.
-* `fit()` / `partial_fit()` o una estrategia de replay equivalente.
-* Transformación de features y metadatos de escalado cuando el modelo use un
-  pipeline o preprocesamiento externo.
-
-El motor de historial (`HistoryEngine`) consume adapters y estrategias de
-captura, y los routers de visualización deciden el builder por dimensión/tarea.
-Esto evita acoplar la visualización a Scikit-Learn y deja preparado el camino
-para añadir nuevas familias de modelos sin duplicar figuras ni lógica de
-métricas.
-
-PyTorch usa una integración especializada porque necesita hooks de activación,
-gradientes y snapshots de tensores. Sus builders consumen el contrato de
-`TorchTrainingRecorder`, mientras comparten las mismas políticas de muestreo,
-truncado y presentación matemática.
-
----
-
-## 📐 Funciones de Bajo Nivel
-
-Además de la API de alto nivel (`visualize_lr`, `visualize_logistic`), puedes usar las funciones granulares:
-
-### Regresión Lineal
-*   `fit_history(estimator, X, y, ...)` → Captura el historial de entrenamiento como un diccionario.
-*   `build_lr_figure(X, y, history=...)` → Construye la figura Plotly a partir del historial.
-*   `build_simple_lr_figure(...)` → Figura para 1 variable.
-*   `build_plane_lr_figure(...)` → Figura para 2 variables.
-*   `build_multivar_lr_figure(...)` → Figura para d > 2 variables.
-
-### Regresión Logística
-*   `fit_history_logistic(estimator, X, y, ...)` → Captura el historial logístico.
-*   `build_logistic_figure(X, y, history=...)` → Construye la figura Plotly logística.
-*   `build_binary_simple_logistic_figure(...)` → Figura binaria 1D.
-*   `build_binary_plane_logistic_figure(...)` → Figura binaria 2D.
-*   `build_binary_multivar_logistic_figure(...)` → Figura binaria d > 2.
-*   `build_multiclass_1d_logistic_figure(...)` → Figura multiclase 1D.
-*   `build_multiclass_multivar_logistic_figure(...)` → Figura multiclase d > 2.
-
----
-
-## 🧪 Directorio Local de Pruebas
-
-Si acabas de clonar el repositorio, puedes probar todas las capacidades multi-dimensionales sin tener que escribir código de prueba verificando el directorio pre-empaquetado `/local_test`. Adentro encontrarás:
-
-### Regresión Lineal
-- `lg_test_1_var.py` — 1 variable con diferentes escenarios de pipelines y sin escalar.
-- `lg_test_plane.py` — 2 variables.
-- `lg_test_multivar_pipeline.py` — Pruebas con regresión de d=2 hasta d=30 en formato matricial iterativo y estático.
-- `tg_pred_test_1.py` / `tg_pred_test_2.py` — Casos de uso de la herramienta explicativa (`explain_lr_prediction`).
-
-### Regresión Logística
-- `test_log_var.py` — Clasificación binaria con datos reales (Breast Cancer) y sintéticos, con y sin escalado.
-
----
-
-## 📚 Documentación
-
-La documentación técnica completa generada con Sphinx se encuentra en el directorio `codeasdoc/`. Para compilarla localmente:
+## Testing
 
 ```bash
-cd codeasdoc
-pip install sphinx sphinx-rtd-theme
-make html          # Linux/macOS
-.\make.bat html    # Windows
+pytest
+ruff check src tests codeasdoc
 ```
 
-La documentación compilada se encontrará en `codeasdoc/_build/html/index.html`.
+The current exploratory notebooks remain at repository root:
 
----
+- `test_interpt.ipynb`
+- `test_linreg.ipynb`
+- `test_logreg.ipynb`
+- `test_ann.ipynb`
 
-## 🤝 Contribuciones
+The improvement plan proposes separating them into generated QA matrices and focused student learning notebooks without deleting their useful coverage.
 
-Si formas parte del equipo de desarrollo, te pedimos ejecutar la suite de linter y testeo antes de cada *Commit*:
+## Documentation
+
+Build Sphinx locally:
+
 ```bash
-uv run ruff format .
-uv run ruff check .
-uv run pytest
+sphinx-build -W -b html codeasdoc codeasdoc/_build/html
 ```
 
----
+Canonical new documentation, docstrings, error messages, tests, and planning records are English-first.
 
-## 📄 Licencia
+## Contributing
 
-Este proyecto se distribuye bajo los términos descritos en el repositorio. Consulta el archivo correspondiente para más detalles.
+Before adding a visual feature:
+
+1. define whether its states are recorded, replayed, or interpolated;
+2. define the exact mathematics and estimator assumptions;
+3. preserve raw values and source coordinates;
+4. add invariant tests before screenshot tests;
+5. keep the classic default stable unless a versioned change is approved;
+6. document unsupported cases explicitly.
+
+## License
+
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE).

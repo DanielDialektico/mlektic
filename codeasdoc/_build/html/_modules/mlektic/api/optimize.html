@@ -1,0 +1,194 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mlektic.api.optimize &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Visualization mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">mlektic.api.optimize</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mlektic.api.optimize</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Reliable display and HTML export helpers for mathematical figures.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+
+<div class="viewcode-block" id="show_optimized">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.api.optimize.show_optimized">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">show_optimized</span><span class="p">(</span><span class="n">fig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a Plotly figure as lightweight notebook HTML.</span>
+
+<span class="sd">    This path is useful in Google Colab and other environments where the widget</span>
+<span class="sd">    renderer is expensive. MathJax is explicitly loaded so equations are not</span>
+<span class="sd">    left as raw LaTeX.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTML</span>
+
+    <span class="n">fig_height</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">height</span> <span class="k">if</span> <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">height</span> <span class="k">else</span> <span class="mi">600</span>
+    <span class="n">wrapper_height</span> <span class="o">=</span> <span class="n">fig_height</span> <span class="o">+</span> <span class="mi">40</span>
+    <span class="n">html_str</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span>
+        <span class="n">include_plotlyjs</span><span class="o">=</span><span class="s2">&quot;cdn&quot;</span><span class="p">,</span>
+        <span class="n">full_html</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">auto_play</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">include_mathjax</span><span class="o">=</span><span class="s2">&quot;cdn&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">HTML</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;div style=&quot;height: </span><span class="si">{</span><span class="n">wrapper_height</span><span class="si">}</span><span class="s1">px; width: 100%; overflow: hidden;&quot;&gt;</span><span class="si">{</span><span class="n">html_str</span><span class="si">}</span><span class="s1">&lt;/div&gt;&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="export_figure">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.api.optimize.export_figure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_figure</span><span class="p">(</span>
+    <span class="n">fig</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">include_plotly</span><span class="o">=</span><span class="s2">&quot;inline&quot;</span><span class="p">,</span>
+    <span class="n">include_mathjax</span><span class="o">=</span><span class="s2">&quot;cdn&quot;</span><span class="p">,</span>
+    <span class="n">responsive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">auto_play</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export a complete HTML document with explicit dependency semantics.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fig: Plotly figure to export.</span>
+<span class="sd">        path: Destination path. The ``.html`` suffix is added when omitted.</span>
+<span class="sd">        include_plotly: ``&quot;inline&quot;`` for a self-contained Plotly runtime or</span>
+<span class="sd">            ``&quot;cdn&quot;`` for a smaller network-dependent document.</span>
+<span class="sd">        include_mathjax: ``&quot;cdn&quot;`` to render LaTeX equations or ``False`` to</span>
+<span class="sd">            omit MathJax intentionally. Plotly does not provide a supported</span>
+<span class="sd">            self-contained MathJax bundle, so this choice remains explicit.</span>
+<span class="sd">        responsive: Whether Plotly should resize the figure with its container.</span>
+<span class="sd">            ``False`` preserves the current fixed-size visual default.</span>
+<span class="sd">        auto_play: Whether an animated figure should start automatically.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The resolved :class:`pathlib.Path` written to disk.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">include_plotly</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">include_plotly</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;inline&quot;</span><span class="p">,</span> <span class="s2">&quot;cdn&quot;</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;include_plotly must be &#39;inline&#39; or &#39;cdn&#39;.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">include_mathjax</span> <span class="o">!=</span> <span class="s2">&quot;cdn&quot;</span> <span class="ow">and</span> <span class="n">include_mathjax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;include_mathjax must be &#39;cdn&#39; or False.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">responsive</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auto_play</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;responsive and auto_play must be boolean values.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;path must be a string or pathlib.Path.&quot;</span><span class="p">)</span>
+    <span class="n">destination</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">destination</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+        <span class="n">destination</span> <span class="o">=</span> <span class="n">destination</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">destination</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;.htm&quot;</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;path must use the .html or .htm suffix.&quot;</span><span class="p">)</span>
+    <span class="n">destination</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">html</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span>
+        <span class="n">include_plotlyjs</span><span class="o">=</span><span class="kc">True</span> <span class="k">if</span> <span class="n">include_plotly</span> <span class="o">==</span> <span class="s2">&quot;inline&quot;</span> <span class="k">else</span> <span class="s2">&quot;cdn&quot;</span><span class="p">,</span>
+        <span class="n">include_mathjax</span><span class="o">=</span><span class="n">include_mathjax</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">full_html</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">auto_play</span><span class="o">=</span><span class="n">auto_play</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;responsive&quot;</span><span class="p">:</span> <span class="n">responsive</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">destination</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">destination</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;export_figure&quot;</span><span class="p">,</span> <span class="s2">&quot;show_optimized&quot;</span><span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

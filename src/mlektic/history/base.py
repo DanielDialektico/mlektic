@@ -1,4 +1,4 @@
-"""Strategy interface for capturing training history."""
+"""Strategy interface for constructing auditable temporal model states."""
 
 import abc
 from typing import Any, Dict, Tuple
@@ -9,7 +9,7 @@ from ..adapters.base import BaseModelAdapter
 
 
 class HistoryCaptureStrategy(abc.ABC):
-    """Abstract strategy to capture training history."""
+    """Abstract strategy for replayed or interpolated history construction."""
 
     @abc.abstractmethod
     def capture_linear(self, adapter: BaseModelAdapter, X: np.ndarray, y: np.ndarray, config: Any) -> Dict[str, Any]:

@@ -324,7 +324,7 @@ def build_simple_lr_figure(
     # --- enforce inside the library ---
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 

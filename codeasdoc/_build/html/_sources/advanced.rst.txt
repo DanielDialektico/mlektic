@@ -1,283 +1,181 @@
-========================
-Uso Avanzado
-========================
+================
+Advanced usage
+================
 
-Uso Granular de la API
-=======================
-
-Puedes usar las funciones de bajo nivel por separado para mayor control:
+Build history separately
+========================
 
 .. code-block:: python
 
    from mlektic import fit_history, build_lr_figure
 
-   # Capturar historial
    history = fit_history(
-       model, X, y,
-       steps=80,
-       mode="iterative",
+       model,
+       X,
+       y,
+       steps=500,
+       max_frames=40,
        smooth="ema",
-       smooth_beta=0.9,
-       baseline="zeros",
-       display_space="original",
+       smooth_beta=0.85,
        metrics=["loss", "mse", "r2", "mae"],
-       max_frames=60,
    )
+   figure = build_lr_figure(X, y, history=history)
 
-   # Construir figura con opciones
-   fig = build_lr_figure(
-       X, y,
-       history=history,
-       show_loss=True,
-       title="Mi Gráfico Personalizado",
-       dec=6,
-       frame_duration=50,
-   )
+Low-level builders do not automatically attach the public provenance subtitle.
+Use the public ``visualize_lr``/``visualize_logistic`` functions for the full
+contract, or call ``annotate_history_semantics`` explicitly.
 
+Custom metrics
+==============
 
-Métricas Personalizadas
-=======================
-
-Las visualizaciones calculan métricas por frame para alimentar subtítulos y
-paneles de la animación.
-
-En regresión lineal puedes solicitar métricas integradas:
+Custom metric mappings receive ``(y_true, y_pred)`` and return one scalar per
+checkpoint:
 
 .. code-block:: python
 
-   fig = visualize_lr(
-       model, X, y,
-       metrics=["loss", "mse", "r2", "mae"],
+   def median_absolute_error(y_true, y_pred):
+       return float(np.median(np.abs(y_true - y_pred)))
+
+   history = fit_history(
+       model,
+       X,
+       y,
+       metrics={"Median AE": median_absolute_error},
    )
 
-En regresión logística están disponibles:
+Unknown built-in names and non-callable mapping values raise immediately.
+Visible metric capacity is currently limited by figure design; phase 1/3 will
+formalize truncation and detail controls.
 
-.. code-block:: python
+Temporal decimation
+===================
 
-   fig = visualize_logistic(
-       model, X, y,
-       metrics=["loss", "accuracy", "f1"],
-   )
-
-También puedes pasar funciones personalizadas como diccionario. Cada función
-recibe ``(y_true, y_pred)`` y debe devolver un escalar:
+``steps`` constructs K semantic states. ``max_frames`` uniformly retains at
+most N states. If ``max_frames=None``, ``frame_step`` selects a stride and
+retains the final endpoint.
 
 .. code-block:: python
 
    history = fit_history(
-       model, X, y,
-       metrics={
-           "Error mediano": lambda y_true, y_pred: np.median(np.abs(y_true - y_pred)),
-       },
-   )
-
-
-Control de Frames
-=================
-
-Para entrenamientos largos, ``steps`` puede ser mayor que la cantidad de frames
-que quieres renderizar. ``max_frames`` reduce el historial de forma uniforme
-antes de construir la figura:
-
-.. code-block:: python
-
-   fig = visualize_lr(model, X, y, steps=500, max_frames=80)
-
-Si necesitas muestrear cada N pasos en vez de fijar un máximo, desactiva
-``max_frames`` y usa ``frame_step``:
-
-.. code-block:: python
-
-   fig = visualize_logistic(model, X, y, steps=500, max_frames=None, frame_step=20)
-
-Las trazas 2D interpolan entre estados mediante ``transition_duration``. Un valor
-``None`` elige automaticamente una duracion menor que ``frame_duration`` para que
-la interpolacion termine antes del siguiente frame; los valores iguales o mayores
-tambien se limitan de forma segura. ``0`` desactiva la transicion. Las superficies
-3D requieren redibujado y obtienen su continuidad aumentando ``steps`` o el limite
-``max_frames``.
-
-Las lineas animadas conservan todos sus puntos durante la interpolacion. Esto evita
-que la simplificacion geometrica de Plotly cambie la ruta SVG entre frames y produzca
-segmentos parciales o parpadeos en renderizadores de Jupyter.
-
-Cuando un frame modifica ecuaciones LaTeX o tarjetas de metricas, la figura activa
-automaticamente el redibujado de layout requerido por Jupyter. Las animaciones que
-solo cambian trazas conservan la actualizacion ligera sin redibujado completo. En
-frames mixtos, el orden ``traces first`` interpola primero la recta o curva y aplica
-despues el nuevo estado matematico, evitando que el layout anule la fluidez visual.
-
-MathJax sustituye una expresion LaTeX completa; no interpola los digitos entre dos
-expresiones. Por eso una formula LaTeX que parece fluida es una secuencia densa de
-estados discretos. En curvas acotadas, como la sigmoide logistica, el redibujado
-puede ser menos perceptible que en una recta que recorre un rango amplio.
-
-Para regresion lineal 1D, ``animation_mode="auto"`` usa una estrategia hibrida:
-la formula simbolica queda fija en LaTeX y los coeficientes numericos, la recta,
-la perdida y las metricas avanzan como trazas sincronizadas. ``fps`` fija la
-cadencia y ``interpolation_frames`` controla cuantos intervalos visuales existen
-entre checkpoints. El slider sigue mostrando solo pasos semanticos reales.
-Sin ``fps``, cada subframe dura ``frame_duration / interpolation_frames``. Evita
-valores inferiores a unos 16 ms en el navegador; para Jupyter y Colab, ``fps=30``
-a ``45`` suele ofrecer una cadencia mas estable que solicitar 100 FPS.
-
-En clasificacion multiclase, ``multiclass_link="auto"`` compara los scores con
-``predict_proba`` para distinguir Softmax de sigmoides OvR normalizadas. El
-override ``"softmax"`` o ``"ovr"`` resulta util para estimadores personalizados.
-
-
-Control de Redes PyTorch
-========================
-
-``TorchTrainingRecorder`` limita por defecto los tensores completos a 4096
-elementos. Los tensores mayores conservan sus normas sin duplicarse en el historial.
-Para una red pequena cuyo grafo matematico deba mostrar todos los pesos, aumenta el
-limite de forma consciente:
-
-.. code-block:: python
-
-   recorder = TorchTrainingRecorder(
        model,
-       max_tensor_elements=10_000,
-       max_activation_elements=512,
-       record_every=2,
+       X,
+       y,
+       steps=1000,
+       max_frames=50,
    )
 
-``max_frames`` selecciona pasos distribuidos uniformemente sin inventar estados
-intermedios. El ultimo frame siempre usa los tensores actuales del modelo:
+   print(history["metadata"]["captured_steps"])   # 1000
+   print(history["metadata"]["displayed_steps"])  # 50
+   print(history["metadata"]["displayed_step_indices"])
+
+Linear 1D hybrid animation
+==========================
+
+``animation_mode="auto"`` selects hybrid trace-only motion for one-dimensional
+linear regression and native animation elsewhere. ``interpolation_frames``
+creates perceptual intervals between retained semantic checkpoints. These
+visual frames do not change K or N.
 
 .. code-block:: python
-
-   fig = visualize_nn_graph(
-       model,
-       X[0],
-       history,
-       max_frames=24,
-       frame_duration=180,
-       node_color_mode="value",
-       edge_color_mode="weight",
-   )
-
-El modo ``value`` usa un minimo y maximo global reales para todos los nodos y
-frames mostrados. Un nodo gris representa una salida cercana a cero dentro de esa
-escala; no implica que el nodo sea constante. El hover distingue ceros exactos,
-ReLU inactivas y valores pequenos expresados en notacion cientifica.
-
-Para inspeccionar el flujo en vez del parametro aislado:
-
-.. code-block:: python
-
-   signal_fig = visualize_nn_graph(
-       model,
-       X[0],
-       history,
-       edge_color_mode="signal",  # w_ji * a_i
-   )
-
-La contribucion :math:`\theta_{ji}a_i` tampoco coincide necesariamente con la salida del
-nodo receptor, que agrega todas las entradas, suma el bias y aplica la activacion.
-
-Exportar a HTML
-================
-
-Para compartir animaciones sin depender de Jupyter:
-
-.. code-block:: python
-
-   fig.write_html("mi_animacion.html", auto_play=False)
-
-El archivo HTML es autocontenido y puede abrirse en cualquier navegador.
-
-El reporte matematico completo de una red usa una API separada:
-
-.. code-block:: python
-
-   from IPython.display import display
-   from mlektic import display_nn_math_report, export_nn_math_report
-
-   display(display_nn_math_report(model, X[:1], history=history))
-   path = export_nn_math_report(
-       model,
-       X[:1],
-       history=history,
-       path="complex-network-mathematics.html",
-   )
-
-Configuración del Renderer
-============================
-
-Plotly requiere configurar el renderer según tu entorno:
-
-.. code-block:: python
-
-   import plotly.io as pio
-
-   # Jupyter Notebook / VS Code
-   pio.renderers.default = "notebook"
-
-   # Google Colab
-   pio.renderers.default = "colab"
-
-   # Abrir en navegador
-   pio.renderers.default = "browser"
-
-.. note::
-   Mlektic establece ``pio.renderers.default = "colab"`` al importar.
-   Si usas otro entorno, sobreescríbelo antes de llamar a ``fig.show()``.
-
-
-Dimensionalidad Alta
-=====================
-
-Para datasets con muchas features (d > 2), Mlektic genera una representación
-LaTeX del vector de parámetros. Ejemplo con 150 dimensiones:
-
-.. code-block:: python
-
-   from sklearn.pipeline import Pipeline
-   from sklearn.preprocessing import StandardScaler
-   from sklearn.linear_model import SGDRegressor
-   from mlektic import visualize_lr
-
-   model = Pipeline([
-       ("scaler", StandardScaler()),
-       ("sgd", SGDRegressor(eta0=0.015, max_iter=1000)),
-   ])
-   model.fit(X_150d, y)
 
    fig = visualize_lr(
-       model, X_150d, y,
-       steps=60,
-       show_loss=True,
-       display_space="original",
+       model,
+       X,
+       y,
+       animation_mode="hybrid",
+       interpolation_frames=3,
+       fps=36,
    )
 
+Use ``animation_mode="native"`` when every Plotly frame must correspond to one
+retained semantic checkpoint or when inspecting dynamic layout equations.
 
-Directorio ``local_test/``
+Pipelines and feature space
 ===========================
 
-Scripts preconfigurados para probar todas las capacidades:
+With a recognized affine scaler, Mlektic can convert learned coefficients to
+original feature units. The estimator still predicts through its full pipeline.
+For non-affine transforms, an exact raw-space coefficient equation may not
+exist; use transformed-space interpretation and document the preprocessing.
 
-- ``test_1_var.py`` — Regresión lineal 1D con datos reales y sintéticos.
-- ``test_2_vars.py`` — Regresión lineal 2D con Pipeline.
-- ``test_multivar_pipeline.py`` — 8, 100 y 150 dimensiones.
-- ``test_refactor_linear.py`` — Tests con ``LinearRegression`` (interpolación).
-- ``test_log_var.py`` — Regresión logística binaria con Breast Cancer.
+Counterfactual prediction lessons
+=================================
 
-Ejecución:
+By default, supplied values are verified:
 
-.. code-block:: bash
+.. code-block:: python
 
-   cd local_test
-   python test_1_var.py
+   explanation = explain_lr_prediction(
+       model, X, y,
+       x_query=[[3.0]],
+       yhat=model.predict([[3.0]])[0],
+   )
 
+For an intentional comparison value:
 
-Compatibilidad con Futuros Adapters
-===================================
+.. code-block:: python
 
-La API tabular de alto nivel trabaja contra adapters. Para soportar otro framework,
-el adapter debe traducir su modelo al contrato interno: prediccion, probabilidades,
-extraccion de parametros cuando aplique, captura incremental o replay, y datos de
-escalado. PyTorch ya cuenta con una integracion especializada mediante
-``TorchTrainingRecorder`` y builders neurales; otros frameworks pueden implementar
-un recorder equivalente o adaptarse al contrato tabular cuando corresponda.
+   explanation = explain_lr_prediction(
+       model, X, y,
+       x_query=[[3.0]],
+       yhat=0.0,
+       prediction_source="provided",
+   )
+
+The subtitle and figure metadata identify the result as user-provided. Do not
+use this mode to bypass estimator verification in ordinary explanations.
+
+History subtitle visibility
+===========================
+
+The provenance and N/K subtitle is visible by default. It can be omitted in a
+compact embedding without removing the underlying context:
+
+.. code-block:: python
+
+   fig = visualize_lr(
+       model,
+       X,
+       y,
+       show_history_context=False,
+   )
+
+The slider still identifies replay or interpolation and ``fig.layout.meta``
+still contains the complete ``mlektic_history`` contract.
+
+HTML size and dependencies
+==========================
+
+.. code-block:: python
+
+   export_figure(
+       fig,
+       "lesson.html",
+       include_plotly="inline",
+       include_mathjax="cdn",
+       responsive=False,
+       auto_play=False,
+   )
+
+Inline Plotly increases file size but removes its network dependency. MathJax
+CDN keeps equation rendering reliable but requires network access. A fully
+self-contained MathJax export is not currently promised.
+
+Neural recording
+================
+
+Create a ``TorchTrainingRecorder`` before training and call it at a documented
+point in the loop (normally after the parameter update and metric calculation).
+Record loss/metrics with consistent step or epoch coordinates. The recorder's
+``record_every`` reduces captured semantic states and must not be confused with
+later display sampling.
+
+Performance guidance
+====================
+
+- reduce K/N before increasing 3D surface grid density;
+- keep 2D trace topology stable for smooth interpolation;
+- avoid large simultaneous multiclass surfaces;
+- use the optimized notebook renderer in Colab when widget overhead dominates;
+- export representative cases and inspect actual HTML size;
+- retain motion unless a user explicitly selects a static/reduced-motion form.

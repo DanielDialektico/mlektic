@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="es" data-content_root="./">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
@@ -13,15 +13,13 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="_static/translations.js?v=f85f4cfb"></script>
-      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Índice" href="genindex.html" />
-    <link rel="search" title="Búsqueda" href="search.html" />
-    <link rel="prev" title="Uso Avanzado" href="advanced.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Advanced usage" href="advanced.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -37,25 +35,29 @@
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
-<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#v0-1-0-en-desarrollo">v0.1.0 (En desarrollo)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#funcionalidades">Funcionalidades</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#fixes-y-mejoras-recientes">Fixes y Mejoras Recientes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-0-integrity-contract">Unreleased — phase 0 integrity contract</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compatibility">Compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#known-limitations">Known limitations</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#earlier-development-history">Earlier development history</a></li>
 </ul>
 </li>
 </ul>
@@ -76,7 +78,7 @@
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Changelog</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/changelog.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+            <a href="_sources/changelog.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -86,116 +88,90 @@
              
   <section id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading"></a></h1>
-<section id="v0-1-0-en-desarrollo">
-<h2>v0.1.0 (En desarrollo)<a class="headerlink" href="#v0-1-0-en-desarrollo" title="Link to this heading"></a></h2>
-<p>Primera versión de la librería.</p>
-<section id="funcionalidades">
-<h3>Funcionalidades<a class="headerlink" href="#funcionalidades" title="Link to this heading"></a></h3>
+<section id="unreleased-phase-0-integrity-contract">
+<h2>Unreleased — phase 0 integrity contract<a class="headerlink" href="#unreleased-phase-0-integrity-contract" title="Link to this heading"></a></h2>
+<section id="added">
+<h3>Added<a class="headerlink" href="#added" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><strong>Redes Neuronales PyTorch</strong>: soporte opcional mediante <code class="docutils literal notranslate"><span class="pre">mlektic[torch]</span></code> con
-grafo temporal de pesos y salidas neuronales como mapas de calor independientes,
-escalas globales reales por defecto, normalizacion temporal opcional por capa y
-modo adicional para colorear aristas mediante la senal <span class="math notranslate nohighlight">\(\theta_{ji}a_i\)</span>,
-gradientes de backpropagation simultaneos, arquitectura matematica, dimensiones y
-formulas LaTeX, cuadricula 2 por 2 para loss y tres metricas inferibles desde
-predicciones y objetivos, evolucion matricial de
-parametros, explicacion temporal del forward pass y reportes HTML completos para
-redes grandes.
-La lectura compacta de pesos y el paso temporal se actualizan como trazas animadas
-sin redibujar toda la red, y el titulo conserva separacion respecto a la ecuacion.
-Los ceros exactos de ReLU se identifican en el hover; las etiquetas temporales y
-escalas matematicas conservan margen respecto a los bordes de la figura.</p></li>
-<li><p><strong>Regresión Lineal</strong>: Soporte completo para <code class="docutils literal notranslate"><span class="pre">visualize_lr()</span></code> con:
-- Renderizado 2D (1 variable): recta de regresión animada + curva MSE.
-- Renderizado 3D (2 variables): plano predictivo animado.
-- Renderizado LaTeX (d &gt; 2): matriz de parámetros interactiva.
-- <strong>NUEVO</strong>: <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction()</span></code> para explicar matemáticamente y de forma visual las predicciones de un modelo ya entrenado.</p></li>
-<li><p><strong>Regresión Logística</strong>: Soporte completo para <code class="docutils literal notranslate"><span class="pre">visualize_logistic()</span></code> con:
-- Clasificación binaria: 1D (sigmoide), 2D (superficie), d &gt; 2 (LaTeX).
-- Clasificación multiclase: 1D (curvas de probabilidad), d &gt; 2 (matrices de pesos).</p></li>
-<li><p><strong>Métricas Dinámicas</strong>: Parámetro <code class="docutils literal notranslate"><span class="pre">metrics</span></code> para mostrar simultáneamente variables como <code class="docutils literal notranslate"><span class="pre">loss</span></code>, <code class="docutils literal notranslate"><span class="pre">mse</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, y formateo inteligente de números para evitar desbordes visuales.</p></li>
-<li><p><strong>Métricas Reutilizables</strong>: Builders internos para métricas por frame en regresión lineal y logística, incluyendo <code class="docutils literal notranslate"><span class="pre">loss</span></code>, <code class="docutils literal notranslate"><span class="pre">mse</span></code>, <code class="docutils literal notranslate"><span class="pre">r2</span></code>, <code class="docutils literal notranslate"><span class="pre">mae</span></code>, <code class="docutils literal notranslate"><span class="pre">accuracy</span></code> y <code class="docutils literal notranslate"><span class="pre">f1</span></code>, además de métricas personalizadas.</p></li>
-<li><p><strong>Muestreo de Historiales</strong>: Utilidades internas para reducir historiales largos mediante <code class="docutils literal notranslate"><span class="pre">max_frames</span></code> o <code class="docutils literal notranslate"><span class="pre">frame_step</span></code> antes del renderizado.</p></li>
-<li><p><strong>Integración con Scikit-Learn</strong>: Compatible con estimadores directos y <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code>.</p></li>
-<li><p><strong>Adapter Pattern</strong>: <code class="docutils literal notranslate"><span class="pre">SklearnAdapter</span></code> como implementación concreta del
-<code class="docutils literal notranslate"><span class="pre">BaseModelAdapter</span></code> (extensible a otros frameworks).</p></li>
-<li><p><strong>Ruta de Escalabilidad</strong>: contrato de adapters para futuras familias tabulares
-y contrato especializado de historiales para PyTorch y otros frameworks neurales.</p></li>
-<li><p><strong>Strategy Pattern</strong>: Dos estrategias de captura de historial:
-- <code class="docutils literal notranslate"><span class="pre">IterativeCapture</span></code> para modelos iterativos (<code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code>).
-- <code class="docutils literal notranslate"><span class="pre">InterpolationCapture</span></code> para modelos no iterativos.</p></li>
-<li><p><strong>Suavizado EMA</strong>: Opción de suavizar la curva de pérdida sin modificar la
-geometría ni los parámetros exactos del modelo.</p></li>
-<li><p><strong>Espacio de visualización</strong>: Soporte para <code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code> y <code class="docutils literal notranslate"><span class="pre">&quot;scaled&quot;</span></code>
-con transformación inversa automática de parámetros escalados.</p></li>
-<li><p><strong>Tema visual unificado</strong>: Dark mode con Plotly, botones Play/Pause, slider temporal.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">show_class_labels=False</span></code> for indexed-by-default logistic figures with
+optional fitted semantic labels and persistent class metadata;</p></li>
+<li><p>schema-versioned provenance and timeline metadata for tabular histories;</p></li>
+<li><p>explicit <code class="docutils literal notranslate"><span class="pre">replayed</span></code> and <code class="docutils literal notranslate"><span class="pre">interpolated</span></code> sources;</p></li>
+<li><p>full and displayed checkpoint coordinates;</p></li>
+<li><p>interpolation alpha values;</p></li>
+<li><p>raw/display loss separation;</p></li>
+<li><p>visible source and N/K timeline labels;</p></li>
+<li><p>verified prediction values, counterfactual opt-in, and extrapolation labels;</p></li>
+<li><p>public <code class="docutils literal notranslate"><span class="pre">export_figure</span></code> helper with explicit Plotly/MathJax dependencies;</p></li>
+<li><p>English history-semantics and implementation documentation;</p></li>
+<li><p>phase 0 contract tests.</p></li>
 </ul>
 </section>
-<section id="fixes-y-mejoras-recientes">
-<h3>Fixes y Mejoras Recientes<a class="headerlink" href="#fixes-y-mejoras-recientes" title="Link to this heading"></a></h3>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><strong>Contrato de Animacion Documentado</strong>: se distingue entre LaTeX simbolico fijo,
-sustituciones MathJax nativas y trazas numericas hibridas; tambien se explica la
-division de <code class="docutils literal notranslate"><span class="pre">frame_duration</span></code> entre subframes y la recomendacion de 30 a 45 FPS
-para Jupyter y Colab.</p></li>
-<li><p><strong>Controles Estables</strong>: Play y Pause permanecen blancos con texto negro en
-todos sus estados, incluso cuando Plotly reconstruye superficies 3D, sin
-seguimiento JavaScript ni cambios en la interpolación híbrida.</p></li>
-<li><p><strong>Métricas Laterales</strong>: la vista híbrida 1D apila sus recuadros de métricas en
-una columna independiente para evitar superposiciones.</p></li>
-<li><p><strong>Predicciones sin Desbordes</strong>: las sustituciones 2D usan notación científica
-LaTeX y tipografía compacta; las vistas ND muestran vectores columna truncados
-con <code class="docutils literal notranslate"><span class="pre">\vdots</span></code> en lugar de cuadrículas que pudieran confundirse con matrices.</p></li>
-<li><p><strong>Notacion Unificada</strong>: regresion lineal, logistica y redes neuronales usan
-<span class="math notranslate nohighlight">\(\theta\)</span>, <span class="math notranslate nohighlight">\(\Theta\)</span> y <span class="math notranslate nohighlight">\(\boldsymbol{\theta}_0\)</span> con dimensiones
-independientes del acomodo visual de las matrices.</p></li>
-<li><p><strong>Enlace Multiclase Riguroso</strong>: deteccion automatica de Softmax frente a
-sigmoides OvR normalizadas, aplicada a historiales, figuras y sustituciones.</p></li>
-<li><p><strong>Transiciones Suaves</strong>: interpolacion configurable para trazas 2D mediante
-<code class="docutils literal notranslate"><span class="pre">transition_duration</span></code>, con margen entre frames para evitar rectas parcialmente
-dibujadas, rutas SVG estables sin simplificacion variable y redibujado estable
-para superficies 3D.</p></li>
-<li><p><strong>LaTeX Animado en Jupyter</strong>: los frames que modifican ecuaciones o metricas en
-el layout activan redibujado selectivo para que los valores de <span class="math notranslate nohighlight">\(\theta\)</span>
-evolucionen junto con el slider; el orden <code class="docutils literal notranslate"><span class="pre">traces</span> <span class="pre">first</span></code> preserva a la vez la
-interpolacion suave de rectas y curvas 2D.</p></li>
-<li><p><strong>Animacion Hibrida 1D</strong>: recta, coeficientes numericos, perdida y metricas
-comparten subframes sincronizados sin redibujar el layout; el slider conserva
-exclusivamente checkpoints semanticos y la definicion simbolica sigue en LaTeX.</p></li>
-<li><p><strong>EMA Matematicamente Consistente</strong>: <code class="docutils literal notranslate"><span class="pre">smooth=&quot;ema&quot;</span></code> suaviza solamente la
-perdida y nunca modifica geometria, probabilidades o parametros del modelo.</p></li>
-<li><p><strong>Layouts de Alta Dimension</strong>: normalizadores compactos y paneles ND sin
-columnas vacias ni formulas que invadan graficas adyacentes.</p></li>
-<li><p><strong>Documentacion Neural Completa</strong>: README, inicio rapido, arquitectura, modos
-del grafo, escalas globales exactas, metricas automaticas, ceros de ReLU,
-trazas animadas de parametros y visualizacion/exportacion de reportes HTML
-quedaron alineados con la API publica y sus docstrings.</p></li>
-<li><p><strong>Estabilidad en Exportación HTML</strong>: Corrección del «glitch» de redimensionamiento de arrays de JavaScript en Plotly; los arrays ahora se rellenan con <code class="docutils literal notranslate"><span class="pre">None</span></code> para garantizar un trazado de línea constante y evitar que las animaciones HTML se corten.</p></li>
-<li><p><strong>Formateo Multivariable</strong>: La función <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction()</span></code> para 3 o más variables ahora formatea correctamente la coordenada resultante incluyendo <code class="docutils literal notranslate"><span class="pre">y_hat</span></code> al final (ej., <code class="docutils literal notranslate"><span class="pre">(x_1,</span> <span class="pre">\dots,</span> <span class="pre">x_d,</span> <span class="pre">\hat{y})</span></code>), logrando consistencia matemática con las vistas de 1D y 2D.</p></li>
-<li><p><strong>Exportaciones Públicas</strong>: <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code> ahora se importa correctamente desde <code class="docutils literal notranslate"><span class="pre">mlektic</span></code>.</p></li>
-<li><p><strong>Métricas Logísticas</strong>: Las métricas de clasificación respetan las etiquetas reales de clase en vez de asumir índices <code class="docutils literal notranslate"><span class="pre">0..K-1</span></code>.</p></li>
-<li><p><strong>Pipelines en Interpolación</strong>: Los historiales interpolados conservan metadatos de escalado para evaluar métricas en el espacio visual solicitado.</p></li>
+<li><p>invalid history enum values and unknown metrics now fail early;</p></li>
+<li><p>explicit iterative mode requires <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code>;</p></li>
+<li><p>unknown themes no longer silently fall back to classic;</p></li>
+<li><p>the loss metric uses the same display series as the visible loss curve;</p></li>
+<li><p>logistic prediction formulas support string labels;</p></li>
+<li><p>binary prediction views expose fitted class order and keep string-labeled
+probability axes numeric so model curves and surfaces remain visible;</p></li>
+<li><p>the two-feature binary decision boundary is the actual 0.5 intersection line,
+and the output identifies both probabilities and the winning fitted label;</p></li>
+<li><p>query ranges expand to keep 1D/2D extrapolations visible;</p></li>
+<li><p>constrained multiclass replay layouts use exact compact probability fractions
+so equations remain inside the mathematical panel;</p></li>
+<li><p>multiclass matrix, bias, score, and probability blocks use stable independent
+spacing across 1D, 2D, and nD routes;</p></li>
+<li><p>nD figures omit the loss subplot entirely when loss is not displayed;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">show_optimized</span></code> documentation is English and IPython is imported lazily.</p></li>
 </ul>
 </section>
+<section id="compatibility">
+<h3>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading"></a></h3>
+<p>Classic colors, fixed dimensions, trace geometry, and animation behavior remain
+the defaults. <code class="docutils literal notranslate"><span class="pre">loss_hist</span></code> remains available as an alias of
+<code class="docutils literal notranslate"><span class="pre">loss_display</span></code>. New subtitles and slider labels are intentional transparency
+changes. Previously ignored invalid values may now raise actionable exceptions.</p>
+</section>
+<section id="known-limitations">
+<h3>Known limitations<a class="headerlink" href="#known-limitations" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>tabular replay is reconstructed and can differ from the fitted estimator;</p></li>
+<li><p>a fully offline MathJax bundle is not supplied;</p></li>
+<li><p>responsive reflow and alternative themes are planned, not implemented;</p></li>
+<li><p>full objective/regularization introspection belongs to the next phase.</p></li>
+</ul>
+</section>
+</section>
+<section id="earlier-development-history">
+<h2>Earlier development history<a class="headerlink" href="#earlier-development-history" title="Link to this heading"></a></h2>
+<p>Earlier versions established linear 1D/2D/nD visualization, binary and
+multiclass logistic visualization, Scikit-learn pipeline support, iterative and
+interpolation strategies, metric histories, temporal decimation, hybrid linear
+motion, and the PyTorch architecture/training/mathematical report family.</p>
+<p>The repository-level <code class="docutils literal notranslate"><span class="pre">CHANGELOG.md</span></code> retains the detailed historical record.
+Future entries should remain English-first and distinguish source semantics.</p>
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="advanced.html" class="btn btn-neutral float-left" title="Uso Avanzado" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="advanced.html" class="btn btn-neutral float-left" title="Advanced usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
   </div>
 
-  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
-    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
    
 
 </footer>

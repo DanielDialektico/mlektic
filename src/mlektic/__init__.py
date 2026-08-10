@@ -13,6 +13,7 @@ from .api.neural import (
     visualize_nn_weights,
 )
 from .api.optimize import (
+    export_figure,
     show_optimized,
 )
 from .core import (
@@ -54,6 +55,7 @@ __all__ = [
     "build_multiclass_multivar_logistic_figure",
     "explain_logistic_prediction",
     "show_optimized",
+    "export_figure",
     "TorchTrainingRecorder",
     "build_nn_math_report",
     "display_nn_math_report",

@@ -12,6 +12,12 @@ from ..theme import (
     get_sliders,
     get_updatemenus,
 )
+from ._math_layout import (
+    MULTICLASS_ELLIPSIS_FONT_SIZE,
+    MULTICLASS_PROBABILITY_FONT_SIZE,
+    MULTICLASS_PROBABILITY_ROW_GAP,
+    compact_probability_fraction_latex,
+)
 
 
 def build_multiclass_multivar_logistic_figure(
@@ -23,6 +29,8 @@ def build_multiclass_multivar_logistic_figure(
     loss_hist=None,
     metrics_hist=None,
     show_loss=True,
+    classes=None,
+    show_class_labels=False,
     history_kind="iterative",
     title=None,
     strict_loss=False,
@@ -37,7 +45,7 @@ def build_multiclass_multivar_logistic_figure(
     """Internal method to build build_multiclass_multivar_logistic_figure."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -99,10 +107,13 @@ def build_multiclass_multivar_logistic_figure(
         lines = []
 
         if D <= capacity:
-            padded = entries + [r"\;"] * (capacity - D)
-            M = np.array(padded, dtype=object).reshape(max_rows, max_cols)
-            for r in range(max_rows):
-                lines.append(" & ".join(M[r, c] for c in range(max_cols)))
+            visible_cols = min(max_cols, D)
+            visible_rows = max(1, (D + visible_cols - 1) // visible_cols)
+            visible_capacity = visible_rows * visible_cols
+            padded = entries + [r"\;"] * (visible_capacity - D)
+            M = np.array(padded, dtype=object).reshape(visible_rows, visible_cols)
+            for row in range(visible_rows):
+                lines.append(" & ".join(M[row, col] for col in range(visible_cols)))
         else:
             head_rows = max(2, max_rows // 2 - 1)
             tail_rows = max_rows - head_rows - 1
@@ -195,25 +206,30 @@ def build_multiclass_multivar_logistic_figure(
         terms.append(rf"\left({num(Theta[d_local, class_idx])}\right)")
         return r" + ".join(terms)
 
-    def final_prob_top_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec):
+    def final_prob_top_latex(t, class_k=example_class, max_feat=max_features_in_z, dec=dec, compact=False):
         Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
         D, K_local = Theta.shape
         d_local = D - 1
         k = int(class_k)
         k = max(0, min(k, K_local - 1))
         z_k = z_numeric_expr(Theta, k, d_local, max_feat=max_feat, dec=dec)
-        num_tex = linked_term(z_k)
-        z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
-        z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
-        if K_local == 1:
-            denom_tex = linked_term(z_first)
+        if compact:
+            probability = compact_probability_fraction_latex(k + 1, K_local, probability_link)
         else:
-            denom_tex = rf"{linked_term(z_first)} + \cdots + {linked_term(z_last_expr)}"
+            num_tex = linked_term(z_k)
+            z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
+            z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
+            if K_local == 1:
+                denom_tex = linked_term(z_first)
+            else:
+                denom_tex = rf"{linked_term(z_first)} + \cdots + {linked_term(z_last_expr)}"
+            probability = rf"\frac{{{num_tex}}}{{{denom_tex}}}"
         return (
             r"$$"
             r"\begin{aligned}"
-            + rf"z_{{{k + 1}}}(\mathbf{{x}})&={z_k}\\[5pt]"
-            + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})&=\frac{{{num_tex}}}{{{denom_tex}}}"
+            + rf"z_{{{k + 1}}}(\mathbf{{x}})&={z_k}"
+            + MULTICLASS_PROBABILITY_ROW_GAP
+            + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})&={probability}"
             r"\end{aligned}"
             r"$$"
         )
@@ -221,21 +237,25 @@ def build_multiclass_multivar_logistic_figure(
     def vertical_dots_latex():
         return r"$$\vdots$$"
 
-    def final_prob_bottom_latex(t, max_feat=max_features_in_z, dec=dec):
+    def final_prob_bottom_latex(t, max_feat=max_features_in_z, dec=dec, compact=False):
         Theta = np.vstack([w_hist[t], b_hist[t].reshape(1, -1)])
         D, K_local = Theta.shape
         d_local = D - 1
-        z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
-        z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
-        num_tex_last = linked_term(z_last_expr)
-        if K_local == 1:
-            denom_tex = linked_term(z_first)
+        if compact:
+            probability = compact_probability_fraction_latex(K_local, K_local, probability_link)
         else:
-            denom_tex = rf"{linked_term(z_first)} + \cdots + {linked_term(z_last_expr)}"
+            z_first = z_numeric_expr(Theta, 0, d_local, max_feat=max_feat, dec=dec)
+            z_last_expr = z_numeric_expr(Theta, K_local - 1, d_local, max_feat=max_feat, dec=dec)
+            num_tex_last = linked_term(z_last_expr)
+            if K_local == 1:
+                denom_tex = linked_term(z_first)
+            else:
+                denom_tex = rf"{linked_term(z_first)} + \cdots + {linked_term(z_last_expr)}"
+            probability = rf"\frac{{{num_tex_last}}}{{{denom_tex}}}"
         return (
             r"$$"
             r"\begin{aligned}"
-            + rf"\hat{{p}}(Y=c_{{{K_local}}}\mid\mathbf{{x}})&=\frac{{{num_tex_last}}}{{{denom_tex}}}"
+            + rf"\hat{{p}}(Y=c_{{{K_local}}}\mid\mathbf{{x}})&={probability}"
             r"\end{aligned}"
             r"$$"
         )
@@ -263,9 +283,15 @@ def build_multiclass_multivar_logistic_figure(
     )
 
     def make_annotations(t):
+        dense_layout = d > 12
         math_center = 0.275 if show_loss else 0.5
         theta_x = 0.24 if show_loss else 0.35
-        dots_x = 0.37 if show_loss else 0.5
+        dots_x = 0.13 if show_loss else 0.31
+        matrix_y = 0.72 if dense_layout else 0.80
+        row3_y = 0.40 if dense_layout else 0.48
+        probability_y = 0.28 if dense_layout else 0.36
+        dots_y = 0.07 if dense_layout else 0.08
+        bottom_y = -0.10 if dense_layout else -0.12
         ann = [
             dict(
                 x=math_center,
@@ -280,7 +306,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.001,
-                y=0.80,
+                y=matrix_y,
                 xref="paper",
                 yref="paper",
                 text=x_vector_latex_capped(d, max_rows=7, max_cols=4),
@@ -291,10 +317,10 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=theta_x,
-                y=0.80,
+                y=matrix_y,
                 xref="paper",
                 yref="paper",
-                text=Theta_matrix_latex_capped(t, max_rows=7, max_cols=6, dec=dec),
+                text=Theta_matrix_latex_capped(t, max_rows=7, max_cols=max_theta_cols, dec=dec),
                 showarrow=False,
                 xanchor="left",
                 yanchor="middle",
@@ -302,7 +328,7 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.01,
-                y=0.48,
+                y=row3_y,
                 xref="paper",
                 yref="paper",
                 text=row3_formula_latex(),
@@ -313,36 +339,36 @@ def build_multiclass_multivar_logistic_figure(
             ),
             dict(
                 x=0.01,
-                y=0.36,
+                y=probability_y,
                 xref="paper",
                 yref="paper",
-                text=final_prob_top_latex(t),
+                text=final_prob_top_latex(t, compact=show_loss),
                 showarrow=False,
                 xanchor="left",
                 yanchor="top",
-                font=dict(size=13, color="white"),
+                font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white"),
             ),
             dict(
                 x=dots_x,
-                y=0.05,
+                y=dots_y,
                 xref="paper",
                 yref="paper",
                 text=vertical_dots_latex(),
                 showarrow=False,
                 xanchor="center",
                 yanchor="middle",
-                font=dict(size=22, color="white"),
+                font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white"),
             ),
             dict(
                 x=0.01,
-                y=-0.12,
+                y=bottom_y,
                 xref="paper",
                 yref="paper",
-                text=final_prob_bottom_latex(t, max_feat=max_features_in_z, dec=dec),
+                text=final_prob_bottom_latex(t, max_feat=max_features_in_z, dec=dec, compact=show_loss),
                 showarrow=False,
                 xanchor="left",
                 yanchor="bottom",
-                font=dict(size=13, color="white"),
+                font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white"),
             ),
         ]
 
@@ -422,7 +448,7 @@ def build_multiclass_multivar_logistic_figure(
     fig.frames = frames
 
     fig.update_layout(
-        **get_base_layout(title=title, margin_t=110, theme=theme),
+        **get_base_layout(title=title, margin_t=110, height=720 if d > 12 else 600, theme=theme),
         showlegend=False,
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),

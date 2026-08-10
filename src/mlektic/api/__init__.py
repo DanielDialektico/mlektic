@@ -12,6 +12,7 @@ from .neural import (
     visualize_nn_training,
     visualize_nn_weights,
 )
+from .optimize import export_figure, show_optimized
 
 __all__ = [
     "TorchTrainingRecorder",
@@ -24,4 +25,6 @@ __all__ = [
     "visualize_nn_graph",
     "visualize_nn_training",
     "visualize_nn_weights",
+    "export_figure",
+    "show_optimized",
 ]

@@ -59,7 +59,10 @@ def build_logistic_metrics(
         "loss": ("Log-loss", np.asarray(loss_hist, dtype=float)),
         "log_loss": ("Log-loss", np.asarray(loss_hist, dtype=float)),
         "accuracy": ("Accuracy", _metric_by_frame(y, y_pred_hist, accuracy_score)),
-        "f1": ("F1 Score", _f1_by_frame(y, y_pred_hist, is_multiclass=is_multiclass)),
+        "f1": (
+            "F1 Score",
+            _f1_by_frame(y, y_pred_hist, classes=classes, is_multiclass=is_multiclass),
+        ),
     }
     return _select_metrics(builtins, metric_config, y, y_pred_hist, max_metrics=max_metrics)
 
@@ -90,12 +93,19 @@ def _metric_by_frame(y_true: np.ndarray, y_pred_hist: np.ndarray, fn: MetricFn) 
     return np.array([fn(y_true, y_pred_hist[:, frame]) for frame in range(y_pred_hist.shape[1])], dtype=float)
 
 
-def _f1_by_frame(y_true: np.ndarray, y_pred_hist: np.ndarray, *, is_multiclass: bool) -> np.ndarray:
+def _f1_by_frame(
+    y_true: np.ndarray,
+    y_pred_hist: np.ndarray,
+    *,
+    classes: np.ndarray,
+    is_multiclass: bool,
+) -> np.ndarray:
     """Evaluate F1 over each prediction-history column."""
     average = "macro" if is_multiclass else "binary"
+    kwargs = {} if is_multiclass else {"pos_label": np.asarray(classes)[1]}
     return np.array(
         [
-            f1_score(y_true, y_pred_hist[:, frame], average=average, zero_division=0)
+            f1_score(y_true, y_pred_hist[:, frame], average=average, zero_division=0, **kwargs)
             for frame in range(y_pred_hist.shape[1])
         ],
         dtype=float,
@@ -137,7 +147,12 @@ def _select_metrics(
     for label, fn in custom.items():
         selected[str(label)] = _metric_by_frame(y_true, y_pred_hist, fn)
 
-    return {key: selected[key] for key in list(selected)[:max_metrics]}
+    if len(selected) > max_metrics:
+        raise ValueError(
+            f"The current figure format can display at most {max_metrics} metrics; "
+            f"the configuration produced {len(selected)}. Select fewer metrics or custom callables."
+        )
+    return selected
 
 
 def _default_metric_keys(builtins: Mapping[str, tuple[str, np.ndarray]]) -> list[str]:

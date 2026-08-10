@@ -19,6 +19,7 @@ class IterativeCapture(HistoryCaptureStrategy):
         # We need a new adapter instance configured for replay
         replay_adapter = adapter.clone_for_replay()
         replay_adapter.fit(X, y)  # Init state
+        source_detail = _replay_source_detail(adapter, replay_adapter)
 
         grid = {}
         y_line_hist = z_plane_hist = None
@@ -64,8 +65,10 @@ class IterativeCapture(HistoryCaptureStrategy):
         for t in range(1, steps):
             try:
                 replay_adapter.partial_fit(Xt, y)
-            except Exception:
-                replay_adapter.fit(X, y)  # Fallback
+            except Exception as error:
+                raise RuntimeError(
+                    f"Incremental replay failed at checkpoint {t + 1}; no repeated-fit fallback was used."
+                ) from error
 
             y_pred = replay_adapter.predict(X)
             loss_hist[t] = float(mean_squared_error(y, y_pred))
@@ -84,6 +87,9 @@ class IterativeCapture(HistoryCaptureStrategy):
 
         return {
             "history_kind": "iterative",
+            "history_source": "replayed",
+            "source_detail": source_detail,
+            "step_indices": np.arange(1, steps + 1, dtype=int),
             "loss_hist": loss_hist,
             "grid": grid,
             "y_line_hist": y_line_hist,
@@ -100,6 +106,7 @@ class IterativeCapture(HistoryCaptureStrategy):
 
         replay_adapter = adapter.clone_for_replay()
         replay_adapter.fit(X, y)
+        source_detail = _replay_source_detail(adapter, replay_adapter)
         classes = replay_adapter.classes if replay_adapter.classes is not None else np.unique(y)
         K = len(classes)
         is_multiclass = K > 2
@@ -184,12 +191,17 @@ class IterativeCapture(HistoryCaptureStrategy):
         for t in range(1, steps):
             try:
                 replay_adapter.partial_fit(Xt, y)
-            except Exception:
-                replay_adapter.fit(X, y)
+            except Exception as error:
+                raise RuntimeError(
+                    f"Incremental replay failed at checkpoint {t + 1}; no repeated-fit fallback was used."
+                ) from error
             _record_step(t, replay_adapter)
 
         return {
             "history_kind": "iterative",
+            "history_source": "replayed",
+            "source_detail": source_detail,
+            "step_indices": np.arange(1, steps + 1, dtype=int),
             "classes": classes,
             "is_multiclass": is_multiclass,
             "probability_link": probability_link,
@@ -203,3 +215,17 @@ class IterativeCapture(HistoryCaptureStrategy):
             "b_hist_learned": b_hist,
             "scaler_params": replay_adapter.get_scaler_params(),
         }
+
+
+def _replay_source_detail(original_adapter: BaseModelAdapter, replay_adapter: BaseModelAdapter) -> dict:
+    """Return only replay parameters that the cloned estimator actually exposes."""
+    names = ("random_state", "learning_rate", "eta0", "max_iter", "shuffle", "tol", "warm_start")
+    original = original_adapter.final_estimator
+    replay = replay_adapter.final_estimator
+    original_parameters = original.get_params(deep=False) if hasattr(original, "get_params") else {}
+    replay_parameters = replay.get_params(deep=False) if hasattr(replay, "get_params") else {}
+    return {
+        "estimator": original.__class__.__name__,
+        "original_parameters": {name: original_parameters[name] for name in names if name in original_parameters},
+        "effective_replay_parameters": {name: replay_parameters[name] for name in names if name in replay_parameters},
+    }

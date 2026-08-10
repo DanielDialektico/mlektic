@@ -11,8 +11,11 @@ from ..linear.prediction import (
     _find_standard_scaler,
     _fmt,
     _matrix_compact,
+    _outside_training_range,
     _theta_to_original,
     _to_scaled_x,
+    _validate_prediction_options,
+    _validate_prediction_source,
 )
 from ..theme import (
     _resolve,
@@ -22,13 +25,73 @@ from ..theme import (
 )
 
 
+def _class_label_text(value):
+    """Format numeric and string labels safely inside a LaTeX expression."""
+    if isinstance(value, (str, np.str_)):
+        escaped = str(value).replace("_", r"\_")
+        return rf"\mathrm{{{escaped}}}"
+    return str(value)
+
+
+def _binary_class_context(classes, y_train):
+    """Return fitted class order and numeric targets for probability plots.
+
+    Scikit-learn's binary coefficient represents ``classes_[1]``. Raw string
+    targets would make Plotly treat a shared probability axis as categorical,
+    hiding numeric model geometry. The view therefore preserves the fitted
+    class order in its labels and maps observed targets to 0 and 1 for plotting.
+    """
+    classes = np.asarray(classes).ravel()
+    if classes.size != 2:
+        raise ValueError("Binary prediction views require exactly two fitted classes.")
+
+    y_train = np.asarray(y_train).ravel()
+    numeric_targets = np.full(y_train.shape, np.nan, dtype=float)
+    for index, class_label in enumerate(classes):
+        numeric_targets[y_train == class_label] = float(index)
+    if np.any(np.isnan(numeric_targets)):
+        raise ValueError("y_train contains labels absent from the estimator's fitted classes.")
+    return classes, numeric_targets
+
+
+def _binary_result_tex(p_hat, y_hat, classes, dec, show_class_labels):
+    """Build an explicit binary probability comparison and class decision."""
+    winner_index = int(np.flatnonzero(classes == y_hat)[0])
+    winner_label = (
+        rf"\;({_class_label_text(y_hat)})" if show_class_labels else ""
+    )
+    return (
+        r"$\begin{aligned}"
+        rf"\hat{{\mathbf{{p}}}} &=(\hat{{p}}_0,\hat{{p}}_1)="
+        rf"({_fmt(1.0 - p_hat, dec)},\,{_fmt(p_hat, dec)})\\"
+        rf"\hat{{y}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}{winner_label}"
+        r"\end{aligned}$"
+    )
+
+
+def _multiclass_winner_tex(p_hat, y_hat, classes, dec, show_class_labels):
+    """Build an indexed multiclass decision with optional semantic label."""
+    winner_index = int(np.argmax(p_hat))
+    winner_label = (
+        rf"\;({_class_label_text(y_hat)})" if show_class_labels else ""
+    )
+    return (
+        r"$\begin{aligned}"
+        rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(float(np.max(p_hat)), dec)} \\"
+        rf"&\hat{{y}} = \arg\max_{{k\in\{{0,\ldots,{len(classes) - 1}\}}}}"
+        rf"\hat{{p}}_k = {winner_index}{winner_label}"
+        r"\end{aligned}$"
+    )
+
+
 def _explain_log_1d(
     X_train, y_train,
     x_disp, w_disp, b_disp,
-    p_hat, y_hat,
+    p_hat, y_hat, classes, show_class_labels,
     title, dec, grid_points, theme,
     p, text_color, ann_color, btn_bg, btn_border, btn_font_color
 ):
+    classes, y_targets = _binary_class_context(classes, y_train)
     x1_train = X_train[:, 0].ravel()
     xq1_disp = float(x_disp[0])
 
@@ -51,23 +114,27 @@ def _explain_log_1d(
     x_range = [x_min_plot, x_max_plot]
 
     # Math formulas
-    vars_tex = r"$\begin{aligned}" + rf"x_1 &= {_fmt(xq1_disp, dec)}" + r"\end{aligned}$"
+    class_mapping = (
+        rf"\\&\text{{Class }}0={_class_label_text(classes[0])},\quad "
+        rf"\text{{Class }}1={_class_label_text(classes[1])}"
+        if show_class_labels
+        else ""
+    )
+    vars_tex = (
+        r"$\begin{aligned}"
+        + rf"x_1 &= {_fmt(xq1_disp, dec)}{class_mapping}"
+        + r"\end{aligned}$"
+    )
 
     subst_tex = (
         r"$\begin{aligned}"
-        r"&\hat{p}(Y=c_1\mid x) = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1x + \theta_0 \\[5pt]"
+        r"&\hat{p}_1 = \sigma(z) = \frac{1}{1 + e^{-z}}, \quad z = \theta_1x + \theta_0 \\[5pt]"
         rf"&z = ({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp, dec)}) \\[5pt]"
         rf"&\sigma(z) = \frac{{1}}{{1 + e^{{-\left(({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(b_disp, dec)})\right)}}}}"
         r"\end{aligned}$"
     )
 
-    res_tex = (
-        r"$\begin{aligned}"
-        rf"\hat{{p}} &= {_fmt(p_hat, dec)}\\"
-        rf"\hat{{y}} &= {int(y_hat)}\\"
-        rf"(x_1, \hat{{p}}) &= ({_fmt(xq1_disp, dec)}, {_fmt(p_hat, dec)})"
-        r"\end{aligned}$"
-    )
+    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec, show_class_labels)
 
     fig = make_subplots(
         rows=1, cols=2,
@@ -81,7 +148,7 @@ def _explain_log_1d(
     # Traces
     # 1. Data
     fig.add_trace(go.Scatter(
-        x=x1_train, y=y_train,
+        x=x1_train, y=y_targets,
         mode="markers",
         name="Data",
         marker=data_marker_style(theme=theme),
@@ -99,7 +166,10 @@ def _explain_log_1d(
                 x=[x_decision, x_decision],
                 y=y_range,
                 mode="lines",
-                name="Decision Boundary",
+                name=(
+                    f"Decision boundary: P({classes[1]} | x) = 0.5"
+                    if show_class_labels else "Decision boundary: p1 = 0.5"
+                ),
                 line=dict(color="gray", dash="dash", width=1.5),
                 legendgroup="fit",
                 showlegend=True,
@@ -109,7 +179,7 @@ def _explain_log_1d(
     fig.add_trace(go.Scatter(
         x=x_grid, y=y_grid,
         mode="lines",
-        name="Model",
+        name=(f"Model: P({classes[1]} | x)" if show_class_labels else "Model: p1"),
         line=model_line_style(theme=theme),
         hoverlabel=dict(bgcolor="white", font=dict(color="black")),
         legendgroup="fit",
@@ -211,23 +281,34 @@ def _explain_log_1d(
         updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color),
     )
     fig.update_xaxes(title="x₁", range=x_range, row=1, col=2)
-    fig.update_yaxes(title="σ(z)", range=y_range, row=1, col=2)
+    fig.update_yaxes(
+        title=(f"P({classes[1]} | x)" if show_class_labels else "p1"),
+        range=y_range,
+        tickvals=[0.0, 0.5, 1.0],
+        ticktext=(
+            [f"0 - {classes[0]}", "0.5 threshold", f"1 - {classes[1]}"]
+            if show_class_labels else ["0", "0.5 threshold", "1"]
+        ),
+        row=1,
+        col=2,
+    )
     return fig
 
 def _explain_log_2d(
     X_train, y_train,
     x_disp, w_disp, b_disp,
-    p_hat, y_hat,
+    p_hat, y_hat, classes, show_class_labels,
     title, dec, grid_2d_points, theme,
     p, text_color, ann_color, btn_bg, btn_border, btn_font_color
 ):
     from ..theme import data_3d_marker_style, surface_style
 
+    classes, y_targets = _binary_class_context(classes, y_train)
     x1, x2 = X_train[:, 0].ravel(), X_train[:, 1].ravel()
     xq1_disp, xq2_disp = float(x_disp[0]), float(x_disp[1])
 
-    x1_min, x1_max = float(x1.min()), float(x1.max())
-    x2_min, x2_max = float(x2.min()), float(x2.max())
+    x1_min, x1_max = min(float(x1.min()), float(x_disp[0])), max(float(x1.max()), float(x_disp[0]))
+    x2_min, x2_max = min(float(x2.min()), float(x_disp[1])), max(float(x2.max()), float(x_disp[1]))
 
     X1g, X2g = np.meshgrid(
         np.linspace(x1_min, x1_max, int(grid_2d_points)),
@@ -244,23 +325,27 @@ def _explain_log_2d(
     z_range = [-0.08, 1.08]
     CAMERA = dict(eye=dict(x=1.55, y=1.55, z=1.15))
 
-    vars_tex = r"$\begin{aligned}" + rf"&x_1 = {_fmt(xq1_disp, dec)}\\" + rf"&x_2 = {_fmt(xq2_disp, dec)}" + r"\end{aligned}$"
+    class_mapping = (
+        rf"\\&\text{{Class }}0={_class_label_text(classes[0])},\quad "
+        rf"\text{{Class }}1={_class_label_text(classes[1])}"
+        if show_class_labels
+        else ""
+    )
+    vars_tex = (
+        r"$\begin{aligned}"
+        + rf"&x_1 = {_fmt(xq1_disp, dec)},\quad x_2 = {_fmt(xq2_disp, dec)}{class_mapping}"
+        + r"\end{aligned}$"
+    )
 
     subst_tex = (
         r"$\begin{aligned}"
-        r"&\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z)=\frac{1}{1+e^{-z}},\quad z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0\\[5pt]"
+        r"&\hat{p}_1=\sigma(z)=\frac{1}{1+e^{-z}},\quad z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0\\[5pt]"
         rf"&z = ({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(w_disp[1], dec)})\cdot({_fmt(xq2_disp, dec)}) + ({_fmt(b_disp, dec)}) \\[5pt]"
         rf"&\sigma(z) = \frac{{1}}{{1 + e^{{-\left(({_fmt(w_disp[0], dec)})\cdot({_fmt(xq1_disp, dec)}) + ({_fmt(w_disp[1], dec)})\cdot({_fmt(xq2_disp, dec)}) + ({_fmt(b_disp, dec)})\right)}}}}"
         r"\end{aligned}$"
     )
 
-    res_tex = (
-        r"$\begin{aligned}"
-        rf"\hat{{p}} &= {_fmt(p_hat, dec)}\\"
-        rf"\hat{{y}} &= {int(y_hat)}\\"
-        rf"(x_1, x_2, \hat{{p}}) &= ({_fmt(xq1_disp, dec)}, {_fmt(xq2_disp, dec)}, {_fmt(p_hat, dec)})"
-        r"\end{aligned}$"
-    )
+    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec, show_class_labels)
 
     fig = make_subplots(
         rows=1, cols=2, column_widths=[0.64, 0.36],
@@ -271,7 +356,7 @@ def _explain_log_2d(
 
     # 1. Data
     fig.add_trace(go.Scatter3d(
-        x=x1, y=x2, z=y_train,
+        x=x1, y=x2, z=y_targets,
         mode="markers", name="Data",
         marker=data_3d_marker_style(theme=theme),
         hovertemplate="<b>Data</b><br>x: %{x}<br>y: %{y}<br>z: %{z}<extra></extra>",
@@ -281,21 +366,42 @@ def _explain_log_2d(
     # 2. Surface
     fig.add_trace(go.Surface(
         x=X1g, y=X2g, z=Pg,
-        name="Model",
+        name=(f"Model: P({classes[1]} | x)" if show_class_labels else "Model: p1"),
         **surface_style(theme=theme),
         showlegend=True, legendgroup="fit",
         uid="MODEL_PLANE",
     ), row=1, col=2)
 
-    # 2.5 Decision Boundary Plane at z=0.5
-    Db = np.full_like(Pg, 0.5)
-    fig.add_trace(go.Surface(
-        x=X1g, y=X2g, z=Db,
-        name="Decision Boundary (p=0.5)",
-        colorscale=[[0, "gray"], [1, "gray"]],
-        opacity=0.3,
-        showscale=False,
-        showlegend=True, legendgroup="fit",
+    # 2.5 The decision boundary is z(x)=0, equivalently P(Y=c_1|x)=0.5.
+    # With two features it is a line where the probability surface crosses 0.5,
+    # not a horizontal plane spanning every feature coordinate.
+    boundary_x1 = np.array([], dtype=float)
+    boundary_x2 = np.array([], dtype=float)
+    if abs(w_disp[1]) >= abs(w_disp[0]) and abs(w_disp[1]) > 1e-12:
+        candidate_x1 = np.linspace(x1_min, x1_max, 160)
+        candidate_x2 = -(w_disp[0] * candidate_x1 + b_disp) / w_disp[1]
+        inside = (candidate_x2 >= x2_min) & (candidate_x2 <= x2_max)
+        boundary_x1, boundary_x2 = candidate_x1[inside], candidate_x2[inside]
+    elif abs(w_disp[0]) > 1e-12:
+        candidate_x2 = np.linspace(x2_min, x2_max, 160)
+        candidate_x1 = -(w_disp[1] * candidate_x2 + b_disp) / w_disp[0]
+        inside = (candidate_x1 >= x1_min) & (candidate_x1 <= x1_max)
+        boundary_x1, boundary_x2 = candidate_x1[inside], candidate_x2[inside]
+
+    fig.add_trace(go.Scatter3d(
+        x=boundary_x1,
+        y=boundary_x2,
+        z=np.full(boundary_x1.shape, 0.5),
+        mode="lines",
+        name=(
+            f"Decision boundary: P({classes[1]} | x) = 0.5"
+            if show_class_labels else "Decision boundary: p1 = 0.5"
+        ),
+        line=dict(color="gray", dash="dash", width=6),
+        showlegend=True,
+        legendgroup="fit",
+        hovertemplate="<b>Decision boundary</b><br>P(class 1 | x) = 0.5<extra></extra>",
+        uid="DECISION_BOUNDARY_3D",
     ), row=1, col=2)
 
     # 3. Prediction point
@@ -388,7 +494,15 @@ def _explain_log_2d(
         scene=dict(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
-            zaxis=dict(title="p̂", range=z_range),
+            zaxis=dict(
+                title=(f"P({classes[1]} | x)" if show_class_labels else "p1"),
+                range=z_range,
+                tickvals=[0.0, 0.5, 1.0],
+                ticktext=(
+                    [f"0 - {classes[0]}", "0.5", f"1 - {classes[1]}" ]
+                    if show_class_labels else ["0", "0.5", "1"]
+                ),
+            ),
             aspectmode="cube",
             camera=CAMERA,
             annotations=scene_ann(0),
@@ -399,7 +513,7 @@ def _explain_log_2d(
 def _explain_log_multiclass_1d(
     X_train, y_train,
     x_disp, w_disp, b_disp,
-    p_hat, y_hat,
+    p_hat, y_hat, classes, show_class_labels,
     title, dec, grid_points, theme,
     p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
     probability_link,
@@ -470,13 +584,7 @@ def _explain_log_multiclass_1d(
 
     subst_tex = r"$\begin{gathered}" + r" \\[2pt]".join(subst_lines) + r"\end{gathered}$"
 
-    p_hat_max = float(np.max(p_hat))
-    res_tex = (
-        r"$\begin{aligned}"
-        rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(p_hat_max, dec)} \\"
-        rf"&\hat{{y}} = \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
-        r"\end{aligned}$"
-    )
+    res_tex = _multiclass_winner_tex(p_hat, y_hat, classes, dec, show_class_labels)
 
     fig = make_subplots(
         rows=3, cols=2,
@@ -511,7 +619,8 @@ def _explain_log_multiclass_1d(
         color = colors[k % len(colors)]
         fig.add_trace(go.Scatter(
             x=x_grid, y=p_curves[k],
-            mode="lines", name=f"Class {k}",
+            mode="lines",
+            name=(f"Class {k} - {classes[k]}" if show_class_labels else f"Class {k}"),
             line=dict(color=color, width=2),
             legendgroup=f"class_{k}", showlegend=True,
         ), row=1, col=2)
@@ -635,7 +744,7 @@ def _explain_log_multiclass_1d(
 
 
 def _explain_log_multiclass_nd(
-    d, K, x_disp, w_disp, b_disp, p_hat, y_hat,
+    d, K, x_disp, w_disp, b_disp, p_hat, y_hat, classes, show_class_labels,
     title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
     probability_link,
 ):
@@ -693,13 +802,7 @@ def _explain_log_multiclass_nd(
 
     subst_tex = r"$\begin{gathered}" + r" \\[-2pt]".join(subst_lines) + r"\end{gathered}$"
 
-    p_hat_max = float(np.max(p_hat))
-    res_tex = (
-        r"$\begin{aligned}"
-        rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(p_hat_max, dec)} \\"
-        rf"&\hat{{y}} = \underset{{k}}{{\mathrm{{argmax}}}}(\hat{{\mathbf{{p}}}}) = \text{{Class }} {y_hat}"
-        r"\end{aligned}$"
-    )
+    res_tex = _multiclass_winner_tex(p_hat, y_hat, classes, dec, show_class_labels)
 
     y_dim_tex = rf"$\hat{{\mathbf{{p}}}}\in\Delta^{{{K - 1}}}$"
 
@@ -774,15 +877,42 @@ def explain_logistic_prediction(
     title=None,
     dec=4,
     grid_points=250,
+    show_class_labels=False,
     display_space="original",
     multiclass_link="auto",
+    prediction_source="model",
+    validation_rtol=1e-7,
+    validation_atol=1e-9,
     theme=None,
 ):
     """Create a link-aware step-by-step logistic prediction visualization.
 
+    For binary estimators, probability indices 0 and 1 follow ``classes_[0]``
+    and ``classes_[1]`` exactly. The scalar ``p_hat`` and sigmoid surface mean
+    ``p_1``; the complementary class probability is ``1 - p_hat``.
+    String targets are converted to 0/1 only in plot coordinates, never in the
+    fitted estimator or reported class identity.
+
+    ``show_class_labels=False`` keeps the mathematical view indexed and omits
+    semantic labels from equations, axes, and legends. Setting it to ``True``
+    appends fitted labels while retaining the class index. Labels and fitted
+    order are always preserved in ``layout.meta``.
+
     ``multiclass_link="auto"`` uses the estimator's exact probability semantics;
     explicit ``"softmax"`` and ``"ovr"`` values support custom estimators.
+    Supplied probabilities and labels are verified against the estimator unless
+    ``prediction_source="provided"`` explicitly requests a counterfactual.
     """
+    _validate_prediction_options(
+        dec=dec,
+        grid_points=grid_points,
+        validation_rtol=validation_rtol,
+        validation_atol=validation_atol,
+    )
+    if not isinstance(show_class_labels, bool):
+        raise TypeError("show_class_labels must be a boolean value.")
+    if not isinstance(multiclass_link, str) or multiclass_link not in {"auto", "softmax", "ovr"}:
+        raise ValueError("multiclass_link must be 'auto', 'softmax', or 'ovr'.")
     def _extract_logistic_multiclass_theta(est):
         from ..linear.prediction import _get_last_estimator
 
@@ -817,20 +947,35 @@ def explain_logistic_prediction(
         b_o = b_s - np.sum(w_s * mu / (scale + 1e-12), axis=1)
         return w_o, b_o
 
-    X_train = np.asarray(X_train)
+    X_train = np.asarray(X_train, dtype=float)
     y_train = np.asarray(y_train)
 
     if X_train.ndim == 1:
         X_train = X_train.reshape(-1, 1)
+    if X_train.ndim != 2 or X_train.shape[0] == 0 or X_train.shape[1] == 0:
+        raise ValueError("X_train must be a non-empty two-dimensional feature matrix.")
+    if not np.all(np.isfinite(X_train)):
+        raise ValueError("X_train must contain only finite values.")
+    if y_train.ravel().size != X_train.shape[0]:
+        raise ValueError("X_train and y_train must contain the same number of samples.")
+    y_train = y_train.ravel()
 
     d = X_train.shape[1]
 
     if x_query is None:
         raise ValueError("Must provide x_query.")
 
-    x_query = np.asarray(x_query, dtype=float).ravel()
+    x_query_array = np.asarray(x_query, dtype=float)
+    if x_query_array.ndim == 2 and x_query_array.shape[0] != 1:
+        raise ValueError(f"x_query must describe exactly one sample; got shape {x_query_array.shape}.")
+    x_query = x_query_array.ravel()
     if x_query.size != d:
         raise ValueError(f"x_query must have {d} elements.")
+    if not np.all(np.isfinite(x_query)):
+        raise ValueError("x_query must contain only finite values.")
+    if not isinstance(display_space, str) or display_space not in {"original", "scaled"}:
+        raise ValueError("display_space must be 'original' or 'scaled'.")
+    _validate_prediction_source(prediction_source)
 
     scaler = _find_standard_scaler(trained_estimator)
     adapter = SklearnAdapter(trained_estimator)
@@ -845,20 +990,58 @@ def explain_logistic_prediction(
     else:
         w_s, b_s = _extract_linear_theta(trained_estimator)
 
-    if display_space not in ["original", "scaled"]:
-        display_space = "original"
-
     x_query_scaled = _to_scaled_x(x_query, scaler)
+    model_probabilities = adapter.predict_proba(x_query.reshape(1, -1), classes).ravel()
+    model_p_hat = model_probabilities if is_multiclass else float(model_probabilities[1])
+    model_y_hat = np.asarray(trained_estimator.predict(x_query.reshape(1, -1))).ravel()[0]
 
     if p_hat is None:
-        probabilities = adapter.predict_proba(x_query.reshape(1, -1), classes)
-        p_hat = probabilities.ravel() if is_multiclass else float(probabilities[0, 1])
+        p_hat = model_p_hat.copy() if is_multiclass else model_p_hat
+    elif is_multiclass:
+        p_hat = np.asarray(p_hat, dtype=float).ravel()
+        if p_hat.size != len(classes):
+            raise ValueError(f"p_hat must contain one probability for each of the {len(classes)} classes.")
+        if not np.all(np.isfinite(p_hat)) or np.any(p_hat < 0) or not np.isclose(np.sum(p_hat), 1.0, atol=1e-8):
+            raise ValueError("p_hat must be a finite non-negative probability vector that sums to 1.")
+        if prediction_source == "model" and not np.allclose(
+            p_hat, model_p_hat, rtol=validation_rtol, atol=validation_atol
+        ):
+            raise ValueError(
+                "Provided p_hat does not match estimator.predict_proba. Use prediction_source='provided' "
+                "only for an intentional counterfactual."
+            )
+    else:
+        p_hat_array = np.asarray(p_hat, dtype=float).ravel()
+        if p_hat_array.size != 1:
+            raise ValueError("Binary p_hat must be a single scalar probability.")
+        p_hat = float(p_hat_array[0])
+        if not np.isfinite(p_hat) or not 0 <= p_hat <= 1:
+            raise ValueError("Binary p_hat must be a finite probability in [0, 1].")
+        if prediction_source == "model" and not np.isclose(
+            p_hat, model_p_hat, rtol=validation_rtol, atol=validation_atol
+        ):
+            raise ValueError(
+                f"Provided p_hat={p_hat!r} does not match estimator.predict_proba value {model_p_hat!r}. "
+                "Use prediction_source='provided' only for an intentional counterfactual."
+            )
 
+    derived_y_hat = classes[np.argmax(p_hat)] if is_multiclass else classes[1] if p_hat >= 0.5 else classes[0]
     if y_hat is None:
-        if is_multiclass:
-            y_hat = classes[np.argmax(p_hat)]
-        else:
-            y_hat = classes[1] if p_hat >= 0.5 else classes[0]
+        y_hat = model_y_hat if prediction_source == "model" else derived_y_hat
+    else:
+        y_hat_array = np.asarray(y_hat).ravel()
+        if y_hat_array.size != 1:
+            raise ValueError("y_hat must be a single fitted class label.")
+        y_hat = y_hat_array[0]
+        if not np.any(classes == y_hat):
+            raise ValueError(f"y_hat must be one of the fitted classes: {classes.tolist()}.")
+        if prediction_source == "model" and y_hat != model_y_hat:
+            raise ValueError(
+                f"Provided y_hat={y_hat!r} does not match estimator.predict value {model_y_hat!r}. "
+                "Use prediction_source='provided' only for an intentional counterfactual."
+            )
+
+    outside_features = _outside_training_range(X_train, x_query)
 
     if display_space == "scaled":
         X_disp = np.array([_to_scaled_x(x, scaler) for x in X_train])
@@ -877,6 +1060,14 @@ def explain_logistic_prediction(
         if title is None:
             title = f"Logistic Regression Prediction ({'Multiclass' if is_multiclass else 'Binary'}) - Original Space"
 
+    scope = (
+        f"Extrapolation outside training range in feature(s): {', '.join(str(index + 1) for index in outside_features)}"
+        if outside_features
+        else "Query lies within every observed training feature range"
+    )
+    source_label = "model-verified" if prediction_source == "model" else "user-provided counterfactual"
+    title = f'{title}<br><sup><span style="color:#B8C1CC">Prediction source: {source_label} · {scope}</span></sup>'
+
     p = _resolve(theme)
     text_color = p.get("text", "#333333")
     ann_color = p.get("prediction_text", "#e0245e")
@@ -887,31 +1078,65 @@ def explain_logistic_prediction(
     if is_multiclass:
         K = len(classes)
         if d == 1:
-            return _explain_log_multiclass_1d(
+            fig = _explain_log_multiclass_1d(
                 X_disp, y_train, x_disp, w_disp, b_disp, p_hat, y_hat,
+                classes, show_class_labels,
                 title, dec, grid_points, theme,
                 p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
                 probability_link,
             )
         else:
-            return _explain_log_multiclass_nd(
+            fig = _explain_log_multiclass_nd(
                 d, K, x_disp, w_disp, b_disp, p_hat, y_hat,
+                classes, show_class_labels,
                 title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
                 probability_link,
             )
     else:
         if d == 1:
-            return _explain_log_1d(
+            fig = _explain_log_1d(
                 X_disp, y_train, x_disp, w_disp, b_disp, p_hat, y_hat,
+                classes, show_class_labels,
                 title, dec, grid_points, theme,
                 p, text_color, ann_color, btn_bg, btn_border, btn_font_color
             )
         else:
             grid_2d_points = 40
-            return _explain_log_2d(
+            fig = _explain_log_2d(
                 X_disp, y_train, x_disp, w_disp, b_disp, p_hat, y_hat,
+                classes, show_class_labels,
                 title, dec, grid_2d_points, theme,
                 p, text_color, ann_color, btn_bg, btn_border, btn_font_color
             )
+
+    fig.update_layout(
+        meta={
+            "mlektic_prediction": {
+                "source": prediction_source,
+                "show_class_labels": show_class_labels,
+                "classes": [value.item() if hasattr(value, "item") else value for value in classes],
+                "probability_target_class_index": None if is_multiclass else 1,
+                "probability_target_class": (
+                    None
+                    if is_multiclass
+                    else classes[1].item() if hasattr(classes[1], "item") else classes[1]
+                ),
+                "decision_threshold": None if is_multiclass else 0.5,
+                "model_class_probabilities": model_probabilities.tolist(),
+                "displayed_class_probabilities": (
+                    np.asarray(p_hat).tolist()
+                    if is_multiclass
+                    else [1.0 - float(p_hat), float(p_hat)]
+                ),
+                "model_probability": np.asarray(model_p_hat).tolist(),
+                "displayed_probability": np.asarray(p_hat).tolist(),
+                "model_class": model_y_hat.item() if hasattr(model_y_hat, "item") else model_y_hat,
+                "displayed_class": y_hat.item() if hasattr(y_hat, "item") else y_hat,
+                "outside_training_feature_indices": outside_features,
+                "probability_link": probability_link,
+            }
+        }
+    )
+    return fig
 
 __all__ = ["explain_logistic_prediction"]

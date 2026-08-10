@@ -59,4 +59,4 @@ html_short_title = "Mlektic"
 html_show_sourcelink = True
 
 # -- Language -----------------------------------------------------------------
-language = "es"
+language = "en"

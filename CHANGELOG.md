@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added `show_class_labels=False` to logistic training and prediction figures. Indexed classes are the uncluttered default; fitted semantic labels can be revealed without removing their always-available metadata.
+- Added `show_history_context=True` to linear and logistic public visualization APIs; setting it to `False` hides only the title subtitle while preserving slider and metadata context.
+- Added a schema-versioned provenance contract for tabular histories, including replay/interpolation source detail, full and displayed checkpoint coordinates, estimator-reported iterations, smoothing/decimation settings, warnings, and final-state comparison.
+- Added separate `loss_raw` and `loss_display` arrays while retaining `loss_hist` as a backward-compatible display alias.
+- Added visible replay/interpolation subtitles and honest slider/loss-axis coordinates without changing classic geometry or animation defaults.
+- Added strict validation for history configuration, training data, themes, prediction controls, supplied prediction/probability/class values, and unsupported explicit replay.
+- Added extrapolation-aware linear and logistic prediction explanations, explicit counterfactual mode, string-label support, and auditable figure metadata.
+- Added public `export_figure()` with explicit inline/CDN Plotly and MathJax dependency semantics.
+- Added English-first history semantics, architecture, visualization, advanced-use, implementation-plan, and phase-0 verification documentation.
 - Added hybrid 1D linear-regression animation with synchronized visual subframes for the model line, numeric coefficients, loss, and metrics; semantic checkpoints remain distinct in the slider and the symbolic definition stays in LaTeX.
 - Added optional PyTorch support through `mlektic[torch]`, including `TorchTrainingRecorder` for frame-aligned loss, metrics, parameter values, gradients, compact activation vectors, and optimizer/loss metadata.
 - Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
@@ -32,6 +41,18 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Restored normal 15-point typography and an inline coordinate tuple for ordinary two-feature linear prediction results; only genuinely long formatted coordinates now trigger a compact 13-point wrapped layout.
+- Kept binary prediction axes numeric for string-labeled estimators so fitted sigmoid curves and probability surfaces remain visible; the two-feature boundary is now the actual `p=0.5` intersection line, and results identify both fitted-class probabilities and the winning label.
+- Separated the multiclass 2D coefficient matrix and bias vector so the bias is centered between the matrix and class-score equation.
+- Prevented normalized-OvR probability substitutions from crossing into loss panels by using exact compact fractions only in constrained replay layouts.
+- Recentered multiclass ellipses in 1D and nD, removed empty rows from compact nD input vectors, and honored `max_theta_cols` in dense multiclass matrices.
+- Removed empty loss subplots from linear and binary-logistic nD figures when `show_loss=False`.
+- Shortened replay/interpolation provenance subtitles while preserving N/K, estimator iterations, and final-state mismatch semantics.
+- Balanced the multiclass probability stack by lowering only the first expanded fraction, keeping the ellipsis visually centered, and sharing the same fraction spacing and typography across 1D, 2D, and nD figures.
+- Increased vertical separation between the definition and substituted sigmoid equations in binary logistic 2D figures so fraction numerators do not overlap the equation above.
+- Fixed temporal decimation labels so retained checkpoints keep their source coordinates instead of being renumbered `0..N-1`.
+- Fixed smoothed loss figures so the visible Loss/Log-loss metric uses the same display series while raw empirical values remain unchanged.
+- Fixed 1D and 2D prediction ranges so out-of-range queries remain visible and are identified as extrapolations.
 - Stabilized Play/Pause styling during 3D redraw animations by keeping buttons white with black text in every interaction state, without JavaScript state tracking or changes to interpolation.
 - Moved hybrid 1D metric cards into a dedicated vertical side column so longer values cannot overlap each other or the loss plot.
 - Prevented 2D prediction substitutions and results from overflowing by using compact LaTeX scientific notation, smaller panel typography, and a wrapped output tuple.
@@ -55,6 +76,9 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Clarified that incremental Scikit-learn histories are reconstructed replays over clones and that non-incremental paths are synthetic interpolations, not recovered optimizer histories.
+- Changed Sphinx documentation language to English and made the new public contract English-first.
+- Changed `show_optimized()` to import IPython lazily so the core package import does not require notebook dependencies.
 - Documented the animation rendering contract: hybrid 1D linear views keep symbolic LaTeX fixed and animate synchronized numeric traces, native views redraw dynamic MathJax substitutions, and notebook-friendly hybrid cadence is typically 30-45 FPS.
 - Unified learnable-parameter notation across linear, logistic, and neural models: vectors use `theta`, matrices use `Theta`, and bias vectors use `theta_0`.
 - Added configurable 2D animation transitions while preserving redraws for Plotly 3D traces; existing `steps`, `max_frames`, and `frame_step` controls remain available for temporal sampling.

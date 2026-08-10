@@ -86,6 +86,9 @@ class InterpolationCapture(HistoryCaptureStrategy):
 
         return {
             "history_kind": "final_interp",
+            "history_source": "interpolated",
+            "step_indices": np.arange(steps, dtype=int),
+            "alpha_values": np.linspace(0.0, 1.0, steps) if steps > 1 else np.ones(1),
             "loss_hist": loss_hist,
             "grid": grid,
             "y_line_hist": y_line_hist,
@@ -219,6 +222,9 @@ class InterpolationCapture(HistoryCaptureStrategy):
 
         return {
             "history_kind": "final_interp",
+            "history_source": "interpolated",
+            "step_indices": np.arange(steps, dtype=int),
+            "alpha_values": np.linspace(0.0, 1.0, steps) if steps > 1 else np.ones(1),
             "classes": classes,
             "is_multiclass": is_multiclass,
             "probability_link": probability_link,

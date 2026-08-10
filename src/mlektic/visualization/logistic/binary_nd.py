@@ -64,14 +64,15 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
         body = r" \\ ".join(lines)
         return r"$$\begin{aligned}" + body + r"\\[4pt]&\hat{p}(Y=c_1\mid\mathbf{x})=\dfrac{1}{1+e^{-z}}" + r"\end{aligned}$$"
 
+    math_x = 0.68 if show_loss else 0.5
     ann = [
         dict(
-            x=0.68, y=0.93, xref="paper", yref="paper",
+            x=math_x, y=0.93, xref="paper", yref="paper",
             text=model_header_latex(), showarrow=False,
             xanchor="center", yanchor="top", font=dict(size=22, color="white"),
         ),
         dict(
-            x=0.68, y=0.78, xref="paper", yref="paper",
+            x=math_x, y=0.78, xref="paper", yref="paper",
             text=full_scalar_model_multiline_latex(t), showarrow=False,
             xanchor="center", yanchor="top", font=dict(size=17, color="white"),
         ),
@@ -188,14 +189,18 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
             z_part = r"z = " + rf"({w[0]:.{dec}f})x_1 " + rf"+ ({w[1]:.{dec}f})x_2 " + rf"+ ({w[2]:.{dec}f})x_3 " + rf"+ ({w[3]:.{dec}f})x_4 " + rf"+ \cdots + ({w[last - 1]:.{dec}f})x_{{{last}}} " + rf"+ ({b:.{dec}f})"
         return r"$$" + z_part + r",\qquad\hat{p}(Y=c_1\mid\mathbf{x})=\dfrac{1}{1+e^{-z}}$$"
 
+    if show_loss:
+        positions = dict(model=0.68, x_dim=0.55, theta_dim=0.83, x_vector=0.52, theta_vector=0.80, scalar=0.71)
+    else:
+        positions = dict(model=0.50, x_dim=0.33, theta_dim=0.67, x_vector=0.30, theta_vector=0.64, scalar=0.50)
     ann = [
-        dict(x=0.68, y=0.995, xref="paper", yref="paper", text=model_formula_latex(), showarrow=False, xanchor="center", yanchor="top", font=dict(size=22, color="white")),
-        dict(x=0.68, y=0.938, xref="paper", yref="paper", text=bias_latex(t), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
-        dict(x=0.55, y=0.83, xref="paper", yref="paper", text=x_dim_latex(), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
-        dict(x=0.83, y=0.83, xref="paper", yref="paper", text=theta_dim_latex(), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
-        dict(x=0.52, y=0.48, xref="paper", yref="paper", text=x_vector_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=15, color="white")),
-        dict(x=0.80, y=0.48, xref="paper", yref="paper", text=w_matrix_latex(t), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=15, color="white")),
-        dict(x=0.71, y=0.03, xref="paper", yref="paper", text=scalar_model_compact_latex(t), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
+        dict(x=positions["model"], y=0.995, xref="paper", yref="paper", text=model_formula_latex(), showarrow=False, xanchor="center", yanchor="top", font=dict(size=22, color="white")),
+        dict(x=positions["model"], y=0.938, xref="paper", yref="paper", text=bias_latex(t), showarrow=False, xanchor="center", yanchor="top", font=dict(size=18, color="white")),
+        dict(x=positions["x_dim"], y=0.83, xref="paper", yref="paper", text=x_dim_latex(), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
+        dict(x=positions["theta_dim"], y=0.83, xref="paper", yref="paper", text=theta_dim_latex(), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
+        dict(x=positions["x_vector"], y=0.48, xref="paper", yref="paper", text=x_vector_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=15, color="white")),
+        dict(x=positions["theta_vector"], y=0.48, xref="paper", yref="paper", text=w_matrix_latex(t), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=15, color="white")),
+        dict(x=positions["scalar"], y=0.03, xref="paper", yref="paper", text=scalar_model_compact_latex(t), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
     ]
 
     if show_loss:
@@ -218,6 +223,8 @@ def build_binary_multivar_logistic_figure(
     loss_hist=None,
     metrics_hist=None,
     show_loss=True,
+    classes=None,
+    show_class_labels=False,
     history_kind="iterative",
     title=None,
     strict_loss=False,
@@ -230,7 +237,7 @@ def build_binary_multivar_logistic_figure(
     """Internal method to build build_binary_multivar_logistic_figure."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -300,24 +307,26 @@ def build_binary_multivar_logistic_figure(
         def _get_ann(t):
             return _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, show_loss, metrics_hist, loss_hist)
 
-    fig = make_subplots(
-        rows=1, cols=2,
-        column_widths=[0.42, 0.58],
-        horizontal_spacing=0.06,
-        specs=[[{"type": "xy"}, {"type": "xy"}]],
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=[step if i == 0 else None for i, step in enumerate(step_axis_list)] if show_loss else [],
-            y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
-            mode="lines",
-            name="Log-loss",
-            line=loss_line_style(theme=theme),
-            uid="LOSS_LINE",
-        ),
-        row=1, col=1
-    )
+    if show_loss:
+        fig = make_subplots(
+            rows=1, cols=2,
+            column_widths=[0.42, 0.58],
+            horizontal_spacing=0.06,
+            specs=[[{"type": "xy"}, {"type": "xy"}]],
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[step if i == 0 else None for i, step in enumerate(step_axis_list)],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
+                mode="lines",
+                name="Log-loss",
+                line=loss_line_style(theme=theme),
+                uid="LOSS_LINE",
+            ),
+            row=1, col=1,
+        )
+    else:
+        fig = make_subplots(rows=1, cols=1, specs=[[{"type": "xy"}]])
 
     frames = []
     for t in range(steps_n):
@@ -329,14 +338,11 @@ def build_binary_multivar_logistic_figure(
                 line=loss_line_style(theme=theme),
                 uid="LOSS_LINE"
             )
-        else:
-            loss_trace = go.Scatter(x=[], y=[], uid="LOSS_LINE")
-
         frames.append(
             go.Frame(
                 name=str(t),
-                data=[loss_trace],
-                traces=[0],
+                data=[loss_trace] if show_loss else [],
+                traces=[0] if show_loss else [],
                 layout=go.Layout(annotations=_get_ann(t)),
             )
         )
@@ -350,14 +356,14 @@ def build_binary_multivar_logistic_figure(
         annotations=_get_ann(0),
     )
 
-    fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=1)
     if show_loss:
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=1)
         fig.update_yaxes(title="Log-loss", range=[lmin - lpad, lmax + lpad], row=1, col=1)
+        fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
+        fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
     else:
-        fig.update_yaxes(title="Log-loss", row=1, col=1)
-
-    fig.update_xaxes(visible=False, row=1, col=2, range=[0, 1])
-    fig.update_yaxes(visible=False, row=1, col=2, range=[0, 1])
+        fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+        fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
     return fig
 
 __all__ = ["build_binary_multivar_logistic_figure"]

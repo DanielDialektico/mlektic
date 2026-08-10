@@ -1,3 +1,5 @@
+from numbers import Real
+
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -23,6 +25,76 @@ def _fmt(val, dec=4):
     if '.' in s:
         s = s.rstrip('0').rstrip('.')
     return s
+
+
+def _linear_2d_result_layout(x1, x2, yhat, dec):
+    """Return a readable 2D result, wrapping only genuinely long coordinates."""
+    formatted = [_fmt(value, dec) for value in (x1, x2, yhat)]
+    coordinate_length = sum(len(value) for value in formatted) + 4
+    if coordinate_length <= 44:
+        return (
+            r"$\begin{aligned}"
+            rf"\hat{{y}} &= {formatted[2]}\\"
+            rf"(x_1, x_2, \hat{{y}}) &= ({formatted[0]}, {formatted[1]}, {formatted[2]})"
+            r"\end{aligned}$",
+            15,
+            False,
+        )
+
+    return (
+        r"$\begin{aligned}"
+        rf"\hat{{y}} &= {formatted[2]}\\"
+        r"(x_1, x_2, \hat{y}) &= \\"
+        rf"&\quad ({formatted[0]}, {formatted[1]}, {formatted[2]})"
+        r"\end{aligned}$",
+        13,
+        True,
+    )
+
+
+def _validate_prediction_source(prediction_source):
+    if not isinstance(prediction_source, str) or prediction_source not in {"model", "provided"}:
+        raise ValueError("prediction_source must be 'model' or 'provided'.")
+
+
+def _resolve_numeric_prediction(provided, model_value, *, name, prediction_source, rtol, atol):
+    """Return a finite scalar and verify supplied values against the model by default."""
+    _validate_prediction_source(prediction_source)
+    model_value = float(np.asarray(model_value, dtype=float).ravel()[0])
+    if not np.isfinite(model_value):
+        raise ValueError(f"The estimator returned a non-finite {name}.")
+    if provided is None:
+        return model_value
+    provided_array = np.asarray(provided, dtype=float).ravel()
+    if provided_array.size != 1:
+        raise ValueError(f"{name} must be a single scalar value.")
+    provided_value = float(provided_array[0])
+    if not np.isfinite(provided_value):
+        raise ValueError(f"{name} must be finite.")
+    if prediction_source == "model" and not np.isclose(provided_value, model_value, rtol=rtol, atol=atol):
+        raise ValueError(
+            f"Provided {name}={provided_value!r} does not match the estimator value {model_value!r}. "
+            "Use prediction_source='provided' only when an intentional counterfactual value should be displayed."
+        )
+    return provided_value
+
+
+def _outside_training_range(X_train, x_query):
+    """Return feature indices whose query value lies outside the observed range."""
+    lower = np.min(X_train, axis=0)
+    upper = np.max(X_train, axis=0)
+    return np.flatnonzero((x_query < lower) | (x_query > upper)).tolist()
+
+
+def _validate_prediction_options(*, dec, grid_points, validation_rtol, validation_atol):
+    """Validate shared numerical controls before Plotly construction."""
+    if not isinstance(dec, int) or isinstance(dec, bool) or dec < 0:
+        raise ValueError("dec must be a non-negative integer.")
+    if not isinstance(grid_points, int) or isinstance(grid_points, bool) or grid_points < 2:
+        raise ValueError("grid_points must be an integer greater than or equal to 2.")
+    for name, value in (("validation_rtol", validation_rtol), ("validation_atol", validation_atol)):
+        if not isinstance(value, Real) or isinstance(value, bool) or value < 0:
+            raise ValueError(f"{name} must be a non-negative real number.")
 
 def _get_last_estimator(est):
     if hasattr(est, "steps"):
@@ -124,7 +196,8 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     x1_train = X_train[:, 0].ravel()
     xq1_disp = float(x_disp[0])
 
-    x_min, x_max = float(x1_train.min()), float(x1_train.max())
+    x_min = min(float(x1_train.min()), xq1_disp)
+    x_max = max(float(x1_train.max()), xq1_disp)
     x_grid = np.linspace(x_min, x_max, int(grid_points))
     y_grid = x_grid * w_disp[0] + b_disp
 
@@ -272,8 +345,8 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     x1, x2 = X_train[:, 0].ravel(), X_train[:, 1].ravel()
     xq1_disp, xq2_disp = float(x_disp[0]), float(x_disp[1])
 
-    x1_min, x1_max = float(x1.min()), float(x1.max())
-    x2_min, x2_max = float(x2.min()), float(x2.max())
+    x1_min, x1_max = min(float(x1.min()), float(x_disp[0])), max(float(x1.max()), float(x_disp[0]))
+    x2_min, x2_max = min(float(x2.min()), float(x_disp[1])), max(float(x2.max()), float(x_disp[1]))
 
     X1g, X2g = np.meshgrid(
         np.linspace(x1_min, x1_max, int(grid_2d_points)),
@@ -300,12 +373,8 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         rf"&\quad ({_fmt(w_disp[1], dec)}) \cdot ({_fmt(xq2_disp, dec)})"
         r"\end{aligned}$"
     )
-    res_tex = (
-        r"$\begin{aligned}"
-        rf"\hat{{y}} &= {_fmt(yhat, dec)}\\"
-        r"(x_1, x_2, \hat{y}) &= \\"
-        rf"&\quad ({_fmt(xq1_disp, dec)}, {_fmt(xq2_disp, dec)}, {_fmt(yhat, dec)})"
-        r"\end{aligned}$"
+    res_tex, result_font_size, _result_wrapped = _linear_2d_result_layout(
+        xq1_disp, xq2_disp, yhat, dec
     )
 
     fig = make_subplots(
@@ -375,7 +444,7 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         return [
             title_annot(T1, 0.96), body_annot(v_body, 0.89),
             title_annot(T2, 0.63), body_annot(s_body, 0.56, size=13),
-            title_annot(T3, 0.30), body_annot(r_body, 0.23, size=12),
+            title_annot(T3, 0.30), body_annot(r_body, 0.23, size=result_font_size),
         ]
 
     def scene_ann(stage: int):
@@ -655,17 +724,39 @@ def explain_lr_prediction(
     grid_points=250,
     grid_2d_points=40,
     display_space="original",
+    prediction_source="model",
+    validation_rtol=1e-7,
+    validation_atol=1e-9,
     theme=None,
 ):
-    """Build a visual explanation for a linear-regression prediction."""
+    """Build an auditable visual explanation for one linear prediction.
+
+    Supplied ``yhat`` values are checked against ``estimator.predict`` by
+    default. Set ``prediction_source="provided"`` only for an intentional
+    counterfactual demonstration. Queries outside the observed feature ranges
+    are explicitly marked as extrapolations and remain visible in the plot.
+    """
+    _validate_prediction_options(
+        dec=dec,
+        grid_points=grid_points,
+        validation_rtol=validation_rtol,
+        validation_atol=validation_atol,
+    )
+    if not isinstance(grid_2d_points, int) or isinstance(grid_2d_points, bool) or grid_2d_points < 2:
+        raise ValueError("grid_2d_points must be an integer greater than or equal to 2.")
     X_train = np.asarray(X_train, dtype=float)
     if X_train.ndim == 1:
         X_train = X_train.reshape(-1, 1)
     y_train = np.asarray(y_train, dtype=float).ravel()
 
+    if not np.all(np.isfinite(X_train)) or not np.all(np.isfinite(y_train)):
+        raise ValueError("X_train and y_train must contain only finite values.")
+
     n, d = X_train.shape
     if d < 1:
         raise ValueError("X_train must have at least 1 feature.")
+    if y_train.size != n:
+        raise ValueError("X_train and y_train must contain the same number of samples.")
 
     if display_space not in ("original", "scaled"):
         raise ValueError("display_space must be 'original' or 'scaled'.")
@@ -684,16 +775,22 @@ def explain_lr_prediction(
     x_query = np.asarray(x_query, dtype=float)
     if x_query.ndim == 1:
         x_query = x_query.reshape(1, -1)
-    if x_query.shape[1] != d:
-        raise ValueError(f"x_query must have shape (m, {d}). Got {x_query.shape}.")
+    if x_query.ndim != 2 or x_query.shape != (1, d):
+        raise ValueError(f"x_query must describe exactly one sample with shape (1, {d}). Got {x_query.shape}.")
+    if not np.all(np.isfinite(x_query)):
+        raise ValueError("x_query must contain only finite values.")
 
     xq = x_query[0].astype(float).ravel()
-
-    if yhat is None:
-        yhat = trained_estimator.predict(xq.reshape(1, -1))
-        yhat = float(np.asarray(yhat, dtype=float).ravel()[0])
-    else:
-        yhat = float(np.asarray(yhat, dtype=float).ravel()[0])
+    model_yhat = trained_estimator.predict(xq.reshape(1, -1))
+    yhat = _resolve_numeric_prediction(
+        yhat,
+        model_yhat,
+        name="yhat",
+        prediction_source=prediction_source,
+        rtol=validation_rtol,
+        atol=validation_atol,
+    )
+    outside_features = _outside_training_range(X_train, xq)
 
     w_scaled, b_scaled = _extract_linear_theta(trained_estimator)
 
@@ -716,6 +813,14 @@ def explain_lr_prediction(
     else:
         x_disp, w_disp, b_disp = xq, w_orig, b_orig
 
+    scope = (
+        f"Extrapolation outside training range in feature(s): {', '.join(str(index + 1) for index in outside_features)}"
+        if outside_features
+        else "Query lies within every observed training feature range"
+    )
+    source_label = "model-verified" if prediction_source == "model" else "user-provided counterfactual"
+    title = f'{title}<br><sup><span style="color:#B8C1CC">Prediction source: {source_label} · {scope}</span></sup>'
+
     p = _resolve(theme)
     ann_color = p.get("annotation_color", "white")
     text_color = p.get("text", "white")
@@ -724,10 +829,21 @@ def explain_lr_prediction(
     btn_font_color = p.get("btn_font_color", "black")
 
     if d == 1:
-        return _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color)
+        fig = _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color)
     elif d == 2:
-        return _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_2d_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color)
+        fig = _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_2d_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color)
     else:
-        return _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color)
+        fig = _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color)
+    fig.update_layout(
+        meta={
+            "mlektic_prediction": {
+                "source": prediction_source,
+                "model_value": float(np.asarray(model_yhat).ravel()[0]),
+                "displayed_value": yhat,
+                "outside_training_feature_indices": outside_features,
+            }
+        }
+    )
+    return fig
 
 __all__ = ["explain_lr_prediction"]

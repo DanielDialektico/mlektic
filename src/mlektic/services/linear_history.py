@@ -21,7 +21,14 @@ def fit_history(
     max_frames=60,
     frame_step=10,
 ) -> dict:
-    """Capture linear history."""
+    """Construct an auditable linear history payload.
+
+    Incremental estimators are replayed over a clone when resolved by ``mode``;
+    other estimators use synthetic interpolation. The returned payload contains
+    provenance, source/display timelines, raw/display loss, parameters, grids,
+    predictions, and metrics where available. The supplied estimator is not fit
+    or mutated.
+    """
     config = LinearHistoryConfig(
         steps=steps,
         mode=mode,
@@ -56,7 +63,11 @@ def fit_history_logistic(
     frame_step=10,
     multiclass_link="auto",
 ) -> dict:
-    """Capture logistic history."""
+    """Construct an auditable binary or multiclass logistic history payload.
+
+    See :func:`fit_history` for replay/interpolation semantics. Fitted class
+    order and resolved probability-link semantics remain in the payload.
+    """
     config = LogisticHistoryConfig(
         steps=steps,
         mode=mode,

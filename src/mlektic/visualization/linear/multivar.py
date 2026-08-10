@@ -213,7 +213,7 @@ def build_multivar_lr_figure(
     """Build a multivariable visualization for d > 2."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -287,26 +287,28 @@ def build_multivar_lr_figure(
             return _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, show_loss, metrics_hist)
         updatemenus_y = 1.11
 
-    fig = make_subplots(
-        rows=1,
-        cols=2,
-        column_widths=[0.75, 0.25],
-        horizontal_spacing=0.04,
-        specs=[[{"type": "xy"}, {"type": "xy"}]],
-    )
-
-    fig.add_trace(
-        go.Scatter(
-            x=[step if i == 0 else None for i, step in enumerate(step_axis_list)] if show_loss else [],
-            y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
-            mode="lines",
-            name="Loss",
-            line=loss_line_style(theme=theme),
-            uid="LOSS_LINE",
-        ),
-        row=1,
-        col=2,
-    )
+    if show_loss:
+        fig = make_subplots(
+            rows=1,
+            cols=2,
+            column_widths=[0.75, 0.25],
+            horizontal_spacing=0.04,
+            specs=[[{"type": "xy"}, {"type": "xy"}]],
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=[step if i == 0 else None for i, step in enumerate(step_axis_list)],
+                y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
+                mode="lines",
+                name="Loss",
+                line=loss_line_style(theme=theme),
+                uid="LOSS_LINE",
+            ),
+            row=1,
+            col=2,
+        )
+    else:
+        fig = make_subplots(rows=1, cols=1, specs=[[{"type": "xy"}]])
 
     frames = []
     for t in range(steps_n):
@@ -318,14 +320,11 @@ def build_multivar_lr_figure(
                 line=loss_line_style(theme=theme),
                 uid="LOSS_LINE",
             )
-        else:
-            loss_trace = go.Scatter(x=[], y=[], uid="LOSS_LINE")
-
         frames.append(
             go.Frame(
                 name=str(t),
-                data=[loss_trace],
-                traces=[0],
+                data=[loss_trace] if show_loss else [],
+                traces=[0] if show_loss else [],
                 layout=go.Layout(annotations=_get_ann(t)),
             )
         )
@@ -340,14 +339,14 @@ def build_multivar_lr_figure(
         annotations=_get_ann(0),
     )
 
-    fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
     if show_loss:
+        fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], domain=[0.25, 0.65], row=1, col=2)
+        fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+        fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
     else:
-        fig.update_yaxes(title="Loss", domain=[0.25, 0.65], row=1, col=2)
-
-    fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
-    fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
+        fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
+        fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
 
     return fig
 

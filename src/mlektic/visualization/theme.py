@@ -48,10 +48,12 @@ _THEMES: Dict[str, Dict[str, Any]] = {
 
 
 def _resolve(theme: str | None = None) -> Dict[str, Any]:
-    """Return the palette dict for *theme*, defaulting to ``"classic"``."""
+    """Return a registered palette, rejecting misspelled theme names."""
+    if theme is not None and not isinstance(theme, str):
+        raise TypeError("theme must be a registered theme name or None.")
     key = (theme or "classic").lower()
     if key not in _THEMES:
-        key = "classic"
+        raise ValueError(f"Unknown theme {theme!r}. Available themes: {', '.join(sorted(_THEMES))}.")
     return _THEMES[key]
 
 
@@ -383,3 +385,78 @@ def configure_animation(fig, frame_duration: int, transition_duration: int | Non
                 frame["redraw"] = requires_redraw
                 options["transition"] = {"duration": transition, "easing": "linear"}
     return fig
+
+
+def annotate_history_semantics(fig, history: dict, *, show_title: bool = True):
+    """Expose capture provenance and retained temporal coordinates in a figure.
+
+    The operation changes labels and metadata only. ``show_title=False`` omits
+    the provenance subtitle while preserving slider context and ``layout.meta``.
+    It does not alter traces, frames, animation duration, or interpolation.
+    """
+    if not isinstance(show_title, bool):
+        raise TypeError("show_title must be a boolean value.")
+    metadata = history.get("metadata", {})
+    if not metadata:
+        return fig
+
+    source = metadata.get("source")
+    displayed = int(metadata.get("displayed_steps", len(history.get("loss_hist", []))))
+    captured = int(metadata.get("captured_steps", displayed))
+    total = metadata.get("training_total_steps")
+    matches = metadata.get("final_state_matches_estimator")
+    labels = _timeline_labels(history, metadata)
+
+    if source == "replayed":
+        summary = f"Reconstructed replay · {displayed}/{captured} checkpoints"
+        if total is not None:
+            summary += f" · estimator n_iter_={total}"
+        if matches is False:
+            summary += " · final-state mismatch"
+        slider_prefix = f"Reconstructed replay ({displayed}/{captured}) · checkpoint: "
+        axis_title = "Replay checkpoint"
+    else:
+        summary = f"Synthetic interpolation · {displayed}/{captured} states · α: 0 → 1"
+        slider_prefix = f"Synthetic interpolation ({displayed}/{captured}) · progress: "
+        axis_title = "Interpolation progress"
+
+    layout_meta = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
+    layout_meta["mlektic_history"] = metadata
+    fig.update_layout(meta=layout_meta)
+
+    title = fig.layout.title.text or ""
+    marker = '<br><sup><span style="color:#B8C1CC">'
+    if show_title and marker not in title:
+        fig.update_layout(title_text=f"{title}{marker}{summary}</span></sup>")
+
+    for slider in fig.layout.sliders or ():
+        slider.currentvalue.prefix = slider_prefix
+        for position, step in enumerate(slider.steps or ()):
+            if position < len(labels):
+                step.label = labels[position]
+
+    layout_json = fig.layout.to_plotly_json()
+    for axis_name, axis_value in layout_json.items():
+        if not axis_name.startswith("xaxis") or not isinstance(axis_value, dict):
+            continue
+        title_value = axis_value.get("title", {})
+        title_text = title_value.get("text") if isinstance(title_value, dict) else title_value
+        if title_text != "Step":
+            continue
+        axis = getattr(fig.layout, axis_name)
+        axis.update(
+            title_text=axis_title,
+            tickmode="array",
+            tickvals=list(range(len(labels))),
+            ticktext=labels,
+        )
+    return fig
+
+
+def _timeline_labels(history: dict, metadata: dict) -> list[str]:
+    """Build human-readable labels without changing internal Plotly frame names."""
+    if metadata.get("source") == "interpolated":
+        alpha = history.get("alpha_values", metadata.get("alpha_values", []))
+        return [f"{100 * float(value):.0f}%" for value in alpha]
+    indices = metadata.get("displayed_step_indices", history.get("step_indices", []))
+    return [str(int(value)) for value in indices]

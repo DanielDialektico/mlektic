@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="es" data-content_root="../../../../">
+<html class="writer-html5" lang="en" data-content_root="../../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,13 +12,12 @@
   
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../../_static/documentation_options.js?v=01f34227"></script>
       <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="../../../../_static/translations.js?v=f85f4cfb"></script>
     <script src="../../../../_static/js/theme.js"></script>
-    <link rel="index" title="Índice" href="../../../../genindex.html" />
-    <link rel="search" title="Búsqueda" href="../../../../search.html" /> 
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -34,19 +33,20 @@
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Inicio Rápido</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Arquitectura del Proyecto</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">Referencia de la API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../visualization.html">Sistema de Visualización</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../visualization.html">Visualization mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../advanced.html">Advanced usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
 </ul>
 
@@ -64,7 +64,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../../../index.html">Código de módulo</a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
       <li class="breadcrumb-item active">mlektic.visualization.linear.prediction</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -74,8 +74,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Código fuente para mlektic.visualization.linear.prediction</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+  <h1>Source code for mlektic.visualization.linear.prediction</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Real</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plotly.subplots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_subplots</span>
 
@@ -100,6 +102,76 @@
     <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
         <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">s</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_linear_2d_result_layout</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">dec</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a readable 2D result, wrapping only genuinely long coordinates.&quot;&quot;&quot;</span>
+    <span class="n">formatted</span> <span class="o">=</span> <span class="p">[</span><span class="n">_fmt</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dec</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">yhat</span><span class="p">)]</span>
+    <span class="n">coordinate_length</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">formatted</span><span class="p">)</span> <span class="o">+</span> <span class="mi">4</span>
+    <span class="k">if</span> <span class="n">coordinate_length</span> <span class="o">&lt;=</span> <span class="mi">44</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">r</span><span class="s2">&quot;$\begin</span><span class="si">{aligned}</span><span class="s2">&quot;</span>
+            <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2"> &amp;= </span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="se">\\</span><span class="s2">&quot;</span>
+            <span class="sa">rf</span><span class="s2">&quot;(x_1, x_2, \hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2">) &amp;= (</span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{aligned}</span><span class="s2">$&quot;</span><span class="p">,</span>
+            <span class="mi">15</span><span class="p">,</span>
+            <span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;$\begin</span><span class="si">{aligned}</span><span class="s2">&quot;</span>
+        <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2"> &amp;= </span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="se">\\</span><span class="s2">&quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;(x_1, x_2, \hat</span><span class="si">{y}</span><span class="s2">) &amp;= </span><span class="se">\\</span><span class="s2">&quot;</span>
+        <span class="sa">rf</span><span class="s2">&quot;&amp;\quad (</span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">formatted</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{aligned}</span><span class="s2">$&quot;</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">,</span>
+        <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_prediction_source</span><span class="p">(</span><span class="n">prediction_source</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prediction_source</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">prediction_source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;provided&quot;</span><span class="p">}:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;prediction_source must be &#39;model&#39; or &#39;provided&#39;.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_numeric_prediction</span><span class="p">(</span><span class="n">provided</span><span class="p">,</span> <span class="n">model_value</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">prediction_source</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a finite scalar and verify supplied values against the model by default.&quot;&quot;&quot;</span>
+    <span class="n">_validate_prediction_source</span><span class="p">(</span><span class="n">prediction_source</span><span class="p">)</span>
+    <span class="n">model_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">model_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">model_value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The estimator returned a non-finite </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">provided</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model_value</span>
+    <span class="n">provided_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">provided</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">provided_array</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be a single scalar value.&quot;</span><span class="p">)</span>
+    <span class="n">provided_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">provided_array</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">provided_value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be finite.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">prediction_source</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">provided_value</span><span class="p">,</span> <span class="n">model_value</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Provided </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">provided_value</span><span class="si">!r}</span><span class="s2"> does not match the estimator value </span><span class="si">{</span><span class="n">model_value</span><span class="si">!r}</span><span class="s2">. &quot;</span>
+            <span class="s2">&quot;Use prediction_source=&#39;provided&#39; only when an intentional counterfactual value should be displayed.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">provided_value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_outside_training_range</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">x_query</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return feature indices whose query value lies outside the observed range.&quot;&quot;&quot;</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">((</span><span class="n">x_query</span> <span class="o">&lt;</span> <span class="n">lower</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">x_query</span> <span class="o">&gt;</span> <span class="n">upper</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_prediction_options</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">grid_points</span><span class="p">,</span> <span class="n">validation_rtol</span><span class="p">,</span> <span class="n">validation_atol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate shared numerical controls before Plotly construction.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dec</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dec</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="n">dec</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dec must be a non-negative integer.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid_points</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid_points</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="n">grid_points</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;grid_points must be an integer greater than or equal to 2.&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;validation_rtol&quot;</span><span class="p">,</span> <span class="n">validation_rtol</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;validation_atol&quot;</span><span class="p">,</span> <span class="n">validation_atol</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Real</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be a non-negative real number.&quot;</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_get_last_estimator</span><span class="p">(</span><span class="n">est</span><span class="p">):</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">est</span><span class="p">,</span> <span class="s2">&quot;steps&quot;</span><span class="p">):</span>
@@ -201,7 +273,8 @@
     <span class="n">x1_train</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="n">xq1_disp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
-    <span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1_train</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1_train</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">x_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x1_train</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="n">xq1_disp</span><span class="p">)</span>
+    <span class="n">x_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x1_train</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="n">xq1_disp</span><span class="p">)</span>
     <span class="n">x_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">grid_points</span><span class="p">))</span>
     <span class="n">y_grid</span> <span class="o">=</span> <span class="n">x_grid</span> <span class="o">*</span> <span class="n">w_disp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">b_disp</span>
 
@@ -349,8 +422,8 @@
     <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">X_train</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
     <span class="n">xq1_disp</span><span class="p">,</span> <span class="n">xq2_disp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
-    <span class="n">x1_min</span><span class="p">,</span> <span class="n">x1_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-    <span class="n">x2_min</span><span class="p">,</span> <span class="n">x2_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x2</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x2</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="n">x1_min</span><span class="p">,</span> <span class="n">x1_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x1</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">x2_min</span><span class="p">,</span> <span class="n">x2_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x2</span><span class="o">.</span><span class="n">min</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">x2</span><span class="o">.</span><span class="n">max</span><span class="p">()),</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_disp</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
 
     <span class="n">X1g</span><span class="p">,</span> <span class="n">X2g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x1_min</span><span class="p">,</span> <span class="n">x1_max</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">grid_2d_points</span><span class="p">)),</span>
@@ -377,12 +450,8 @@
         <span class="sa">rf</span><span class="s2">&quot;&amp;\quad (</span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">w_disp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">) \cdot (</span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">xq2_disp</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
         <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{aligned}</span><span class="s2">$&quot;</span>
     <span class="p">)</span>
-    <span class="n">res_tex</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">r</span><span class="s2">&quot;$\begin</span><span class="si">{aligned}</span><span class="s2">&quot;</span>
-        <span class="sa">rf</span><span class="s2">&quot;\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2"> &amp;= </span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="se">\\</span><span class="s2">&quot;</span>
-        <span class="sa">r</span><span class="s2">&quot;(x_1, x_2, \hat</span><span class="si">{y}</span><span class="s2">) &amp;= </span><span class="se">\\</span><span class="s2">&quot;</span>
-        <span class="sa">rf</span><span class="s2">&quot;&amp;\quad (</span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">xq1_disp</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">xq2_disp</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
-        <span class="sa">r</span><span class="s2">&quot;\end</span><span class="si">{aligned}</span><span class="s2">$&quot;</span>
+    <span class="n">res_tex</span><span class="p">,</span> <span class="n">result_font_size</span><span class="p">,</span> <span class="n">_result_wrapped</span> <span class="o">=</span> <span class="n">_linear_2d_result_layout</span><span class="p">(</span>
+        <span class="n">xq1_disp</span><span class="p">,</span> <span class="n">xq2_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">dec</span>
     <span class="p">)</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span>
@@ -452,7 +521,7 @@
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">title_annot</span><span class="p">(</span><span class="n">T1</span><span class="p">,</span> <span class="mf">0.96</span><span class="p">),</span> <span class="n">body_annot</span><span class="p">(</span><span class="n">v_body</span><span class="p">,</span> <span class="mf">0.89</span><span class="p">),</span>
             <span class="n">title_annot</span><span class="p">(</span><span class="n">T2</span><span class="p">,</span> <span class="mf">0.63</span><span class="p">),</span> <span class="n">body_annot</span><span class="p">(</span><span class="n">s_body</span><span class="p">,</span> <span class="mf">0.56</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">13</span><span class="p">),</span>
-            <span class="n">title_annot</span><span class="p">(</span><span class="n">T3</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">),</span> <span class="n">body_annot</span><span class="p">(</span><span class="n">r_body</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">12</span><span class="p">),</span>
+            <span class="n">title_annot</span><span class="p">(</span><span class="n">T3</span><span class="p">,</span> <span class="mf">0.30</span><span class="p">),</span> <span class="n">body_annot</span><span class="p">(</span><span class="n">r_body</span><span class="p">,</span> <span class="mf">0.23</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">result_font_size</span><span class="p">),</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">scene_ann</span><span class="p">(</span><span class="n">stage</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
@@ -722,7 +791,7 @@
 
 
 <div class="viewcode-block" id="explain_lr_prediction">
-<a class="viewcode-back" href="../../../../api_reference.html#mlektic.api.linear.explain_lr_prediction">[documentos]</a>
+<a class="viewcode-back" href="../../../../api_reference.html#mlektic.api.linear.explain_lr_prediction">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">explain_lr_prediction</span><span class="p">(</span>
     <span class="n">trained_estimator</span><span class="p">,</span>
     <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span>
@@ -734,17 +803,39 @@
     <span class="n">grid_points</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
     <span class="n">grid_2d_points</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">display_space</span><span class="o">=</span><span class="s2">&quot;original&quot;</span><span class="p">,</span>
+    <span class="n">prediction_source</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span>
+    <span class="n">validation_rtol</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span>
+    <span class="n">validation_atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a visual explanation for a linear-regression prediction.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an auditable visual explanation for one linear prediction.</span>
+
+<span class="sd">    Supplied ``yhat`` values are checked against ``estimator.predict`` by</span>
+<span class="sd">    default. Set ``prediction_source=&quot;provided&quot;`` only for an intentional</span>
+<span class="sd">    counterfactual demonstration. Queries outside the observed feature ranges</span>
+<span class="sd">    are explicitly marked as extrapolations and remain visible in the plot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_validate_prediction_options</span><span class="p">(</span>
+        <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
+        <span class="n">grid_points</span><span class="o">=</span><span class="n">grid_points</span><span class="p">,</span>
+        <span class="n">validation_rtol</span><span class="o">=</span><span class="n">validation_rtol</span><span class="p">,</span>
+        <span class="n">validation_atol</span><span class="o">=</span><span class="n">validation_atol</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid_2d_points</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid_2d_points</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="n">grid_2d_points</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;grid_2d_points must be an integer greater than or equal to 2.&quot;</span><span class="p">)</span>
     <span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">X_train</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">X_train</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">y_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
 
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">X_train</span><span class="p">))</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">y_train</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;X_train and y_train must contain only finite values.&quot;</span><span class="p">)</span>
+
     <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">shape</span>
     <span class="k">if</span> <span class="n">d</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;X_train must have at least 1 feature.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">y_train</span><span class="o">.</span><span class="n">size</span> <span class="o">!=</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;X_train and y_train must contain the same number of samples.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">display_space</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;original&quot;</span><span class="p">,</span> <span class="s2">&quot;scaled&quot;</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;display_space must be &#39;original&#39; or &#39;scaled&#39;.&quot;</span><span class="p">)</span>
@@ -763,16 +854,22 @@
     <span class="n">x_query</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x_query</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">x_query</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">x_query</span> <span class="o">=</span> <span class="n">x_query</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">x_query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">d</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x_query must have shape (m, </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">). Got </span><span class="si">{</span><span class="n">x_query</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x_query</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">x_query</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x_query must describe exactly one sample with shape (1, </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">). Got </span><span class="si">{</span><span class="n">x_query</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x_query</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;x_query must contain only finite values.&quot;</span><span class="p">)</span>
 
     <span class="n">xq</span> <span class="o">=</span> <span class="n">x_query</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">yhat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">yhat</span> <span class="o">=</span> <span class="n">trained_estimator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">xq</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-        <span class="n">yhat</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">yhat</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">model_yhat</span> <span class="o">=</span> <span class="n">trained_estimator</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">xq</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">yhat</span> <span class="o">=</span> <span class="n">_resolve_numeric_prediction</span><span class="p">(</span>
+        <span class="n">yhat</span><span class="p">,</span>
+        <span class="n">model_yhat</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;yhat&quot;</span><span class="p">,</span>
+        <span class="n">prediction_source</span><span class="o">=</span><span class="n">prediction_source</span><span class="p">,</span>
+        <span class="n">rtol</span><span class="o">=</span><span class="n">validation_rtol</span><span class="p">,</span>
+        <span class="n">atol</span><span class="o">=</span><span class="n">validation_atol</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">outside_features</span> <span class="o">=</span> <span class="n">_outside_training_range</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">xq</span><span class="p">)</span>
 
     <span class="n">w_scaled</span><span class="p">,</span> <span class="n">b_scaled</span> <span class="o">=</span> <span class="n">_extract_linear_theta</span><span class="p">(</span><span class="n">trained_estimator</span><span class="p">)</span>
 
@@ -795,6 +892,14 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span> <span class="o">=</span> <span class="n">xq</span><span class="p">,</span> <span class="n">w_orig</span><span class="p">,</span> <span class="n">b_orig</span>
 
+    <span class="n">scope</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Extrapolation outside training range in feature(s): </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">outside_features</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">outside_features</span>
+        <span class="k">else</span> <span class="s2">&quot;Query lies within every observed training feature range&quot;</span>
+    <span class="p">)</span>
+    <span class="n">source_label</span> <span class="o">=</span> <span class="s2">&quot;model-verified&quot;</span> <span class="k">if</span> <span class="n">prediction_source</span> <span class="o">==</span> <span class="s2">&quot;model&quot;</span> <span class="k">else</span> <span class="s2">&quot;user-provided counterfactual&quot;</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s1">&lt;br&gt;&lt;sup&gt;&lt;span style=&quot;color:#B8C1CC&quot;&gt;Prediction source: </span><span class="si">{</span><span class="n">source_label</span><span class="si">}</span><span class="s1"> · </span><span class="si">{</span><span class="n">scope</span><span class="si">}</span><span class="s1">&lt;/span&gt;&lt;/sup&gt;&#39;</span>
+
     <span class="n">p</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">theme</span><span class="p">)</span>
     <span class="n">ann_color</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;annotation_color&quot;</span><span class="p">,</span> <span class="s2">&quot;white&quot;</span><span class="p">)</span>
     <span class="n">text_color</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;white&quot;</span><span class="p">)</span>
@@ -803,11 +908,22 @@
     <span class="n">btn_font_color</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;btn_font_color&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_explain_lr_1d</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">grid_points</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">text_color</span><span class="p">,</span> <span class="n">ann_color</span><span class="p">,</span> <span class="n">btn_bg</span><span class="p">,</span> <span class="n">btn_border</span><span class="p">,</span> <span class="n">btn_font_color</span><span class="p">)</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">_explain_lr_1d</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">grid_points</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">text_color</span><span class="p">,</span> <span class="n">ann_color</span><span class="p">,</span> <span class="n">btn_bg</span><span class="p">,</span> <span class="n">btn_border</span><span class="p">,</span> <span class="n">btn_font_color</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_explain_lr_2d</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">grid_2d_points</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">text_color</span><span class="p">,</span> <span class="n">ann_color</span><span class="p">,</span> <span class="n">btn_bg</span><span class="p">,</span> <span class="n">btn_border</span><span class="p">,</span> <span class="n">btn_font_color</span><span class="p">)</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">_explain_lr_2d</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">grid_2d_points</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">text_color</span><span class="p">,</span> <span class="n">ann_color</span><span class="p">,</span> <span class="n">btn_bg</span><span class="p">,</span> <span class="n">btn_border</span><span class="p">,</span> <span class="n">btn_font_color</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_explain_lr_nd</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">text_color</span><span class="p">,</span> <span class="n">ann_color</span><span class="p">,</span> <span class="n">btn_bg</span><span class="p">,</span> <span class="n">btn_border</span><span class="p">,</span> <span class="n">btn_font_color</span><span class="p">)</span></div>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">_explain_lr_nd</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">x_disp</span><span class="p">,</span> <span class="n">w_disp</span><span class="p">,</span> <span class="n">b_disp</span><span class="p">,</span> <span class="n">yhat</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">dec</span><span class="p">,</span> <span class="n">theme</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">text_color</span><span class="p">,</span> <span class="n">ann_color</span><span class="p">,</span> <span class="n">btn_bg</span><span class="p">,</span> <span class="n">btn_border</span><span class="p">,</span> <span class="n">btn_font_color</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">meta</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;mlektic_prediction&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">prediction_source</span><span class="p">,</span>
+                <span class="s2">&quot;model_value&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">model_yhat</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="mi">0</span><span class="p">]),</span>
+                <span class="s2">&quot;displayed_value&quot;</span><span class="p">:</span> <span class="n">yhat</span><span class="p">,</span>
+                <span class="s2">&quot;outside_training_feature_indices&quot;</span><span class="p">:</span> <span class="n">outside_features</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;explain_lr_prediction&quot;</span><span class="p">]</span>
@@ -820,12 +936,12 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
   </div>
 
-  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
-    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
    
 
 </footer>
