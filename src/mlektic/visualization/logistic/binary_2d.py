@@ -32,6 +32,8 @@ def build_binary_plane_logistic_figure(
     loss_hist=None,
     metrics_hist=None,
     show_loss=False,
+    classes=None,
+    show_class_labels=False,
     history_kind="iterative",
     title="Binary Logistic Regression (2 variables)",
     strict_loss=False,
@@ -41,9 +43,17 @@ def build_binary_plane_logistic_figure(
     theme=None,
 ):
     """Internal method to build build_binary_plane_logistic_figure."""
+    classes = np.asarray([0, 1] if classes is None else classes).ravel()
+    if classes.size != 2:
+        raise ValueError("classes must contain exactly two fitted labels.")
+    class_ticks = (
+        [f"0 - {classes[0]}", "0.5", f"1 - {classes[1]}"]
+        if show_class_labels
+        else ["0", "0.5", "1"]
+    )
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -148,13 +158,13 @@ def build_binary_plane_logistic_figure(
     step_axis = np.arange(steps_n)
 
     if show_loss:
-        theta_y = 1.18
+        theta_y = 1.25
         eq_y = 1.08
-        margin_t = 160
+        margin_t = 180
     else:
-        theta_y = 1.15
-        eq_y = 1.05
-        margin_t = 150
+        theta_y = 1.25
+        eq_y = 1.08
+        margin_t = 180
 
     def formula_annotation():
         return create_annotation(formula_text(), y=theta_y)
@@ -293,7 +303,10 @@ def build_binary_plane_logistic_figure(
             scene=dict(
                 xaxis=dict(title="x₁", range=x1_range),
                 yaxis=dict(title="x₂", range=x2_range),
-                zaxis=dict(title="σ(z)", range=y_range),
+                zaxis=dict(
+                    title="P(class 1 | x)", range=y_range,
+                    tickvals=[0.0, 0.5, 1.0], ticktext=class_ticks,
+                ),
                 aspectmode="cube",
                 camera=CAMERA,
             ),
@@ -366,7 +379,10 @@ def build_binary_plane_logistic_figure(
         scene=dict(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
-            zaxis=dict(title="σ(z)", range=y_range),
+            zaxis=dict(
+                title="P(class 1 | x)", range=y_range,
+                tickvals=[0.0, 0.5, 1.0], ticktext=class_ticks,
+            ),
             aspectmode="cube",
             camera=CAMERA,
         ),

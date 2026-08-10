@@ -1,28 +1,31 @@
-.. Mlektic documentation master file.
+===============================
+Mlektic technical documentation
+===============================
 
-=====================================
-Mlektic — Documentación Técnica
-=====================================
+**Mlektic** is a Python library for learning how machine-learning models map
+inputs to outputs and how their mathematical state can be represented over
+time. It provides interactive Plotly views for Scikit-learn linear and logistic
+models and architecture, training, parameter, activation, forward-pass, and
+prediction views for PyTorch networks.
 
-**Mlektic** es una librería de Python diseñada para demostrar visual y
-matemáticamente cómo evolucionan los modelos de *Machine Learning* durante su
-fase de entrenamiento. Provee graficos y animaciones interactivas impulsadas
-por ``plotly`` para regresion lineal y logistica de Scikit-Learn, ademas de
-arquitectura, entrenamiento, parametros, activaciones y matematicas del forward
-pass de redes PyTorch.
+Mlektic treats provenance as part of the mathematics. A tabular animation may
+be a replay over a cloned estimator or a synthetic interpolation to a fitted
+model; it is not described as a recording unless the states were captured from
+the actual training process.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contenido
+   :caption: Contents
 
    getting_started
+   history_semantics
    architecture
    api_reference
    visualization
    advanced
    changelog
 
-Índices
+Indices
 =======
 
 * :ref:`genindex`

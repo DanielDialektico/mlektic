@@ -30,6 +30,8 @@ def build_binary_simple_logistic_figure(
     loss_hist=None,
     metrics_hist=None,
     show_loss=False,
+    classes=None,
+    show_class_labels=False,
     history_kind="iterative",
     title="Binary Logistic Regression (1 variable)",
     strict_loss=False,
@@ -39,9 +41,17 @@ def build_binary_simple_logistic_figure(
     theme=None,
 ):
     """Internal method to build build_binary_simple_logistic_figure."""
+    classes = np.asarray([0, 1] if classes is None else classes).ravel()
+    if classes.size != 2:
+        raise ValueError("classes must contain exactly two fitted labels.")
+    class_ticks = (
+        [f"0 - {classes[0]}", "0.5", f"1 - {classes[1]}"]
+        if show_class_labels
+        else ["0", "0.5", "1"]
+    )
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -266,7 +276,10 @@ def build_binary_simple_logistic_figure(
 
         fig.data[2].update(legend="legend2")
         fig.update_xaxes(title="x₁", range=x_range, row=1, col=1)
-        fig.update_yaxes(title="σ(z)", range=[-0.08, 1.08], row=1, col=1)
+        fig.update_yaxes(
+            title="P(class 1 | x)", range=[-0.08, 1.08],
+            tickvals=[0.0, 0.5, 1.0], ticktext=class_ticks, row=1, col=1,
+        )
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(title="Log-loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
         return fig
@@ -312,7 +325,10 @@ def build_binary_simple_logistic_figure(
         annotations=[formula_annotation(), eq_annotation(0)],
         legend=get_legend_props(theme=theme),
         xaxis=dict(title="x₁", range=x_range),
-        yaxis=dict(title="σ(z)", range=[-0.08, 1.08]),
+        yaxis=dict(
+            title="P(class 1 | x)", range=[-0.08, 1.08],
+            tickvals=[0.0, 0.5, 1.0], ticktext=class_ticks,
+        ),
         sliders=get_sliders(steps_n, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )

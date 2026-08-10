@@ -1,28 +1,27 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="es" data-content_root="./">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistema de Visualización &mdash; Mlektic Documentation</title>
+  <title>Visualization mathematics &mdash; Mlektic Documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="_static/translations.js?v=f85f4cfb"></script>
       <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Índice" href="genindex.html" />
-    <link rel="search" title="Búsqueda" href="search.html" />
-    <link rel="next" title="Uso Avanzado" href="advanced.html" />
-    <link rel="prev" title="Referencia de la API" href="api_reference.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Advanced usage" href="advanced.html" />
+    <link rel="prev" title="API reference" href="api_reference.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -38,46 +37,30 @@
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Sistema de Visualización</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#redes-neuronales-pytorch">Redes Neuronales PyTorch</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#ejemplo-minimo">Ejemplo minimo</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#modos-del-grafo-matematico">Modos del grafo matematico</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#reportes-html-en-notebook">Reportes HTML en notebook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Visualization mathematics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#linear-regression">Linear regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#binary-logistic-regression">Binary logistic regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multiclass-logistic-regression">Multiclass logistic regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#replay-and-interpolation">Replay and interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#smoothing">Smoothing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prediction-explanations">Prediction explanations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#neural-networks">Neural networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#classic-visual-contract">Classic visual contract</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#tema-visual-global">Tema Visual Global</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#renderizado-por-dimension">Renderizado por Dimensión</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#d-1-regresion-simple-2d">d = 1: Regresión Simple (2D)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#d-2-visualizacion-3d">d = 2: Visualización 3D</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#d-2-matriz-de-parametros-latex">d &gt; 2: Matriz de Parámetros LaTeX</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#estrategias-de-captura">Estrategias de Captura</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#iterativa-mode-iterative">Iterativa (<code class="docutils literal notranslate"><span class="pre">mode=&quot;iterative&quot;</span></code>)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#interpolacion-mode-final-interp">Interpolación (<code class="docutils literal notranslate"><span class="pre">mode=&quot;final_interp&quot;</span></code>)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#modo-automatico-mode-auto">Modo Automático (<code class="docutils literal notranslate"><span class="pre">mode=&quot;auto&quot;</span></code>)</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#suavizado-ema">Suavizado EMA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#transiciones-y-muestreo-temporal">Transiciones y muestreo temporal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#animacion-hibrida-1d">Animación híbrida 1D</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#espacio-de-visualizacion">Espacio de Visualización</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#explicacion-visual-de-predicciones">Explicación Visual de Predicciones</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#metricas-dinamicas">Métricas Dinámicas</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -95,9 +78,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Sistema de Visualización</li>
+      <li class="breadcrumb-item active">Visualization mathematics</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/visualization.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+            <a href="_sources/visualization.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -105,315 +88,136 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="sistema-de-visualizacion">
-<h1>Sistema de Visualización<a class="headerlink" href="#sistema-de-visualizacion" title="Link to this heading"></a></h1>
-<p>Mlektic genera figuras Plotly animadas con un tema visual cohesivo en <strong>dark mode</strong>.</p>
-<section id="redes-neuronales-pytorch">
-<h2>Redes Neuronales PyTorch<a class="headerlink" href="#redes-neuronales-pytorch" title="Link to this heading"></a></h2>
-<p>La familia neural es opcional y se instala con <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">&quot;mlektic[torch]&quot;</span></code>.
-Su API esta orientada a notebooks y Colab. Cada vista conserva el hilo matematico
-entre arquitectura, entrenamiento y prediccion.</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">visualize_nn_architecture</span></code> representa cada tipo de capa con una forma semantica
-y muestra formulas LaTeX, dimensiones de entrada/salida, parametros e
-hiperparametros. En arquitecturas extensas intercala puntos suspensivos.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">visualize_nn_graph</span></code> crea un frame estable por paso. Las conexiones forman un
-mapa de calor global entre el peso minimo y maximo; las lineas punteadas color
-tinto superpuestas representan la magnitud del gradiente de backpropagation. El
-color de cada nodo representa su salida numerica exacta para la entrada elegida,
-usando por defecto una sola escala global con los minimos y maximos reales de
-todos los nodos y frames, incluidos valores negativos. El hover conserva la
-salida exacta y evita mostrar sintaxis LaTeX cruda. Las aristas codifican
-<span class="math notranslate nohighlight">\(\theta_{ji}\)</span> y los nodos
-<span class="math notranslate nohighlight">\(a_j=\phi(\sum_i\theta_{ji}a_i+\theta_{0,j})\)</span>, por lo que
-usan escalas distintas. El ultimo frame usa los tensores finales del modelo.
-<code class="docutils literal notranslate"><span class="pre">node_color_mode=&quot;relative&quot;</span></code> ofrece contraste normalizado por capa como modo
-opcional. <code class="docutils literal notranslate"><span class="pre">edge_color_mode=&quot;signal&quot;</span></code> colorea cada arista mediante la
-contribucion forward <span class="math notranslate nohighlight">\(\theta_{ji}a_i\)</span>; el modo predeterminado <code class="docutils literal notranslate"><span class="pre">&quot;weight&quot;</span></code>
-conserva la visualizacion de los parametros. El hover diferencia <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">(exact)</span></code>
-de <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">(ReLU</span> <span class="pre">inactive)</span></code> y usa notacion cientifica para valores no nulos que
-serian redondeados a <code class="docutils literal notranslate"><span class="pre">0.000</span></code>. Los valores compactos <span class="math notranslate nohighlight">\(\Theta_t\)</span> y el paso
-temporal son trazas animadas, por lo que avanzan sin redibujar ni hacer
-parpadear la red.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">TorchTrainingRecorder</span></code> registra loss, metricas proporcionadas por el usuario,
-normas L2, gradientes, vectores de activacion compactos y snapshots de tensores
-pequenos. Tambien puede inferir tres metricas al recibir <code class="docutils literal notranslate"><span class="pre">predictions</span></code> y
-<code class="docutils literal notranslate"><span class="pre">targets</span></code>: accuracy, precision macro y recall macro para clasificacion; MSE,
-MAE y R2 para regresion. <code class="docutils literal notranslate"><span class="pre">record</span></code> se llama despues de <code class="docutils literal notranslate"><span class="pre">optimizer.step()</span></code> y
-antes del siguiente <code class="docutils literal notranslate"><span class="pre">zero_grad()</span></code> para conservar tanto el peso actualizado
-como el gradiente que lo origino.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">visualize_nn_training</span></code> distribuye loss y tres metricas de rendimiento en una
-cuadricula compacta de 2 por 2. Si el historial no contiene metricas, mantiene
-los cuatro paneles e indica como registrarlas. <code class="docutils literal notranslate"><span class="pre">visualize_nn_weights</span></code> muestra matrices LaTeX con
-definiciones, dimensiones y truncado explicito. La vista <code class="docutils literal notranslate"><span class="pre">activations</span></code> muestra
-formulas, vectores y estadisticas compactas por capa.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">explain_nn_prediction</span></code> anima la composicion de funciones y sustituye valores
-numericos en <code class="docutils literal notranslate"><span class="pre">z</span> <span class="pre">=</span> <span class="pre">Theta</span> <span class="pre">a</span> <span class="pre">+</span> <span class="pre">theta_0</span></code>. En redes profundas conserva primeras y ultimas capas
-y marca el tramo omitido con puntos suspensivos.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">display_nn_math_report</span></code> inserta en Jupyter un reporte con la taxonomia completa.
-<code class="docutils literal notranslate"><span class="pre">export_nn_math_report</span></code> genera el mismo documento HTML independiente, con una
-seccion por capa, configuracion de entrenamiento y evolucion de parametros.</p></li>
-</ul>
-<p>Los limites <code class="docutils literal notranslate"><span class="pre">max_frames</span></code>, <code class="docutils literal notranslate"><span class="pre">max_layers</span></code>, <code class="docutils literal notranslate"><span class="pre">max_neurons</span></code>, <code class="docutils literal notranslate"><span class="pre">max_rows</span></code> y
-<code class="docutils literal notranslate"><span class="pre">max_cols</span></code> mantienen responsivas las figuras. Los tensores mayores que
-<code class="docutils literal notranslate"><span class="pre">max_tensor_elements</span></code> no se duplican en el historial, aunque sus normas y metricas
-si se conservan.</p>
-<section id="ejemplo-minimo">
-<h3>Ejemplo minimo<a class="headerlink" href="#ejemplo-minimo" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recorder</span> <span class="o">=</span> <span class="n">TorchTrainingRecorder</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
-    <span class="n">loss_fn</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">,</span>
-    <span class="n">record_every</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># Dentro del entrenamiento, despues de optimizer.step y antes de zero_grad:</span>
-<span class="n">recorder</span><span class="o">.</span><span class="n">record</span><span class="p">(</span>
-    <span class="n">step</span><span class="p">,</span>
-    <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span>
-    <span class="n">predictions</span><span class="o">=</span><span class="n">prediction</span><span class="p">,</span>
-    <span class="n">targets</span><span class="o">=</span><span class="n">y</span><span class="p">,</span>
-    <span class="n">task</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="n">history</span> <span class="o">=</span> <span class="n">recorder</span><span class="o">.</span><span class="n">to_history</span><span class="p">()</span>
-<span class="n">visualize_nn_architecture</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span> <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="n">visualize_nn_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">history</span><span class="p">,</span> <span class="n">max_frames</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="n">visualize_nn_training</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">max_frames</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="n">visualize_nn_weights</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">max_rows</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">max_cols</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="n">explain_nn_prediction</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-<span class="n">report_path</span> <span class="o">=</span> <span class="n">export_nn_math_report</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="n">X</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span>
-    <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
-    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;network-report.html&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="modos-del-grafo-matematico">
-<h3>Modos del grafo matematico<a class="headerlink" href="#modos-del-grafo-matematico" title="Link to this heading"></a></h3>
-<p>La configuracion predeterminada conserva unidades y valores reales en dos escalas
-globales independientes:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">visualize_nn_graph</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="n">history</span><span class="p">,</span>
-    <span class="n">node_color_mode</span><span class="o">=</span><span class="s2">&quot;value&quot;</span><span class="p">,</span>  <span class="c1"># a_j real; default</span>
-    <span class="n">edge_color_mode</span><span class="o">=</span><span class="s2">&quot;weight&quot;</span><span class="p">,</span> <span class="c1"># w_ji real; default</span>
-<span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>La escala de nodos no debe compararse numericamente con la de aristas:</p>
+  <section id="visualization-mathematics">
+<h1>Visualization mathematics<a class="headerlink" href="#visualization-mathematics" title="Link to this heading"></a></h1>
+<section id="linear-regression">
+<h2>Linear regression<a class="headerlink" href="#linear-regression" title="Link to this heading"></a></h2>
+<p>For d features, the fitted mapping is</p>
 <div class="math notranslate nohighlight">
-\[\text{peso}=\theta_{ji},\qquad
-\text{senal}=\theta_{ji}a_i,\qquad
-a_j=\phi\!\left(\sum_i\theta_{ji}a_i+\theta_{0,j}\right).\]</div>
-<p>Para resaltar cambios pequenos por capa puede usarse una escala relativa. Para
-visualizar lo que aporta cada conexion durante el forward pass puede colorearse
-por senal:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">visualize_nn_graph</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">,</span>
-    <span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="n">history</span><span class="p">,</span>
-    <span class="n">node_color_mode</span><span class="o">=</span><span class="s2">&quot;relative&quot;</span><span class="p">,</span>
-    <span class="n">edge_color_mode</span><span class="o">=</span><span class="s2">&quot;signal&quot;</span><span class="p">,</span>
-<span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">relative</span></code> mejora el contraste, pero deja de expresar una escala absoluta comun.
-En ambos modos el hover conserva la salida, el peso, la senal transmitida, el
-gradiente y la actualizacion exactos.</p>
-</section>
-<section id="reportes-html-en-notebook">
-<h3>Reportes HTML en notebook<a class="headerlink" href="#reportes-html-en-notebook" title="Link to this heading"></a></h3>
-<p>Para redes complejas, el reporte completo puede mostrarse directamente en Jupyter
-o Colab:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">display</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">mlektic</span><span class="w"> </span><span class="kn">import</span> <span class="n">display_nn_math_report</span>
-
-<span class="n">display</span><span class="p">(</span>
-    <span class="n">display_nn_math_report</span><span class="p">(</span>
-        <span class="n">model</span><span class="p">,</span>
-        <span class="n">X</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span>
-        <span class="n">history</span><span class="o">=</span><span class="n">history</span><span class="p">,</span>
-        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Complex network mathematics&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<p>Si el archivo ya fue exportado, puede insertarse en Jupyter con
-<code class="docutils literal notranslate"><span class="pre">HTML(filename=&quot;network-report.html&quot;)</span></code> o <code class="docutils literal notranslate"><span class="pre">IFrame</span></code>. En Colab se recomienda
-<code class="docutils literal notranslate"><span class="pre">display_nn_math_report</span></code> porque no depende de que el navegador pueda resolver
-una ruta local.</p>
-</section>
-</section>
-<section id="tema-visual-global">
-<h2>Tema Visual Global<a class="headerlink" href="#tema-visual-global" title="Link to this heading"></a></h2>
-<p>Las figuras Scikit-Learn comparten <code class="docutils literal notranslate"><span class="pre">visualization/theme.py</span></code> y las vistas neurales
-usan el lenguaje equivalente definido en <code class="docutils literal notranslate"><span class="pre">visualization/neural/_style.py</span></code>:</p>
-<ul class="simple">
-<li><p><strong>Template base</strong>: <code class="docutils literal notranslate"><span class="pre">plotly_dark</span></code> con tipografia clara de alto contraste.</p></li>
-<li><p><strong>Altura</strong>: 720px por defecto.</p></li>
-<li><p><strong>Controles</strong>: Botones Play/Pause y slider temporal integrados.</p></li>
-<li><p><strong>Leyenda</strong>: Fondo semi-transparente con texto negro sobre blanco.</p></li>
-</ul>
-</section>
-<section id="renderizado-por-dimension">
-<h2>Renderizado por Dimensión<a class="headerlink" href="#renderizado-por-dimension" title="Link to this heading"></a></h2>
-<section id="d-1-regresion-simple-2d">
-<h3>d = 1: Regresión Simple (2D)<a class="headerlink" href="#d-1-regresion-simple-2d" title="Link to this heading"></a></h3>
-<ul class="simple">
-<li><p><strong>Lineal</strong>: Scatter plot con recta animada + curva MSE opcional.</p></li>
-<li><p><strong>Logística Binaria</strong>: Scatter coloreado + curva sigmoide animada.</p></li>
-<li><p><strong>Logística Multiclase</strong>: Curvas de probabilidad por clase.</p></li>
-</ul>
-</section>
-<section id="d-2-visualizacion-3d">
-<h3>d = 2: Visualización 3D<a class="headerlink" href="#d-2-visualizacion-3d" title="Link to this heading"></a></h3>
-<ul class="simple">
-<li><p><strong>Lineal</strong>: Scatter 3D + plano predictivo animado.</p></li>
-<li><p><strong>Logística Binaria</strong>: Scatter 3D + superficie de probabilidad.</p></li>
-<li><p><strong>Logística Multiclase</strong>: Scatter 3D + <code class="docutils literal notranslate"><span class="pre">K</span></code> superficies de probabilidad y un
-panel LaTeX con <span class="math notranslate nohighlight">\(\Theta\in\mathbb{R}^{2\times K}\)</span>,
-<span class="math notranslate nohighlight">\(\boldsymbol{\theta}_0\in\mathbb{R}^{K}\)</span> y el enlace real del estimador.
-<code class="docutils literal notranslate"><span class="pre">multiclass_link=&quot;auto&quot;</span></code> distingue Softmax multinomial de OvR mediante
-sigmoides normalizadas; <code class="docutils literal notranslate"><span class="pre">&quot;softmax&quot;</span></code> y <code class="docutils literal notranslate"><span class="pre">&quot;ovr&quot;</span></code> permiten forzarlo.</p></li>
-</ul>
-</section>
-<section id="d-2-matriz-de-parametros-latex">
-<h3>d &gt; 2: Matriz de Parámetros LaTeX<a class="headerlink" href="#d-2-matriz-de-parametros-latex" title="Link to this heading"></a></h3>
-<ul class="simple">
-<li><p>Tabla/fórmula LaTeX interactiva con <code class="docutils literal notranslate"><span class="pre">θ</span></code> actualizado por frame.</p></li>
-<li><p>Multiclase: <span class="math notranslate nohighlight">\(\Theta\in\mathbb{R}^{d\times K}\)</span> y
-<span class="math notranslate nohighlight">\(\boldsymbol{\theta}_0\in\mathbb{R}^{K}\)</span>, aunque la matriz se trunque o
-redistribuya visualmente.</p></li>
-</ul>
-</section>
-</section>
-<section id="estrategias-de-captura">
-<h2>Estrategias de Captura<a class="headerlink" href="#estrategias-de-captura" title="Link to this heading"></a></h2>
-<section id="iterativa-mode-iterative">
-<h3>Iterativa (<code class="docutils literal notranslate"><span class="pre">mode=&quot;iterative&quot;</span></code>)<a class="headerlink" href="#iterativa-mode-iterative" title="Link to this heading"></a></h3>
-<p>Para modelos con <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code>:</p>
-<ol class="arabic simple">
-<li><p>Clona el estimador con <code class="docutils literal notranslate"><span class="pre">warm_start=True</span></code>, <code class="docutils literal notranslate"><span class="pre">max_iter=1</span></code>.</p></li>
-<li><p>Ejecuta una iteración por frame.</p></li>
-<li><p>Captura predicciones, pesos, pérdida, y, en configuraciones multiclase 2D, extrae un historial matricial de superficies probabilísticas (<code class="docutils literal notranslate"><span class="pre">p_surfaces_hist</span></code>).</p></li>
-</ol>
-</section>
-<section id="interpolacion-mode-final-interp">
-<h3>Interpolación (<code class="docutils literal notranslate"><span class="pre">mode=&quot;final_interp&quot;</span></code>)<a class="headerlink" href="#interpolacion-mode-final-interp" title="Link to this heading"></a></h3>
-<p>Para modelos sin entrenamiento iterativo (e.g. <code class="docutils literal notranslate"><span class="pre">LinearRegression</span></code>):</p>
-<ol class="arabic simple">
-<li><p>Define línea base (media, ceros, prior).</p></li>
-<li><p>Interpola linealmente hacia predicciones finales.</p></li>
-</ol>
-</section>
-<section id="modo-automatico-mode-auto">
-<h3>Modo Automático (<code class="docutils literal notranslate"><span class="pre">mode=&quot;auto&quot;</span></code>)<a class="headerlink" href="#modo-automatico-mode-auto" title="Link to this heading"></a></h3>
-<p>Detecta <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> / <code class="docutils literal notranslate"><span class="pre">warm_start</span></code> → iterativa; si no → interpolación.</p>
-</section>
-</section>
-<section id="suavizado-ema">
-<h2>Suavizado EMA<a class="headerlink" href="#suavizado-ema" title="Link to this heading"></a></h2>
-<p>Cuando <code class="docutils literal notranslate"><span class="pre">smooth=&quot;ema&quot;</span></code>:</p>
+\[\hat y_i = \theta_0 + \mathbf{x}_i^\top\boldsymbol{\theta}
+= \theta_0 + \sum_{j=1}^{d}\theta_j x_{ij}.\]</div>
+<p>The 1D builder animates a line, the 2D builder animates a plane, and the nD
+builder uses a report-style parameter view. <code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code>
+converts coefficients through a recognized affine scaler when possible;
+<code class="docutils literal notranslate"><span class="pre">display_space=&quot;scaled&quot;</span></code> shows learned-space parameters.</p>
+<p>The displayed empirical MSE is</p>
 <div class="math notranslate nohighlight">
-\[\widetilde{\mathcal{L}}_t = \beta \widetilde{\mathcal{L}}_{t-1}
-+ (1 - \beta)\mathcal{L}_t\]</div>
-<p><code class="docutils literal notranslate"><span class="pre">smooth_beta</span></code> controla la agresividad (0.95 = muy suave, 0.5 = más detalle).
-El suavizado solo afecta a la pérdida: las predicciones, probabilidades y
-parámetros conservan los checkpoints exactos para no romper su correspondencia
-matemática.</p>
+\[\operatorname{MSE}=\frac{1}{n}\sum_{i=1}^{n}(y_i-\hat y_i)^2.\]</div>
+<p>MSE, MAE, and R-squared are available as checkpoint metrics. They should not be
+assumed to reproduce every estimator’s private objective normalization or
+regularization term.</p>
 </section>
-<section id="transiciones-y-muestreo-temporal">
-<h2>Transiciones y muestreo temporal<a class="headerlink" href="#transiciones-y-muestreo-temporal" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">steps</span></code> controla los estados capturados; <code class="docutils literal notranslate"><span class="pre">max_frames</span></code> y <code class="docutils literal notranslate"><span class="pre">frame_step</span></code>
-reducen el historial sin perder el primer ni el ultimo estado. Para trazas 2D,
-<code class="docutils literal notranslate"><span class="pre">transition_duration</span></code> interpola visualmente entre frames y puede fijarse en
-<code class="docutils literal notranslate"><span class="pre">0</span></code> para desactivarla. Plotly redibuja las superficies 3D porque no admite la
-misma interpolacion estable; en ese caso la suavidad depende principalmente de
-<code class="docutils literal notranslate"><span class="pre">steps</span></code>, <code class="docutils literal notranslate"><span class="pre">max_frames</span></code> y <code class="docutils literal notranslate"><span class="pre">frame_duration</span></code>.</p>
+<section id="binary-logistic-regression">
+<h2>Binary logistic regression<a class="headerlink" href="#binary-logistic-regression" title="Link to this heading"></a></h2>
+<div class="math notranslate nohighlight">
+\[z_i = \theta_0 + \mathbf{x}_i^\top\boldsymbol{\theta},
+\qquad
+p_i = \sigma(z_i)=\frac{1}{1+e^{-z_i}}.\]</div>
+<p>The positive class is <code class="docutils literal notranslate"><span class="pre">classes_[1]</span></code> for the binary coefficient convention
+used by supported Scikit-learn estimators. The default decision is the fitted
+estimator’s prediction; a canonical 0.5 threshold is shown in the mathematical
+explanation where appropriate.</p>
+<p>Binary log-loss is computed after mapping labels to the positive class:</p>
+<div class="math notranslate nohighlight">
+\[-\frac{1}{n}\sum_i
+[y_i'\log p_i + (1-y_i')\log(1-p_i)].\]</div>
 </section>
-<section id="animacion-hibrida-1d">
-<h2>Animación híbrida 1D<a class="headerlink" href="#animacion-hibrida-1d" title="Link to this heading"></a></h2>
-<p>En regresión lineal de una variable, <code class="docutils literal notranslate"><span class="pre">animation_mode=&quot;auto&quot;</span></code> selecciona el
-modo híbrido. <code class="docutils literal notranslate"><span class="pre">steps</span></code> y <code class="docutils literal notranslate"><span class="pre">max_frames</span></code> siguen describiendo checkpoints reales;
-<code class="docutils literal notranslate"><span class="pre">interpolation_frames</span></code> agrega subframes visuales entre ellos y <code class="docutils literal notranslate"><span class="pre">fps</span></code> controla
-su cadencia. La recta, la pérdida, las métricas y los coeficientes numéricos usan
-el mismo parámetro interpolado. La definición simbólica permanece en LaTeX y no
-obliga a redibujar el layout, por lo que funciona con <code class="docutils literal notranslate"><span class="pre">redraw=False</span></code> en Jupyter,
-Colab y HTML exportado.</p>
-<p>Si <code class="docutils literal notranslate"><span class="pre">fps</span></code> es <code class="docutils literal notranslate"><span class="pre">None</span></code>, la duración visual se calcula como
-<code class="docutils literal notranslate"><span class="pre">frame_duration</span> <span class="pre">/</span> <span class="pre">interpolation_frames</span></code>. Por ejemplo, <code class="docutils literal notranslate"><span class="pre">30</span> <span class="pre">/</span> <span class="pre">3</span> <span class="pre">=</span> <span class="pre">10</span> <span class="pre">ms</span></code>
-solicita 100 FPS, una cadencia que suele superar la capacidad de Jupyter y causa
-cuadros descartados. Para notebooks se recomienda <code class="docutils literal notranslate"><span class="pre">fps=30</span></code> a <code class="docutils literal notranslate"><span class="pre">45</span></code>, o
-<code class="docutils literal notranslate"><span class="pre">frame_duration=60</span></code> a <code class="docutils literal notranslate"><span class="pre">80</span></code> con tres subframes.</p>
-<p>El texto numérico del modo híbrido usa una fuente matemática dentro de una traza:
-MathJax no puede interpolar glifos LaTeX entre frames. <code class="docutils literal notranslate"><span class="pre">animation_mode=&quot;native&quot;</span></code>
-conserva la sustitución dinámica en LaTeX, pero cada cambio obliga a redibujar el
-layout. La regresión logística 1D utiliza actualmente este mecanismo nativo; una
-sigmoide acotada puede percibirse fluida con suficientes frames, aunque sus
-fórmulas se sustituyen discretamente y no se interpolan.</p>
-<p>Las métricas se apilan en una columna lateral independiente para que sus valores
-no compitan por espacio con la curva de pérdida. Play y Pause permanecen blancos
-con texto negro en reposo, hover y reproducción, incluso si Plotly reconstruye
-los controles durante una animación 3D.</p>
+<section id="multiclass-logistic-regression">
+<h2>Multiclass logistic regression<a class="headerlink" href="#multiclass-logistic-regression" title="Link to this heading"></a></h2>
+<p>For each fitted class column k:</p>
+<div class="math notranslate nohighlight">
+\[z_k(\mathbf{x})=b_k+\mathbf{x}^{\top}\mathbf{w}_k.\]</div>
+<p>Mlektic resolves multinomial Softmax or normalized one-vs-rest sigmoid
+semantics by comparing available scores and probabilities when
+<code class="docutils literal notranslate"><span class="pre">multiclass_link=&quot;auto&quot;</span></code>. Explicit <code class="docutils literal notranslate"><span class="pre">&quot;softmax&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;ovr&quot;</span></code> values are
+available for supported custom cases. Class identity always follows
+<code class="docutils literal notranslate"><span class="pre">classes_</span></code> order.</p>
 </section>
-<section id="espacio-de-visualizacion">
-<h2>Espacio de Visualización<a class="headerlink" href="#espacio-de-visualizacion" title="Link to this heading"></a></h2>
-<p>Con <code class="docutils literal notranslate"><span class="pre">Pipeline</span></code> + <code class="docutils literal notranslate"><span class="pre">StandardScaler</span></code>:</p>
+<section id="replay-and-interpolation">
+<h2>Replay and interpolation<a class="headerlink" href="#replay-and-interpolation" title="Link to this heading"></a></h2>
+<p>Incremental Scikit-learn models are replayed over a clone. Non-incremental
+models are interpolated from a task-specific baseline. See
+<a class="reference internal" href="history_semantics.html"><span class="doc">History provenance and time semantics</span></a> for the exact contract and limitations.</p>
+</section>
+<section id="smoothing">
+<h2>Smoothing<a class="headerlink" href="#smoothing" title="Link to this heading"></a></h2>
+<p>With <code class="docutils literal notranslate"><span class="pre">smooth=&quot;ema&quot;</span></code>:</p>
+<div class="math notranslate nohighlight">
+\[s_t=\beta s_{t-1}+(1-\beta)\ell_t.\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">loss_raw</span></code> keeps (ell_t); <code class="docutils literal notranslate"><span class="pre">loss_display</span></code> stores (s_t); <code class="docutils literal notranslate"><span class="pre">loss_hist</span></code>
+is a compatibility alias for the display values. The visible loss metric and
+curve use the same series.</p>
+</section>
+<section id="prediction-explanations">
+<h2>Prediction explanations<a class="headerlink" href="#prediction-explanations" title="Link to this heading"></a></h2>
+<p>The linear explainer substitutes a single query into the coefficient equation.
+The logistic explainer additionally shows score, probability link, and class
+decision. Both compute estimator output and verify any supplied display values.</p>
+<p>Logistic figures use indexed classes by default. For a binary estimator,
+probability indices 0 and 1 follow <code class="docutils literal notranslate"><span class="pre">classes_[0]</span></code> and <code class="docutils literal notranslate"><span class="pre">classes_[1]</span></code>. The
+sigmoid value is <span class="math notranslate nohighlight">\(\hat p_1\)</span>; the result compares both probabilities and
+reports only the winning index. <code class="docutils literal notranslate"><span class="pre">show_class_labels=True</span></code> appends fitted
+semantic labels to applicable axes, legends, and prediction results. Fitted
+labels and order remain present in <code class="docutils literal notranslate"><span class="pre">layout.meta</span></code> even when hidden.</p>
+<p>In a two-feature view, string targets are mapped to numeric endpoints 0 and 1
+only for plotting. This keeps the probability axis numeric, so the trained
+probability surface remains visible. The decision boundary is rendered as the
+line where the surface crosses <span class="math notranslate nohighlight">\(\hat p_1=0.5\)</span>.</p>
+<p>Queries outside a per-feature observed range are identified as extrapolations.
+This is a featurewise domain warning, not a claim that the point lies outside a
+statistical support model or convex hull.</p>
+<p>Two-feature linear prediction results keep ordinary coordinate tuples inline
+at the standard mathematical font size. A compact wrapped result is selected
+only when formatted coordinates, including scientific notation, exceed the
+available mathematical panel width.</p>
+</section>
+<section id="neural-networks">
+<h2>Neural networks<a class="headerlink" href="#neural-networks" title="Link to this heading"></a></h2>
+<p>Neural views cover:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">display_space=&quot;scaled&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">θ</span></code> tal como los aprende el modelo.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">display_space=&quot;original&quot;</span></code> → Transforma inversamente los pesos a las unidades originales.</p></li>
+<li><p>architecture and tensor shape flow;</p></li>
+<li><p>computational graph structure;</p></li>
+<li><p>recorded training checkpoints;</p></li>
+<li><p>parameter and weight summaries;</p></li>
+<li><p>layerwise activations;</p></li>
+<li><p>mathematical forward-pass reports;</p></li>
+<li><p>prediction explanations.</p></li>
 </ul>
+<p>For a dense layer:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{z}^{(l)}=\mathbf{W}^{(l)}\mathbf{a}^{(l-1)}+\mathbf{b}^{(l)},
+\qquad
+\mathbf{a}^{(l)}=\phi^{(l)}(\mathbf{z}^{(l)}).\]</div>
+<p><code class="docutils literal notranslate"><span class="pre">TorchTrainingRecorder</span></code> captures genuine training states when called from the
+training loop. <code class="docutils literal notranslate"><span class="pre">record_every</span></code> controls semantic checkpoint capture; later
+visual sampling should be interpreted separately.</p>
 </section>
-<section id="explicacion-visual-de-predicciones">
-<h2>Explicación Visual de Predicciones<a class="headerlink" href="#explicacion-visual-de-predicciones" title="Link to this heading"></a></h2>
-<p>Mediante las funciones <code class="docutils literal notranslate"><span class="pre">explain_lr_prediction</span></code> y <code class="docutils literal notranslate"><span class="pre">explain_logistic_prediction</span></code>, Mlektic permite diseccionar matemáticamente cómo un modelo generó una predicción puntual <code class="docutils literal notranslate"><span class="pre">yhat</span></code> a partir de un <code class="docutils literal notranslate"><span class="pre">x_query</span></code>:</p>
-<ul class="simple">
-<li><p><strong>1D</strong>: Punto verde sobre la recta de regresión.</p></li>
-<li><p><strong>2D</strong>: Punto verde anclado espacialmente en un plano 3D.</p></li>
-<li><p><strong>ND</strong>: Presentación dinámica de fórmulas en LaTeX que despliega el producto
-punto mediante vectores columna. <code class="docutils literal notranslate"><span class="pre">\vdots</span></code> omite componentes intermedias sin
-cambiar su orden ni introducir semántica matricial.</p></li>
-</ul>
-<p>Las vistas de predicción usan notación científica LaTeX para magnitudes grandes,
-por ejemplo <span class="math notranslate nohighlight">\(1.6609\times 10^7\)</span>, y reservan tamaños tipográficos menores en
-los paneles de sustitución y resultado de dos variables.</p>
-</section>
-<section id="metricas-dinamicas">
-<h2>Métricas Dinámicas<a class="headerlink" href="#metricas-dinamicas" title="Link to this heading"></a></h2>
-<p>Las visualizaciones animadas pueden renderizar arreglos personalizables de
-métricas en tiempo real.</p>
-<ul class="simple">
-<li><p>Regresión lineal: <code class="docutils literal notranslate"><span class="pre">metrics=[&quot;loss&quot;,</span> <span class="pre">&quot;mse&quot;,</span> <span class="pre">&quot;r2&quot;,</span> <span class="pre">&quot;mae&quot;]</span></code>.</p></li>
-<li><p>Regresión logística: <code class="docutils literal notranslate"><span class="pre">metrics=[&quot;loss&quot;,</span> <span class="pre">&quot;accuracy&quot;,</span> <span class="pre">&quot;f1&quot;]</span></code>.</p></li>
-<li><p>Métricas personalizadas: <code class="docutils literal notranslate"><span class="pre">metrics={&quot;Nombre&quot;:</span> <span class="pre">callable}</span></code>, donde <code class="docutils literal notranslate"><span class="pre">callable</span></code>
-recibe <code class="docutils literal notranslate"><span class="pre">(y_true,</span> <span class="pre">y_pred)</span></code> y devuelve un escalar.</p></li>
-</ul>
-<p>Mlektic computa y muestra estas métricas como subtítulos o recuadros separados.
-La animación híbrida 1D coloca sus recuadros en una columna vertical dedicada.</p>
+<section id="classic-visual-contract">
+<h2>Classic visual contract<a class="headerlink" href="#classic-visual-contract" title="Link to this heading"></a></h2>
+<p>Phase 0 retains the original classic theme, fixed base size, trace colors,
+line widths, and motion. The only added visible elements are provenance and
+timeline labels required for mathematical honesty. Optional academic, compact,
+classroom, and accessible systems are planned but are not current APIs.</p>
 </section>
 </section>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="api_reference.html" class="btn btn-neutral float-left" title="Referencia de la API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Anterior</a>
-        <a href="advanced.html" class="btn btn-neutral float-right" title="Uso Avanzado" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api_reference.html" class="btn btn-neutral float-left" title="API reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="advanced.html" class="btn btn-neutral float-right" title="Advanced usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
   </div>
 
-  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
-    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
    
 
 </footer>

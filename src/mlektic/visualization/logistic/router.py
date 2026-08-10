@@ -13,6 +13,17 @@ from .multiclass_2d import build_multiclass_2d_logistic_figure
 from .multiclass_nd import build_multiclass_multivar_logistic_figure
 
 
+def _attach_class_display_metadata(fig, classes, show_class_labels):
+    """Preserve fitted class semantics independently of visible labels."""
+    metadata = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
+    metadata["mlektic_classes"] = {
+        "classes": [value.item() if hasattr(value, "item") else value for value in classes],
+        "show_class_labels": show_class_labels,
+    }
+    fig.update_layout(meta=metadata)
+    return fig
+
+
 def build_logistic_figure(
     X,
     y,
@@ -30,6 +41,7 @@ def build_logistic_figure(
     loss_hist=None,
     classes=None,
     show_loss=False,
+    show_class_labels=False,
     history_kind="iterative",
     title=None,
     strict_loss=False,
@@ -40,6 +52,8 @@ def build_logistic_figure(
     theme=None,
 ):
     """Build logistic figure based on data dimensionality."""
+    if not isinstance(show_class_labels, bool):
+        raise TypeError("show_class_labels must be a boolean value.")
     X = np.asarray(X)
     y = np.asarray(y).ravel()
     if X.ndim == 1:
@@ -85,13 +99,14 @@ def build_logistic_figure(
         metrics_hist = None
 
     if not is_multiclass:
+        y_binary = (y == classes[1]).astype(float)
         if d == 1:
             x1 = X[:, 0]
             if title is None:
                 title = "Binary Logistic Regression (1 variable)"
-            return build_binary_simple_logistic_figure(
+            fig = build_binary_simple_logistic_figure(
                 x1,
-                y,
+                y_binary,
                 w_hist=w_hist,
                 b_hist=b_hist,
                 p_line_hist=p_line_hist,
@@ -99,6 +114,8 @@ def build_logistic_figure(
                 loss_hist=loss_hist,
                 metrics_hist=metrics_hist,
                 show_loss=show_loss,
+                classes=classes,
+                show_class_labels=show_class_labels,
                 history_kind=history_kind,
                 title=title,
                 strict_loss=strict_loss,
@@ -106,16 +123,17 @@ def build_logistic_figure(
                 frame_duration=frame_duration,
                 theme=theme,
             )
+            return _attach_class_display_metadata(fig, classes, show_class_labels)
 
         if d == 2:
             x1 = X[:, 0]
             x2 = X[:, 1]
             if title is None:
                 title = "Binary Logistic Regression (2 variables)"
-            return build_binary_plane_logistic_figure(
+            fig = build_binary_plane_logistic_figure(
                 x1,
                 x2,
-                y,
+                y_binary,
                 w_hist=w_hist,
                 b_hist=b_hist,
                 p_plane_hist=p_plane_hist,
@@ -124,6 +142,8 @@ def build_logistic_figure(
                 loss_hist=loss_hist,
                 metrics_hist=metrics_hist,
                 show_loss=show_loss,
+                classes=classes,
+                show_class_labels=show_class_labels,
                 history_kind=history_kind,
                 title=title,
                 strict_loss=strict_loss,
@@ -131,10 +151,11 @@ def build_logistic_figure(
                 frame_duration=frame_duration,
                 theme=theme,
             )
+            return _attach_class_display_metadata(fig, classes, show_class_labels)
 
         if title is None:
             title = f"Binary Logistic Regression ({d} variables)"
-        return build_binary_multivar_logistic_figure(
+        fig = build_binary_multivar_logistic_figure(
             X,
             y,
             w_hist,
@@ -142,6 +163,8 @@ def build_logistic_figure(
             loss_hist=loss_hist,
             metrics_hist=metrics_hist,
             show_loss=show_loss,
+            classes=classes,
+            show_class_labels=show_class_labels,
             history_kind=history_kind,
             title=title,
             strict_loss=strict_loss,
@@ -149,12 +172,13 @@ def build_logistic_figure(
             frame_duration=frame_duration,
             theme=theme,
         )
+        return _attach_class_display_metadata(fig, classes, show_class_labels)
 
     # multiclass
     if d == 1:
         if title is None:
             title = f"Multiclass Logistic Regression (K={K}, d=1)"
-        return build_multiclass_1d_logistic_figure(
+        fig = build_multiclass_1d_logistic_figure(
             X[:, 0],
             y,
             w_hist,
@@ -164,6 +188,8 @@ def build_logistic_figure(
             loss_hist=loss_hist,
             metrics_hist=metrics_hist,
             show_loss=show_loss,
+            classes=classes,
+            show_class_labels=show_class_labels,
             history_kind=history_kind,
             title=title,
             strict_loss=strict_loss,
@@ -173,11 +199,12 @@ def build_logistic_figure(
             probability_link=probability_link,
             theme=theme,
         )
+        return _attach_class_display_metadata(fig, classes, show_class_labels)
 
     if d == 2:
         if title is None:
             title = f"Multiclass Logistic Regression (K={K}, d=2)"
-        return build_multiclass_2d_logistic_figure(
+        fig = build_multiclass_2d_logistic_figure(
             X[:, 0],
             X[:, 1],
             y,
@@ -189,6 +216,8 @@ def build_logistic_figure(
             loss_hist=loss_hist,
             metrics_hist=metrics_hist,
             show_loss=show_loss,
+            classes=classes,
+            show_class_labels=show_class_labels,
             history_kind=history_kind,
             title=title,
             strict_loss=strict_loss,
@@ -198,10 +227,11 @@ def build_logistic_figure(
             probability_link=probability_link,
             theme=theme,
         )
+        return _attach_class_display_metadata(fig, classes, show_class_labels)
 
     if title is None:
         title = f"Multiclass Logistic Regression (K={K}, d={d})"
-    return build_multiclass_multivar_logistic_figure(
+    fig = build_multiclass_multivar_logistic_figure(
         X,
         y,
         w_hist,
@@ -209,6 +239,8 @@ def build_logistic_figure(
         loss_hist=loss_hist,
         metrics_hist=metrics_hist,
         show_loss=show_loss,
+        classes=classes,
+        show_class_labels=show_class_labels,
         history_kind=history_kind,
         title=title,
         strict_loss=strict_loss,
@@ -218,6 +250,7 @@ def build_logistic_figure(
         probability_link=probability_link,
         theme=theme,
     )
+    return _attach_class_display_metadata(fig, classes, show_class_labels)
 
 
 __all__ = ["build_logistic_figure"]

@@ -14,6 +14,12 @@ from ..theme import (
     get_updatemenus,
     loss_line_style,
 )
+from ._math_layout import (
+    MULTICLASS_ELLIPSIS_FONT_SIZE,
+    MULTICLASS_PROBABILITY_FONT_SIZE,
+    MULTICLASS_PROBABILITY_ROW_GAP,
+    compact_probability_fraction_latex,
+)
 
 
 def _row1_formula_latex_2d(K):
@@ -23,7 +29,7 @@ def _row3_formula_latex_2d(K, probability_link):
     definition = multiclass_link_latex(probability_link, K)
     return rf"$$z_k(\mathbf{{x}})=\theta_{{1,k}}x_1+\theta_{{2,k}}x_2+\theta_{{0,k}},\quad {definition}$$"
 
-def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
+def _parameter_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
     K_local = Theta.shape[1]
 
@@ -35,7 +41,9 @@ def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
         row2 = " & ".join(fmt(Theta[1, j]) for j in range(K_local))
         row3 = " & ".join(fmt(Theta[2, j]) for j in range(K_local))
         cols_spec = "c" * K_local
-        return r"$$\begin{aligned}\Theta_t&=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + rf"\end{{array}}\right]\in\mathbb{{R}}^{{2\times {K_local}}}\\\boldsymbol{{\theta}}_{{0,t}}&=\begin{{bmatrix}}" + row3 + rf"\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
+        theta_latex = r"$$\Theta_t=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + rf"\end{{array}}\right]\in\mathbb{{R}}^{{2\times {K_local}}}$$"
+        bias_latex = rf"$$\boldsymbol{{\theta}}_{{0,t}}=\begin{{bmatrix}}{row3}\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}$$"
+        return theta_latex, bias_latex
     head = (max_elems - 1) // 2
     tail = (max_elems - 1) - head
     head_idx = list(range(head))
@@ -47,7 +55,9 @@ def _theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_elems, dec):
     row2 = " & ".join(row2_items)
     row3 = " & ".join(row3_items)
     cols_spec = "c" * max_elems
-    return r"$$\begin{aligned}\Theta_t&=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + rf"\end{{array}}\right]\in\mathbb{{R}}^{{2\times {K_local}}}\\\boldsymbol{{\theta}}_{{0,t}}&=\begin{{bmatrix}}" + row3 + rf"\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
+    theta_latex = r"$$\Theta_t=\left[\begin{array}{" + cols_spec + r"}" + row1 + r"\\" + row2 + rf"\end{{array}}\right]\in\mathbb{{R}}^{{2\times {K_local}}}$$"
+    bias_latex = rf"$$\boldsymbol{{\theta}}_{{0,t}}=\begin{{bmatrix}}{row3}\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}$$"
+    return theta_latex, bias_latex
 
 def _z_numeric_expr_bivar(Theta, class_idx, dec):
     def num(v):
@@ -71,25 +81,37 @@ def _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link):
     zK = _z_numeric_expr_bivar(Theta, K_local - 1, dec=dec)
     return rf"{_linked_term_2d(z1, probability_link)} + \cdots + {_linked_term_2d(zK, probability_link)}"
 
-def _final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec, probability_link):
+def _final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec, probability_link, compact=False):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
     K_local = Theta.shape[1]
     k = max(0, min(int(example_class), K_local - 1))
     z_k = _z_numeric_expr_bivar(Theta, k, dec=dec)
-    numerator = _linked_term_2d(z_k, probability_link)
-    denominator = _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link)
-    return rf"$$\begin{{aligned}}z_{{{k + 1}}}(\mathbf{{x}})&={z_k}\\[4pt]\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})&=\frac{{{numerator}}}{{{denominator}}}\end{{aligned}}$$"
+    if compact:
+        probability = compact_probability_fraction_latex(k + 1, K_local, probability_link)
+    else:
+        numerator = _linked_term_2d(z_k, probability_link)
+        denominator = _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link)
+        probability = rf"\frac{{{numerator}}}{{{denominator}}}"
+    return (
+        rf"$$\begin{{aligned}}z_{{{k + 1}}}(\mathbf{{x}})&={z_k}"
+        + MULTICLASS_PROBABILITY_ROW_GAP
+        + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})&={probability}\end{{aligned}}$$"
+    )
 
 def _vertical_dots_latex_2d():
     return r"$$\vdots$$"
 
-def _last_class_tail_latex_2d(w_hist, b_hist, t, dec, probability_link):
+def _last_class_tail_latex_2d(w_hist, b_hist, t, dec, probability_link, compact=False):
     Theta = np.vstack([w_hist[t, 0], w_hist[t, 1], b_hist[t]])
     K_local = Theta.shape[1]
     z_last = _z_numeric_expr_bivar(Theta, K_local - 1, dec=dec)
-    numerator = _linked_term_2d(z_last, probability_link)
-    denominator = _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link)
-    return rf"$$\hat{{p}}(Y=c_{{{K_local}}}\mid\mathbf{{x}})=\frac{{{numerator}}}{{{denominator}}}$$"
+    if compact:
+        probability = compact_probability_fraction_latex(K_local, K_local, probability_link)
+    else:
+        numerator = _linked_term_2d(z_last, probability_link)
+        denominator = _denom_three_terms_tex_2d(Theta, K_local, dec, probability_link)
+        probability = rf"\frac{{{numerator}}}{{{denominator}}}"
+    return rf"$$\hat{{p}}(Y=c_{{{K_local}}}\mid\mathbf{{x}})={probability}$$"
 
 def build_multiclass_2d_logistic_figure(
     x1,
@@ -104,6 +126,8 @@ def build_multiclass_2d_logistic_figure(
     loss_hist=None,
     metrics_hist=None,
     show_loss=False,
+    classes=None,
+    show_class_labels=False,
     history_kind="iterative",
     title=None,
     strict_loss=False,
@@ -117,7 +141,7 @@ def build_multiclass_2d_logistic_figure(
     """Build the 2D multiclass logistic-regression probability surfaces."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -133,6 +157,14 @@ def build_multiclass_2d_logistic_figure(
     X2g = np.asarray(X2g, dtype=float)
 
     steps_n, h, w, K = p_surfaces_hist.shape
+    classes = np.arange(K) if classes is None else np.asarray(classes).ravel()
+    if classes.size != K:
+        raise ValueError("classes must contain one fitted label per probability surface.")
+    y_indices = np.full(y.shape, -1, dtype=int)
+    for class_index, class_label in enumerate(classes):
+        y_indices[y == class_label] = class_index
+    if np.any(y_indices < 0):
+        raise ValueError("y contains labels absent from classes.")
 
     if title is None:
         title = f"Multiclass Logistic Regression (K={K}, d=2)"
@@ -153,14 +185,14 @@ def build_multiclass_2d_logistic_figure(
         column_widths = [0.65, 0.35]
         specs = [[{"type": "xy"}, {"type": "scene"}], [{"type": "xy"}, {"type": "xy"}]]
         X_TEXT = 0.28
-        X_VDOTS = 0.32
+        X_VDOTS = X_TEXT
     else:
         cols = 2
         rows = 1
         column_widths = [0.65, 0.35]
         specs = [[{"type": "xy"}, {"type": "scene"}]]
         X_TEXT = 0.28
-        X_VDOTS = 0.32
+        X_VDOTS = X_TEXT
 
     x1_min, x1_max = float(np.min(X1g)), float(np.max(X1g))
     x2_min, x2_max = float(np.min(X2g)), float(np.max(X2g))
@@ -211,13 +243,15 @@ def build_multiclass_2d_logistic_figure(
         )]
 
     def make_annotations(t):
+        theta_latex, bias_latex = _parameter_latex_math_style_2d(w_hist, b_hist, t, max_theta_cols, dec)
         base_ann = [
             dict(x=0.39, y=1.08, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style_2d(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=14, color="white")),
-            dict(x=X_TEXT, y=0.58, xref="paper", yref="paper", text=_row3_formula_latex_2d(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
-            dict(x=X_TEXT, y=0.44, xref="paper", yref="paper", text=_final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=13, color="white")),
-            dict(x=X_VDOTS, y=0.12, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
-            dict(x=X_TEXT, y=-0.08, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=13, color="white")),
+            dict(x=X_TEXT, y=0.86, xref="paper", yref="paper", text=theta_latex, showarrow=False, xanchor="center", yanchor="middle", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.70, xref="paper", yref="paper", text=bias_latex, showarrow=False, xanchor="center", yanchor="middle", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.55, xref="paper", yref="paper", text=_row3_formula_latex_2d(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.35, xref="paper", yref="paper", text=_final_prob_example_latex_2d(w_hist, b_hist, t, example_class, dec, probability_link, compact=show_loss), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=X_VDOTS, y=0.11, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
+            dict(x=X_TEXT, y=-0.08, xref="paper", yref="paper", text=_last_class_tail_latex_2d(w_hist, b_hist, t, dec, probability_link, compact=show_loss), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
         ]
 
         base_ann.append(
@@ -241,8 +275,13 @@ def build_multiclass_2d_logistic_figure(
         z=np.zeros_like(x1) - 0.02,
         mode="markers",
         name="Data",
-        marker=dict(size=4, color=y, colorscale="Jet", opacity=0.8, showscale=False),
-        hovertemplate="<b>Data</b><br>x1: %{x}<br>x2: %{y}<br>Class: %{marker.color}<extra></extra>",
+        marker=dict(size=4, color=y_indices, colorscale="Jet", opacity=0.8, showscale=False),
+        customdata=np.asarray(y, dtype=str),
+        hovertemplate=(
+            "<b>Data</b><br>x1: %{x}<br>x2: %{y}<br>Class: %{customdata}<extra></extra>"
+            if show_class_labels
+            else "<b>Data</b><br>x1: %{x}<br>x2: %{y}<br>Class index: %{marker.color}<extra></extra>"
+        ),
         showlegend=False,
     )
     if show_loss:
@@ -256,7 +295,7 @@ def build_multiclass_2d_logistic_figure(
             x=X1g,
             y=X2g,
             z=p_surfaces_hist[0, :, :, k],
-            name=f"Class {k}",
+            name=(f"Class {k} - {classes[k]}" if show_class_labels else f"Class {k}"),
             colorscale=cs,
             opacity=0.65,
             showscale=False,
@@ -338,7 +377,7 @@ def build_multiclass_2d_logistic_figure(
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )
 
-    # Ocultar ejes del primer subplot para dejar espacio puro al texto
+    # Hide the first subplot axes so the mathematical panel uses the full area.
     fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
     fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
     if show_loss:
@@ -349,7 +388,7 @@ def build_multiclass_2d_logistic_figure(
         fig.data[-1].update(legend="legend2")
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], domain=[0.60, 0.85], row=2, col=2)
         fig.update_yaxes(range=[lmin - lpad, lmax + lpad], domain=[0.0, 0.25], row=2, col=2)
-        # Forzar que la escena 3D también aproveche el espacio superior y esté separada
+        # Let the 3D scene use the upper area while remaining visually separate.
         fig.update_layout(scene=dict(domain=dict(x=[0.55, 1.0], y=[0.35, 1.0])))
 
     return fig

@@ -13,6 +13,11 @@ from ..theme import (
     get_sliders,
     get_updatemenus,
 )
+from ._math_layout import (
+    MULTICLASS_ELLIPSIS_FONT_SIZE,
+    MULTICLASS_PROBABILITY_FONT_SIZE,
+    MULTICLASS_PROBABILITY_ROW_GAP,
+)
 
 
 def _row1_formula_latex(K):
@@ -82,7 +87,8 @@ def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability
     return (
         r"$$"
         r"\begin{aligned}"
-        + rf"z_{{{k + 1}}}(x)&={z_k}\\[4pt]"
+        + rf"z_{{{k + 1}}}(x)&={z_k}"
+        + MULTICLASS_PROBABILITY_ROW_GAP
         + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid x)&=\frac{{{num_tex}}}{{{denom_tex}}}"
         r"\end{aligned}"
         r"$$"
@@ -118,6 +124,8 @@ def build_multiclass_1d_logistic_figure(
     loss_hist=None,
     metrics_hist=None,
     show_loss=True,
+    classes=None,
+    show_class_labels=False,
     history_kind="iterative",
     title=None,
     strict_loss=False,
@@ -131,7 +139,7 @@ def build_multiclass_1d_logistic_figure(
     """Internal method to build build_multiclass_1d_logistic_figure."""
     if show_loss and history_kind != "iterative":
         if strict_loss:
-            raise ValueError("show_loss=True is only allowed for iterative histories.")
+            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
         show_loss = False
         loss_hist = None
 
@@ -150,6 +158,9 @@ def build_multiclass_1d_logistic_figure(
 
     steps_n = int(w_hist.shape[0])
     K = int(w_hist.shape[2])
+    classes = np.arange(K) if classes is None else np.asarray(classes).ravel()
+    if classes.size != K:
+        raise ValueError("classes must contain one fitted label per probability column.")
 
     if title is None:
         title = f"Multiclass Logistic Regression (K={K}, d=1)"
@@ -188,14 +199,14 @@ def build_multiclass_1d_logistic_figure(
         column_widths = [0.68, 0.32]
         specs = [[{"type": "xy"}, {"type": "xy"}], [{"type": "xy"}, {"type": "xy"}]]
         X_TEXT = 0.27
-        X_VDOTS = 0.32
+        X_VDOTS = X_TEXT
     else:
         cols = 2
         rows = 1
         column_widths = [0.68, 0.32]
         specs = [[{"type": "xy"}, {"type": "xy"}]]
         X_TEXT = 0.27
-        X_VDOTS = 0.32
+        X_VDOTS = X_TEXT
 
     ep = np.arange(steps_n)
     ep_list = ep.tolist()
@@ -221,7 +232,7 @@ def build_multiclass_1d_logistic_figure(
                 x=x1_grid,
                 y=Pg0[:, k],
                 mode="lines",
-                name=f"p(class {k})",
+                name=(f"p(class {k} - {classes[k]})" if show_class_labels else f"p(class {k})"),
                 line=dict(width=4),
                 legendgroup="curves" if show_loss else None,
             ),
@@ -263,9 +274,9 @@ def build_multiclass_1d_logistic_figure(
             dict(x=0.39, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=X_TEXT, y=0.48, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white")),
-            dict(x=X_VDOTS, y=0.15, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=22, color="white")),
-            dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=14, color="white")),
+            dict(x=X_TEXT, y=0.48, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=X_VDOTS, y=0.19, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
+            dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
         ]
 
         base_ann.append(

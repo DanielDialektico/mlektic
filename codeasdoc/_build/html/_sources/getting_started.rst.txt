@@ -1,188 +1,138 @@
-========================
-Inicio Rápido
-========================
+===============
+Getting started
+===============
 
-Instalación
-===========
+Installation
+============
 
-El proyecto utiliza ``uv`` como gestor de dependencias (compatible con PEP 621).
-
-.. code-block:: bash
-
-   git clone https://github.com/DanielDialektico/mlektic.git
-   cd mlektic
-   uv sync
-
-Dependencias principales:
-
-- **numpy** — Álgebra lineal y manipulación de arrays.
-- **scikit-learn** — Modelos de Machine Learning.
-- **plotly** — Motor de visualización interactiva.
-
-La integración con PyTorch es opcional:
+From the repository root:
 
 .. code-block:: bash
 
-   pip install "mlektic[torch]"
+   pip install -e .
 
-Primer Ejemplo: Regresión Lineal
-================================
+Core dependencies are NumPy, Scikit-learn, and Plotly. PyTorch integration is
+optional:
+
+.. code-block:: bash
+
+   pip install -e ".[torch]"
+
+Linear regression
+=================
 
 .. code-block:: python
 
    import numpy as np
-   import plotly.io as pio
    from sklearn.linear_model import SGDRegressor
    from mlektic import visualize_lr
 
-   pio.renderers.default = "notebook"
+   X = np.linspace(-2, 2, 80).reshape(-1, 1)
+   y = 1.5 + 2.2 * X[:, 0]
+   model = SGDRegressor(max_iter=200, random_state=7).fit(X, y)
 
-   # Datos de juguete
-   X = np.sort(np.random.rand(100, 1)) * 10
-   y = 2.5 * X.ravel() + 1.0 + np.random.randn(100) * 2
-
-   # Modelo
-   model = SGDRegressor(
-       loss="squared_error",
-       max_iter=50,
-       learning_rate="constant",
-       eta0=0.005,
-       random_state=42,
-   )
-   model.fit(X, y)
-
-   # Animación
-   fig = visualize_lr(
-       model, X, y,
-       steps=60,
-       animation_mode="hybrid",
-       fps=30,
-       interpolation_frames=3,
-       show_loss=True,
-       title="Mi Primera Animación Mlektic",
-   )
+   fig = visualize_lr(model, X, y, steps=80, max_frames=30)
    fig.show()
 
-Si la animación en el editor es lenta, puedes exportarla a HTML:
+Because ``SGDRegressor`` supports ``partial_fit``, Mlektic reconstructs a replay
+over a clone. The subtitle and slider state that the checkpoints are replayed;
+they do not claim to be the original ``fit`` history.
+
+For a closed-form estimator:
 
 .. code-block:: python
 
-   fig.write_html("animacion.html", auto_play=False)
+   from sklearn.linear_model import LinearRegression
 
+   model = LinearRegression().fit(X, y)
+   fig = visualize_lr(model, X, y, steps=30)
 
-Primer Ejemplo: Regresión Logística
-====================================
+The second figure uses a synthetic baseline-to-model interpolation and labels
+its slider as interpolation progress.
+
+Logistic regression
+===================
 
 .. code-block:: python
 
-   import numpy as np
-   import plotly.io as pio
-   from sklearn.linear_model import SGDClassifier
+   from sklearn.linear_model import LogisticRegression
    from mlektic import visualize_logistic
 
-   pio.renderers.default = "notebook"
-
-   # Datos binarios
-   np.random.seed(42)
-   X = np.random.randn(200, 1)
-   y = (X.ravel() > 0).astype(int)
-
-   model = SGDClassifier(
-       loss="log_loss",
-       learning_rate="constant",
-       eta0=0.05,
-       max_iter=500,
-       random_state=42,
-   )
-   model.fit(X, y)
-
+   labels = np.where(X[:, 0] >= 0, "accepted", "rejected")
+   classifier = LogisticRegression().fit(X, labels)
    fig = visualize_logistic(
-       model, X, y,
-       steps=60,
-       show_loss=True,
-       frame_duration=80,
-       transition_duration=70,
-       title="Regresión Logística Binaria",
+       classifier,
+       X,
+       labels,
+       steps=30,
+       show_class_labels=False,
    )
    fig.show()
 
+Logistic figures display class indices by default. Pass
+``show_class_labels=True`` when the fitted semantic labels are relevant to the
+lesson; they remain available in figure metadata when hidden.
 
-Primer Ejemplo: Red Neuronal PyTorch
-====================================
+Prediction explanations
+=======================
 
-El recorder debe guardar cada frame después de ``optimizer.step()`` y antes del
-siguiente ``zero_grad()``. Así conserva el peso actualizado junto con el gradiente
-que lo produjo.
+.. code-block:: python
+
+   from mlektic import explain_lr_prediction
+
+   explanation = explain_lr_prediction(
+       model,
+       X,
+       y,
+       x_query=[[1.25]],
+   )
+   explanation.show()
+
+The explainer computes the estimator output, marks extrapolation, and stores
+the source and range assessment in ``figure.layout.meta``. If you supply
+``yhat`` or logistic ``p_hat``/``y_hat``, it is verified against the estimator
+by default. Use ``prediction_source="provided"`` only for an intentional
+counterfactual lesson.
+
+Neural networks
+===============
 
 .. code-block:: python
 
    import torch
-   from mlektic import TorchTrainingRecorder, visualize_nn_graph, visualize_nn_training
+   from torch import nn
+   from mlektic import visualize_nn_architecture
 
-   X = torch.tensor([[0., 0.], [0., 1.], [1., 0.], [1., 1.]])
-   y = torch.tensor([[0.], [1.], [1.], [0.]])
-   model = torch.nn.Sequential(
-       torch.nn.Linear(2, 4),
-       torch.nn.Tanh(),
-       torch.nn.Linear(4, 1),
-       torch.nn.Sigmoid(),
+   network = nn.Sequential(
+       nn.Linear(4, 8),
+       nn.ReLU(),
+       nn.Linear(8, 1),
    )
-   optimizer = torch.optim.Adam(model.parameters(), lr=0.08)
-   loss_fn = torch.nn.BCELoss()
-   recorder = TorchTrainingRecorder(model, optimizer=optimizer, loss_fn=loss_fn)
+   figure = visualize_nn_architecture(network, input_shape=(4,))
+   figure.show()
 
-   for step in range(80):
-       optimizer.zero_grad()
-       prediction = model(X)
-       loss = loss_fn(prediction, y)
-       loss.backward()
-       optimizer.step()
+Use :class:`mlektic.neural.recorder.TorchTrainingRecorder` when real neural
+training checkpoints must be captured. The recorder is fundamentally different
+from reconstructing a history after a model has already been fitted.
 
-       with torch.no_grad():
-           prediction = model(X)
-           recorded_loss = loss_fn(prediction, y)
-       recorder.record(
-           step,
-           loss=recorded_loss,
-           predictions=prediction,
-           targets=y,
-           task="classification",
-       )
-
-   history = recorder.to_history()
-   recorder.close()
-
-   visualize_nn_graph(model, X[0], history).show()
-   visualize_nn_training(history).show()
-
-``record`` infiere ``accuracy``, ``precision`` macro y ``recall`` macro para
-clasificación. Para regresión, ``task="regression"`` produce MSE, MAE y R2.
-
-
-Uso con Pipelines
-=================
-
-Mlektic soporta nativamente ``sklearn.pipeline.Pipeline`` con pasos de
-preprocesamiento como ``StandardScaler``:
+HTML export
+===========
 
 .. code-block:: python
 
-   from sklearn.pipeline import Pipeline
-   from sklearn.preprocessing import StandardScaler
+   from mlektic import export_figure
 
-   model = Pipeline([
-       ("scaler", StandardScaler()),
-       ("sgd", SGDRegressor(
-           loss="squared_error",
-           learning_rate="constant",
-           eta0=0.001,
-           max_iter=2000,
-       )),
-   ])
-   model.fit(X, y)
+   export_figure(fig, "linear-lesson.html")
 
-   # Visualizar en espacio original (des-transforma θ automáticamente)
-   fig = visualize_lr(model, X, y, display_space="original")
+The default export inlines Plotly and loads MathJax from a CDN. Plotly is
+available offline, but equation rendering still requires network access. Pass
+``include_mathjax=False`` only when preserving raw LaTeX without guaranteed
+rendering is acceptable. Current fixed figure dimensions remain the default;
+``responsive=True`` is explicit.
 
-   # Visualizar en espacio escalado (θ tal cual los aprende el modelo)
-   fig_scaled = visualize_lr(model, X, y, display_space="scaled")
+Next steps
+==========
+
+Read :doc:`history_semantics` before interpreting any animated timeline, then
+use :doc:`visualization` for model-specific mathematics and :doc:`advanced`
+for sampling, smoothing, pipelines, and performance.

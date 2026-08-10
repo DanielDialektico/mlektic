@@ -1,222 +1,148 @@
-==========================
-Arquitectura del Proyecto
-==========================
+============
+Architecture
+============
 
-La integracion PyTorch vive en dos paquetes independientes del flujo Scikit-Learn.
-``neural/`` contiene introspeccion, la taxonomia matematica reutilizable,
-``TorchTrainingRecorder`` y el generador de reportes HTML. ``visualization/neural/``
-contiene builders separados para arquitectura, grafo temporal, entrenamiento,
-parametros, activaciones y sustituciones del forward pass. PyTorch se importa solo al
-invocar estas funciones, por lo que sigue siendo una dependencia opcional.
+Design goals
+============
 
-Los builders consumen diccionarios de descripcion e historial, no estado visual
-global. Los limites ``max_frames``, ``max_layers``, ``max_neurons`` y
-``max_tensor_elements`` permiten resumir redes grandes sin cambiar el contrato. Esta
-separacion permite sumar CNNs, grafos FX o adapters de otros frameworks reutilizando
-las definiciones y las politicas de truncado.
+Mlektic separates model introspection, history construction, mathematical
+semantics, and Plotly rendering. This separation allows the library to test a
+history payload without constructing a figure and to reuse the same semantics
+across 1D, 2D, and high-dimensional views.
 
-Mlektic sigue una **arquitectura hexagonal** (Ports & Adapters) simplificada, organizada
-en capas con responsabilidades claras.
-
-Diagrama General
-================
+Package map
+===========
 
 .. code-block:: text
 
-   ┌───────────────────────────────────────────────────────────────┐
-   │                         API Publica                           │
-   │  visualize_lr()  visualize_logistic()  visualize_nn()        │
-   └───────────────┬───────────────────────────┬───────────────────┘
-                   │                           │
-   ┌───────────────▼──────────────────┐  ┌─────▼───────────────────┐
-   │ Flujo tabular Scikit-Learn       │  │ Flujo neural PyTorch   │
-   │ Services + HistoryEngine         │  │ TorchTrainingRecorder  │
-   │ BaseModelAdapter                 │  │ snapshots + hooks       │
-   └───────────────┬──────────────────┘  └─────┬───────────────────┘
-                   │                           │
-   ┌───────────────▼───────────────────────────▼───────────────────┐
-   │                    Builders Plotly                            │
-   │ linear/  logistic/  neural/  + reporte HTML matematico       │
-   └───────────────────────────────────────────────────────────────┘
+   mlektic/
+     api/              public orchestration and export helpers
+     services/         configuration construction and history facades
+     adapters/         estimator/pipeline capability normalization
+     domain/           validated configuration and payload contracts
+     history/          replay, interpolation, metrics, sampling, metadata
+     visualization/
+       linear/         1D, 2D, nD, and prediction builders
+       logistic/       binary/multiclass builders and prediction explainers
+       neural/         architecture, graph, training, and mathematical views
+     neural/           recorder, introspection, taxonomy, and reports
+     utils/            numerical utilities and probability semantics
 
-
-Módulo ``api/``
-===============
-
-Contiene las funciones de alto nivel que el usuario final invoca directamente.
-
-- ``linear.py`` → :func:`mlektic.api.linear.visualize_lr`
-- ``logistic.py`` → :func:`mlektic.api.logistic.visualize_logistic`
-- ``neural.py`` → ``visualize_nn()``, ``visualize_nn_graph()``,
-  ``visualize_nn_training()``, ``visualize_nn_weights()`` y
-  ``explain_nn_prediction()``.
-
-Las funciones tabulares orquestan dos pasos:
-
-1. **Captura de historial** (``fit_history`` / ``fit_history_logistic``).
-2. **Construcción de la figura** (``build_lr_figure`` / ``build_logistic_figure``).
-
-
-Módulo ``adapters/``
+Public orchestration
 ====================
 
-Implementa el **patrón Adapter** para abstraer la interacción con diferentes frameworks de ML.
+``visualize_lr`` and ``visualize_logistic`` perform four operations:
 
-- ``BaseModelAdapter`` — Clase abstracta (ABC) que define el contrato: ``predict()``,
-  ``predict_proba()``, ``extract_linear_theta()``, ``extract_logistic_theta()``,
-  ``fit()``, ``partial_fit()``, ``get_scaler_params()``, ``transform_X()``.
-- ``SklearnAdapter`` — Implementación concreta para estimadores y ``Pipeline`` de Scikit-Learn.
-  Incluye ``clone_for_replay()`` para crear copias con ``warm_start=True`` y ``max_iter=1``.
+1. validate public animation controls;
+2. call a history service;
+3. route the payload to a dimensional figure builder;
+4. configure motion and attach visible history semantics.
 
-.. note::
-   ``BaseModelAdapter`` es la frontera del flujo tabular. La integracion PyTorch
-   usa una frontera especializada porque necesita hooks, gradientes y snapshots
-   de tensores; otros estimadores tabulares, como XGBoost, pueden implementar el
-   contrato del adapter.
+The figure builders do not fit the supplied estimator. Replay fitting occurs
+only on a Scikit-learn clone inside the history strategy. Prediction explainers
+call ``predict``/``predict_proba`` for the single query they explain.
 
+Configuration and services
+==========================
 
-Módulo ``neural/``
-===================
+``LinearHistoryConfig`` and ``LogisticHistoryConfig`` are frozen validated
+contracts. Service functions construct those objects and pass them to a
+``HistoryEngine``. Unsupported enum values, invalid numeric ranges, unknown
+metrics, and non-callable custom metrics fail before strategy execution.
 
-Implementa la captura y la descripcion matematica independiente de Plotly:
+Adapters
+========
 
-- ``recorder.py`` — ``TorchTrainingRecorder`` captura perdida, metricas,
-  parametros, gradientes y activaciones alineados por paso.
-- ``introspection.py`` — inspecciona modulos hoja, formas y configuracion sin
-  convertir PyTorch en dependencia obligatoria.
-- ``metrics.py`` — infiere tres metricas educativas de clasificacion o regresion
-  cuando ``record()`` recibe ``predictions`` y ``targets``.
-- ``taxonomy.py`` — produce definiciones LaTeX, dimensiones y funciones
-  compuestas reutilizables.
-- ``report.py`` — construye, muestra o exporta el reporte HTML matematico.
+``SklearnAdapter`` normalizes:
 
+- direct estimators and pipelines;
+- prediction and probability access;
+- decision scores and multiclass link resolution;
+- linear/logistic coefficient extraction;
+- affine scaler parameters;
+- clone creation and incremental replay capability.
 
-Módulo ``domain/``
+For pipelines, transformations before the final estimator are applied through
+the pipeline for normal prediction. Learned-space coefficients can be converted
+to original units only when the preprocessing has an affine scaler convention
+that can be represented by mean and scale.
+
+History strategies
 ==================
 
-Define las **estructuras de datos** y contratos internos:
+``IterativeCapture``
+--------------------
 
-- ``config.py`` — ``LinearHistoryConfig`` y ``LogisticHistoryConfig`` (dataclasses congelados).
-- ``history.py`` — ``LinearHistoryPayload`` y ``LogisticHistoryPayload`` (TypedDicts que
-  definen el contrato de los diccionarios de historial).
+The strategy clones the supplied estimator, sets supported replay parameters
+(``warm_start=True``, ``max_iter=1``, ``tol=0``, ``shuffle=False``), performs
+an initial clone fit, and then calls ``partial_fit`` for later checkpoints. It
+records empirical predictions, loss, grid values, and learned-space parameters.
+Its public source is ``replayed``.
 
+``InterpolationCapture``
+------------------------
 
-Módulo ``history/``
+The strategy computes baseline and fitted-model predictions/probabilities and
+constructs convex states using alpha. It similarly interpolates extractable
+parameters between baseline and final values. Its public source is
+``interpolated``. The path describes a pedagogical transformation, not an
+optimizer trajectory.
+
+History engine
+==============
+
+``HistoryEngine`` is responsible for:
+
+- training-data validation;
+- auto mode resolution;
+- strategy selection;
+- original/scaled coefficient conversion;
+- checkpoint metric calculation;
+- provenance and final-state metadata;
+- aligned temporal decimation;
+- raw/display loss separation and EMA;
+- final retained-coordinate metadata.
+
+The engine deliberately builds metrics from raw checkpoint state before
+display smoothing. It then updates the visible loss metric from the same display
+series as the loss curve, leaving other metrics unchanged.
+
+Sampling
+========
+
+``decimate_history`` builds one retained-position vector. Every NumPy array
+whose leading dimension equals K and every metric history with that length is
+sampled by the same vector. Metadata holds the full coordinate vector outside
+the top-level sampling loop; retained coordinates remain at the top level.
+
+Visualization
+=============
+
+Routers select builders by feature count and class count. Builders create
+Plotly data, frames, formulas, controls, and dimensional geometry. A final
+semantic annotation layer updates title subtitles, slider labels, and loss-axis
+coordinates without changing frame data or the classic geometry.
+
+Neural architecture
 ===================
 
-Corazón del proceso de captura de entrenamiento.
+Neural functionality uses an explicit recorder for real training checkpoints.
+Introspection and taxonomy classify supported modules and tensor roles;
+visualization builders consume those records. Mathematical reports and
+prediction explanations are distinct from the interactive training plot, which
+keeps complex derivations from overloading one figure.
 
-- ``base.py`` — Define ``HistoryCaptureStrategy`` (ABC) y las funciones de conversión
-  de parámetros entre espacio escalado y original:
-  ``_scale_linear_theta()``, ``_scale_logistic_binary_theta()``,
-  ``_scale_logistic_multiclass_theta()``.
+Extension rules
+===============
 
-- ``engine.py`` — ``HistoryEngine``: fachada que:
+When adding an estimator family or view:
 
-  1. Selecciona la estrategia (iterativa vs. interpolación) según el modo.
-  2. Aplica suavizado EMA exclusivamente al historial de perdida.
-  3. Aplica el rescalado de ``θ`` al espacio de visualización solicitado.
-
-- ``strategy_iterative.py`` — ``IterativeCapture``: clona el modelo, configura
-  ``warm_start=True`` y ``max_iter=1``, y ejecuta ``partial_fit()`` paso a paso.
-  Captura en cada iteración: predicciones, pesos, pérdida.
-
-- ``strategy_interp.py`` — ``InterpolationCapture``: para modelos que no soportan
-  entrenamiento iterativo (e.g. ``LinearRegression``). Interpola linealmente entre
-  una línea base (media o ceros) y las predicciones finales del modelo.
-
-
-Módulo ``services/``
-====================
-
-Capa de servicio que conecta la API pública con el motor de historial:
-
-- ``linear_history.py`` — ``fit_history()`` y ``fit_history_logistic()`` instancian
-  la configuración, crean el ``HistoryEngine`` y ejecutan la captura.
-- ``logistic_history.py`` — Re-exporta ``fit_history_logistic`` para mantener
-  compatibilidad de imports.
-
-
-Módulo ``utils/``
-=================
-
-Funciones matemáticas y de utilidad puras:
-
-- ``math.py`` — ``_sigmoid()``, ``_softmax()``, ``_binary_log_loss_from_p()``,
-  ``_multiclass_cross_entropy()``, ``_one_hot()``, ``_ema_smooth()``.
-- ``probability.py`` — enlace multiclase Softmax u OvR, inferencia desde
-  ``decision_function``/``predict_proba`` y definiciones LaTeX compartidas.
-- ``grids.py`` — ``build_1d_grid()`` y ``build_2d_grid()`` para crear los meshgrids
-  sobre los cuales se evalúan las predicciones.
-
-
-Módulo ``visualization/``
-=========================
-
-Responsable de traducir el historial capturado en figuras Plotly animadas.
-
-- ``theme.py`` — Funciones de tema global: ``get_base_layout()`` (dark mode),
-  ``get_updatemenus()`` (botones Play/Pause), ``get_sliders()``,
-  ``get_legend_props()``, ``create_annotation()``.
-
-- **``linear/``**:
-
-  - ``router.py`` → ``build_lr_figure()``: detecta la dimensionalidad y delega.
-  - ``simple.py`` → 1 variable: scatter 2D + recta animada + curva MSE.
-  - ``plane.py`` → 2 variables: scatter 3D + plano animado + curva MSE.
-  - ``multivar.py`` → d > 2: matriz LaTeX con ``θ`` actualizado por frame + curva MSE.
-
-- **``logistic/``**:
-
-  - ``router.py`` → ``build_logistic_figure()``: detecta dimensión y número de clases.
-  - ``binary_1d.py`` → Clasificación binaria 1D: curva sigmoide animada.
-  - ``binary_2d.py`` → Clasificación binaria 2D: superficie de probabilidad 3D.
-  - ``binary_nd.py`` → Clasificación binaria d > 2: matriz LaTeX de pesos.
-  - ``multiclass_1d.py`` → Multiclase 1D: curvas de probabilidad por clase.
-  - ``multiclass_2d.py`` → Multiclase 2D: superficies Softmax u OvR superpuestas.
-  - ``multiclass_nd.py`` → Multiclase d > 2: matriz de pesos multiclase.
-
-- **``neural/``**:
-
-  - ``architecture.py`` → diagrama de capas, formas, funciones e hiperparametros.
-  - ``graph.py`` → grafo animado con salidas nodales, pesos o senales y gradientes.
-  - ``training.py`` → panel 2x2 de perdida y hasta tres metricas, matrices LaTeX
-    de parametros y resumen de activaciones.
-  - ``math_view.py`` → sustitucion matematica del forward pass por paso.
-  - ``_style.py`` → estilo comun, controles y reglas de espaciado del flujo neural.
-
-
-Escalabilidad hacia Nuevos Modelos
-===================================
-
-Existen dos fronteras de extension. Los modelos tabulares reutilizan
-``BaseModelAdapter`` y el ``HistoryEngine``; una integracion neural reutiliza el
-contrato de historial de ``TorchTrainingRecorder``, la taxonomia y los builders
-neuronales. La API publica y las figuras consumen descripciones e historiales,
-no el estado global del framework.
-
-Para añadir nuevos estimadores tabulares, por ejemplo XGBoost, el adapter debe
-implementar:
-
-- ``predict()`` y, para clasificación, ``predict_proba()``.
-- Extracción de parámetros cuando exista una forma interpretable para la figura.
-- ``fit()`` / ``partial_fit()`` o una estrategia de replay equivalente.
-- Transformación de features y metadatos de escalado cuando el modelo use
-  preprocesamiento externo.
-
-El ``HistoryEngine`` orquesta captura, metricas, suavizado, rescalado y
-decimacion temporal para modelos tabulares. Para otro framework neural, como
-Keras, basta producir el payload equivalente de pasos, parametros, gradientes,
-activaciones y configuracion; las politicas de truncado y las vistas educativas
-se pueden reutilizar sin duplicar la capa visual.
-
-
-Módulo ``_internal/``
-=====================
-
-Helpers heredados del código original, mantenidos por compatibilidad:
-
-- ``common.py`` — Funciones como ``_as_2d()``, ``_as_1d()``, ``_get_final_estimator()``,
-  ``_find_standard_scaler()``, ``_make_iterative_replay_estimator()``, etc.
-  Muchas de estas funciones están duplicadas en los módulos refactorizados
-  (``adapters/``, ``utils/``), pero se mantienen para no romper imports internos.
+1. define exact source semantics;
+2. create a validated configuration contract;
+3. keep capture independent of Plotly;
+4. preserve source coordinates before sampling;
+5. define raw and display quantities;
+6. add mathematical invariants;
+7. route through a semantic view model;
+8. add classic compatibility and new-format visual tests;
+9. document unsupported assumptions explicitly.

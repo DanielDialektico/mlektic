@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="es" data-content_root="../../../">
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,13 +12,12 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="../../../_static/translations.js?v=f85f4cfb"></script>
     <script src="../../../_static/js/theme.js"></script>
-    <link rel="index" title="Índice" href="../../../genindex.html" />
-    <link rel="search" title="Búsqueda" href="../../../search.html" /> 
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -34,19 +33,20 @@
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Inicio Rápido</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Arquitectura del Proyecto</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">Referencia de la API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Sistema de Visualización</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Visualization mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Advanced usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
@@ -64,7 +64,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="../../index.html">Código de módulo</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
       <li class="breadcrumb-item active">mlektic.visualization.theme</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -74,7 +74,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Código fuente para mlektic.visualization.theme</h1><div class="highlight"><pre>
+  <h1>Source code for mlektic.visualization.theme</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Theme utilities for Mlektic Plotly visualization.</span>
 
 <span class="sd">Supports one standard theme:</span>
@@ -125,17 +125,19 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span><span class="n">theme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the palette dict for *theme*, defaulting to ``&quot;classic&quot;``.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a registered palette, rejecting misspelled theme names.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">theme</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">theme</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;theme must be a registered theme name or None.&quot;</span><span class="p">)</span>
     <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">theme</span> <span class="ow">or</span> <span class="s2">&quot;classic&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_THEMES</span><span class="p">:</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="s2">&quot;classic&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown theme </span><span class="si">{</span><span class="n">theme</span><span class="si">!r}</span><span class="s2">. Available themes: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_THEMES</span><span class="p">))</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_THEMES</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
 
 <span class="c1"># ── public helpers (backward-compatible signatures) ─────────────</span>
 
 <div class="viewcode-block" id="get_base_layout">
-<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.get_base_layout">[documentos]</a>
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.get_base_layout">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_base_layout</span><span class="p">(</span>
     <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">600</span><span class="p">,</span>
@@ -169,8 +171,6 @@
 
 
 
-<div class="viewcode-block" id="get_legend_props">
-<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.get_legend_props">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_legend_props</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.985</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
@@ -191,8 +191,7 @@
         <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;legend_font_color&quot;</span><span class="p">]),</span>
     <span class="p">)</span>
     <span class="n">props</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">props</span></div>
-
+    <span class="k">return</span> <span class="n">props</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_play_pause_buttons</span><span class="p">(</span>
@@ -228,8 +227,6 @@
     <span class="p">]</span>
 
 
-<div class="viewcode-block" id="get_updatemenus">
-<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.get_updatemenus">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_updatemenus</span><span class="p">(</span>
     <span class="n">frame_duration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span>
     <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.10</span><span class="p">,</span>
@@ -252,12 +249,11 @@
             <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;btn_font_color&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">),</span>
             <span class="n">buttons</span><span class="o">=</span><span class="n">_build_play_pause_buttons</span><span class="p">(</span><span class="n">frame_duration</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
         <span class="p">)</span>
-    <span class="p">]</span></div>
-
+    <span class="p">]</span>
 
 
 <div class="viewcode-block" id="get_sliders">
-<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.get_sliders">[documentos]</a>
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.get_sliders">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_sliders</span><span class="p">(</span>
     <span class="n">steps_n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -293,8 +289,6 @@
 
 
 
-<div class="viewcode-block" id="create_annotation">
-<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.create_annotation">[documentos]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_annotation</span><span class="p">(</span>
     <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
@@ -318,8 +312,7 @@
         <span class="n">xanchor</span><span class="o">=</span><span class="n">xanchor</span><span class="p">,</span>
         <span class="n">yanchor</span><span class="o">=</span><span class="n">yanchor</span><span class="p">,</span>
         <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;annotation_color&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">sz</span><span class="p">),</span>
-    <span class="p">)</span></div>
-
+    <span class="p">)</span>
 
 
 <span class="c1"># ── style helpers for traces ────────────────────────────────────</span>
@@ -442,6 +435,8 @@
     <span class="k">return</span> <span class="n">fig</span>
 
 
+<div class="viewcode-block" id="configure_animation">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.configure_animation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">configure_animation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">frame_duration</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">transition_duration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configure transitions and redraw frames that modify layout mathematics.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">frame_duration</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -474,7 +469,86 @@
                 <span class="n">frame</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">frame_duration</span>
                 <span class="n">frame</span><span class="p">[</span><span class="s2">&quot;redraw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">requires_redraw</span>
                 <span class="n">options</span><span class="p">[</span><span class="s2">&quot;transition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="n">transition</span><span class="p">,</span> <span class="s2">&quot;easing&quot;</span><span class="p">:</span> <span class="s2">&quot;linear&quot;</span><span class="p">}</span>
-    <span class="k">return</span> <span class="n">fig</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="annotate_history_semantics">
+<a class="viewcode-back" href="../../../api_reference.html#mlektic.visualization.theme.annotate_history_semantics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">annotate_history_semantics</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">history</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">show_title</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Expose capture provenance and retained temporal coordinates in a figure.</span>
+
+<span class="sd">    The operation changes labels and metadata only. ``show_title=False`` omits</span>
+<span class="sd">    the provenance subtitle while preserving slider context and ``layout.meta``.</span>
+<span class="sd">    It does not alter traces, frames, animation duration, or interpolation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">show_title</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;show_title must be a boolean value.&quot;</span><span class="p">)</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fig</span>
+
+    <span class="n">source</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">)</span>
+    <span class="n">displayed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;displayed_steps&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss_hist&quot;</span><span class="p">,</span> <span class="p">[]))))</span>
+    <span class="n">captured</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;captured_steps&quot;</span><span class="p">,</span> <span class="n">displayed</span><span class="p">))</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;training_total_steps&quot;</span><span class="p">)</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;final_state_matches_estimator&quot;</span><span class="p">)</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">_timeline_labels</span><span class="p">(</span><span class="n">history</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">&quot;replayed&quot;</span><span class="p">:</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Reconstructed replay · </span><span class="si">{</span><span class="n">displayed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">captured</span><span class="si">}</span><span class="s2"> checkpoints&quot;</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">summary</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; · estimator n_iter_=</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">matches</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">summary</span> <span class="o">+=</span> <span class="s2">&quot; · final-state mismatch&quot;</span>
+        <span class="n">slider_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Reconstructed replay (</span><span class="si">{</span><span class="n">displayed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">captured</span><span class="si">}</span><span class="s2">) · checkpoint: &quot;</span>
+        <span class="n">axis_title</span> <span class="o">=</span> <span class="s2">&quot;Replay checkpoint&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Synthetic interpolation · </span><span class="si">{</span><span class="n">displayed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">captured</span><span class="si">}</span><span class="s2"> states · α: 0 → 1&quot;</span>
+        <span class="n">slider_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Synthetic interpolation (</span><span class="si">{</span><span class="n">displayed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">captured</span><span class="si">}</span><span class="s2">) · progress: &quot;</span>
+        <span class="n">axis_title</span> <span class="o">=</span> <span class="s2">&quot;Interpolation progress&quot;</span>
+
+    <span class="n">layout_meta</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+    <span class="n">layout_meta</span><span class="p">[</span><span class="s2">&quot;mlektic_history&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">metadata</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">meta</span><span class="o">=</span><span class="n">layout_meta</span><span class="p">)</span>
+
+    <span class="n">title</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">text</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">marker</span> <span class="o">=</span> <span class="s1">&#39;&lt;br&gt;&lt;sup&gt;&lt;span style=&quot;color:#B8C1CC&quot;&gt;&#39;</span>
+    <span class="k">if</span> <span class="n">show_title</span> <span class="ow">and</span> <span class="n">marker</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">title_text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">title</span><span class="si">}{</span><span class="n">marker</span><span class="si">}{</span><span class="n">summary</span><span class="si">}</span><span class="s2">&lt;/span&gt;&lt;/sup&gt;&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">slider</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">sliders</span> <span class="ow">or</span> <span class="p">():</span>
+        <span class="n">slider</span><span class="o">.</span><span class="n">currentvalue</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">slider_prefix</span>
+        <span class="k">for</span> <span class="n">position</span><span class="p">,</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">slider</span><span class="o">.</span><span class="n">steps</span> <span class="ow">or</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
+                <span class="n">step</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">position</span><span class="p">]</span>
+
+    <span class="n">layout_json</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">to_plotly_json</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">axis_name</span><span class="p">,</span> <span class="n">axis_value</span> <span class="ow">in</span> <span class="n">layout_json</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">axis_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;xaxis&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">axis_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">title_value</span> <span class="o">=</span> <span class="n">axis_value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">title_text</span> <span class="o">=</span> <span class="n">title_value</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">title_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">title_value</span>
+        <span class="k">if</span> <span class="n">title_text</span> <span class="o">!=</span> <span class="s2">&quot;Step&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fig</span><span class="o">.</span><span class="n">layout</span><span class="p">,</span> <span class="n">axis_name</span><span class="p">)</span>
+        <span class="n">axis</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">title_text</span><span class="o">=</span><span class="n">axis_title</span><span class="p">,</span>
+            <span class="n">tickmode</span><span class="o">=</span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+            <span class="n">tickvals</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))),</span>
+            <span class="n">ticktext</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_timeline_labels</span><span class="p">(</span><span class="n">history</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build human-readable labels without changing internal Plotly frame names.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;interpolated&quot;</span><span class="p">:</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alpha_values&quot;</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alpha_values&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">%&quot;</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">alpha</span><span class="p">]</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;displayed_step_indices&quot;</span><span class="p">,</span> <span class="n">history</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step_indices&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">]</span>
 </pre></div>
 
            </div>
@@ -484,12 +558,12 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
   </div>
 
-  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
-    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
    
 
 </footer>

@@ -73,7 +73,7 @@ def build_lr_figure(
 
     d = int(X.shape[1])
 
-    # ---- history dict (sin OR con arrays) ----
+    # ---- history dictionary (avoid boolean operations on arrays) ----
     if history is not None:
         if not isinstance(history, dict):
             raise ValueError("history must be a dict returned by fit_history().")
@@ -91,7 +91,7 @@ def build_lr_figure(
 
         grid = history.get("grid", {}) or {}
 
-        # Prefer theta "para mostrar" (respeta display_space de fit_history)
+        # Prefer display coefficients, which respect fit_history display_space.
         w_hist = _first_not_none(history.get("w_hist", None), w_hist)
         b_hist = _first_not_none(history.get("b_hist", None), b_hist)
 
@@ -155,7 +155,7 @@ def build_lr_figure(
         )
 
     if d > 2:
-        # Para d>2 esta vista ES theta-based (no hay "pred-grid" equivalente aquí)
+        # For d > 2 this view is coefficient-based; there is no equivalent prediction grid.
         if w_hist is None or b_hist is None:
             raise ValueError("For d>2, this visualization expects w_hist and b_hist (parameter-display-based).")
         if title is None:

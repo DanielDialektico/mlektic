@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 
 from mlektic import visualize_lr
 from mlektic.api.linear import explain_lr_prediction
-from mlektic.visualization.linear.prediction import _fmt
+from mlektic.visualization.linear.prediction import _fmt, _linear_2d_result_layout
 from mlektic.visualization.theme import get_button_highlight_script
 
 
@@ -198,6 +198,21 @@ class TestExplainLRPrediction:
         model, X, y = trained_sgd_2d
         fig = explain_lr_prediction(model, X, y, x_query=X[1])
         assert isinstance(fig, go.Figure)
+        output_annotations = fig.layout.updatemenus[0].buttons[2].args[1]["annotations"]
+        result = output_annotations[5]
+        assert result["font"]["size"] == 15
+        assert r"(x_1, x_2, \hat{y}) &= (" in result["text"]
+
+    def test_explain_prediction_2d_wraps_only_long_coordinates(self):
+        short_text, short_size, short_wrapped = _linear_2d_result_layout(0.25, -0.25, 1.7, 4)
+        long_text, long_size, long_wrapped = _linear_2d_result_layout(1.2e100, -3.4e100, 5.6e100, 4)
+
+        assert short_wrapped is False
+        assert short_size == 15
+        assert r"(x_1, x_2, \hat{y}) &= (0.25, -0.25, 1.7)" in short_text
+        assert long_wrapped is True
+        assert long_size == 13
+        assert r"(x_1, x_2, \hat{y}) &= \\" in long_text
 
     def test_explain_prediction_nd(self, trained_sgd_5d):
         model, X, y = trained_sgd_5d

@@ -1,26 +1,25 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="es" data-content_root="./">
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mlektic — Documentación Técnica &mdash; Mlektic Documentation</title>
+  <title>Mlektic technical documentation &mdash; Mlektic Documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=ba61de6b"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="_static/translations.js?v=f85f4cfb"></script>
     <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Índice" href="genindex.html" />
-    <link rel="search" title="Búsqueda" href="search.html" />
-    <link rel="next" title="Inicio Rápido" href="getting_started.html" /> 
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting started" href="getting_started.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -36,19 +35,20 @@
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a></li>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a></li>
-<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -66,9 +66,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Mlektic — Documentación Técnica</li>
+      <li class="breadcrumb-item active">Mlektic technical documentation</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -76,93 +76,103 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="mlektic-documentacion-tecnica">
-<h1>Mlektic — Documentación Técnica<a class="headerlink" href="#mlektic-documentacion-tecnica" title="Link to this heading"></a></h1>
-<p><strong>Mlektic</strong> es una librería de Python diseñada para demostrar visual y
-matemáticamente cómo evolucionan los modelos de <em>Machine Learning</em> durante su
-fase de entrenamiento. Provee graficos y animaciones interactivas impulsadas
-por <code class="docutils literal notranslate"><span class="pre">plotly</span></code> para regresion lineal y logistica de Scikit-Learn, ademas de
-arquitectura, entrenamiento, parametros, activaciones y matematicas del forward
-pass de redes PyTorch.</p>
+  <section id="mlektic-technical-documentation">
+<h1>Mlektic technical documentation<a class="headerlink" href="#mlektic-technical-documentation" title="Link to this heading"></a></h1>
+<p><strong>Mlektic</strong> is a Python library for learning how machine-learning models map
+inputs to outputs and how their mathematical state can be represented over
+time. It provides interactive Plotly views for Scikit-learn linear and logistic
+models and architecture, training, parameter, activation, forward-pass, and
+prediction views for PyTorch networks.</p>
+<p>Mlektic treats provenance as part of the mathematics. A tabular animation may
+be a replay over a cloned estimator or a synthetic interpolation to a fitted
+model; it is not described as a recording unless the states were captured from
+the actual training process.</p>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contenido</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Inicio Rápido</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#instalacion">Instalación</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#primer-ejemplo-regresion-lineal">Primer Ejemplo: Regresión Lineal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#primer-ejemplo-regresion-logistica">Primer Ejemplo: Regresión Logística</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#primer-ejemplo-red-neuronal-pytorch">Primer Ejemplo: Red Neuronal PyTorch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="getting_started.html#uso-con-pipelines">Uso con Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#linear-regression">Linear regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#logistic-regression">Logistic regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#prediction-explanations">Prediction explanations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#neural-networks">Neural networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#html-export">HTML export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started.html#next-steps">Next steps</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Arquitectura del Proyecto</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#diagrama-general">Diagrama General</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-api">Módulo <code class="docutils literal notranslate"><span class="pre">api/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-adapters">Módulo <code class="docutils literal notranslate"><span class="pre">adapters/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-neural">Módulo <code class="docutils literal notranslate"><span class="pre">neural/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-domain">Módulo <code class="docutils literal notranslate"><span class="pre">domain/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-history">Módulo <code class="docutils literal notranslate"><span class="pre">history/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-services">Módulo <code class="docutils literal notranslate"><span class="pre">services/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-utils">Módulo <code class="docutils literal notranslate"><span class="pre">utils/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-visualization">Módulo <code class="docutils literal notranslate"><span class="pre">visualization/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#escalabilidad-hacia-nuevos-modelos">Escalabilidad hacia Nuevos Modelos</a></li>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html#modulo-internal">Módulo <code class="docutils literal notranslate"><span class="pre">_internal/</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#why-provenance-matters">Why provenance matters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#sources">Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#timeline-quantities">Timeline quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#payload-contract">Payload contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#loss-contract">Loss contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#final-state-comparison">Final-state comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="history_semantics.html#practical-interpretation">Practical interpretation</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api_reference.html">Referencia de la API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.api.linear">API de Alto Nivel</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#redes-neuronales-pytorch">Redes Neuronales PyTorch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.services.linear_history">Servicios de Historial</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.history.engine">Motor de Historial</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.history.base">Estrategias de Captura</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.adapters.base">Adapters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.domain.config">Dominio</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.visualization.linear.router">Routers de Visualización</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.visualization.linear.simple">Builders de Figuras — Regresión Lineal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.visualization.logistic.binary_1d">Builders de Figuras — Regresión Logística</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.utils.math">Utilidades Matemáticas</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.utils.grids">Utilidades de Grids</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.history.metrics">Métricas e Historial</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.visualization.theme">Tema Visual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#design-goals">Design goals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#package-map">Package map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#public-orchestration">Public orchestration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#configuration-and-services">Configuration and services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#adapters">Adapters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#history-strategies">History strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#history-engine">History engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#sampling">Sampling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#visualization">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#neural-architecture">Neural architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#extension-rules">Extension rules</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="visualization.html">Sistema de Visualización</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#redes-neuronales-pytorch">Redes Neuronales PyTorch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#tema-visual-global">Tema Visual Global</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#renderizado-por-dimension">Renderizado por Dimensión</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#estrategias-de-captura">Estrategias de Captura</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#suavizado-ema">Suavizado EMA</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#transiciones-y-muestreo-temporal">Transiciones y muestreo temporal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#animacion-hibrida-1d">Animación híbrida 1D</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#espacio-de-visualizacion">Espacio de Visualización</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#explicacion-visual-de-predicciones">Explicación Visual de Predicciones</a></li>
-<li class="toctree-l2"><a class="reference internal" href="visualization.html#metricas-dinamicas">Métricas Dinámicas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.api.linear">Public tabular visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.services.linear_history">History services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.domain.config">Configuration and payloads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.history.engine">History implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.adapters.sklearn">Adapters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.visualization.linear.router">Low-level figure builders</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.visualization.theme">Theme and animation helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.api.optimize">Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#module-mlektic.api.neural">Neural networks</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="advanced.html">Uso Avanzado</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#uso-granular-de-la-api">Uso Granular de la API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#metricas-personalizadas">Métricas Personalizadas</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#control-de-frames">Control de Frames</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#control-de-redes-pytorch">Control de Redes PyTorch</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#exportar-a-html">Exportar a HTML</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#configuracion-del-renderer">Configuración del Renderer</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#dimensionalidad-alta">Dimensionalidad Alta</a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#directorio-local-test">Directorio <code class="docutils literal notranslate"><span class="pre">local_test/</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="advanced.html#compatibilidad-con-futuros-adapters">Compatibilidad con Futuros Adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#linear-regression">Linear regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#binary-logistic-regression">Binary logistic regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#multiclass-logistic-regression">Multiclass logistic regression</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#replay-and-interpolation">Replay and interpolation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#smoothing">Smoothing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#prediction-explanations">Prediction explanations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#neural-networks">Neural networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="visualization.html#classic-visual-contract">Classic visual contract</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#build-history-separately">Build history separately</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#custom-metrics">Custom metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#temporal-decimation">Temporal decimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#linear-1d-hybrid-animation">Linear 1D hybrid animation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#pipelines-and-feature-space">Pipelines and feature space</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#counterfactual-prediction-lessons">Counterfactual prediction lessons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#history-subtitle-visibility">History subtitle visibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#html-size-and-dependencies">HTML size and dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#neural-recording">Neural recording</a></li>
+<li class="toctree-l2"><a class="reference internal" href="advanced.html#performance-guidance">Performance guidance</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-1-0-en-desarrollo">v0.1.0 (En desarrollo)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#unreleased-phase-0-integrity-contract">Unreleased — phase 0 integrity contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#earlier-development-history">Earlier development history</a></li>
 </ul>
 </li>
 </ul>
 </div>
 <section id="indices">
-<h2>Índices<a class="headerlink" href="#indices" title="Link to this heading"></a></h2>
+<h2>Indices<a class="headerlink" href="#indices" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Índice</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Índice de Módulos</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Página de Búsqueda</span></a></p></li>
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
 </section>
 </section>
@@ -170,19 +180,19 @@ pass de redes PyTorch.</p>
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Pie de página">
-        <a href="getting_started.html" class="btn btn-neutral float-right" title="Inicio Rápido" accesskey="n" rel="next">Siguiente <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Derechos de autor 2026, Mlektic Authors.</p>
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
   </div>
 
-  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
-    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
    
 
 </footer>

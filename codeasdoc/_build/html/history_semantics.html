@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History provenance and time semantics &mdash; Mlektic Documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Architecture" href="architecture.html" />
+    <link rel="prev" title="Getting started" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Mlektic
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">History provenance and time semantics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#why-provenance-matters">Why provenance matters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sources">Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#timeline-quantities">Timeline quantities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#payload-contract">Payload contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#loss-contract">Loss contract</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#final-state-comparison">Final-state comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#practical-interpretation">Practical interpretation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Mlektic</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">History provenance and time semantics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/history_semantics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="history-provenance-and-time-semantics">
+<h1>History provenance and time semantics<a class="headerlink" href="#history-provenance-and-time-semantics" title="Link to this heading"></a></h1>
+<section id="why-provenance-matters">
+<h2>Why provenance matters<a class="headerlink" href="#why-provenance-matters" title="Link to this heading"></a></h2>
+<p>An animated sequence is not automatically a training history. Mlektic accepts
+already fitted Scikit-learn estimators, so it usually cannot observe the states
+that existed during the original <code class="docutils literal notranslate"><span class="pre">fit</span></code> call. It uses explicit source labels
+to avoid teaching a synthetic or reconstructed sequence as empirical history.</p>
+</section>
+<section id="sources">
+<h2>Sources<a class="headerlink" href="#sources" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">recorded</span></code></dt><dd><p>States captured during the actual training process. This term is reserved
+for recorder-based workflows, such as the neural training recorder.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">replayed</span></code></dt><dd><p>States reconstructed by cloning an incremental estimator, applying replay
+overrides where supported, fitting the clone, and calling <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code>.
+The original fitted estimator is not mutated. Replay results can differ from
+its final parameters.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">interpolated</span></code></dt><dd><p>Synthetic states between a documented baseline and the fitted model. The
+coordinate is alpha in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. Intermediate states are not optimizer
+updates.</p>
+</dd>
+</dl>
+</section>
+<section id="timeline-quantities">
+<h2>Timeline quantities<a class="headerlink" href="#timeline-quantities" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">T</span></code></dt><dd><p>Training updates reported or captured by the training process, when known.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">K</span></code></dt><dd><p>Semantic checkpoints constructed or recorded before display sampling.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">N</span></code></dt><dd><p>Checkpoints retained for display after sampling, with <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">&lt;=</span> <span class="pre">K</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">q</span></code></dt><dd><p>Perceptual intervals inserted between displayed checkpoints.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">F</span></code></dt><dd><p>Rendered frames. In a simple hybrid animation,
+<code class="docutils literal notranslate"><span class="pre">F</span> <span class="pre">=</span> <span class="pre">(N</span> <span class="pre">-</span> <span class="pre">1)</span> <span class="pre">q</span> <span class="pre">+</span> <span class="pre">1</span></code>.</p>
+</dd>
+</dl>
+<p>Only K and N describe semantic model states. Perceptual frames improve visual
+continuity but are not additional training events.</p>
+</section>
+<section id="payload-contract">
+<h2>Payload contract<a class="headerlink" href="#payload-contract" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">]</span>
+<span class="c1"># {</span>
+<span class="c1">#   &quot;schema_version&quot;: 1,</span>
+<span class="c1">#   &quot;source&quot;: &quot;replayed&quot; | &quot;interpolated&quot;,</span>
+<span class="c1">#   &quot;source_detail&quot;: {...},</span>
+<span class="c1">#   &quot;requested_mode&quot;: &quot;auto&quot;,</span>
+<span class="c1">#   &quot;resolved_mode&quot;: &quot;iterative&quot;,</span>
+<span class="c1">#   &quot;requested_steps&quot;: 100,</span>
+<span class="c1">#   &quot;training_total_steps&quot;: 200,</span>
+<span class="c1">#   &quot;captured_steps&quot;: 100,</span>
+<span class="c1">#   &quot;displayed_steps&quot;: 30,</span>
+<span class="c1">#   &quot;step_indices&quot;: array([...]),</span>
+<span class="c1">#   &quot;displayed_step_indices&quot;: array([...]),</span>
+<span class="c1">#   &quot;final_state_matches_estimator&quot;: False,</span>
+<span class="c1">#   &quot;display_space&quot;: &quot;original&quot;,</span>
+<span class="c1">#   &quot;smoothing&quot;: {&quot;method&quot;: &quot;ema&quot;, &quot;beta&quot;: 0.85},</span>
+<span class="c1">#   &quot;decimation&quot;: {&quot;max_frames&quot;: 30, &quot;frame_step&quot;: 10},</span>
+<span class="c1">#   &quot;warnings&quot;: [...],</span>
+<span class="c1"># }</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">step_indices</span></code> in metadata describes all K source coordinates.
+<code class="docutils literal notranslate"><span class="pre">displayed_step_indices</span></code> describes the retained N coordinates. The slider
+uses retained source coordinates rather than renumbering them <code class="docutils literal notranslate"><span class="pre">0..N-1</span></code>.</p>
+</section>
+<section id="loss-contract">
+<h2>Loss contract<a class="headerlink" href="#loss-contract" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">history</span><span class="p">[</span><span class="s2">&quot;loss_raw&quot;</span><span class="p">]</span>
+<span class="n">history</span><span class="p">[</span><span class="s2">&quot;loss_display&quot;</span><span class="p">]</span>
+<span class="n">history</span><span class="p">[</span><span class="s2">&quot;loss_hist&quot;</span><span class="p">]</span>  <span class="c1"># backward-compatible alias of loss_display</span>
+</pre></div>
+</div>
+<p>EMA never overwrites <code class="docutils literal notranslate"><span class="pre">loss_raw</span></code>. A visible loss metric and the plotted loss
+curve use <code class="docutils literal notranslate"><span class="pre">loss_display</span></code> so they do not disagree. Other evaluation metrics
+are computed from checkpoint predictions.</p>
+</section>
+<section id="final-state-comparison">
+<h2>Final-state comparison<a class="headerlink" href="#final-state-comparison" title="Link to this heading"></a></h2>
+<p>When coefficients can be extracted, Mlektic compares the final constructed
+state with the supplied fitted estimator. <code class="docutils literal notranslate"><span class="pre">True</span></code> means the parameters match
+within the documented numerical tolerance, <code class="docutils literal notranslate"><span class="pre">False</span></code> exposes a mismatch, and
+<code class="docutils literal notranslate"><span class="pre">None</span></code> means the comparison could not be made. A fitted state is never
+silently appended to a replay as though it were another update.</p>
+</section>
+<section id="practical-interpretation">
+<h2>Practical interpretation<a class="headerlink" href="#practical-interpretation" title="Link to this heading"></a></h2>
+<p>Before discussing convergence, ask:</p>
+<ol class="arabic simple">
+<li><p>What is the source?</p></li>
+<li><p>How many checkpoints existed and how many are displayed?</p></li>
+<li><p>Are the slider coordinates updates, replay checkpoints, or alpha values?</p></li>
+<li><p>Is the loss raw or smoothed for display?</p></li>
+<li><p>Does the final replay match the fitted estimator?</p></li>
+</ol>
+<p>These questions are part of model literacy, not implementation trivia.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="architecture.html" class="btn btn-neutral float-right" title="Architecture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Mlektic Authors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
