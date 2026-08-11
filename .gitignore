@@ -69,6 +69,7 @@ venv.bak/
 *.ipynb
 !phase_0_review.ipynb
 !phase_1_mathematical_parity.ipynb
+!phase_3_visual_design.ipynb
 
 # VSCode
 .vscode/

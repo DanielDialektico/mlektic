@@ -5,6 +5,7 @@ from plotly.subplots import make_subplots
 from ...adapters.sklearn import SklearnAdapter
 from ...utils.math import _sigmoid
 from ...utils.probability import multiclass_probabilities
+from ..design import apply_visual_system, resolve_visual_spec
 from ..linear.prediction import (
     _custom_updatemenus,
     _extract_linear_theta,
@@ -22,6 +23,7 @@ from ..theme import (
     data_marker_style,
     get_base_layout,
     model_line_style,
+    prediction_label_box,
 )
 
 
@@ -243,6 +245,7 @@ def _explain_log_1d(
                 text=rf"$\hat{{p}}={_fmt(p_hat, dec)}$",
                 showarrow=True, arrowhead=2, ax=35, ay=-35,
                 font=dict(size=14, color="white"),
+                **prediction_label_box(theme=theme),
             ))
         return ann
 
@@ -459,6 +462,7 @@ def _explain_log_2d(
                 text=rf"$\hat{{p}}={_fmt(p_hat, dec)}$",
                 showarrow=True, arrowhead=2, ax=35, ay=-35,
                 font=dict(size=14, color="white"),
+                **prediction_label_box(theme=theme),
             )]
         return []
 
@@ -697,7 +701,7 @@ def _explain_log_multiclass_1d(
                     text=rf"$\hat{{p}}_{{{k}}}={_fmt(p_hat[k], dec)}$",
                     showarrow=True, arrowhead=2,
                     font=dict(size=12, color="white"),
-                    bgcolor="rgba(0,0,0,0.3)", borderpad=2,
+                    **prediction_label_box(theme=theme),
                 ))
         return ann
 
@@ -884,6 +888,13 @@ def explain_logistic_prediction(
     validation_rtol=1e-7,
     validation_atol=1e-9,
     theme=None,
+    format="dashboard",
+    density=None,
+    size="default",
+    width=None,
+    height=None,
+    responsive=False,
+    reduced_motion=False,
 ):
     """Create a link-aware step-by-step logistic prediction visualization.
 
@@ -903,6 +914,17 @@ def explain_logistic_prediction(
     Supplied probabilities and labels are verified against the estimator unless
     ``prediction_source="provided"`` explicitly requests a counterfactual.
     """
+    visual_spec = resolve_visual_spec(
+        detail="essential",
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+    )
     _validate_prediction_options(
         dec=dec,
         grid_points=grid_points,
@@ -1137,6 +1159,7 @@ def explain_logistic_prediction(
             }
         }
     )
+    apply_visual_system(fig, visual_spec, family="logistic-prediction")
     return fig
 
 __all__ = ["explain_logistic_prediction"]

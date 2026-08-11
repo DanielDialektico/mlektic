@@ -313,7 +313,47 @@ path = export_figure(
 
 The default inlines Plotly but loads MathJax from a CDN. The Plotly runtime is offline-capable; equation rendering still requires network access. Passing `include_mathjax=False` preserves the LaTeX source but does not guarantee rendered equations. Fully self-contained MathJax is not currently promised.
 
-Current classic width, height, styling, and motion remain the defaults; the documented one-dimensional equation band is shared by all detail levels. Academic mathematical density is opt-in, while compact, classroom, accessible, and responsive/reflow formats remain planned in [`mejoras`](mejoras/README.md).
+## Visual themes, formats, and sizes
+
+Current classic width, height, styling, and motion remain the defaults. Phase 3
+adds independent, opt-in visual axes:
+
+```python
+academic_lesson = visualize_lr(
+    model,
+    X,
+    y,
+    theme="academic",
+    format="lesson",
+    density="academic",
+    size="notebook",
+    responsive=True,
+)
+```
+
+- `theme` controls color, typography, and line/marker styling: `classic`,
+  `academic`, `classroom`, `compact`, or `accessible`.
+- `format` controls composition: the existing `dashboard`, staged `lesson`,
+  space-conscious `compact`, or static final-state `report`.
+- `density` is a compatible alias for tabular mathematical `detail`.
+- `size` accepts `default`, `compact`, `notebook`, `wide`, or `classroom`;
+  explicit `width` and `height` override the preset.
+- `responsive=True` scales the selected composition. Choose another `format`
+  when structural reflow is needed.
+- `reduced_motion=True` provides the exact final displayed state without
+  playback controls.
+
+`dashboard`, `compact`, and `lesson` retain every selected animation frame.
+The lesson stages only change trace visibility; Play/Pause and fluid motion
+remain available. Only `report` and `reduced_motion` intentionally create a
+static view. The `accessible` theme uses marker symbols and line dashes in
+addition to color.
+
+Every resolved choice and token is inspectable in
+`figure.layout.meta["mlektic_visual"]`. `export_figure()` inherits responsive
+behavior from this metadata when its `responsive` argument is omitted. See the
+[visual design guide](codeasdoc/visual_design.rst) and the
+[Phase 3 implementation record](mejoras/10_phase_3_implementation_record.md).
 
 ## Project architecture
 

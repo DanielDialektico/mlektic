@@ -4,12 +4,14 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ..design import apply_visual_system, resolve_visual_spec
 from ..theme import (
     _resolve,
     data_3d_marker_style,
     data_marker_style,
     get_base_layout,
     model_line_style,
+    prediction_label_box,
     surface_style,
 )
 
@@ -310,6 +312,7 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
                 text=rf"$\hat{{y}}={_fmt(yhat, dec)}$",
                 showarrow=True, arrowhead=2, ax=25, ay=-35,
                 font=dict(size=14, color=ann_color),
+                **prediction_label_box(theme=theme),
             ))
         return ann
 
@@ -454,6 +457,7 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
                 text=rf"$\hat{{y}}={_fmt(yhat, dec)}$",
                 showarrow=True, arrowhead=2, ax=25, ay=-35,
                 font=dict(size=14, color=ann_color),
+                **prediction_label_box(theme=theme),
             )]
         return []
 
@@ -728,6 +732,13 @@ def explain_lr_prediction(
     validation_rtol=1e-7,
     validation_atol=1e-9,
     theme=None,
+    format="dashboard",
+    density=None,
+    size="default",
+    width=None,
+    height=None,
+    responsive=False,
+    reduced_motion=False,
 ):
     """Build an auditable visual explanation for one linear prediction.
 
@@ -736,6 +747,17 @@ def explain_lr_prediction(
     counterfactual demonstration. Queries outside the observed feature ranges
     are explicitly marked as extrapolations and remain visible in the plot.
     """
+    visual_spec = resolve_visual_spec(
+        detail="essential",
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+    )
     _validate_prediction_options(
         dec=dec,
         grid_points=grid_points,
@@ -844,6 +866,7 @@ def explain_lr_prediction(
             }
         }
     )
+    apply_visual_system(fig, visual_spec, family="linear-prediction")
     return fig
 
 __all__ = ["explain_lr_prediction"]

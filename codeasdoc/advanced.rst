@@ -44,8 +44,9 @@ checkpoint:
    )
 
 Unknown built-in names and non-callable mapping values raise immediately.
-Visible metric capacity is currently limited by figure design; phase 1/3 will
-formalize truncation and detail controls.
+Visible metric capacity remains bounded by each figure design. Mathematical
+density and composition are controlled independently through the Phase 1
+``detail``/``density`` contract and the Phase 3 visual formats.
 
 Temporal decimation
 ===================

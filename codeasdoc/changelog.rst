@@ -2,6 +2,29 @@
 Changelog
 =========
 
+Unreleased — phase 3 visual design
+==================================
+
+Added
+-----
+
+- opt-in academic, classroom, compact, and accessible themes backed by public
+  immutable design tokens;
+- dashboard, lesson, compact, and report compositions;
+- named sizes, explicit dimensions, responsive scaling, reduced-motion output,
+  and responsive export inheritance;
+- ``layout.meta["mlektic_visual"]`` audit metadata across tabular, prediction,
+  and neural public figures;
+- non-color marker and line redundancy for accessible views;
+- a dedicated :doc:`visual_design` guide and Phase 3 showcase notebook.
+
+Compatibility
+-------------
+
+Classic remains the default. Dashboard, lesson, and compact formats preserve
+every retained frame and the existing animation cadence. Only explicit report
+and reduced-motion choices freeze the exact final displayed state.
+
 Unreleased — phase 1 mathematical parity
 =========================================
 
@@ -108,7 +131,8 @@ Known limitations
 - tabular replay remains reconstructed even though its separately labeled
   endpoint is the exact fitted estimator;
 - a fully offline MathJax bundle is not supplied;
-- responsive reflow and alternative themes are planned, not implemented;
+- responsive scaling is implemented; structural reflow requires choosing a
+  dedicated compact, lesson, or report format;
 - full objective/regularization introspection belongs to the next phase.
 
 Earlier development history

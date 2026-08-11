@@ -1,12 +1,14 @@
-"""Theme utilities for Mlektic Plotly visualization.
+"""Backward-compatible Plotly helpers backed by the additive visual system.
 
-Supports one standard theme:
-  - ``"classic"``  — the original dark-mode theme (default).
+``classic`` remains the default; academic, classroom, compact, and accessible
+palettes are opt-in and resolve through :mod:`mlektic.visualization.design`.
 """
 
 from __future__ import annotations
 
 from typing import Any, Dict, List
+
+from .design import available_themes, theme_palette
 
 # ── colour palettes ─────────────────────────────────────────────
 
@@ -44,6 +46,11 @@ _CLASSIC = dict(
 
 _THEMES: Dict[str, Dict[str, Any]] = {
     "classic": _CLASSIC,
+    **{
+        name: theme_palette(name)
+        for name in available_themes()
+        if name != "classic"
+    },
 }
 
 
@@ -166,7 +173,7 @@ def get_updatemenus(
             bgcolor=p["btn_bg"],
             bordercolor=p["btn_border"],
             borderwidth=1,
-            font=dict(color=p["btn_font_color"], size=14),
+            font=dict(color=p["btn_font_color"], size=p.get("control_size", 14)),
             buttons=_build_play_pause_buttons(frame_duration, theme=theme),
         )
     ]
@@ -242,6 +249,8 @@ def data_marker_style(*, theme: str | None = None) -> Dict[str, Any]:
         m["color"] = p["data_marker"]
     if p["data_marker_border"]:
         m["line"] = dict(width=1, color=p["data_marker_border"])
+    if p.get("data_marker_symbol"):
+        m["symbol"] = p["data_marker_symbol"]
     return m
 
 
@@ -251,6 +260,8 @@ def model_line_style(*, theme: str | None = None) -> Dict[str, Any]:
     d: Dict[str, Any] = dict(width=p["model_line_width"], simplify=False)
     if p["model_line"]:
         d["color"] = p["model_line"]
+    if p.get("model_line_dash"):
+        d["dash"] = p["model_line_dash"]
     return d
 
 
@@ -260,7 +271,20 @@ def loss_line_style(*, theme: str | None = None) -> Dict[str, Any]:
     d: Dict[str, Any] = dict(width=p["loss_line_width"], simplify=False)
     if p["loss_line"]:
         d["color"] = p["loss_line"]
+    if p.get("loss_line_dash"):
+        d["dash"] = p["loss_line_dash"]
     return d
+
+
+def prediction_label_box(*, theme: str | None = None) -> Dict[str, Any]:
+    """Return a high-contrast box for prediction-value annotations."""
+    p = _resolve(theme)
+    return {
+        "bgcolor": p.get("panel_bg", p.get("bg", "#111111")),
+        "bordercolor": p.get("prediction_label_border", p.get("loss_line", "#00cc96")),
+        "borderwidth": 1,
+        "borderpad": 5,
+    }
 
 
 def surface_style(*, theme: str | None = None) -> Dict[str, Any]:
@@ -280,6 +304,8 @@ def data_3d_marker_style(*, theme: str | None = None) -> Dict[str, Any]:
         m["color"] = p["data_marker"]
     if p["data_marker_border"]:
         m["line"] = dict(width=0.5, color=p["data_marker_border"])
+    if p.get("data_marker_symbol"):
+        m["symbol"] = p["data_marker_symbol"]
     return m
 
 
