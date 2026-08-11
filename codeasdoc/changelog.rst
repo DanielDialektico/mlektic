@@ -28,6 +28,18 @@ Changed
 - earlier phase notebooks now live in the versioned archive, while the original
   large exploratory notebooks remain locally preserved with a tracked checksum
   inventory instead of bloating the release repository.
+- postponed evaluation of Scikit-learn adapter type annotations preserves the
+  documented Python 3.9 import contract without changing runtime behavior;
+- strict Sphinx builds now start from a fresh environment and write to an
+  ignored build directory, preventing committed artifacts from affecting CI.
+
+Fixed
+-----
+
+- Python 3.9 test collection no longer fails while evaluating the
+  ``np.ndarray | None`` return annotation;
+- the compatibility guide no longer contains a duplicated fragment that Sphinx
+  reports as unexpected indentation.
 
 Compatibility
 -------------

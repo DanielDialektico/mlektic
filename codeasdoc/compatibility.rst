@@ -1,7 +1,7 @@
 ====================
 Compatibility matrix
 ====================
-fabricating mathematics. Inspect ``LR-PIPE-SCALED`` and ``NN-RELU-ADAM``.
+
 .. list-table:: Supported estimator routes
    :header-rows: 1
 
