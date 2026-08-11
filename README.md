@@ -28,6 +28,14 @@ PyTorch support is optional:
 pip install -e ".[torch]"
 ```
 
+Notebook, documentation, and maintainer environments are explicit:
+
+```bash
+pip install -e ".[notebooks]"
+pip install -e ".[docs]"
+pip install -e ".[dev,torch]"
+```
+
 Core dependencies are NumPy, Scikit-learn, and Plotly. Notebook-specific IPython functionality is loaded only when requested.
 
 ## Linear regression quickstart
@@ -369,23 +377,36 @@ src/mlektic/
   utils/            numerical and probability helpers
 ```
 
-See [Architecture](codeasdoc/architecture.rst), [API reference](codeasdoc/api_reference.rst), and [advanced usage](codeasdoc/advanced.rst).
+See [Architecture](codeasdoc/architecture.rst), [API reference](codeasdoc/api_reference.rst), [compatibility](codeasdoc/compatibility.rst), and [limitations](codeasdoc/limitations.rst).
 
 ## Testing
 
 ```bash
 pytest
-ruff check src tests codeasdoc
+python -m ruff check src tests scripts codeasdoc
+python scripts/validate_notebook_policy.py
 ```
 
-The current exploratory notebooks remain at repository root:
+Canonical notebooks are separated by audience:
 
-- `test_interpt.ipynb`
-- `test_linreg.ipynb`
-- `test_logreg.ipynb`
-- `test_ann.ipynb`
+- [`notebooks/learn`](notebooks/learn) contains focused student lessons;
+- [`notebooks/qa`](notebooks/qa) contains 98 stable human visual-QA cases across
+  model families, dimensionalities, data regimes, parameters, hyperparameters,
+  provenance, motion, predictions, themes, formats, density, and sizes;
+- [`notebooks/archive`](notebooks/archive) preserves earlier phase notebooks and
+  inventories the large local exploratory notebooks without deleting them.
 
-The improvement plan proposes separating them into generated QA matrices and focused student learning notebooks without deleting their useful coverage.
+Regenerate and validate the canonical suite with:
+
+```bash
+python scripts/generate_notebooks.py
+python scripts/execute_notebooks.py --group smoke
+```
+
+Every new or materially changed public documentation page must add a new,
+separately executable visual cell with a stable case ID to the corresponding QA
+notebook. This contract is enforced by CI; see
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Documentation
 

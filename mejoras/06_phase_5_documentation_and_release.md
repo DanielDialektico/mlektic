@@ -1,5 +1,13 @@
 # Phase 5 — Documentation, packaging, and public release
 
+## Implementation status
+
+Implemented on `feature/phase-5-documentation-release`. The canonical English
+documentation architecture, package metadata, CI workflows, preserved notebook
+archive, deterministic QA/learning notebooks, and enforced documentation-to-
+visual-cell policy are present. Release validation evidence and exact commands
+are maintained in `12_phase_5_implementation_record.md`.
+
 ## Objective
 
 Present Mlektic as a coherent public learning tool with an English-first documentation system, reproducible examples, explicit compatibility, and installation metadata that matches actual runtime behavior.

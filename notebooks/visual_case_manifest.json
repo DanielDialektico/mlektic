@@ -1,0 +1,486 @@
+{
+  "schema_version": 1,
+  "policy": "Every new or materially changed public documentation page adds a new visual QA cell.",
+  "cases": {
+    "SMOKE-LR-1D": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 4
+    },
+    "SMOKE-LR-2D": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 6
+    },
+    "SMOKE-LR-ND": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 8
+    },
+    "SMOKE-LOG-BIN-1D": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 10
+    },
+    "SMOKE-LOG-BIN-2D": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 12
+    },
+    "SMOKE-LOG-BIN-ND": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 14
+    },
+    "SMOKE-LOG-MULTI-1D": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 16
+    },
+    "SMOKE-LOG-MULTI-2D": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 18
+    },
+    "SMOKE-LOG-MULTI-ND": {
+      "notebook": "notebooks/qa/qa_00_smoke_matrix.ipynb",
+      "cell_index": 20
+    },
+    "LR-CLOSED-INTERP": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 4
+    },
+    "LR-SGD-REPLAY": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 6
+    },
+    "LR-BASELINE-ZEROS": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 8
+    },
+    "LR-LOSS-OFF": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 10
+    },
+    "LR-PIPE-ORIGINAL": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 12
+    },
+    "LR-PIPE-SCALED": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 14
+    },
+    "LR-POLYNOMIAL": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 16
+    },
+    "LR-MANY-FEATURES": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 18
+    },
+    "LR-PRED-IN-RANGE": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 20
+    },
+    "LR-PRED-EXTRAP": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 22
+    },
+    "LR-PRED-COUNTERFACTUAL": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 24
+    },
+    "LOG-BINARY-INDEXED": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 4
+    },
+    "LOG-BINARY-LABELS": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 6
+    },
+    "LOG-BINARY-THRESHOLD": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 8
+    },
+    "LOG-BINARY-IMBALANCED": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 10
+    },
+    "LOG-SGD-REPLAY": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 12
+    },
+    "LOG-PIPE-ORIGINAL": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 14
+    },
+    "LOG-PIPE-SCALED": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 16
+    },
+    "LOG-MULTI-FOCUS": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 18
+    },
+    "LOG-MULTI-OVR": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 20
+    },
+    "LOG-MULTI-MANY-CLASSES": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 22
+    },
+    "LOG-PRED-BINARY": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 24
+    },
+    "LOG-PRED-LABELS": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 26
+    },
+    "LOG-PRED-MULTI": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 28
+    },
+    "NN-ARCHITECTURE": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 4
+    },
+    "NN-GRAPH-EXACT": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 6
+    },
+    "NN-GRAPH-RELATIVE": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 8
+    },
+    "NN-TRAINING": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 10
+    },
+    "NN-WEIGHTS": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 12
+    },
+    "NN-ACTIVATIONS": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 14
+    },
+    "NN-PREDICTION": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 16
+    },
+    "NN-RELU-ADAM": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 18
+    },
+    "NN-REPORT": {
+      "notebook": "notebooks/qa/qa_03_neural.ipynb",
+      "cell_index": 20
+    },
+    "MOTION-NATIVE-SLOW": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 5
+    },
+    "MOTION-HYBRID-FLUID": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 7
+    },
+    "MOTION-FRAME-STEP": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 9
+    },
+    "MOTION-NO-SMOOTH": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 11
+    },
+    "MOTION-LOGISTIC": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 13
+    },
+    "MOTION-LESSON": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 15
+    },
+    "MOTION-REDUCED": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 17
+    },
+    "MOTION-REPORT": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 19
+    },
+    "STYLE-THEME-CLASSIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 4
+    },
+    "STYLE-THEME-ACADEMIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 6
+    },
+    "STYLE-THEME-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 8
+    },
+    "STYLE-THEME-COMPACT": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 10
+    },
+    "STYLE-THEME-ACCESSIBLE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 12
+    },
+    "STYLE-FORMAT-DASHBOARD": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 14
+    },
+    "STYLE-FORMAT-LESSON": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 16
+    },
+    "STYLE-FORMAT-COMPACT": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 18
+    },
+    "STYLE-FORMAT-REPORT": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 20
+    },
+    "STYLE-SIZE-DEFAULT": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 22
+    },
+    "STYLE-SIZE-COMPACT": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 24
+    },
+    "STYLE-SIZE-NOTEBOOK": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 26
+    },
+    "STYLE-SIZE-WIDE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 28
+    },
+    "STYLE-SIZE-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 30
+    },
+    "STYLE-RESPONSIVE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 32
+    },
+    "STYLE-EXPLICIT-SIZE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 34
+    },
+    "STYLE-DENSITY-ESSENTIAL": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 36
+    },
+    "STYLE-DENSITY-ACADEMIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 38
+    },
+    "STYLE-DENSITY-COMPLETE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 40
+    },
+    "STYLE-HISTORY-HIDDEN": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 42
+    },
+    "DATA-LR-NOISELESS": {
+      "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
+      "cell_index": 4
+    },
+    "DATA-LR-SCALE": {
+      "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
+      "cell_index": 6
+    },
+    "DATA-LR-CONSTANT-TARGET": {
+      "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
+      "cell_index": 8
+    },
+    "DATA-LOG-OVERLAP": {
+      "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
+      "cell_index": 10
+    },
+    "DATA-MULTI-FOUR": {
+      "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
+      "cell_index": 12
+    },
+    "HYPER-LR-L2": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 4
+    },
+    "HYPER-LR-L1": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 6
+    },
+    "HYPER-LR-LEARNING-RATE": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 8
+    },
+    "HYPER-LOG-C-STRONG": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 10
+    },
+    "HYPER-LOG-C-WEAK": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 12
+    },
+    "HYPER-LOG-L1": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 14
+    },
+    "HYPER-LOG-CLASS-WEIGHT": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 16
+    },
+    "HYPER-LOG-MULTICLASS-C": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 18
+    },
+    "HYPER-NN-DEEP": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 20
+    },
+    "HYPER-NN-CONV": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 22
+    },
+    "HYPER-NN-REGRESSION": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 24
+    },
+    "HYPER-NN-MULTICLASS": {
+      "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
+      "cell_index": 26
+    },
+    "LEARN-GETTING-STARTED": {
+      "notebook": "notebooks/learn/learn_00_getting_started.ipynb",
+      "cell_index": 6
+    },
+    "LEARN-GETTING-PREDICTION": {
+      "notebook": "notebooks/learn/learn_00_getting_started.ipynb",
+      "cell_index": 9
+    },
+    "LEARN-LINEAR-PLANE": {
+      "notebook": "notebooks/learn/learn_01_linear_regression.ipynb",
+      "cell_index": 6
+    },
+    "LEARN-LINEAR-POLY": {
+      "notebook": "notebooks/learn/learn_01_linear_regression.ipynb",
+      "cell_index": 9
+    },
+    "LEARN-LOGISTIC-BINARY": {
+      "notebook": "notebooks/learn/learn_02_logistic_regression.ipynb",
+      "cell_index": 6
+    },
+    "LEARN-LOGISTIC-PREDICTION": {
+      "notebook": "notebooks/learn/learn_02_logistic_regression.ipynb",
+      "cell_index": 8
+    },
+    "LEARN-LOGISTIC-MULTI": {
+      "notebook": "notebooks/learn/learn_02_logistic_regression.ipynb",
+      "cell_index": 11
+    },
+    "LEARN-NN-ARCHITECTURE": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 6
+    },
+    "LEARN-NN-TRAINING": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 9
+    },
+    "LEARN-NN-GRAPH": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 11
+    },
+    "LEARN-NN-PREDICTION": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 13
+    }
+  },
+  "documents": {
+    "codeasdoc/introduction.rst": [
+      "SMOKE-LR-1D"
+    ],
+    "codeasdoc/installation.rst": [
+      "LEARN-GETTING-STARTED"
+    ],
+    "codeasdoc/getting_started.rst": [
+      "LEARN-GETTING-PREDICTION"
+    ],
+    "codeasdoc/linear_lesson.rst": [
+      "LEARN-LINEAR-PLANE",
+      "LEARN-LINEAR-POLY"
+    ],
+    "codeasdoc/logistic_lesson.rst": [
+      "LEARN-LOGISTIC-BINARY",
+      "LEARN-LOGISTIC-MULTI"
+    ],
+    "codeasdoc/neural_lesson.rst": [
+      "LEARN-NN-ARCHITECTURE",
+      "LEARN-NN-TRAINING"
+    ],
+    "codeasdoc/history_semantics.rst": [
+      "MOTION-NATIVE-SLOW",
+      "MOTION-HYBRID-FLUID"
+    ],
+    "codeasdoc/mathematical_parity.rst": [
+      "LR-PIPE-ORIGINAL",
+      "LOG-BINARY-THRESHOLD"
+    ],
+    "codeasdoc/mathematical_conventions.rst": [
+      "LR-POLYNOMIAL",
+      "LOG-MULTI-FOCUS"
+    ],
+    "codeasdoc/animation_performance.rst": [
+      "MOTION-FRAME-STEP",
+      "MOTION-LESSON"
+    ],
+    "codeasdoc/visual_design.rst": [
+      "STYLE-THEME-ACADEMIC",
+      "STYLE-FORMAT-LESSON"
+    ],
+    "codeasdoc/themes_formats_sizes.rst": [
+      "STYLE-THEME-ACCESSIBLE",
+      "STYLE-SIZE-CLASSROOM"
+    ],
+    "codeasdoc/prediction_explanations.rst": [
+      "LR-PRED-EXTRAP",
+      "LOG-PRED-BINARY"
+    ],
+    "codeasdoc/export.rst": [
+      "STYLE-RESPONSIVE",
+      "NN-REPORT"
+    ],
+    "codeasdoc/gallery.rst": [
+      "SMOKE-LR-2D",
+      "SMOKE-LOG-MULTI-2D",
+      "NN-GRAPH-EXACT"
+    ],
+    "codeasdoc/compatibility.rst": [
+      "LR-PIPE-SCALED",
+      "NN-RELU-ADAM"
+    ],
+    "codeasdoc/model_hyperparameters.rst": [
+      "HYPER-LR-L2",
+      "HYPER-LOG-C-STRONG",
+      "HYPER-NN-REGRESSION"
+    ],
+    "codeasdoc/limitations.rst": [
+      "LR-MANY-FEATURES",
+      "LOG-MULTI-MANY-CLASSES"
+    ],
+    "codeasdoc/visualization.rst": [
+      "SMOKE-LOG-BIN-2D"
+    ],
+    "codeasdoc/advanced.rst": [
+      "LR-PRED-COUNTERFACTUAL",
+      "LOG-MULTI-OVR"
+    ],
+    "codeasdoc/architecture.rst": [
+      "SMOKE-LR-ND",
+      "NN-ARCHITECTURE"
+    ],
+    "codeasdoc/contributing_visual_qa.rst": [
+      "DATA-LR-SCALE",
+      "DATA-LOG-OVERLAP"
+    ]
+  }
+}

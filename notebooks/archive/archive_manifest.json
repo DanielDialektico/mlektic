@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "description": "Local historical notebooks preserved before the Phase 5 canonical QA replacement.",
+  "notebooks": [
+    {
+      "path": "notebooks/archive/exploratory/Bocetos_Lib.ipynb",
+      "bytes": 31055133,
+      "sha256": "75cee96d0eae7da4b92a88728b0585e01b823e6bcc2d6e30e1c844566ca18463",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    },
+    {
+      "path": "notebooks/archive/exploratory/Bocetos_Lib_Log.ipynb",
+      "bytes": 1189681,
+      "sha256": "0a36adaa3d6fdd63efd9663f4afadc1e14158aef16aa36bcef16a994ceffe11f",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    },
+    {
+      "path": "notebooks/archive/exploratory/Bocetos_Lib_RLin.ipynb",
+      "bytes": 39843742,
+      "sha256": "972c033b29d85d201a4f366fe0201f435aee1d24712a398f9ff8669af4a6a633",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    },
+    {
+      "path": "notebooks/archive/exploratory/test_ann.ipynb",
+      "bytes": 3270729,
+      "sha256": "3a18fb46ff52c270fa78f10eef66209b31ac9c57193b70c774a1ebdf06654839",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    },
+    {
+      "path": "notebooks/archive/exploratory/test_interpt.ipynb",
+      "bytes": 7362603,
+      "sha256": "7afa1f96116d569543ab109ec0521d31814f31e04ef7fb0365087a3a7e0d365f",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    },
+    {
+      "path": "notebooks/archive/exploratory/test_linreg.ipynb",
+      "bytes": 41176950,
+      "sha256": "f2569ae5525b2cfeae76c9bdd6dc222cb64e266af8ea13c16182a86bb2cb595c",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    },
+    {
+      "path": "notebooks/archive/exploratory/test_logreg.ipynb",
+      "bytes": 158440917,
+      "sha256": "a79012b95847bdd4924034d3ec2b7885006b1c198defac027e069d3a7fc845a1",
+      "tracked": false,
+      "reason": "Preserved exploratory output; excluded from Git because large embedded outputs are not release artifacts."
+    }
+  ]
+}

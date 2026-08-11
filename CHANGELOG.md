@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added the Phase-5 English documentation architecture: introduction,
+  installation, rigorous linear/logistic/neural lessons, mathematical
+  conventions, animation/performance, themes/formats/sizes, prediction
+  explanations, export, compatibility, limitations, gallery, and contributing
+  guides.
+- Added twelve deterministic, output-cleared notebooks: eight maintainer human
+  visual-QA matrices and four focused student lessons. Their 98 stable case IDs
+  cover all public dimensional routes plus meaningful estimator, data,
+  preprocessing, provenance, motion, mathematical-density, prediction, theme,
+  format, size, accessibility, and neural-training variants.
+- Added a machine-readable documentation-to-notebook manifest and validator.
+  Every new or materially changed public documentation page must add a new real
+  figure cell to its corresponding QA notebook; assertion-free cells, unique
+  IDs, explicit display, cleared outputs, and complete mappings are CI enforced.
+- Added deterministic notebook generation/execution tools, a local exploratory
+  notebook archive with SHA-256 inventory, contributor guidance, Python
+  3.9-3.13 test CI, optional PyTorch validation, documentation/package checks,
+  clean wheel import smoke testing, PR notebook smoke execution, and scheduled
+  full visual-notebook execution.
+- Added complete package metadata, optional notebook/docs development extras,
+  project URLs, classifiers, keywords, license metadata, and public
+  ``mlektic.__version__``.
+- Added a dedicated model/hyperparameter visual matrix covering linear
+  ``alpha``, penalties and learning rates; logistic ``C``, penalties and class
+  weights; and neural binary, multiclass, regression, deep-dense, and
+  convolutional configurations.
 - Added the opt-in Phase-3 visual system across linear, logistic, prediction,
   and neural public figures: immutable `VisualTokens`, `classic`, `academic`,
   `classroom`, `compact`, and `accessible` themes; `dashboard`, `lesson`,
@@ -101,6 +127,10 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Reorganized notebooks by audience under ``notebooks/learn``, ``notebooks/qa``,
+  and ``notebooks/archive``. Earlier phase notebooks retain Git history; seven
+  very large exploratory notebooks remain preserved locally and ignored rather
+  than being deleted or committed with stale embedded output.
 - Preserved every retained animation frame in the new dashboard, compact, and
   lesson formats. Only the explicit report and reduced-motion alternatives
   freeze the exact final displayed state and remove temporal controls.
