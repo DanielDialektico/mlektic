@@ -64,12 +64,22 @@ venv.bak/
 # Ruff
 .ruff_cache/
 
+# Generated documentation
+codeasdoc/_build/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
-!phase_0_review.ipynb
-!phase_1_mathematical_parity.ipynb
-!phase_3_visual_design.ipynb
+!notebooks/
+!notebooks/**/
+!notebooks/qa/*.ipynb
+!notebooks/learn/*.ipynb
+!notebooks/archive/phases/*.ipynb
+
+# Historical exploratory notebooks are preserved locally. Several contain
+# embedded outputs larger than GitHub's per-file limit; the tracked archive
+# manifest records their checksums and canonical local destinations.
+notebooks/archive/exploratory/*.ipynb
 
 # VSCode
 .vscode/

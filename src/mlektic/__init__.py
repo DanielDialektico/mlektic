@@ -1,5 +1,8 @@
 """Mlektic public package exports."""
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _distribution_version
+
 from .api.neural import (
     TorchTrainingRecorder,
     build_nn_math_report,
@@ -38,7 +41,13 @@ from .logistic import (
 )
 from .visualization.design import VisualSpec, VisualTokens, available_themes, get_theme_tokens
 
+try:
+    __version__ = _distribution_version("mlektic")
+except PackageNotFoundError:  # pragma: no cover - source tree without installation
+    __version__ = "0+unknown"
+
 __all__ = [
+    "__version__",
     "fit_history",
     "build_lr_figure",
     "build_simple_lr_figure",

@@ -1,5 +1,7 @@
 """Adapter for Scikit-Learn estimators and pipelines."""
 
+from __future__ import annotations
+
 import numpy as np
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline

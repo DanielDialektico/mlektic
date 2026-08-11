@@ -2,6 +2,51 @@
 Changelog
 =========
 
+Unreleased — phase 5 documentation and release readiness
+=========================================================
+
+Added
+-----
+
+- a complete English guide architecture covering installation, first lessons,
+  mathematical conventions, motion, visual options, predictions, export,
+  compatibility, limitations, gallery, and contribution policy;
+- eight deterministic human visual-QA notebooks and four student notebooks with
+  98 stable real-figure cases and cleared committed output;
+- an enforced documentation-to-notebook manifest: new public documentation must
+  add a corresponding assertion-free human inspection cell;
+- notebook generation, validation, and non-mutating execution scripts;
+- Python 3.9–3.13, PyTorch, docs, package, clean-import, notebook-smoke, and
+  scheduled full-notebook CI workflows;
+- complete package metadata and public version discovery.
+- a dedicated estimator-hyperparameter guide and visual matrix spanning
+  regularization, learning rates, weighting, neural topology, task, and loss.
+
+Changed
+-------
+
+- earlier phase notebooks now live in the versioned archive, while the original
+  large exploratory notebooks remain locally preserved with a tracked checksum
+  inventory instead of bloating the release repository.
+- postponed evaluation of Scikit-learn adapter type annotations preserves the
+  documented Python 3.9 import contract without changing runtime behavior;
+- strict Sphinx builds now start from a fresh environment and write to an
+  ignored build directory, preventing committed artifacts from affecting CI.
+
+Fixed
+-----
+
+- Python 3.9 test collection no longer fails while evaluating the
+  ``np.ndarray | None`` return annotation;
+- the compatibility guide no longer contains a duplicated fragment that Sphinx
+  reports as unexpected indentation.
+
+Compatibility
+-------------
+
+No visualization default changed. Classic dashboard styling, current sizes,
+fluid animation, history semantics, and public figure behavior remain intact.
+
 Unreleased — phase 3 visual design
 ==================================
 
