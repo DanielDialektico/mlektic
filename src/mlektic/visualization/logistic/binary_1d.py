@@ -49,12 +49,6 @@ def build_binary_simple_logistic_figure(
         if show_class_labels
         else ["0", "0.5", "1"]
     )
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     x1 = np.asarray(x1).ravel()
     y = np.asarray(y).ravel().astype(float)
     y_jitter = y + np.random.uniform(-jitter, jitter, size=y.size)

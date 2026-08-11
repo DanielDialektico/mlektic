@@ -1,6 +1,9 @@
 """Iterative strategy for history capture."""
 
+import warnings
+
 import numpy as np
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import mean_squared_error
 
 from ..adapters.base import BaseModelAdapter
@@ -18,8 +21,19 @@ class IterativeCapture(HistoryCaptureStrategy):
 
         # We need a new adapter instance configured for replay
         replay_adapter = adapter.clone_for_replay()
-        replay_adapter.fit(X, y)  # Init state
+        with warnings.catch_warnings():
+            # A one-iteration fit is the intentional first replay checkpoint,
+            # not a failed user fit. Suppress only this expected warning.
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            replay_adapter.fit(X, y)
         source_detail = _replay_source_detail(adapter, replay_adapter)
+        source_detail.update(
+            endpoint_policy="supplied_fitted_estimator",
+            replayed_states=max(0, steps - 1),
+            total_states=steps,
+        )
+        state_origins = np.full(steps, "replayed", dtype="<U16")
+        state_origins[-1] = "fitted_estimator"
 
         grid = {}
         y_line_hist = z_plane_hist = None
@@ -62,7 +76,7 @@ class IterativeCapture(HistoryCaptureStrategy):
 
         Xt = replay_adapter.transform_X(X) if replay_adapter.is_pipeline else X
 
-        for t in range(1, steps):
+        for t in range(1, steps - 1):
             try:
                 replay_adapter.partial_fit(Xt, y)
             except Exception as error:
@@ -85,10 +99,33 @@ class IterativeCapture(HistoryCaptureStrategy):
                 w_hist[t] = wt
                 b_hist[t] = bt
 
+        # The replay is an explanatory reconstruction, not the estimator's
+        # original fit trajectory. Reserve the last state for the exact model
+        # supplied by the user so every visualization ends at model truth.
+        y_pred_final = adapter.predict(X)
+        loss_hist[-1] = float(mean_squared_error(y, y_pred_final))
+        final_grid = adapter.predict(Xg_pred) if Xg_pred is not None else None
+        if final_grid is not None:
+            if d == 1:
+                y_line_hist[-1] = final_grid
+            elif d == 2:
+                z_plane_hist[-1] = final_grid.reshape(X1g.shape)
+        w_final, b_final = adapter.extract_linear_theta(d_expected=d)
+        if w_final is not None:
+            w_hist[-1] = w_final
+            b_hist[-1] = b_final
+
+        scaler_params = replay_adapter.get_scaler_params()
+        coefficient_space = config.display_space
+        if replay_adapter.is_pipeline and len(replay_adapter.estimator.steps) > 1 and not any(
+            value is not None for value in scaler_params
+        ):
+            coefficient_space = "transformed"
         return {
             "history_kind": "iterative",
             "history_source": "replayed",
             "source_detail": source_detail,
+            "state_origins": state_origins,
             "step_indices": np.arange(1, steps + 1, dtype=int),
             "loss_hist": loss_hist,
             "grid": grid,
@@ -96,7 +133,8 @@ class IterativeCapture(HistoryCaptureStrategy):
             "z_plane_hist": z_plane_hist,
             "w_hist_learned": w_hist if np.any(w_hist) else None,
             "b_hist_learned": b_hist if np.any(b_hist) else None,
-            "scaler_params": replay_adapter.get_scaler_params(),
+            "scaler_params": scaler_params,
+            "coefficient_space": coefficient_space,
         }
 
     def capture_logistic(self, adapter: BaseModelAdapter, X: np.ndarray, y: np.ndarray, config) -> dict:
@@ -105,8 +143,19 @@ class IterativeCapture(HistoryCaptureStrategy):
         steps = config.steps
 
         replay_adapter = adapter.clone_for_replay()
-        replay_adapter.fit(X, y)
+        with warnings.catch_warnings():
+            # A one-iteration fit is the intentional first replay checkpoint,
+            # not a failed user fit. Suppress only this expected warning.
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            replay_adapter.fit(X, y)
         source_detail = _replay_source_detail(adapter, replay_adapter)
+        source_detail.update(
+            endpoint_policy="supplied_fitted_estimator",
+            replayed_states=max(0, steps - 1),
+            total_states=steps,
+        )
+        state_origins = np.full(steps, "replayed", dtype="<U16")
+        state_origins[-1] = "fitted_estimator"
         classes = replay_adapter.classes if replay_adapter.classes is not None else np.unique(y)
         K = len(classes)
         is_multiclass = K > 2
@@ -188,7 +237,7 @@ class IterativeCapture(HistoryCaptureStrategy):
         _record_step(0, replay_adapter)
         Xt = replay_adapter.transform_X(X) if replay_adapter.is_pipeline else X
 
-        for t in range(1, steps):
+        for t in range(1, steps - 1):
             try:
                 replay_adapter.partial_fit(Xt, y)
             except Exception as error:
@@ -197,10 +246,21 @@ class IterativeCapture(HistoryCaptureStrategy):
                 ) from error
             _record_step(t, replay_adapter)
 
+        # Close the explanatory replay with the exact supplied estimator.
+        # This endpoint is labeled separately from the reconstructed states.
+        _record_step(steps - 1, adapter)
+
+        scaler_params = replay_adapter.get_scaler_params()
+        coefficient_space = config.display_space
+        if replay_adapter.is_pipeline and len(replay_adapter.estimator.steps) > 1 and not any(
+            value is not None for value in scaler_params
+        ):
+            coefficient_space = "transformed"
         return {
             "history_kind": "iterative",
             "history_source": "replayed",
             "source_detail": source_detail,
+            "state_origins": state_origins,
             "step_indices": np.arange(1, steps + 1, dtype=int),
             "classes": classes,
             "is_multiclass": is_multiclass,
@@ -213,7 +273,8 @@ class IterativeCapture(HistoryCaptureStrategy):
             "p_surfaces_hist": p_surfaces_hist,
             "w_hist_learned": w_hist,
             "b_hist_learned": b_hist,
-            "scaler_params": replay_adapter.get_scaler_params(),
+            "scaler_params": scaler_params,
+            "coefficient_space": coefficient_space,
         }
 
 

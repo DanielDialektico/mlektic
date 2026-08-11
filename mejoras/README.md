@@ -29,6 +29,7 @@ The review covered:
 7. [Phase 5 — Documentation and release](06_phase_5_documentation_and_release.md)
 8. [Test and acceptance matrix](07_test_and_acceptance_matrix.md)
 9. [Phase 0 implementation record](08_phase_0_implementation_record.md)
+10. [Phase 1 implementation record](09_phase_1_implementation_record.md)
 
 ## Recommended order
 

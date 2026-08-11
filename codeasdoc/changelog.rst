@@ -2,6 +2,59 @@
 Changelog
 =========
 
+Unreleased — phase 1 mathematical parity
+=========================================
+
+Added
+-----
+
+- opt-in ``academic`` and ``complete`` mathematical detail for linear and
+  logistic training figures while ``essential`` keeps the compact main view;
+- versioned ``layout.meta["mlektic_math"]`` contracts with estimator-backed
+  dimensions, feature spaces, contributions, predictions, probabilities,
+  objectives, decisions, class order, and regularization settings;
+- ``show_objective``, ``show_regularization``, ``feature_names``, and
+  ``sample_index`` controls;
+- binary ``threshold`` and multiclass ``class_focus`` controls;
+- verified affine preprocessing conversion and explicit transformed-feature
+  mathematics for non-affine pipelines;
+- a dedicated :doc:`mathematical_parity` guide and Phase-1 implementation
+  record.
+
+Changed
+-------
+
+- ``show_loss=True`` now displays empirical MSE or log-loss along synthetic
+  interpolation instead of silently removing the curve; labels explicitly
+  reject optimizer-loss claims, interpolation endpoints remain exact, and
+  compact low-dimensional nD linear layouts use their space more efficiently;
+- fitted-model contribution products now wrap into dynamically spaced LaTeX
+  rows; moderate-dimensional models show every term, while larger models use a
+  disclosed contribution-ranked selection and retain the complete vector in
+  metadata;
+- synthetic interpolation now has an explicit baseline-to-fitted parameter
+  equation, and polynomial-feature documentation distinguishes linearity in
+  fitted coefficients from nonlinear geometry in the original input;
+- incremental linear and logistic sequences now end at an explicitly labeled
+  exact fitted endpoint; prior states remain reconstructed replay and metadata
+  preserves every state origin;
+- coefficient-bearing logistic interpolation now derives every intermediate
+  probability, geometry, and empirical loss from the same parameter state;
+- one-dimensional linear figures now place the interpolated fitted equation in
+  a dedicated LaTeX band at every detail level, outside the data axes and
+  synchronized as a redraw-free trace;
+- history metadata schema version 2 records coefficient space and whether
+  logistic interpolation targets parameters or probabilities.
+
+Compatibility
+-------------
+
+The essential default retains compact styling, controls, frame counts, and
+motion. Its evolving one-dimensional equation now uses the shared LaTeX math
+band instead of covering the data region. Academic panels are separate
+fitted-model references and remain fixed during playback so hybrid trace-only
+animation stays fluid.
+
 Unreleased — phase 0 integrity contract
 =======================================
 
@@ -52,7 +105,8 @@ changes. Previously ignored invalid values may now raise actionable exceptions.
 Known limitations
 -----------------
 
-- tabular replay is reconstructed and can differ from the fitted estimator;
+- tabular replay remains reconstructed even though its separately labeled
+  endpoint is the exact fitted estimator;
 - a fully offline MathJax bundle is not supplied;
 - responsive reflow and alternative themes are planned, not implemented;
 - full objective/regularization introspection belongs to the next phase.

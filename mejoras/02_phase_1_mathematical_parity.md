@@ -1,5 +1,13 @@
 # Phase 1 — Mathematical parity for linear and logistic regression
 
+## Implementation status
+
+Implemented on `feature/phase-1-mathematical-parity`. The authoritative record
+of delivered APIs, mathematical semantics, compatibility decisions, visual
+corrections, verification evidence, and deferred work is
+[Phase 1 implementation record](09_phase_1_implementation_record.md). The
+original requirements below remain the acceptance baseline.
+
 ## Objective
 
 Bring tabular models to the same academic standard as the neural family while preserving visual approachability. A figure should teach the exact model mapping, parameter convention, prediction calculation, objective, and relevant optimization or interpolation semantics—not merely animate a line or surface.

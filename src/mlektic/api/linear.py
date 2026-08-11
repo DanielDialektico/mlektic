@@ -6,10 +6,16 @@ from numbers import Real
 
 import numpy as np
 
+from ..mathematics import attach_math_contract, build_linear_math_contract
 from ..services.linear_history import fit_history
 from ..visualization.linear.prediction import explain_lr_prediction
 from ..visualization.linear.router import build_lr_figure
-from ..visualization.theme import annotate_history_semantics, attach_highlight, configure_animation
+from ..visualization.theme import (
+    annotate_history_semantics,
+    annotate_loss_semantics,
+    attach_highlight,
+    configure_animation,
+)
 
 
 def visualize_lr(
@@ -36,6 +42,11 @@ def visualize_lr(
     interpolation_frames=3,
     max_frames=60,
     frame_step=10,
+    detail="essential",
+    show_objective="auto",
+    show_regularization="auto",
+    feature_names=None,
+    sample_index=None,
     theme=None,
 ):
     """
@@ -43,9 +54,10 @@ def visualize_lr(
 
     This is the primary public API for tabular linear models. Because the
     estimator is already fitted, Mlektic does not claim to recover its original
-    ``fit`` history. Incremental estimators are replayed over a clone;
-    non-incremental estimators use a labeled synthetic interpolation. The
-    figure subtitle, slider, and ``layout.meta`` expose the resolved source.
+    ``fit`` history. Incremental estimators are replayed over a clone and close
+    with an explicitly labeled exact fitted endpoint; non-incremental
+    estimators use a labeled synthetic interpolation. The figure subtitle,
+    slider, and ``layout.meta`` expose every resolved state origin.
 
     Args:
         trained_estimator: A fitted scikit-learn estimator or Pipeline.
@@ -55,14 +67,17 @@ def visualize_lr(
             decimation. This is not necessarily the number of rendered frames.
         mode (str, optional): ``"auto"`` resolves replay for incremental
             estimators and interpolation otherwise. ``"iterative"`` requests
-            replay, while ``"final_interp"`` requests synthetic interpolation.
+            reconstructed intermediate states plus an exact fitted endpoint,
+            while ``"final_interp"`` requests synthetic interpolation.
         show_loss (bool, optional): Whether to display the loss curve alongside the main plot. Defaults to True.
         title (str, optional): The title of the plot. Defaults to None.
         show_history_context (bool, optional): Whether to add the provenance and
             N/K subtitle below the title. Defaults to True. Slider labels and
             ``layout.meta`` retain the same history context when False.
-        smooth (str, optional): Display smoothing for loss (``"ema"`` or
-            ``None``). Raw values remain available as ``loss_raw``.
+        smooth (str, optional): Display smoothing for replay loss (``"ema"``
+            or ``None``). Synthetic interpolation already defines a smooth
+            mathematical path and displays raw empirical evaluation so its
+            endpoint stays exact. Raw values remain available as ``loss_raw``.
         smooth_beta (float, optional): Beta parameter for EMA smoothing. Defaults to 0.85.
         strict_loss (bool, optional): If True, throw errors if loss cannot be animated cleanly. Defaults to False.
         baseline (str, optional): Initial reference line for the loss curve ("mean" or "zeros"). Defaults to "mean".
@@ -76,9 +91,10 @@ def visualize_lr(
             traces. ``None`` derives a smooth value from ``frame_duration``; ``0``
             disables transitions.
         animation_mode (str, optional): ``"auto"`` enables hybrid trace-only
-            animation for one-dimensional regression, ``"native"`` preserves
-            semantic frames and dynamic LaTeX layout substitutions, and
-            ``"hybrid"`` explicitly requests synchronized trace subframes.
+            animation with a trace-based evolving LaTeX equation for
+            one-dimensional regression. ``"native"`` preserves semantic
+            frames and dynamic LaTeX layout substitutions, and ``"hybrid"``
+            explicitly requests synchronized trace subframes.
         fps (int | None, optional): Visual frames per second in hybrid mode. If
             omitted, ``frame_duration`` is divided across the visual subframes.
             Values from 30 to 45 are recommended for Jupyter and Colab.
@@ -88,6 +104,23 @@ def visualize_lr(
             for display. Source coordinates remain in history metadata.
         frame_step (int | None, optional): Source-position stride used only when
             ``max_frames`` is ``None``.
+        detail (str, optional): Mathematical density: ``"essential"`` keeps
+            the compact main figure, ``"academic"`` adds a fitted-model
+            derivation, and ``"complete"`` also exposes preprocessing,
+            regularization, and optimizer caveats. The animated mathematical
+            equation belongs to the main figure at every detail level; the
+            fitted-model panel is separate.
+        show_objective ("auto" | bool, optional): Show the exact empirical MSE
+            convention in the mathematical panel. ``"auto"`` enables it for
+            academic and complete detail.
+        show_regularization ("auto" | bool, optional): Show the estimator-backed
+            penalty family and public strength parameter. Exact private
+            normalization is never inferred. ``"auto"`` enables this in the
+            complete detail level.
+        feature_names (Sequence[str] | None, optional): Names for the original
+            input features. DataFrame column names are used automatically.
+        sample_index (int | None, optional): Training observation used for the
+            visible contribution calculation. ``None`` selects index 0.
         theme (str | None, optional): Registered visualization theme. The only
             phase-0 theme is the backward-compatible ``"classic"`` default.
 
@@ -144,6 +177,19 @@ def visualize_lr(
         frame_step=frame_step,
     )
 
+    math_contract = build_linear_math_contract(
+        trained_estimator,
+        X,
+        y,
+        history=hist,
+        detail=detail,
+        show_objective=show_objective,
+        show_regularization=show_regularization,
+        feature_names=feature_names,
+        sample_index=sample_index,
+        dec=dec,
+    )
+
     fig = build_lr_figure(
         X,
         y,
@@ -155,11 +201,14 @@ def visualize_lr(
         frame_duration=visual_frame_duration,
         animation_mode=resolved_animation_mode,
         interpolation_frames=interpolation_frames,
+        equation_location="math_band",
         theme=theme,
     )
 
     configure_animation(fig, visual_frame_duration, transition_duration)
     annotate_history_semantics(fig, hist, show_title=show_history_context)
+    annotate_loss_semantics(fig, hist)
+    attach_math_contract(fig, math_contract, theme=theme)
     return attach_highlight(fig, theme=theme)
 
 

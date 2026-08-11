@@ -55,6 +55,11 @@ def test_replay_contract_separates_raw_and_smoothed_loss():
     effective = history["metadata"]["source_detail"]["effective_replay_parameters"]
     assert effective["max_iter"] == 1
     assert effective["shuffle"] is False
+    assert history["metadata"]["source_detail"]["endpoint_policy"] == "supplied_fitted_estimator"
+    assert history["metadata"]["final_state_matches_estimator"] is True
+    assert history["metadata"]["displayed_state_origins"][-1] == "fitted_estimator"
+    np.testing.assert_allclose(history["w_hist"][-1], model.coef_)
+    np.testing.assert_allclose(history["b_hist"][-1], model.intercept_[0])
 
 
 @pytest.mark.parametrize(
@@ -87,10 +92,11 @@ def test_visual_timeline_reports_source_and_retained_indices():
     figure = visualize_lr(model, X, y, steps=8, max_frames=3, animation_mode="native")
 
     assert "Reconstructed replay" in figure.layout.title.text
-    assert "3/8 checkpoints" in figure.layout.title.text
+    assert "fitted endpoint" in figure.layout.title.text
+    assert "3/8 states" in figure.layout.title.text
     assert "n_iter_=" in figure.layout.title.text
-    assert figure.layout.sliders[0].currentvalue.prefix == "Reconstructed replay (3/8) · checkpoint: "
-    assert [step.label for step in figure.layout.sliders[0].steps] == ["1", "4", "8"]
+    assert figure.layout.sliders[0].currentvalue.prefix == "Replay + fitted endpoint (3/8) · state: "
+    assert [step.label for step in figure.layout.sliders[0].steps] == ["1", "4", "fitted"]
     assert figure.layout.meta["mlektic_history"]["captured_steps"] == 8
 
 
@@ -109,7 +115,7 @@ def test_history_subtitle_can_be_hidden_without_removing_context():
     )
 
     assert "Reconstructed replay" not in figure.layout.title.text
-    assert "Reconstructed replay (3/8)" in figure.layout.sliders[0].currentvalue.prefix
+    assert "Replay + fitted endpoint (3/8)" in figure.layout.sliders[0].currentvalue.prefix
     assert figure.layout.meta["mlektic_history"]["source"] == "replayed"
     with pytest.raises(TypeError, match="show_history_context"):
         visualize_lr(model, X, y, show_history_context="no")

@@ -126,14 +126,23 @@ class HistoryEngine:
     def _resolve_eval_X(self, X, data: dict, config):
         """Return X in the same feature space as the displayed coefficients."""
         X_eval = np.asarray(X, dtype=float)
-        if config.display_space != "scaled" or "scaler_params" not in data:
+        weights = np.asarray(data.get("w_hist"))
+        coefficient_dimension = weights.shape[1] if weights.ndim >= 2 else X_eval.shape[1]
+        if config.display_space == "scaled":
+            return np.asarray(self.adapter.transform_X(X_eval), dtype=float)
+        if coefficient_dimension != X_eval.shape[1]:
+            # Non-affine feature expansion cannot be converted into a raw-space
+            # coefficient vector. Evaluate the visible transformed coefficients
+            # in their honest transformed feature space.
+            return np.asarray(self.adapter.transform_X(X_eval), dtype=float)
+        if "scaler_params" not in data:
             return X_eval
 
         mu, scale = data.get("scaler_params", (None, None))
-        if mu is not None:
-            X_eval = X_eval - mu
-        if scale is not None:
-            X_eval = X_eval / (scale + 1e-12)
+        # In original display space the history engine has already converted
+        # affine-scaler coefficients back to raw units, so X remains raw.
+        if mu is None and scale is None:
+            return X_eval
         return X_eval
 
     def _decimate(self, data: dict, config) -> dict:
@@ -146,9 +155,23 @@ class HistoryEngine:
 
     def _apply_smoothing(self, data: dict, config):
         raw = np.asarray(data["loss_raw"], dtype=float)
-        display = _ema_smooth(raw, config.smooth_beta) if config.smooth == "ema" else raw.copy()
+        source = data.get("history_source", "interpolated")
+        apply_ema = config.smooth == "ema" and source == "replayed"
+        display = _ema_smooth(raw, config.smooth_beta) if apply_ema else raw.copy()
         data["loss_display"] = display
         data["loss_hist"] = display  # Backward-compatible alias used by figure builders.
+
+        smoothing = data.get("metadata", {}).setdefault("smoothing", {})
+        smoothing.update(
+            requested_method=config.smooth,
+            method="ema" if apply_ema else None,
+            beta=float(config.smooth_beta),
+        )
+        if source == "interpolated" and config.smooth == "ema":
+            smoothing["reason"] = (
+                "Synthetic interpolation is already a smooth mathematical path; "
+                "raw empirical evaluation is displayed so the endpoint remains exact."
+            )
 
         loss_label = "Loss" if data.get("task") == "linear" else "Log-loss"
         if loss_label in data.get("metrics_hist", {}):
@@ -166,6 +189,7 @@ class HistoryEngine:
         """Attach an auditable provenance and timeline contract before decimation."""
         source = data.get("history_source", "interpolated")
         step_indices = np.asarray(data.get("step_indices", np.arange(len(data["loss_raw"]))))
+        state_origins = np.asarray(data.get("state_origins", []), dtype=str)
         final_matches = self._final_state_matches_estimator(data, task=task)
         warnings_list = []
         if source == "replayed":
@@ -173,8 +197,9 @@ class HistoryEngine:
                 {
                     "code": "replay_not_original_training",
                     "message": (
-                        "This history was reconstructed by fitting a cloned estimator; "
-                        "it is not a recording of the original fit call."
+                        "Intermediate replay states were reconstructed by fitting a cloned estimator; "
+                        "they are not a recording of the original fit call. A separately labeled fitted "
+                        "endpoint is the supplied estimator when endpoint_policy declares it."
                     ),
                 }
             )
@@ -198,7 +223,7 @@ class HistoryEngine:
 
         data["task"] = task
         data["metadata"] = {
-            "schema_version": 1,
+            "schema_version": 2,
             "source": source,
             "source_detail": self._source_detail(source, data, config),
             "requested_mode": config.mode,
@@ -209,8 +234,11 @@ class HistoryEngine:
             "displayed_steps": int(step_indices.size),
             "step_indices": step_indices.copy(),
             "displayed_step_indices": step_indices.copy(),
+            "state_origins": state_origins.copy(),
+            "displayed_state_origins": state_origins.copy(),
             "final_state_matches_estimator": final_matches,
             "display_space": config.display_space,
+            "coefficient_space": data.get("coefficient_space", config.display_space),
             "smoothing": {"method": config.smooth, "beta": float(config.smooth_beta)},
             "decimation": {"max_frames": config.max_frames, "frame_step": config.frame_step},
             "warnings": warnings_list,
@@ -221,11 +249,14 @@ class HistoryEngine:
         estimator = self.adapter.final_estimator
         if source == "replayed":
             return dict(data.get("source_detail", {"estimator": estimator.__class__.__name__}))
-        return {
+        detail = {
             "estimator": estimator.__class__.__name__,
             "path": "baseline_to_fitted_model",
             "baseline": config.baseline,
         }
+        if "interpolation_target" in data:
+            detail["interpolation_target"] = data["interpolation_target"]
+        return detail
 
     def _training_total_steps(self) -> int | None:
         """Return the estimator-reported iteration count when it is available."""
@@ -274,6 +305,8 @@ class HistoryEngine:
         metadata["displayed_step_indices"] = displayed.copy()
         if "alpha_values" in data:
             metadata["alpha_values"] = np.asarray(data["alpha_values"], dtype=float).copy()
+        if "state_origins" in data:
+            metadata["displayed_state_origins"] = np.asarray(data["state_origins"], dtype=str).copy()
 
     def _apply_theta_scaling(self, data: dict, config, is_linear: bool, is_multiclass: bool):
         w_learned = data.get("w_hist_learned")
@@ -285,12 +318,26 @@ class HistoryEngine:
             return
 
         # Default behavior is just point w_hist to learned
-        if config.display_space != "original" or "scaler_params" not in data:
+        if (
+            config.display_space != "original"
+            or data.get("coefficient_space") == "transformed"
+            or "scaler_params" not in data
+        ):
             data["w_hist"] = w_learned
             data["b_hist"] = b_learned
             return
 
         scaler_params = data.get("scaler_params", (None, None))
+        coefficient_dimension = int(np.asarray(w_learned).shape[1])
+        incompatible_scaler = any(
+            value is not None and np.asarray(value).size != coefficient_dimension
+            for value in scaler_params
+        )
+        if incompatible_scaler:
+            data["w_hist"] = w_learned
+            data["b_hist"] = b_learned
+            data["coefficient_space"] = "transformed"
+            return
 
         w_show = np.zeros_like(w_learned)
         b_show = np.zeros_like(b_learned)

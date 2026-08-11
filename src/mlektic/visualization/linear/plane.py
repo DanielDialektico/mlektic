@@ -50,15 +50,9 @@ def build_plane_lr_figure(
 
     Notes:
       - If z_plane_hist is given, w_hist/b_hist are OPTIONAL and only used for display in the equation text.
-      - show_loss is only allowed for replayed incremental histories (same rule as 1D).
+      - show_loss displays empirical MSE along either a replay or a synthetic path.
     """
     # --- enforce inside the library ---
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     x1 = np.asarray(x1).ravel()
     x2 = np.asarray(x2).ravel()
     y = np.asarray(y).ravel()

@@ -4,10 +4,22 @@ from __future__ import annotations
 
 from numbers import Real
 
+import numpy as np
+
+from ..mathematics import (
+    apply_logistic_focus_and_threshold,
+    attach_math_contract,
+    build_logistic_math_contract,
+)
 from ..services.logistic_history import fit_history_logistic
 from ..visualization.logistic.prediction import explain_logistic_prediction
 from ..visualization.logistic.router import build_logistic_figure
-from ..visualization.theme import annotate_history_semantics, attach_highlight, configure_animation
+from ..visualization.theme import (
+    annotate_history_semantics,
+    annotate_loss_semantics,
+    attach_highlight,
+    configure_animation,
+)
 
 
 def visualize_logistic(
@@ -34,6 +46,13 @@ def visualize_logistic(
     frame_step=10,
     max_theta_cols=5,
     multiclass_link="auto",
+    detail="essential",
+    threshold=0.5,
+    class_focus=None,
+    show_objective="auto",
+    show_regularization="auto",
+    feature_names=None,
+    sample_index=None,
     theme=None,
 ):
     """Visualize a logistic-regression learning or interpolation history.
@@ -43,10 +62,11 @@ def visualize_logistic(
     and selects either multinomial Softmax or normalized one-vs-rest sigmoids.
 
     An already fitted estimator does not expose its original fit trajectory.
-    Incremental estimators are replayed over a clone; other estimators use a
-    labeled synthetic interpolation. ``steps`` controls constructed semantic
-    states, while ``max_frames`` and ``frame_step`` bound the displayed
-    checkpoints and preserve their source coordinates. ``transition_duration``
+    Incremental estimators are replayed over a clone and close with an
+    explicitly labeled exact fitted endpoint; other estimators use a labeled
+    synthetic interpolation. ``steps`` controls constructed semantic states,
+    while ``max_frames`` and ``frame_step`` bound the displayed states and
+    preserve their source coordinates and origins. ``transition_duration``
     controls visual interpolation between 2D frames; Plotly 3D traces retain
     redraw semantics.
 
@@ -56,8 +76,9 @@ def visualize_logistic(
         y: Training class labels.
         steps: Number of captured states before temporal decimation.
         mode: ``"auto"``, ``"iterative"``, or ``"final_interp"``.
-        show_loss: Whether to show empirical loss for a replay history. A
-            synthetic interpolation is not presented as optimizer loss.
+        show_loss: Whether to show empirical path evaluation. Replays and
+            synthetic interpolations are labeled distinctly; neither is
+            presented as an introspected private optimizer loss.
         title: Optional figure title.
         show_history_context: Whether to add the provenance and N/K subtitle
             below the title. Slider labels and ``layout.meta`` retain the same
@@ -65,8 +86,10 @@ def visualize_logistic(
         show_class_labels: Whether to expose fitted semantic labels in axes and
             legends. The default ``False`` uses class indices while preserving
             the fitted labels in ``layout.meta``.
-        smooth: ``"ema"`` or ``None`` for displayed loss. Raw loss remains in
-            the history payload.
+        smooth: ``"ema"`` or ``None`` for displayed replay loss. Synthetic
+            interpolation displays raw empirical evaluation because its path
+            is already smooth and its endpoint should remain exact. Raw loss
+            remains in the history payload.
         smooth_beta: Exponential moving-average coefficient.
         strict_loss: Raise instead of hiding unavailable empirical loss panels.
         baseline: ``"prior"`` or ``"uniform"`` interpolation baseline.
@@ -82,6 +105,23 @@ def visualize_logistic(
         frame_step: Sampling stride used when ``max_frames`` is ``None``.
         max_theta_cols: Visible class columns before LaTeX truncation.
         multiclass_link: ``"auto"``, ``"softmax"``, or ``"ovr"``.
+        detail: ``"essential"`` preserves the classic figure, ``"academic"``
+            adds a fitted-model derivation, and ``"complete"`` adds the full
+            objective, preprocessing, regularization, and optimizer caveats.
+        threshold: Binary decision threshold, strictly between zero and one.
+            Non-default thresholds are reflected in the academic decision and
+            probability geometry. Multiclass decisions continue to use argmax.
+        class_focus: Optional fitted label or zero-based class index. In 1D/2D
+            multiclass figures only that probability curve or surface remains
+            visible; the fitted class order remains in metadata.
+        show_objective: ``"auto"`` or bool controlling the empirical log-loss
+            or cross-entropy line in the mathematical panel.
+        show_regularization: ``"auto"`` or bool controlling the estimator-backed
+            regularization summary. Private normalization is not inferred.
+        feature_names: Optional original feature-name sequence. DataFrame
+            columns are used automatically.
+        sample_index: Training observation used for the visible substitution;
+            ``None`` selects index 0.
         theme: Optional visualization theme.
 
     Returns:
@@ -123,6 +163,22 @@ def visualize_logistic(
         multiclass_link=multiclass_link,
     )
 
+    math_contract = build_logistic_math_contract(
+        trained_estimator,
+        X,
+        y,
+        history=hist,
+        detail=detail,
+        threshold=threshold,
+        class_focus=class_focus,
+        show_objective=show_objective,
+        show_regularization=show_regularization,
+        feature_names=feature_names,
+        sample_index=sample_index,
+        show_class_labels=show_class_labels,
+        dec=dec,
+    )
+
     fig = build_logistic_figure(
         X,
         y,
@@ -137,8 +193,21 @@ def visualize_logistic(
         theme=theme,
     )
 
+    X_array = np.asarray(X)
+    dimensions = 1 if X_array.ndim == 1 else int(X_array.shape[1])
+    apply_logistic_focus_and_threshold(
+        fig,
+        dimensions=dimensions,
+        classes=math_contract["dimensions"]["classes"],
+        class_focus_index=math_contract["class_focus_index"],
+        threshold=float(threshold),
+        detail=detail,
+    )
+
     configure_animation(fig, frame_duration, transition_duration)
     annotate_history_semantics(fig, hist, show_title=show_history_context)
+    annotate_loss_semantics(fig, hist)
+    attach_math_contract(fig, math_contract, theme=theme)
     return attach_highlight(fig, theme=theme)
 
 

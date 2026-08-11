@@ -43,6 +43,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mathematical_parity.html">Tabular mathematical detail contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
@@ -186,10 +187,10 @@
         <li><a href="api_reference.html#mlektic.history.strategy_iterative.IterativeCapture.capture_logistic">(mlektic.history.strategy_iterative.IterativeCapture method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.captured_steps">captured_steps (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.classes">classes (mlektic.adapters.sklearn.SklearnAdapter property)</a>
 
       <ul>
@@ -200,6 +201,14 @@
 </li>
       <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.close">close() (mlektic.neural.recorder.TorchTrainingRecorder method)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.coefficient_space">coefficient_space (mlektic.domain.history.HistoryMetadata attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.coefficient_space">(mlektic.domain.history.LinearHistoryPayload attribute)</a>
+</li>
+        <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.coefficient_space">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api_reference.html#mlektic.visualization.theme.configure_animation">configure_animation() (in module mlektic.visualization.theme)</a>
 </li>
   </ul></td>
@@ -230,6 +239,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.displayed_state_origins">displayed_state_origins (mlektic.domain.history.HistoryMetadata attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.displayed_step_indices">displayed_step_indices (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.displayed_steps">displayed_steps (mlektic.domain.history.HistoryMetadata attribute)</a>
@@ -340,12 +351,14 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_reference.html#mlektic.history.strategy_interp.InterpolationCapture">InterpolationCapture (class in mlektic.history.strategy_interp)</a>
+      <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.interpolation_target">interpolation_target (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
-      <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.is_iterative">is_iterative (mlektic.adapters.sklearn.SklearnAdapter property)</a>
+      <li><a href="api_reference.html#mlektic.history.strategy_interp.InterpolationCapture">InterpolationCapture (class in mlektic.history.strategy_interp)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.is_iterative">is_iterative (mlektic.adapters.sklearn.SklearnAdapter property)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.is_multiclass">is_multiclass (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.history.strategy_iterative.IterativeCapture">IterativeCapture (class in mlektic.history.strategy_iterative)</a>
@@ -587,6 +600,8 @@
 </li>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.predict_proba">predict_proba() (mlektic.adapters.sklearn.SklearnAdapter method)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.probability_link">probability_link (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -629,14 +644,22 @@
         <li><a href="api_reference.html#mlektic.domain.config.LogisticHistoryConfig.smooth_beta">(mlektic.domain.config.LogisticHistoryConfig attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.smoothing">smoothing (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.source">source (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.source_detail">source_detail (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.state_origins">state_origins (mlektic.domain.history.HistoryMetadata attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.state_origins">(mlektic.domain.history.LinearHistoryPayload attribute)</a>
+</li>
+        <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.state_origins">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
+</li>
+      </ul></li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.step_indices">step_indices (mlektic.domain.history.HistoryMetadata attribute)</a>
 
       <ul>

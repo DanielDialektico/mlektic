@@ -235,12 +235,6 @@ def build_binary_multivar_logistic_figure(
     theme=None,
 ):
     """Internal method to build build_binary_multivar_logistic_figure."""
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     X = np.asarray(X)
     y = np.asarray(y).ravel()
     w_hist = np.asarray(w_hist, dtype=float)

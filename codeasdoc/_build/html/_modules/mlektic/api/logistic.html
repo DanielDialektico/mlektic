@@ -43,6 +43,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mathematical_parity.html">Tabular mathematical detail contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Visualization mathematics</a></li>
@@ -81,10 +82,22 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">numbers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Real</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..mathematics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">apply_logistic_focus_and_threshold</span><span class="p">,</span>
+    <span class="n">attach_math_contract</span><span class="p">,</span>
+    <span class="n">build_logistic_math_contract</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..services.logistic_history</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_history_logistic</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.logistic.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">explain_logistic_prediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.logistic.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_logistic_figure</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_history_semantics</span><span class="p">,</span> <span class="n">attach_highlight</span><span class="p">,</span> <span class="n">configure_animation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">annotate_history_semantics</span><span class="p">,</span>
+    <span class="n">annotate_loss_semantics</span><span class="p">,</span>
+    <span class="n">attach_highlight</span><span class="p">,</span>
+    <span class="n">configure_animation</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="visualize_logistic">
@@ -113,6 +126,13 @@
     <span class="n">frame_step</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
     <span class="n">max_theta_cols</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">multiclass_link</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;essential&quot;</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">class_focus</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">show_objective</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">show_regularization</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">feature_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">sample_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Visualize a logistic-regression learning or interpolation history.</span>
@@ -122,10 +142,11 @@
 <span class="sd">    and selects either multinomial Softmax or normalized one-vs-rest sigmoids.</span>
 
 <span class="sd">    An already fitted estimator does not expose its original fit trajectory.</span>
-<span class="sd">    Incremental estimators are replayed over a clone; other estimators use a</span>
-<span class="sd">    labeled synthetic interpolation. ``steps`` controls constructed semantic</span>
-<span class="sd">    states, while ``max_frames`` and ``frame_step`` bound the displayed</span>
-<span class="sd">    checkpoints and preserve their source coordinates. ``transition_duration``</span>
+<span class="sd">    Incremental estimators are replayed over a clone and close with an</span>
+<span class="sd">    explicitly labeled exact fitted endpoint; other estimators use a labeled</span>
+<span class="sd">    synthetic interpolation. ``steps`` controls constructed semantic states,</span>
+<span class="sd">    while ``max_frames`` and ``frame_step`` bound the displayed states and</span>
+<span class="sd">    preserve their source coordinates and origins. ``transition_duration``</span>
 <span class="sd">    controls visual interpolation between 2D frames; Plotly 3D traces retain</span>
 <span class="sd">    redraw semantics.</span>
 
@@ -135,8 +156,9 @@
 <span class="sd">        y: Training class labels.</span>
 <span class="sd">        steps: Number of captured states before temporal decimation.</span>
 <span class="sd">        mode: ``&quot;auto&quot;``, ``&quot;iterative&quot;``, or ``&quot;final_interp&quot;``.</span>
-<span class="sd">        show_loss: Whether to show empirical loss for a replay history. A</span>
-<span class="sd">            synthetic interpolation is not presented as optimizer loss.</span>
+<span class="sd">        show_loss: Whether to show empirical path evaluation. Replays and</span>
+<span class="sd">            synthetic interpolations are labeled distinctly; neither is</span>
+<span class="sd">            presented as an introspected private optimizer loss.</span>
 <span class="sd">        title: Optional figure title.</span>
 <span class="sd">        show_history_context: Whether to add the provenance and N/K subtitle</span>
 <span class="sd">            below the title. Slider labels and ``layout.meta`` retain the same</span>
@@ -144,8 +166,10 @@
 <span class="sd">        show_class_labels: Whether to expose fitted semantic labels in axes and</span>
 <span class="sd">            legends. The default ``False`` uses class indices while preserving</span>
 <span class="sd">            the fitted labels in ``layout.meta``.</span>
-<span class="sd">        smooth: ``&quot;ema&quot;`` or ``None`` for displayed loss. Raw loss remains in</span>
-<span class="sd">            the history payload.</span>
+<span class="sd">        smooth: ``&quot;ema&quot;`` or ``None`` for displayed replay loss. Synthetic</span>
+<span class="sd">            interpolation displays raw empirical evaluation because its path</span>
+<span class="sd">            is already smooth and its endpoint should remain exact. Raw loss</span>
+<span class="sd">            remains in the history payload.</span>
 <span class="sd">        smooth_beta: Exponential moving-average coefficient.</span>
 <span class="sd">        strict_loss: Raise instead of hiding unavailable empirical loss panels.</span>
 <span class="sd">        baseline: ``&quot;prior&quot;`` or ``&quot;uniform&quot;`` interpolation baseline.</span>
@@ -161,6 +185,23 @@
 <span class="sd">        frame_step: Sampling stride used when ``max_frames`` is ``None``.</span>
 <span class="sd">        max_theta_cols: Visible class columns before LaTeX truncation.</span>
 <span class="sd">        multiclass_link: ``&quot;auto&quot;``, ``&quot;softmax&quot;``, or ``&quot;ovr&quot;``.</span>
+<span class="sd">        detail: ``&quot;essential&quot;`` preserves the classic figure, ``&quot;academic&quot;``</span>
+<span class="sd">            adds a fitted-model derivation, and ``&quot;complete&quot;`` adds the full</span>
+<span class="sd">            objective, preprocessing, regularization, and optimizer caveats.</span>
+<span class="sd">        threshold: Binary decision threshold, strictly between zero and one.</span>
+<span class="sd">            Non-default thresholds are reflected in the academic decision and</span>
+<span class="sd">            probability geometry. Multiclass decisions continue to use argmax.</span>
+<span class="sd">        class_focus: Optional fitted label or zero-based class index. In 1D/2D</span>
+<span class="sd">            multiclass figures only that probability curve or surface remains</span>
+<span class="sd">            visible; the fitted class order remains in metadata.</span>
+<span class="sd">        show_objective: ``&quot;auto&quot;`` or bool controlling the empirical log-loss</span>
+<span class="sd">            or cross-entropy line in the mathematical panel.</span>
+<span class="sd">        show_regularization: ``&quot;auto&quot;`` or bool controlling the estimator-backed</span>
+<span class="sd">            regularization summary. Private normalization is not inferred.</span>
+<span class="sd">        feature_names: Optional original feature-name sequence. DataFrame</span>
+<span class="sd">            columns are used automatically.</span>
+<span class="sd">        sample_index: Training observation used for the visible substitution;</span>
+<span class="sd">            ``None`` selects index 0.</span>
 <span class="sd">        theme: Optional visualization theme.</span>
 
 <span class="sd">    Returns:</span>
@@ -202,6 +243,22 @@
         <span class="n">multiclass_link</span><span class="o">=</span><span class="n">multiclass_link</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">math_contract</span> <span class="o">=</span> <span class="n">build_logistic_math_contract</span><span class="p">(</span>
+        <span class="n">trained_estimator</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">,</span>
+        <span class="n">history</span><span class="o">=</span><span class="n">hist</span><span class="p">,</span>
+        <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+        <span class="n">class_focus</span><span class="o">=</span><span class="n">class_focus</span><span class="p">,</span>
+        <span class="n">show_objective</span><span class="o">=</span><span class="n">show_objective</span><span class="p">,</span>
+        <span class="n">show_regularization</span><span class="o">=</span><span class="n">show_regularization</span><span class="p">,</span>
+        <span class="n">feature_names</span><span class="o">=</span><span class="n">feature_names</span><span class="p">,</span>
+        <span class="n">sample_index</span><span class="o">=</span><span class="n">sample_index</span><span class="p">,</span>
+        <span class="n">show_class_labels</span><span class="o">=</span><span class="n">show_class_labels</span><span class="p">,</span>
+        <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">fig</span> <span class="o">=</span> <span class="n">build_logistic_figure</span><span class="p">(</span>
         <span class="n">X</span><span class="p">,</span>
         <span class="n">y</span><span class="p">,</span>
@@ -216,8 +273,21 @@
         <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">X_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">X_array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">X_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">apply_logistic_focus_and_threshold</span><span class="p">(</span>
+        <span class="n">fig</span><span class="p">,</span>
+        <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
+        <span class="n">classes</span><span class="o">=</span><span class="n">math_contract</span><span class="p">[</span><span class="s2">&quot;dimensions&quot;</span><span class="p">][</span><span class="s2">&quot;classes&quot;</span><span class="p">],</span>
+        <span class="n">class_focus_index</span><span class="o">=</span><span class="n">math_contract</span><span class="p">[</span><span class="s2">&quot;class_focus_index&quot;</span><span class="p">],</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">threshold</span><span class="p">),</span>
+        <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">configure_animation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">frame_duration</span><span class="p">,</span> <span class="n">transition_duration</span><span class="p">)</span>
     <span class="n">annotate_history_semantics</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">show_title</span><span class="o">=</span><span class="n">show_history_context</span><span class="p">)</span>
+    <span class="n">annotate_loss_semantics</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">hist</span><span class="p">)</span>
+    <span class="n">attach_math_contract</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">math_contract</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">attach_highlight</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span></div>
 
 

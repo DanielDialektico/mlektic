@@ -137,12 +137,6 @@ def build_multiclass_1d_logistic_figure(
     theme=None,
 ):
     """Internal method to build build_multiclass_1d_logistic_figure."""
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     x1 = np.asarray(x1).ravel()
     y = np.asarray(y).ravel()
 

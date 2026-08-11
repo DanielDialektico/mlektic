@@ -69,7 +69,7 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
 
     if show_loss and metrics_hist is not None:
         for i, (name, hist) in enumerate(metrics_hist.items()):
-            x_pos = 0.98 - (i * 0.08)
+            x_pos = 0.98 - (i * 0.09)
             y_pos = 0.69
             fmt = ".6f" if name.lower() == "loss" else ".4f"
             ann.append(_metric_box(name, hist[t], x_pos, y_pos, fmt))
@@ -186,7 +186,7 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
     if show_loss:
         if metrics_hist is not None:
             for i, (name, hist) in enumerate(metrics_hist.items()):
-                x_pos = 0.98 - (i * 0.08)
+                x_pos = 0.98 - (i * 0.09)
                 y_pos = 0.69
                 fmt = ".6f" if name.lower() == "loss" else ".4f"
                 ann.append(_metric_box_matrix(name, hist[t], x_pos, y_pos, fmt))
@@ -211,12 +211,6 @@ def build_multivar_lr_figure(
     theme=None,
 ):
     """Build a multivariable visualization for d > 2."""
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     X = np.asarray(X)
     y = np.asarray(y).ravel()
     w_hist = np.asarray(w_hist, dtype=float)
@@ -276,6 +270,7 @@ def build_multivar_lr_figure(
             break
 
     is_expansion_mode = (d <= threshold_dense and not force_matrix_for_dense)
+    compact_expansion = is_expansion_mode and d <= 10
 
     if is_expansion_mode:
         def _get_ann(t):
@@ -291,7 +286,7 @@ def build_multivar_lr_figure(
         fig = make_subplots(
             rows=1,
             cols=2,
-            column_widths=[0.75, 0.25],
+            column_widths=[0.64, 0.36] if compact_expansion else [0.75, 0.25],
             horizontal_spacing=0.04,
             specs=[[{"type": "xy"}, {"type": "xy"}]],
         )
@@ -331,7 +326,12 @@ def build_multivar_lr_figure(
     fig.frames = frames
 
     fig.update_layout(
-        **get_base_layout(title=title, margin_t=110, height=760, theme=theme),
+        **get_base_layout(
+            title=title,
+            margin_t=110,
+            height=640 if compact_expansion else 760,
+            theme=theme,
+        ),
         showlegend=True,
         legend=dict(x=0.90, y=0.15, xanchor="center", yanchor="top"),
         sliders=get_sliders(steps_n, theme=theme),
@@ -341,7 +341,8 @@ def build_multivar_lr_figure(
 
     if show_loss:
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
-        fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], domain=[0.25, 0.65], row=1, col=2)
+        loss_domain = [0.12, 0.68] if compact_expansion else [0.25, 0.65]
+        fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], domain=loss_domain, row=1, col=2)
         fig.update_xaxes(visible=False, row=1, col=1, range=[0, 1])
         fig.update_yaxes(visible=False, row=1, col=1, range=[0, 1])
     else:

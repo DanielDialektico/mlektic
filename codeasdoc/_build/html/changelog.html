@@ -45,15 +45,22 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mathematical_parity.html">Tabular mathematical detail contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-0-integrity-contract">Unreleased — phase 0 integrity contract</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-1-mathematical-parity">Unreleased — phase 1 mathematical parity</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#compatibility">Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-0-integrity-contract">Unreleased — phase 0 integrity contract</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Compatibility</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#known-limitations">Known limitations</a></li>
 </ul>
 </li>
@@ -88,10 +95,64 @@
              
   <section id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading"></a></h1>
-<section id="unreleased-phase-0-integrity-contract">
-<h2>Unreleased — phase 0 integrity contract<a class="headerlink" href="#unreleased-phase-0-integrity-contract" title="Link to this heading"></a></h2>
+<section id="unreleased-phase-1-mathematical-parity">
+<h2>Unreleased — phase 1 mathematical parity<a class="headerlink" href="#unreleased-phase-1-mathematical-parity" title="Link to this heading"></a></h2>
 <section id="added">
 <h3>Added<a class="headerlink" href="#added" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>opt-in <code class="docutils literal notranslate"><span class="pre">academic</span></code> and <code class="docutils literal notranslate"><span class="pre">complete</span></code> mathematical detail for linear and
+logistic training figures while <code class="docutils literal notranslate"><span class="pre">essential</span></code> keeps the compact main view;</p></li>
+<li><p>versioned <code class="docutils literal notranslate"><span class="pre">layout.meta[&quot;mlektic_math&quot;]</span></code> contracts with estimator-backed
+dimensions, feature spaces, contributions, predictions, probabilities,
+objectives, decisions, class order, and regularization settings;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">show_objective</span></code>, <code class="docutils literal notranslate"><span class="pre">show_regularization</span></code>, <code class="docutils literal notranslate"><span class="pre">feature_names</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">sample_index</span></code> controls;</p></li>
+<li><p>binary <code class="docutils literal notranslate"><span class="pre">threshold</span></code> and multiclass <code class="docutils literal notranslate"><span class="pre">class_focus</span></code> controls;</p></li>
+<li><p>verified affine preprocessing conversion and explicit transformed-feature
+mathematics for non-affine pipelines;</p></li>
+<li><p>a dedicated <a class="reference internal" href="mathematical_parity.html"><span class="doc">Tabular mathematical detail contract</span></a> guide and Phase-1 implementation
+record.</p></li>
+</ul>
+</section>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">show_loss=True</span></code> now displays empirical MSE or log-loss along synthetic
+interpolation instead of silently removing the curve; labels explicitly
+reject optimizer-loss claims, interpolation endpoints remain exact, and
+compact low-dimensional nD linear layouts use their space more efficiently;</p></li>
+<li><p>fitted-model contribution products now wrap into dynamically spaced LaTeX
+rows; moderate-dimensional models show every term, while larger models use a
+disclosed contribution-ranked selection and retain the complete vector in
+metadata;</p></li>
+<li><p>synthetic interpolation now has an explicit baseline-to-fitted parameter
+equation, and polynomial-feature documentation distinguishes linearity in
+fitted coefficients from nonlinear geometry in the original input;</p></li>
+<li><p>incremental linear and logistic sequences now end at an explicitly labeled
+exact fitted endpoint; prior states remain reconstructed replay and metadata
+preserves every state origin;</p></li>
+<li><p>coefficient-bearing logistic interpolation now derives every intermediate
+probability, geometry, and empirical loss from the same parameter state;</p></li>
+<li><p>one-dimensional linear figures now place the interpolated fitted equation in
+a dedicated LaTeX band at every detail level, outside the data axes and
+synchronized as a redraw-free trace;</p></li>
+<li><p>history metadata schema version 2 records coefficient space and whether
+logistic interpolation targets parameters or probabilities.</p></li>
+</ul>
+</section>
+<section id="compatibility">
+<h3>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading"></a></h3>
+<p>The essential default retains compact styling, controls, frame counts, and
+motion. Its evolving one-dimensional equation now uses the shared LaTeX math
+band instead of covering the data region. Academic panels are separate
+fitted-model references and remain fixed during playback so hybrid trace-only
+animation stays fluid.</p>
+</section>
+</section>
+<section id="unreleased-phase-0-integrity-contract">
+<h2>Unreleased — phase 0 integrity contract<a class="headerlink" href="#unreleased-phase-0-integrity-contract" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Added<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">show_class_labels=False</span></code> for indexed-by-default logistic figures with
 optional fitted semantic labels and persistent class metadata;</p></li>
@@ -107,8 +168,8 @@ optional fitted semantic labels and persistent class metadata;</p></li>
 <li><p>phase 0 contract tests.</p></li>
 </ul>
 </section>
-<section id="changed">
-<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
+<section id="id2">
+<h3>Changed<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>invalid history enum values and unknown metrics now fail early;</p></li>
 <li><p>explicit iterative mode requires <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code>;</p></li>
@@ -128,8 +189,8 @@ spacing across 1D, 2D, and nD routes;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">show_optimized</span></code> documentation is English and IPython is imported lazily.</p></li>
 </ul>
 </section>
-<section id="compatibility">
-<h3>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading"></a></h3>
+<section id="id3">
+<h3>Compatibility<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <p>Classic colors, fixed dimensions, trace geometry, and animation behavior remain
 the defaults. <code class="docutils literal notranslate"><span class="pre">loss_hist</span></code> remains available as an alias of
 <code class="docutils literal notranslate"><span class="pre">loss_display</span></code>. New subtitles and slider labels are intentional transparency
@@ -138,7 +199,8 @@ changes. Previously ignored invalid values may now raise actionable exceptions.<
 <section id="known-limitations">
 <h3>Known limitations<a class="headerlink" href="#known-limitations" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p>tabular replay is reconstructed and can differ from the fitted estimator;</p></li>
+<li><p>tabular replay remains reconstructed even though its separately labeled
+endpoint is the exact fitted estimator;</p></li>
 <li><p>a fully offline MathJax bundle is not supplied;</p></li>
 <li><p>responsive reflow and alternative themes are planned, not implemented;</p></li>
 <li><p>full objective/regularization introspection belongs to the next phase.</p></li>

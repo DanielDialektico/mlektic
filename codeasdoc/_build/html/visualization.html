@@ -47,6 +47,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mathematical_parity.html">Tabular mathematical detail contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Visualization mathematics</a><ul>
@@ -57,6 +58,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#smoothing">Smoothing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#prediction-explanations">Prediction explanations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#neural-networks">Neural networks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mathematical-detail">Mathematical detail</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#classic-visual-contract">Classic visual contract</a></li>
 </ul>
 </li>
@@ -144,9 +146,11 @@ models are interpolated from a task-specific baseline. See
 <p>With <code class="docutils literal notranslate"><span class="pre">smooth=&quot;ema&quot;</span></code>:</p>
 <div class="math notranslate nohighlight">
 \[s_t=\beta s_{t-1}+(1-\beta)\ell_t.\]</div>
-<p><code class="docutils literal notranslate"><span class="pre">loss_raw</span></code> keeps (ell_t); <code class="docutils literal notranslate"><span class="pre">loss_display</span></code> stores (s_t); <code class="docutils literal notranslate"><span class="pre">loss_hist</span></code>
-is a compatibility alias for the display values. The visible loss metric and
-curve use the same series.</p>
+<p><code class="docutils literal notranslate"><span class="pre">loss_raw</span></code> keeps (ell_t); <code class="docutils literal notranslate"><span class="pre">loss_display</span></code> stores (s_t) for replay or
+the unchanged empirical path evaluation for synthetic interpolation;
+<code class="docutils literal notranslate"><span class="pre">loss_hist</span></code> is a compatibility alias for the display values. The visible
+metric and curve use the same series. Synthetic paths are already smooth, so
+EMA is not applied and their final curve value remains exact.</p>
 </section>
 <section id="prediction-explanations">
 <h2>Prediction explanations<a class="headerlink" href="#prediction-explanations" title="Link to this heading"></a></h2>
@@ -192,12 +196,26 @@ available mathematical panel width.</p>
 training loop. <code class="docutils literal notranslate"><span class="pre">record_every</span></code> controls semantic checkpoint capture; later
 visual sampling should be interpreted separately.</p>
 </section>
+<section id="mathematical-detail">
+<h2>Mathematical detail<a class="headerlink" href="#mathematical-detail" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">detail=&quot;essential&quot;</span></code> retains the compact size, classic visual language, and
+motion. <code class="docutils literal notranslate"><span class="pre">detail=&quot;academic&quot;</span></code> adds a compact fitted-model derivation;
+<code class="docutils literal notranslate"><span class="pre">detail=&quot;complete&quot;</span></code> also exposes preprocessing, objective, regularization,
+and optimizer caveats. In every level, one-dimensional linear playback uses
+the same evolving LaTeX equation band above the plotting axes. See
+<a class="reference internal" href="mathematical_parity.html"><span class="doc">Tabular mathematical detail contract</span></a> for the exact contract.</p>
+<p>The academic panel is a stable final-model reference while the existing
+animation continues to show its labeled replay or interpolation path. This
+keeps hybrid trace-only motion fluid and prevents visual subframes from being
+misidentified as new mathematical states.</p>
+</section>
 <section id="classic-visual-contract">
 <h2>Classic visual contract<a class="headerlink" href="#classic-visual-contract" title="Link to this heading"></a></h2>
-<p>Phase 0 retains the original classic theme, fixed base size, trace colors,
-line widths, and motion. The only added visible elements are provenance and
-timeline labels required for mathematical honesty. Optional academic, compact,
-classroom, and accessible systems are planned but are not current APIs.</p>
+<p>The original classic theme, base size, trace colors, line widths, and motion
+remain the default. The one-dimensional equation placement is the documented
+exception: it now occupies a reserved math band instead of the data axes.
+Academic detail increases the canvas only when explicitly requested. Compact,
+classroom, accessible, and responsive/reflow formats remain later-phase work.</p>
 </section>
 </section>
 

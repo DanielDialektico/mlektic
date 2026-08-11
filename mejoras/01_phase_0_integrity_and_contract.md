@@ -50,7 +50,7 @@ Used when Mlektic clones an incremental estimator and reconstructs a path. Requi
 - whether the final replay parameters match the supplied fitted estimator;
 - a warning when they do not match.
 
-The original fitted state must not be silently appended as if it were the next replay update. A later phase may display it as a distinct reference state.
+The original fitted state must not be silently appended as if it were the next replay update. Phase 1 implements the planned alternative: it is displayed as a distinct `fitted` reference state with its own origin metadata.
 
 #### `interpolated`
 
