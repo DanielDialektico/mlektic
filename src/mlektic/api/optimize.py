@@ -5,6 +5,17 @@ from __future__ import annotations
 from pathlib import Path
 
 
+def _resolved_responsive(fig, responsive):
+    """Resolve an explicit export choice or inherit the figure contract."""
+    if responsive is not None and not isinstance(responsive, bool):
+        raise TypeError("responsive must be a boolean value or None.")
+    if responsive is not None:
+        return responsive
+    metadata = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
+    visual = metadata.get("mlektic_visual", {})
+    return bool(visual.get("responsive", False))
+
+
 def show_optimized(fig):
     """Render a Plotly figure as lightweight notebook HTML.
 
@@ -16,11 +27,13 @@ def show_optimized(fig):
 
     fig_height = fig.layout.height if fig.layout.height else 600
     wrapper_height = fig_height + 40
+    responsive = _resolved_responsive(fig, None)
     html_str = fig.to_html(
         include_plotlyjs="cdn",
         full_html=False,
         auto_play=False,
         include_mathjax="cdn",
+        config={"responsive": responsive},
     )
     return HTML(f'<div style="height: {wrapper_height}px; width: 100%; overflow: hidden;">{html_str}</div>')
 
@@ -31,7 +44,7 @@ def export_figure(
     *,
     include_plotly="inline",
     include_mathjax="cdn",
-    responsive=False,
+    responsive=None,
     auto_play=False,
 ):
     """Export a complete HTML document with explicit dependency semantics.
@@ -45,7 +58,8 @@ def export_figure(
             omit MathJax intentionally. Plotly does not provide a supported
             self-contained MathJax bundle, so this choice remains explicit.
         responsive: Whether Plotly should resize the figure with its container.
-            ``False`` preserves the current fixed-size visual default.
+            ``None`` inherits the figure's visual contract; figures without
+            that metadata remain fixed-size for backward compatibility.
         auto_play: Whether an animated figure should start automatically.
 
     Returns:
@@ -55,8 +69,9 @@ def export_figure(
         raise ValueError("include_plotly must be 'inline' or 'cdn'.")
     if include_mathjax != "cdn" and include_mathjax is not False:
         raise ValueError("include_mathjax must be 'cdn' or False.")
-    if not isinstance(responsive, bool) or not isinstance(auto_play, bool):
-        raise TypeError("responsive and auto_play must be boolean values.")
+    responsive = _resolved_responsive(fig, responsive)
+    if not isinstance(auto_play, bool):
+        raise TypeError("auto_play must be a boolean value.")
 
     if not isinstance(path, (str, Path)):
         raise TypeError("path must be a string or pathlib.Path.")

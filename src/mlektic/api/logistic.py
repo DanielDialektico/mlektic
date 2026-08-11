@@ -12,6 +12,7 @@ from ..mathematics import (
     build_logistic_math_contract,
 )
 from ..services.logistic_history import fit_history_logistic
+from ..visualization.design import apply_visual_system, resolve_visual_spec
 from ..visualization.logistic.prediction import explain_logistic_prediction
 from ..visualization.logistic.router import build_logistic_figure
 from ..visualization.theme import (
@@ -54,6 +55,13 @@ def visualize_logistic(
     feature_names=None,
     sample_index=None,
     theme=None,
+    format="dashboard",
+    density=None,
+    size="default",
+    width=None,
+    height=None,
+    responsive=False,
+    reduced_motion=False,
 ):
     """Visualize a logistic-regression learning or interpolation history.
 
@@ -123,10 +131,31 @@ def visualize_logistic(
         sample_index: Training observation used for the visible substitution;
             ``None`` selects index 0.
         theme: Optional visualization theme.
+        format: ``"dashboard"``, ``"lesson"``, ``"compact"``, or the static
+            final-state ``"report"`` composition.
+        density: Optional alias for mathematical ``detail``.
+        size: Named canvas preset: ``"default"``, ``"compact"``,
+            ``"notebook"``, ``"wide"``, or ``"classroom"``.
+        width: Optional explicit canvas width in pixels.
+        height: Optional explicit canvas height in pixels.
+        responsive: Scale the resolved composition with its container.
+        reduced_motion: Show the exact final state without animation controls.
 
     Returns:
         An animated Plotly figure with mathematically matched definitions.
     """
+    visual_spec = resolve_visual_spec(
+        detail=detail,
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+    )
+    detail = visual_spec.density
     if not all(
         isinstance(value, bool)
         for value in (show_loss, strict_loss, show_history_context, show_class_labels)
@@ -208,6 +237,7 @@ def visualize_logistic(
     annotate_history_semantics(fig, hist, show_title=show_history_context)
     annotate_loss_semantics(fig, hist)
     attach_math_contract(fig, math_contract, theme=theme)
+    apply_visual_system(fig, visual_spec, family="logistic")
     return attach_highlight(fig, theme=theme)
 
 

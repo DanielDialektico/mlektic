@@ -8,6 +8,7 @@ import numpy as np
 
 from ..mathematics import attach_math_contract, build_linear_math_contract
 from ..services.linear_history import fit_history
+from ..visualization.design import apply_visual_system, resolve_visual_spec
 from ..visualization.linear.prediction import explain_lr_prediction
 from ..visualization.linear.router import build_lr_figure
 from ..visualization.theme import (
@@ -48,6 +49,13 @@ def visualize_lr(
     feature_names=None,
     sample_index=None,
     theme=None,
+    format="dashboard",
+    density=None,
+    size="default",
+    width=None,
+    height=None,
+    responsive=False,
+    reduced_motion=False,
 ):
     """
     Generate an animated visualization for a linear regression model.
@@ -121,12 +129,40 @@ def visualize_lr(
             input features. DataFrame column names are used automatically.
         sample_index (int | None, optional): Training observation used for the
             visible contribution calculation. ``None`` selects index 0.
-        theme (str | None, optional): Registered visualization theme. The only
-            phase-0 theme is the backward-compatible ``"classic"`` default.
+        theme (str | None, optional): ``"classic"`` (default), ``"academic"``,
+            ``"classroom"``, ``"compact"``, or ``"accessible"``.
+        format (str, optional): Composition preset: ``"dashboard"`` keeps the
+            existing figure, ``"lesson"`` adds staged concept controls,
+            ``"compact"`` reduces unused space, and ``"report"`` produces a
+            static final-state composition.
+        density (str | None, optional): Alias for mathematical ``detail``.
+            When omitted, ``detail`` remains authoritative.
+        size (str, optional): Named canvas preset: ``"default"``, ``"compact"``,
+            ``"notebook"``, ``"wide"``, or ``"classroom"``.
+        width (int | None, optional): Explicit canvas width. It overrides the
+            named size when supplied.
+        height (int | None, optional): Explicit canvas height. It overrides the
+            named size when supplied.
+        responsive (bool, optional): Make the resolved composition scale with
+            its container. Structural reflow is selected with ``format``.
+        reduced_motion (bool, optional): Render the exact final state without
+            animation controls. Defaults to False, preserving fluid motion.
 
     Returns:
         plotly.graph_objects.Figure: The animated Plotly figure object.
     """
+    visual_spec = resolve_visual_spec(
+        detail=detail,
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+    )
+    detail = visual_spec.density
     X_array = np.asarray(X)
     dimensions = 1 if X_array.ndim == 1 else int(X_array.shape[1])
     if not all(isinstance(value, bool) for value in (show_loss, strict_loss, show_history_context)):
@@ -209,6 +245,7 @@ def visualize_lr(
     annotate_history_semantics(fig, hist, show_title=show_history_context)
     annotate_loss_semantics(fig, hist)
     attach_math_contract(fig, math_contract, theme=theme)
+    apply_visual_system(fig, visual_spec, family="linear")
     return attach_highlight(fig, theme=theme)
 
 

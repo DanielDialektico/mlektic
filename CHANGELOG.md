@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added the opt-in Phase-3 visual system across linear, logistic, prediction,
+  and neural public figures: immutable `VisualTokens`, `classic`, `academic`,
+  `classroom`, `compact`, and `accessible` themes; `dashboard`, `lesson`,
+  `compact`, and `report` formats; named sizes; explicit dimensions;
+  responsive scaling; and reduced-motion final-state rendering.
+- Added schema-versioned `layout.meta["mlektic_visual"]` metadata containing
+  every resolved visual choice, token, dimension, motion decision,
+  accessibility declaration, and responsive export setting.
+- Added non-color redundancy in the accessible theme, staged pedagogical
+  controls in lesson format, responsive HTML inheritance, a Phase-3 Sphinx
+  guide, implementation record, and executable end-user showcase notebook.
 - Added Phase-1 mathematical detail levels to `visualize_lr()` and `visualize_logistic()`: `detail="essential"` keeps the compact main visualization, while `"academic"` and `"complete"` add a stable fitted-model derivation without reducing animation frames or hybrid motion.
 - Added estimator-backed `layout.meta["mlektic_math"]` contracts for linear, binary logistic, and multiclass logistic figures, including dimensions, feature space, parameters, one observation's contributions, reconstructed/model predictions, objective values, decisions, fitted class order, probability link, regularization settings, and canonical-versus-exact optimizer semantics.
 - Added `show_objective`, `show_regularization`, `feature_names`, and `sample_index` controls to linear and logistic training figures; added binary `threshold` and multiclass `class_focus` controls to logistic figures.
@@ -46,6 +57,13 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Added theme-aware high-contrast boxes and borders to plotted prediction-value
+  annotations (`y_hat` and `p_hat`) in linear, binary-logistic, multiclass, 2D,
+  and 3D prediction explainers so values remain legible over model geometry.
+- Prevented compact figures with academic/complete derivations from compressing
+  the plot domain until the lower mathematics panel overlapped slider labels;
+  the panel reserve and upper equation/title clearance now remain stable across
+  named size presets and animated frames.
 - Suppressed the expected Scikit-learn convergence warning produced only by Mlektic's intentional one-iteration replay initialization; warnings from the user's own estimator fit remain untouched.
 - Synchronized coefficient-bearing logistic interpolation so every intermediate score, sigmoid/Softmax/OvR probability, curve or surface, and empirical loss is derived from the same interpolated parameter state; probability-only fallbacks are explicitly labeled.
 - Restored normal 15-point typography and an inline coordinate tuple for ordinary two-feature linear prediction results; only genuinely long formatted coordinates now trigger a compact 13-point wrapped layout.
@@ -83,6 +101,12 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Preserved every retained animation frame in the new dashboard, compact, and
+  lesson formats. Only the explicit report and reduced-motion alternatives
+  freeze the exact final displayed state and remove temporal controls.
+- Made `density` a validated alias of the Phase-1 `detail` contract for tabular
+  training figures while leaving `detail` authoritative when density is
+  omitted.
 - Honored `show_loss=True` for synthetic interpolation across linear and logistic dimensionalities. These curves are labeled as interpolation MSE/log-loss rather than optimizer training loss; synthetic paths retain raw endpoint-exact values, replay-only EMA is declared explicitly, and compact linear models up to 10 variables use a shorter, better-balanced canvas with a wider loss panel.
 - Wrapped fitted-model contribution expansions into dynamically spaced LaTeX rows. Moderate-dimensional panels show every coefficient-value product; higher-dimensional panels show a bounded, contribution-ranked selection and disclose the omitted count separately while preserving every value in metadata.
 - Clarified synthetic interpolation with its baseline-to-fitted parameter equation and documented that polynomial-feature linear models can form nonlinear original-space geometry without implying gradient-descent training.

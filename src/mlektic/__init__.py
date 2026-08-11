@@ -36,6 +36,7 @@ from .logistic import (
     fit_history_logistic,
     visualize_logistic,
 )
+from .visualization.design import VisualSpec, VisualTokens, available_themes, get_theme_tokens
 
 __all__ = [
     "fit_history",
@@ -66,4 +67,8 @@ __all__ = [
     "visualize_nn_weights",
     "explain_nn_prediction",
     "export_nn_math_report",
+    "VisualSpec",
+    "VisualTokens",
+    "available_themes",
+    "get_theme_tokens",
 ]

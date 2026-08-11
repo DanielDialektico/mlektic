@@ -30,6 +30,7 @@ The review covered:
 8. [Test and acceptance matrix](07_test_and_acceptance_matrix.md)
 9. [Phase 0 implementation record](08_phase_0_implementation_record.md)
 10. [Phase 1 implementation record](09_phase_1_implementation_record.md)
+11. [Phase 3 implementation record](10_phase_3_implementation_record.md)
 
 ## Recommended order
 

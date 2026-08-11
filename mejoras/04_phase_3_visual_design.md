@@ -1,5 +1,9 @@
 # Phase 3 — Visual system, typography, spacing, and formats
 
+> **Status:** Implemented on `feature/phase-3-visual-design`. The verified
+> implementation decisions, compatibility guarantees, and test evidence are
+> recorded in [the Phase 3 implementation record](10_phase_3_implementation_record.md).
+
 ## Objective
 
 Make figures more elegant, compact, academically composed, and adaptable without changing the classic default. The neural family supplies the internal reference for hierarchy and restraint; tabular geometry remains the reference for spatial requirements.

@@ -98,6 +98,16 @@ Low-level figure builders
 Theme and animation helpers
 ===========================
 
+.. module:: mlektic.visualization.design
+
+.. autoclass:: mlektic.visualization.design.VisualTokens
+
+.. autoclass:: mlektic.visualization.design.VisualSpec
+
+.. autofunction:: mlektic.visualization.design.available_themes
+
+.. autofunction:: mlektic.visualization.design.get_theme_tokens
+
 .. module:: mlektic.visualization.theme
 
 .. autofunction:: mlektic.visualization.theme.get_base_layout

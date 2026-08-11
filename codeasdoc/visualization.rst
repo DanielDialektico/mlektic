@@ -160,4 +160,7 @@ The original classic theme, base size, trace colors, line widths, and motion
 remain the default. The one-dimensional equation placement is the documented
 exception: it now occupies a reserved math band instead of the data axes.
 Academic detail increases the canvas only when explicitly requested. Compact,
-classroom, accessible, and responsive/reflow formats remain later-phase work.
+classroom, and accessible themes are now opt-in. Dashboard, lesson, compact,
+and report formats solve different composition needs; responsive mode scales
+the selected composition. See :doc:`visual_design` for the exact contract and
+the distinction between responsive scaling and structural reflow.
