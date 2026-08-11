@@ -117,6 +117,11 @@ class TestVisualizeLR:
         assert all(len(frame.data[0].x) == len(frame.data[0].y) for frame in fig.frames)
         assert all(not frame.layout.to_plotly_json() for frame in fig.frames)
         assert fig.frames[0].data[2].text != fig.frames[-1].data[2].text
+        assert fig.data[3].uid == "NUMERIC_EQUATION"
+        assert fig.data[3].xaxis == "x4"
+        assert fig.data[3].yaxis == "y4"
+        assert fig.data[3].text[0].startswith("$\\hat{y}=")
+        assert fig.layout.yaxis.domain[1] < fig.layout.yaxis4.domain[0]
         assert fig.data[4].mode == "markers+text"
         assert fig.data[4].marker.symbol == "square"
         assert fig.data[4].textfont.color == "black"
@@ -168,6 +173,10 @@ class TestVisualizeLR:
         fig = visualize_lr(model, X, y, steps=5, show_loss=False)
         assert isinstance(fig, go.Figure)
         assert len(fig.frames) == 13
+        assert fig.data[2].uid == "NUMERIC_EQUATION"
+        assert fig.data[2].xaxis == "x2"
+        assert fig.data[2].yaxis == "y2"
+        assert fig.layout.yaxis.domain[1] < fig.layout.yaxis2.domain[0]
 
     def test_visualize_lr_pipeline_scaled(self, trained_pipeline_1d):
         model, X, y = trained_pipeline_1d

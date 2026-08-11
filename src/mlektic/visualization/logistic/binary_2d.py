@@ -51,12 +51,6 @@ def build_binary_plane_logistic_figure(
         if show_class_labels
         else ["0", "0.5", "1"]
     )
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     x1 = np.asarray(x1).ravel()
     x2 = np.asarray(x2).ravel()
     y = np.asarray(y).ravel().astype(float)

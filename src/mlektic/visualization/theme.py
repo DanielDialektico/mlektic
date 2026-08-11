@@ -405,16 +405,26 @@ def annotate_history_semantics(fig, history: dict, *, show_title: bool = True):
     captured = int(metadata.get("captured_steps", displayed))
     total = metadata.get("training_total_steps")
     matches = metadata.get("final_state_matches_estimator")
+    origins = list(metadata.get("displayed_state_origins", []))
+    has_fitted_endpoint = bool(origins) and origins[-1] == "fitted_estimator"
     labels = _timeline_labels(history, metadata)
 
     if source == "replayed":
-        summary = f"Reconstructed replay · {displayed}/{captured} checkpoints"
+        summary = (
+            f"Reconstructed replay + fitted endpoint · {displayed}/{captured} states"
+            if has_fitted_endpoint
+            else f"Reconstructed replay · {displayed}/{captured} checkpoints"
+        )
         if total is not None:
             summary += f" · estimator n_iter_={total}"
         if matches is False:
             summary += " · final-state mismatch"
-        slider_prefix = f"Reconstructed replay ({displayed}/{captured}) · checkpoint: "
-        axis_title = "Replay checkpoint"
+        if has_fitted_endpoint:
+            slider_prefix = f"Replay + fitted endpoint ({displayed}/{captured}) · state: "
+            axis_title = "Replay / fitted state"
+        else:
+            slider_prefix = f"Reconstructed replay ({displayed}/{captured}) · checkpoint: "
+            axis_title = "Replay checkpoint"
     else:
         summary = f"Synthetic interpolation · {displayed}/{captured} states · α: 0 → 1"
         slider_prefix = f"Synthetic interpolation ({displayed}/{captured}) · progress: "
@@ -453,10 +463,97 @@ def annotate_history_semantics(fig, history: dict, *, show_title: bool = True):
     return fig
 
 
+def annotate_loss_semantics(fig, history: dict):
+    """Label displayed loss as an empirical path quantity, never private optimizer loss."""
+    metadata = history.get("metadata", {})
+    if not metadata or "loss_display" not in history:
+        return fig
+
+    task = metadata.get("task", history.get("task"))
+    source = metadata.get("source")
+    smoothing = metadata.get("smoothing", {})
+    smoothing_method = smoothing.get("method")
+    quantity = "mean_squared_error" if task == "linear" else "log_loss"
+    quantity_label = "MSE" if task == "linear" else "log-loss"
+    source_label = "Synthetic interpolation" if source == "interpolated" else "Replay"
+    if smoothing_method == "ema":
+        metric_label = f"EMA {quantity_label}"
+        axis_label = f"{source_label} empirical {quantity_label} (EMA)"
+        card_label = metric_label
+    else:
+        metric_label = (
+            f"Interpolation {quantity_label}"
+            if source == "interpolated"
+            else f"Replay {quantity_label}"
+        )
+        axis_label = (
+            f"Empirical {quantity_label} along interpolation"
+            if source == "interpolated"
+            else f"Replay empirical {quantity_label}"
+        )
+        card_label = f"INTERP. {quantity_label}" if source == "interpolated" else metric_label
+
+    semantics = {
+        "quantity": quantity,
+        "role": (
+            "empirical evaluation along a synthetic interpolation"
+            if source == "interpolated"
+            else "empirical evaluation along a reconstructed replay"
+        ),
+        "optimizer_loss": False,
+        "smoothing": smoothing_method,
+        "metric_label": metric_label,
+        "axis_label": axis_label,
+    }
+    metadata["loss_display_semantics"] = semantics
+    layout_meta = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
+    layout_meta["mlektic_history"] = metadata
+    fig.update_layout(meta=layout_meta)
+
+    def replace_metric_label(text):
+        if not isinstance(text, str):
+            return text
+        for old in ("LOSS", "Loss", "Log-loss"):
+            text = text.replace(f"<b>{old}</b>", f"<b>{card_label}</b>")
+        return text
+
+    def update_trace(trace):
+        if getattr(trace, "uid", None) == "LOSS_LINE":
+            trace.name = metric_label
+        if getattr(trace, "text", None) is not None:
+            trace.text = tuple(replace_metric_label(value) for value in trace.text)
+
+    for trace in fig.data:
+        update_trace(trace)
+    for frame in fig.frames or ():
+        for trace in frame.data or ():
+            update_trace(trace)
+        if frame.layout is not None:
+            for annotation in frame.layout.annotations or ():
+                annotation.text = replace_metric_label(annotation.text)
+    for annotation in fig.layout.annotations or ():
+        annotation.text = replace_metric_label(annotation.text)
+
+    layout_json = fig.layout.to_plotly_json()
+    for axis_name, axis_value in layout_json.items():
+        if not axis_name.startswith("yaxis") or not isinstance(axis_value, dict):
+            continue
+        title_value = axis_value.get("title", {})
+        title_text = title_value.get("text") if isinstance(title_value, dict) else title_value
+        if title_text in {"Loss", "Log-loss"}:
+            getattr(fig.layout, axis_name).update(title_text=axis_label)
+    return fig
+
+
 def _timeline_labels(history: dict, metadata: dict) -> list[str]:
     """Build human-readable labels without changing internal Plotly frame names."""
     if metadata.get("source") == "interpolated":
         alpha = history.get("alpha_values", metadata.get("alpha_values", []))
         return [f"{100 * float(value):.0f}%" for value in alpha]
     indices = metadata.get("displayed_step_indices", history.get("step_indices", []))
-    return [str(int(value)) for value in indices]
+    labels = [str(int(value)) for value in indices]
+    origins = list(metadata.get("displayed_state_origins", history.get("state_origins", [])))
+    return [
+        "fitted" if position < len(origins) and origins[position] == "fitted_estimator" else label
+        for position, label in enumerate(labels)
+    ]

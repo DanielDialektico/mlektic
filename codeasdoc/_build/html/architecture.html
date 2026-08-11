@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API reference" href="api_reference.html" />
-    <link rel="prev" title="History provenance and time semantics" href="history_semantics.html" /> 
+    <link rel="prev" title="Tabular mathematical detail contract" href="mathematical_parity.html" />
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,6 +46,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mathematical_parity.html">Tabular mathematical detail contract</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#design-goals">Design goals</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#package-map">Package map</a></li>
@@ -111,6 +112,7 @@ across 1D, 2D, and high-dimensional views.</p>
   adapters/         estimator/pipeline capability normalization
   domain/           validated configuration and payload contracts
   history/          replay, interpolation, metrics, sampling, metadata
+  mathematics.py    estimator-backed tabular mathematical contracts
   visualization/
     linear/         1D, 2D, nD, and prediction builders
     logistic/       binary/multiclass builders and prediction explainers
@@ -122,12 +124,13 @@ across 1D, 2D, and high-dimensional views.</p>
 </section>
 <section id="public-orchestration">
 <h2>Public orchestration<a class="headerlink" href="#public-orchestration" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">visualize_lr</span></code> and <code class="docutils literal notranslate"><span class="pre">visualize_logistic</span></code> perform four operations:</p>
+<p><code class="docutils literal notranslate"><span class="pre">visualize_lr</span></code> and <code class="docutils literal notranslate"><span class="pre">visualize_logistic</span></code> perform five operations:</p>
 <ol class="arabic simple">
 <li><p>validate public animation controls;</p></li>
 <li><p>call a history service;</p></li>
+<li><p>build an estimator-backed mathematical contract;</p></li>
 <li><p>route the payload to a dimensional figure builder;</p></li>
-<li><p>configure motion and attach visible history semantics.</p></li>
+<li><p>configure motion and attach history and mathematical semantics.</p></li>
 </ol>
 <p>The figure builders do not fit the supplied estimator. Replay fitting occurs
 only on a Scikit-learn clone inside the history strategy. Prediction explainers
@@ -164,15 +167,20 @@ that can be represented by mean and scale.</p>
 (<code class="docutils literal notranslate"><span class="pre">warm_start=True</span></code>, <code class="docutils literal notranslate"><span class="pre">max_iter=1</span></code>, <code class="docutils literal notranslate"><span class="pre">tol=0</span></code>, <code class="docutils literal notranslate"><span class="pre">shuffle=False</span></code>), performs
 an initial clone fit, and then calls <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code> for later checkpoints. It
 records empirical predictions, loss, grid values, and learned-space parameters.
-Its public source is <code class="docutils literal notranslate"><span class="pre">replayed</span></code>.</p>
+The final semantic state is reserved for the exact supplied estimator and has
+origin <code class="docutils literal notranslate"><span class="pre">fitted_estimator</span></code>; preceding states retain origin <code class="docutils literal notranslate"><span class="pre">replayed</span></code>. Its
+public sequence is therefore labeled <code class="docutils literal notranslate"><span class="pre">Reconstructed</span> <span class="pre">replay</span> <span class="pre">+</span> <span class="pre">fitted</span>
+<span class="pre">endpoint</span></code> rather than being presented as recorded training.</p>
 </section>
 <section id="interpolationcapture">
 <h3><code class="docutils literal notranslate"><span class="pre">InterpolationCapture</span></code><a class="headerlink" href="#interpolationcapture" title="Link to this heading"></a></h3>
-<p>The strategy computes baseline and fitted-model predictions/probabilities and
-constructs convex states using alpha. It similarly interpolates extractable
-parameters between baseline and final values. Its public source is
-<code class="docutils literal notranslate"><span class="pre">interpolated</span></code>. The path describes a pedagogical transformation, not an
-optimizer trajectory.</p>
+<p>The strategy computes baseline and fitted-model states using alpha. Linear
+predictions follow interpolated linear parameters. For coefficient-bearing
+logistic estimators, scores, probabilities, geometry, and loss are derived
+from the same interpolated parameters at every state. Probability-only
+estimators retain an explicitly labeled probability-space fallback. Its public
+source is <code class="docutils literal notranslate"><span class="pre">interpolated</span></code>; the path is pedagogical and is not an optimizer
+trajectory.</p>
 </section>
 </section>
 <section id="history-engine">
@@ -206,6 +214,11 @@ the top-level sampling loop; retained coordinates remain at the top level.</p>
 Plotly data, frames, formulas, controls, and dimensional geometry. A final
 semantic annotation layer updates title subtitles, slider labels, and loss-axis
 coordinates without changing frame data or the classic geometry.</p>
+<p>The Phase-1 mathematical layer independently reconstructs a selected fitted
+prediction, objective, class decision, feature-space representation, and
+public regularization settings. The default stores this contract only in
+<code class="docutils literal notranslate"><span class="pre">layout.meta</span></code>. Academic modes add a stable fitted-model reference below the
+slider, preserving hybrid trace-only motion.</p>
 </section>
 <section id="neural-architecture">
 <h2>Neural architecture<a class="headerlink" href="#neural-architecture" title="Link to this heading"></a></h2>
@@ -236,7 +249,7 @@ keeps complex derivations from overloading one figure.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="history_semantics.html" class="btn btn-neutral float-left" title="History provenance and time semantics" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mathematical_parity.html" class="btn btn-neutral float-left" title="Tabular mathematical detail contract" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="api_reference.html" class="btn btn-neutral float-right" title="API reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

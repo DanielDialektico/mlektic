@@ -79,9 +79,11 @@ With ``smooth="ema"``:
 
    s_t=\beta s_{t-1}+(1-\beta)\ell_t.
 
-``loss_raw`` keeps \(\ell_t\); ``loss_display`` stores \(s_t\); ``loss_hist``
-is a compatibility alias for the display values. The visible loss metric and
-curve use the same series.
+``loss_raw`` keeps \(\ell_t\); ``loss_display`` stores \(s_t\) for replay or
+the unchanged empirical path evaluation for synthetic interpolation;
+``loss_hist`` is a compatibility alias for the display values. The visible
+metric and curve use the same series. Synthetic paths are already smooth, so
+EMA is not applied and their final curve value remains exact.
 
 Prediction explanations
 =======================
@@ -136,10 +138,26 @@ For a dense layer:
 training loop. ``record_every`` controls semantic checkpoint capture; later
 visual sampling should be interpreted separately.
 
+Mathematical detail
+===================
+
+``detail="essential"`` retains the compact size, classic visual language, and
+motion. ``detail="academic"`` adds a compact fitted-model derivation;
+``detail="complete"`` also exposes preprocessing, objective, regularization,
+and optimizer caveats. In every level, one-dimensional linear playback uses
+the same evolving LaTeX equation band above the plotting axes. See
+:doc:`mathematical_parity` for the exact contract.
+
+The academic panel is a stable final-model reference while the existing
+animation continues to show its labeled replay or interpolation path. This
+keeps hybrid trace-only motion fluid and prevents visual subframes from being
+misidentified as new mathematical states.
+
 Classic visual contract
 =======================
 
-Phase 0 retains the original classic theme, fixed base size, trace colors,
-line widths, and motion. The only added visible elements are provenance and
-timeline labels required for mathematical honesty. Optional academic, compact,
-classroom, and accessible systems are planned but are not current APIs.
+The original classic theme, base size, trace colors, line widths, and motion
+remain the default. The one-dimensional equation placement is the documented
+exception: it now occupies a reserved math band instead of the data axes.
+Academic detail increases the canvas only when explicitly requested. Compact,
+classroom, accessible, and responsive/reflow formats remain later-phase work.

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added Phase-1 mathematical detail levels to `visualize_lr()` and `visualize_logistic()`: `detail="essential"` keeps the compact main visualization, while `"academic"` and `"complete"` add a stable fitted-model derivation without reducing animation frames or hybrid motion.
+- Added estimator-backed `layout.meta["mlektic_math"]` contracts for linear, binary logistic, and multiclass logistic figures, including dimensions, feature space, parameters, one observation's contributions, reconstructed/model predictions, objective values, decisions, fitted class order, probability link, regularization settings, and canonical-versus-exact optimizer semantics.
+- Added `show_objective`, `show_regularization`, `feature_names`, and `sample_index` controls to linear and logistic training figures; added binary `threshold` and multiclass `class_focus` controls to logistic figures.
+- Added verified affine preprocessing conversion and transformed-feature mathematics for non-affine pipelines, using `get_feature_names_out` where available and explicitly declining to claim unavailable raw-space coefficients.
+- Added a dedicated Sphinx mathematical-parity guide and an executable end-user Phase-1 notebook covering linear, binary, multiclass, pipeline, high-dimensional, and motion configurations.
 - Added `show_class_labels=False` to logistic training and prediction figures. Indexed classes are the uncluttered default; fitted semantic labels can be revealed without removing their always-available metadata.
 - Added `show_history_context=True` to linear and logistic public visualization APIs; setting it to `False` hides only the title subtitle while preserving slider and metadata context.
 - Added a schema-versioned provenance contract for tabular histories, including replay/interpolation source detail, full and displayed checkpoint coordinates, estimator-reported iterations, smoothing/decimation settings, warnings, and final-state comparison.
@@ -41,13 +46,15 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Suppressed the expected Scikit-learn convergence warning produced only by Mlektic's intentional one-iteration replay initialization; warnings from the user's own estimator fit remain untouched.
+- Synchronized coefficient-bearing logistic interpolation so every intermediate score, sigmoid/Softmax/OvR probability, curve or surface, and empirical loss is derived from the same interpolated parameter state; probability-only fallbacks are explicitly labeled.
 - Restored normal 15-point typography and an inline coordinate tuple for ordinary two-feature linear prediction results; only genuinely long formatted coordinates now trigger a compact 13-point wrapped layout.
 - Kept binary prediction axes numeric for string-labeled estimators so fitted sigmoid curves and probability surfaces remain visible; the two-feature boundary is now the actual `p=0.5` intersection line, and results identify both fitted-class probabilities and the winning label.
 - Separated the multiclass 2D coefficient matrix and bias vector so the bias is centered between the matrix and class-score equation.
 - Prevented normalized-OvR probability substitutions from crossing into loss panels by using exact compact fractions only in constrained replay layouts.
 - Recentered multiclass ellipses in 1D and nD, removed empty rows from compact nD input vectors, and honored `max_theta_cols` in dense multiclass matrices.
 - Removed empty loss subplots from linear and binary-logistic nD figures when `show_loss=False`.
-- Shortened replay/interpolation provenance subtitles while preserving N/K, estimator iterations, and final-state mismatch semantics.
+- Shortened replay/interpolation provenance subtitles while preserving N/K, estimator iterations, and explicit endpoint-origin semantics.
 - Balanced the multiclass probability stack by lowering only the first expanded fraction, keeping the ellipsis visually centered, and sharing the same fraction spacing and typography across 1D, 2D, and nD figures.
 - Increased vertical separation between the definition and substituted sigmoid equations in binary logistic 2D figures so fraction numerators do not overlap the equation above.
 - Fixed temporal decimation labels so retained checkpoints keep their source coordinates instead of being renumbered `0..N-1`.
@@ -76,6 +83,12 @@ All notable changes to this project will be documented in this file.
 - Fixed baseline value logic in `test_1_var.py`.
 
 ### Changed
+- Honored `show_loss=True` for synthetic interpolation across linear and logistic dimensionalities. These curves are labeled as interpolation MSE/log-loss rather than optimizer training loss; synthetic paths retain raw endpoint-exact values, replay-only EMA is declared explicitly, and compact linear models up to 10 variables use a shorter, better-balanced canvas with a wider loss panel.
+- Wrapped fitted-model contribution expansions into dynamically spaced LaTeX rows. Moderate-dimensional panels show every coefficient-value product; higher-dimensional panels show a bounded, contribution-ranked selection and disclose the omitted count separately while preserving every value in metadata.
+- Clarified synthetic interpolation with its baseline-to-fitted parameter equation and documented that polynomial-feature linear models can form nonlinear original-space geometry without implying gradient-descent training.
+- Closed incremental linear and logistic replays with an explicitly labeled `fitted` endpoint from the supplied estimator. Intermediate states remain reconstructed, while the final equations, geometry, probabilities, raw loss, and evaluation metrics now match the model exactly; metadata records every state origin and the endpoint policy.
+- Standardized one-dimensional linear-regression playback across all mathematical detail levels: the interpolated fitted equation now evolves in a dedicated LaTeX band above the plotting axes, metric cards retain their organized side column, and the equation no longer covers observations or the fitted line. The equation remains a trace update, so hybrid subframes keep `redraw=False`; academic panels remain separate below the slider.
+- Advanced history metadata to schema version 2 with explicit coefficient-space semantics and parameter-versus-probability interpolation targets.
 - Clarified that incremental Scikit-learn histories are reconstructed replays over clones and that non-incremental paths are synthetic interpolations, not recovered optimizer histories.
 - Changed Sphinx documentation language to English and made the new public contract English-first.
 - Changed `show_optimized()` to import IPython lazily so the core package import does not require notebook dependencies.

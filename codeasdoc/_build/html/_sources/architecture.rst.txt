@@ -21,6 +21,7 @@ Package map
      adapters/         estimator/pipeline capability normalization
      domain/           validated configuration and payload contracts
      history/          replay, interpolation, metrics, sampling, metadata
+     mathematics.py    estimator-backed tabular mathematical contracts
      visualization/
        linear/         1D, 2D, nD, and prediction builders
        logistic/       binary/multiclass builders and prediction explainers
@@ -31,12 +32,13 @@ Package map
 Public orchestration
 ====================
 
-``visualize_lr`` and ``visualize_logistic`` perform four operations:
+``visualize_lr`` and ``visualize_logistic`` perform five operations:
 
 1. validate public animation controls;
 2. call a history service;
-3. route the payload to a dimensional figure builder;
-4. configure motion and attach visible history semantics.
+3. build an estimator-backed mathematical contract;
+4. route the payload to a dimensional figure builder;
+5. configure motion and attach history and mathematical semantics.
 
 The figure builders do not fit the supplied estimator. Replay fitting occurs
 only on a Scikit-learn clone inside the history strategy. Prediction explainers
@@ -77,16 +79,21 @@ The strategy clones the supplied estimator, sets supported replay parameters
 (``warm_start=True``, ``max_iter=1``, ``tol=0``, ``shuffle=False``), performs
 an initial clone fit, and then calls ``partial_fit`` for later checkpoints. It
 records empirical predictions, loss, grid values, and learned-space parameters.
-Its public source is ``replayed``.
+The final semantic state is reserved for the exact supplied estimator and has
+origin ``fitted_estimator``; preceding states retain origin ``replayed``. Its
+public sequence is therefore labeled ``Reconstructed replay + fitted
+endpoint`` rather than being presented as recorded training.
 
 ``InterpolationCapture``
 ------------------------
 
-The strategy computes baseline and fitted-model predictions/probabilities and
-constructs convex states using alpha. It similarly interpolates extractable
-parameters between baseline and final values. Its public source is
-``interpolated``. The path describes a pedagogical transformation, not an
-optimizer trajectory.
+The strategy computes baseline and fitted-model states using alpha. Linear
+predictions follow interpolated linear parameters. For coefficient-bearing
+logistic estimators, scores, probabilities, geometry, and loss are derived
+from the same interpolated parameters at every state. Probability-only
+estimators retain an explicitly labeled probability-space fallback. Its public
+source is ``interpolated``; the path is pedagogical and is not an optimizer
+trajectory.
 
 History engine
 ==============
@@ -122,6 +129,12 @@ Routers select builders by feature count and class count. Builders create
 Plotly data, frames, formulas, controls, and dimensional geometry. A final
 semantic annotation layer updates title subtitles, slider labels, and loss-axis
 coordinates without changing frame data or the classic geometry.
+
+The Phase-1 mathematical layer independently reconstructs a selected fitted
+prediction, objective, class decision, feature-space representation, and
+public regularization settings. The default stores this contract only in
+``layout.meta``. Academic modes add a stable fitted-model reference below the
+slider, preserving hybrid trace-only motion.
 
 Neural architecture
 ===================

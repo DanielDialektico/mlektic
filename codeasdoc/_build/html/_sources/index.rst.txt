@@ -19,6 +19,7 @@ the actual training process.
 
    getting_started
    history_semantics
+   mathematical_parity
    architecture
    api_reference
    visualization

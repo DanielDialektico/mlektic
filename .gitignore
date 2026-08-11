@@ -67,7 +67,8 @@ venv.bak/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+!phase_0_review.ipynb
+!phase_1_mathematical_parity.ipynb
 
 # VSCode
 .vscode/
-

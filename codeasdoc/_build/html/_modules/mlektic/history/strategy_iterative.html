@@ -43,6 +43,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mathematical_parity.html">Tabular mathematical detail contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Visualization mathematics</a></li>
@@ -77,7 +78,10 @@
   <h1>Source code for mlektic.history.strategy_iterative</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Iterative strategy for history capture.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvergenceWarning</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_squared_error</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..adapters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModelAdapter</span>
@@ -99,8 +103,19 @@
 
         <span class="c1"># We need a new adapter instance configured for replay</span>
         <span class="n">replay_adapter</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">clone_for_replay</span><span class="p">()</span>
-        <span class="n">replay_adapter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>  <span class="c1"># Init state</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="c1"># A one-iteration fit is the intentional first replay checkpoint,</span>
+            <span class="c1"># not a failed user fit. Suppress only this expected warning.</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">ConvergenceWarning</span><span class="p">)</span>
+            <span class="n">replay_adapter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">source_detail</span> <span class="o">=</span> <span class="n">_replay_source_detail</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="n">replay_adapter</span><span class="p">)</span>
+        <span class="n">source_detail</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">endpoint_policy</span><span class="o">=</span><span class="s2">&quot;supplied_fitted_estimator&quot;</span><span class="p">,</span>
+            <span class="n">replayed_states</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">total_states</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">state_origins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="s2">&quot;replayed&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;&lt;U16&quot;</span><span class="p">)</span>
+        <span class="n">state_origins</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fitted_estimator&quot;</span>
 
         <span class="n">grid</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">y_line_hist</span> <span class="o">=</span> <span class="n">z_plane_hist</span> <span class="o">=</span> <span class="kc">None</span>
@@ -143,7 +158,7 @@
 
         <span class="n">Xt</span> <span class="o">=</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">transform_X</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">is_pipeline</span> <span class="k">else</span> <span class="n">X</span>
 
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">replay_adapter</span><span class="o">.</span><span class="n">partial_fit</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
@@ -166,10 +181,33 @@
                 <span class="n">w_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">wt</span>
                 <span class="n">b_hist</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">bt</span>
 
+        <span class="c1"># The replay is an explanatory reconstruction, not the estimator&#39;s</span>
+        <span class="c1"># original fit trajectory. Reserve the last state for the exact model</span>
+        <span class="c1"># supplied by the user so every visualization ends at model truth.</span>
+        <span class="n">y_pred_final</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">loss_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">y_pred_final</span><span class="p">))</span>
+        <span class="n">final_grid</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">Xg_pred</span><span class="p">)</span> <span class="k">if</span> <span class="n">Xg_pred</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">final_grid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">y_line_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_grid</span>
+            <span class="k">elif</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">z_plane_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_grid</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X1g</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">w_final</span><span class="p">,</span> <span class="n">b_final</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">extract_linear_theta</span><span class="p">(</span><span class="n">d_expected</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">w_final</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">w_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_final</span>
+            <span class="n">b_hist</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">b_final</span>
+
+        <span class="n">scaler_params</span> <span class="o">=</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">get_scaler_params</span><span class="p">()</span>
+        <span class="n">coefficient_space</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">display_space</span>
+        <span class="k">if</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">is_pipeline</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">replay_adapter</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">scaler_params</span>
+        <span class="p">):</span>
+            <span class="n">coefficient_space</span> <span class="o">=</span> <span class="s2">&quot;transformed&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;history_kind&quot;</span><span class="p">:</span> <span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
             <span class="s2">&quot;history_source&quot;</span><span class="p">:</span> <span class="s2">&quot;replayed&quot;</span><span class="p">,</span>
             <span class="s2">&quot;source_detail&quot;</span><span class="p">:</span> <span class="n">source_detail</span><span class="p">,</span>
+            <span class="s2">&quot;state_origins&quot;</span><span class="p">:</span> <span class="n">state_origins</span><span class="p">,</span>
             <span class="s2">&quot;step_indices&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">),</span>
             <span class="s2">&quot;loss_hist&quot;</span><span class="p">:</span> <span class="n">loss_hist</span><span class="p">,</span>
             <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">grid</span><span class="p">,</span>
@@ -177,7 +215,8 @@
             <span class="s2">&quot;z_plane_hist&quot;</span><span class="p">:</span> <span class="n">z_plane_hist</span><span class="p">,</span>
             <span class="s2">&quot;w_hist_learned&quot;</span><span class="p">:</span> <span class="n">w_hist</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">w_hist</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">&quot;b_hist_learned&quot;</span><span class="p">:</span> <span class="n">b_hist</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">b_hist</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;scaler_params&quot;</span><span class="p">:</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">get_scaler_params</span><span class="p">(),</span>
+            <span class="s2">&quot;scaler_params&quot;</span><span class="p">:</span> <span class="n">scaler_params</span><span class="p">,</span>
+            <span class="s2">&quot;coefficient_space&quot;</span><span class="p">:</span> <span class="n">coefficient_space</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 
@@ -189,8 +228,19 @@
         <span class="n">steps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">steps</span>
 
         <span class="n">replay_adapter</span> <span class="o">=</span> <span class="n">adapter</span><span class="o">.</span><span class="n">clone_for_replay</span><span class="p">()</span>
-        <span class="n">replay_adapter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="c1"># A one-iteration fit is the intentional first replay checkpoint,</span>
+            <span class="c1"># not a failed user fit. Suppress only this expected warning.</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">ConvergenceWarning</span><span class="p">)</span>
+            <span class="n">replay_adapter</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">source_detail</span> <span class="o">=</span> <span class="n">_replay_source_detail</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="n">replay_adapter</span><span class="p">)</span>
+        <span class="n">source_detail</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">endpoint_policy</span><span class="o">=</span><span class="s2">&quot;supplied_fitted_estimator&quot;</span><span class="p">,</span>
+            <span class="n">replayed_states</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">total_states</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">state_origins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="s2">&quot;replayed&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;&lt;U16&quot;</span><span class="p">)</span>
+        <span class="n">state_origins</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;fitted_estimator&quot;</span>
         <span class="n">classes</span> <span class="o">=</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">classes</span> <span class="k">if</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">classes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
         <span class="n">K</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
         <span class="n">is_multiclass</span> <span class="o">=</span> <span class="n">K</span> <span class="o">&gt;</span> <span class="mi">2</span>
@@ -272,7 +322,7 @@
         <span class="n">_record_step</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">replay_adapter</span><span class="p">)</span>
         <span class="n">Xt</span> <span class="o">=</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">transform_X</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">if</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">is_pipeline</span> <span class="k">else</span> <span class="n">X</span>
 
-        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">replay_adapter</span><span class="o">.</span><span class="n">partial_fit</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
@@ -281,10 +331,21 @@
                 <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
             <span class="n">_record_step</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">replay_adapter</span><span class="p">)</span>
 
+        <span class="c1"># Close the explanatory replay with the exact supplied estimator.</span>
+        <span class="c1"># This endpoint is labeled separately from the reconstructed states.</span>
+        <span class="n">_record_step</span><span class="p">(</span><span class="n">steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>
+
+        <span class="n">scaler_params</span> <span class="o">=</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">get_scaler_params</span><span class="p">()</span>
+        <span class="n">coefficient_space</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">display_space</span>
+        <span class="k">if</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">is_pipeline</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">replay_adapter</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">steps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">scaler_params</span>
+        <span class="p">):</span>
+            <span class="n">coefficient_space</span> <span class="o">=</span> <span class="s2">&quot;transformed&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;history_kind&quot;</span><span class="p">:</span> <span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
             <span class="s2">&quot;history_source&quot;</span><span class="p">:</span> <span class="s2">&quot;replayed&quot;</span><span class="p">,</span>
             <span class="s2">&quot;source_detail&quot;</span><span class="p">:</span> <span class="n">source_detail</span><span class="p">,</span>
+            <span class="s2">&quot;state_origins&quot;</span><span class="p">:</span> <span class="n">state_origins</span><span class="p">,</span>
             <span class="s2">&quot;step_indices&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">),</span>
             <span class="s2">&quot;classes&quot;</span><span class="p">:</span> <span class="n">classes</span><span class="p">,</span>
             <span class="s2">&quot;is_multiclass&quot;</span><span class="p">:</span> <span class="n">is_multiclass</span><span class="p">,</span>
@@ -297,7 +358,8 @@
             <span class="s2">&quot;p_surfaces_hist&quot;</span><span class="p">:</span> <span class="n">p_surfaces_hist</span><span class="p">,</span>
             <span class="s2">&quot;w_hist_learned&quot;</span><span class="p">:</span> <span class="n">w_hist</span><span class="p">,</span>
             <span class="s2">&quot;b_hist_learned&quot;</span><span class="p">:</span> <span class="n">b_hist</span><span class="p">,</span>
-            <span class="s2">&quot;scaler_params&quot;</span><span class="p">:</span> <span class="n">replay_adapter</span><span class="o">.</span><span class="n">get_scaler_params</span><span class="p">(),</span>
+            <span class="s2">&quot;scaler_params&quot;</span><span class="p">:</span> <span class="n">scaler_params</span><span class="p">,</span>
+            <span class="s2">&quot;coefficient_space&quot;</span><span class="p">:</span> <span class="n">coefficient_space</span><span class="p">,</span>
         <span class="p">}</span></div>
 </div>
 

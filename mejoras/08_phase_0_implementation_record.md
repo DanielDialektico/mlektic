@@ -40,7 +40,10 @@ For extractable linear and logistic coefficients, the last constructed learned-s
 - replay can report `True` or `False` depending on estimator and fit configuration;
 - unavailable parameters report `None` rather than an invented result.
 
-No fitted state is appended to a replay path. A mismatch remains visible as evidence.
+Phase 0 did not append a fitted state to a replay path; a mismatch remained
+visible as evidence. Phase 1 later superseded the presentation policy by
+reserving a distinctly labeled `fitted` endpoint while preserving every
+retained state's origin. It is not described as another replay update.
 
 ### Temporal preservation
 
@@ -209,7 +212,9 @@ behavior while applying the following internal layout rules:
 - linear and binary-logistic nD routes construct a single mathematical panel
   when ``show_loss=False`` instead of retaining an empty loss subplot;
 - provenance subtitles retain source, N/K, estimator ``n_iter_``, and endpoint
-  mismatch information in a shorter form suitable for fixed-width notebooks.
+  information in a shorter form suitable for fixed-width notebooks. Phase 1
+  subsequently replaced visible mismatch endpoints with a distinct fitted
+  reference state.
 
 Regression tests cover the independent 2D parameter blocks, compact replay
 fractions, ellipsis geometry, dynamic input-vector height, dense matrix caps,

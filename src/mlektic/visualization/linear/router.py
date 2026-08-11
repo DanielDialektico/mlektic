@@ -32,6 +32,7 @@ def build_lr_figure(
     frame_duration=80,
     animation_mode="native",
     interpolation_frames=3,
+    equation_location="plot",
     theme=None,
 ):
     """
@@ -61,6 +62,9 @@ def build_lr_figure(
         frame_duration (int, optional): Duration of animation frames in milliseconds. Defaults to 80.
         animation_mode (str, optional): Animation strategy for the 1D builder.
         interpolation_frames (int, optional): Visual intervals between 1D checkpoints.
+        equation_location (str, optional): Location of the evolving 1D hybrid
+            equation: ``"plot"`` preserves the classic layout, while
+            ``"math_band"`` reserves a LaTeX band above the plotting axes.
         theme (str | None, optional): Visualization theme name. Defaults to None.
 
     Returns:
@@ -126,6 +130,7 @@ def build_lr_figure(
             frame_duration=frame_duration,
             animation_mode=animation_mode,
             interpolation_frames=interpolation_frames,
+            equation_location=equation_location,
             theme=theme,
         )
 

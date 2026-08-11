@@ -11,6 +11,7 @@ Its central rule is simple: an animation must say where its states came from. A 
 - Model-aware prediction explanations with mathematical substitution.
 - Original/scaled coefficient views for recognized affine Scikit-learn pipelines.
 - Explicit history provenance, retained checkpoint coordinates, and smoothing metadata.
+- Optional academic and complete tabular derivations with estimator-verified contributions, probabilities, objectives, feature spaces, and conservative regularization semantics.
 - Fluid native and hybrid Plotly animation without presenting visual subframes as optimizer updates.
 - PyTorch architecture, computational graph, training, parameter, activation, forward-pass report, and prediction views.
 - Complete HTML export with explicit Plotly and MathJax dependency choices.
@@ -54,7 +55,7 @@ fig = visualize_lr(
 fig.show()
 ```
 
-`SGDRegressor` supports `partial_fit`, so Mlektic constructs a replay over a clone. The figure identifies the replay, shows N/K, preserves retained source indices, and reports whether the final replay parameters match the supplied fitted estimator.
+`SGDRegressor` supports `partial_fit`, so Mlektic constructs a replay over a clone. Because replay settings cannot reproduce every private detail of the original `fit()`, the final state is the exact supplied estimator and is explicitly labeled `fitted`; earlier states remain labeled as reconstructed replay. The figure shows N/K and preserves both retained coordinates and state origins.
 
 For a non-incremental estimator:
 
@@ -88,6 +89,58 @@ fig.show()
 ```
 
 Binary views connect the linear score, sigmoid probability, fitted class order, and decision. Multiclass views resolve supported Softmax or normalized one-vs-rest probability semantics and retain the estimator's `classes_` ordering.
+
+## Academic mathematical detail
+
+The default `detail="essential"` keeps the compact main figure and full machine-readable contract. Use `"academic"` for a fitted-model derivation or `"complete"` for objective, metrics, preprocessing, regularization, and optimizer caveats:
+
+```python
+academic_linear = visualize_lr(
+    closed_form_model,
+    X,
+    y,
+    detail="complete",
+    feature_names=["study_hours"],
+    sample_index=12,
+)
+
+academic_logistic = visualize_logistic(
+    classifier,
+    X,
+    labels,
+    detail="academic",
+    threshold=0.65,
+    sample_index=12,
+)
+```
+
+The added panel is explicitly a **fitted-model derivation**. It stays fixed while the existing animation shows its replayed or interpolated states, preserving fluid hybrid motion. In one-dimensional linear regression, every detail level uses the same evolving LaTeX fitted equation in a reserved band above the axes; metric cards remain in their side column and the equation never covers the data. The machine-readable calculation is available in every detail level:
+
+```python
+contract = academic_linear.layout.meta["mlektic_math"]
+contract["sample"]["contributions"]
+contract["sample"]["matches_model"]
+contract["objective"]
+contract["regularization"]
+```
+
+For affine preprocessing, Mlektic verifies the transformation and can express coefficients in original units. For a non-affine transformation such as polynomial expansion, it shows transformed-feature mathematics and uses `get_feature_names_out` when available; it does not invent a raw-space coefficient vector.
+
+Linear refers to linearity in the fitted coefficients, not necessarily in the original input. A pipeline with `PolynomialFeatures(2)` fits `theta_0 + theta_1*x + theta_2*x^2`, which is linear in theta but correctly appears as a parabola against the original `x`. Its separate `Interpolation MSE` is empirical evaluation along a declared baseline-to-model parameter path, not gradient-descent history.
+
+For multiclass views, `class_focus` accepts a fitted class label or zero-based index and keeps one probability curve or surface visible. The title reports `1/K`, while the complete fitted class order remains in metadata:
+
+```python
+focused = visualize_logistic(
+    multiclass_model,
+    X_multiclass,
+    y_multiclass,
+    detail="academic",
+    class_focus="setosa",
+)
+```
+
+`show_objective="auto"` enables the empirical objective in academic/complete detail. `show_regularization="auto"` enables its summary in complete detail. Mlektic reports only public penalty settings (`penalty`, `alpha` or inverse-strength `C`, and `l1_ratio`) and labels unknown private normalization or intercept-penalty behavior as not introspected.
 
 ## Prediction explanations
 
@@ -168,7 +221,7 @@ history["loss_display"]
 history["loss_hist"]       # backward-compatible alias of loss_display
 ```
 
-EMA never overwrites the empirical series. A visible Loss/Log-loss metric and the loss curve use the same display values, while metadata records the method and beta.
+EMA never overwrites the empirical series. It is applied to reconstructed replays, where successive updates may be visually noisy. Synthetic interpolation already defines a smooth mathematical path, so its visible empirical MSE or log-loss remains raw and reaches the exact fitted endpoint. Curves and metric cards state `Replay`, `Interpolation`, or `EMA` semantics explicitly; metadata records the quantity, role, smoothing decision, and that it is not an introspected private optimizer loss.
 
 ## Animation controls
 
@@ -182,7 +235,7 @@ Important linear controls include:
 - `max_frames`
 - `frame_step`
 
-`auto` uses hybrid trace-only motion for one-dimensional linear regression and native animation elsewhere. Hybrid subframes improve continuity; semantic labels advance only at retained checkpoints.
+`auto` uses hybrid trace-only motion for one-dimensional linear regression and native animation elsewhere. Hybrid subframes improve continuity; semantic labels advance only at retained checkpoints. The symbolic definition is fixed and the numerical fitted equation is another synchronized LaTeX trace in a reserved math band, so playback does not require layout redraws.
 
 Important shared history controls include:
 
@@ -260,7 +313,7 @@ path = export_figure(
 
 The default inlines Plotly but loads MathJax from a CDN. The Plotly runtime is offline-capable; equation rendering still requires network access. Passing `include_mathjax=False` preserves the LaTeX source but does not guarantee rendered equations. Fully self-contained MathJax is not currently promised.
 
-Current classic width, height, styling, and motion remain the defaults. Optional academic, compact, classroom, accessible, and responsive/reflow formats are planned in [`mejoras`](mejoras/README.md), not exposed as current APIs.
+Current classic width, height, styling, and motion remain the defaults; the documented one-dimensional equation band is shared by all detail levels. Academic mathematical density is opt-in, while compact, classroom, accessible, and responsive/reflow formats remain planned in [`mejoras`](mejoras/README.md).
 
 ## Project architecture
 

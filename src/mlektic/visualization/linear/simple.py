@@ -70,6 +70,15 @@ def _numeric_equation_text(w_values, b_values, position, dec):
     return f"\u0177 = ({weight})x<sub>1</sub> + ({bias})"
 
 
+def _numeric_equation_latex(w_values, b_values, position, dec):
+    """Return the interpolated fitted equation as MathJax-ready LaTeX."""
+    if w_values is None or b_values is None:
+        return r"$\hat{y}=f_t(x_1)$"
+    weight = float(_interpolate_at(w_values, position))
+    bias = float(_interpolate_at(b_values, position))
+    return rf"$\hat{{y}}=({weight:.{dec}f})x_1+({bias:.{dec}f})$"
+
+
 def _metric_card_texts(metrics_hist, position):
     if not metrics_hist:
         return []
@@ -122,18 +131,32 @@ def _build_hybrid_figure(
     x_range,
     y_range,
     y_text,
+    equation_location,
     theme,
 ):
     """Build a trace-only 1D animation with interpolated visual subframes."""
     steps_n = line_history.shape[0]
     positions, frame_names, checkpoint_names = _hybrid_timeline(steps_n, interpolation_frames)
 
+    def formula_annotation():
+        annotation = theta_formula_annotation()
+        if equation_location == "math_band":
+            annotation["y"] = 1.08
+        return annotation
+
     def equation_trace(position):
+        in_math_band = equation_location == "math_band"
         return go.Scatter(
-            x=[float(np.mean(x_range))],
-            y=[y_text],
+            x=[0.5 if in_math_band else float(np.mean(x_range))],
+            y=[0.5 if in_math_band else y_text],
+            xaxis=("x4" if show_loss else "x2") if in_math_band else None,
+            yaxis=("y4" if show_loss else "y2") if in_math_band else None,
             mode="text",
-            text=[_numeric_equation_text(w_values, b_values, position, dec)],
+            text=[
+                _numeric_equation_latex(w_values, b_values, position, dec)
+                if in_math_band
+                else _numeric_equation_text(w_values, b_values, position, dec)
+            ],
             textfont=dict(family=_MATH_TEXT_FONT, size=18, color="white"),
             cliponaxis=False,
             hoverinfo="skip",
@@ -223,7 +246,11 @@ def _build_hybrid_figure(
         )
         fig.add_trace(model_trace(0.0), row=1, col=1)
         fig.add_trace(loss_trace(0.0), row=1, col=2)
-        fig.add_trace(equation_trace(0.0), row=1, col=1)
+        if equation_location == "math_band":
+            fig.add_trace(equation_trace(0.0))
+            fig.data[-1].update(xaxis="x4", yaxis="y4")
+        else:
+            fig.add_trace(equation_trace(0.0), row=1, col=1)
         fig.add_trace(metric_trace(0.0), row=1, col=3)
 
         frames = []
@@ -242,8 +269,12 @@ def _build_hybrid_figure(
             )
         fig.frames = frames
         fig.update_layout(
-            **get_base_layout(title=title, margin_t=170, theme=theme),
-            annotations=[theta_formula_annotation()],
+            **get_base_layout(
+                title=title,
+                margin_t=145 if equation_location == "math_band" else 170,
+                theme=theme,
+            ),
+            annotations=[formula_annotation()],
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
             legend2=dict(orientation="v", **get_legend_props(x=0.85, y=0.05, theme=theme)),
             sliders=_hybrid_sliders(checkpoint_names, theme=theme),
@@ -256,6 +287,13 @@ def _build_hybrid_figure(
         fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
         fig.update_xaxes(visible=False, range=[0, 1], row=1, col=3)
         fig.update_yaxes(visible=False, range=[0, 1], row=1, col=3)
+        if equation_location == "math_band":
+            fig.update_layout(
+                xaxis4=dict(domain=[0.0, 1.0], range=[0, 1], visible=False, anchor="y4", fixedrange=True),
+                yaxis4=dict(domain=[0.91, 1.0], range=[0, 1], visible=False, anchor="x4", fixedrange=True),
+            )
+            for axis_name in ("yaxis", "yaxis2", "yaxis3"):
+                fig.layout[axis_name].domain = [0.0, 0.86]
         return fig
 
     fig = go.Figure()
@@ -270,6 +308,8 @@ def _build_hybrid_figure(
     )
     fig.add_trace(model_trace(0.0))
     fig.add_trace(equation_trace(0.0))
+    if equation_location == "math_band":
+        fig.data[-1].update(xaxis="x2", yaxis="y2")
     fig.frames = [
         go.Frame(
             name=name,
@@ -279,14 +319,24 @@ def _build_hybrid_figure(
         for name, position in zip(frame_names, positions)
     ]
     fig.update_layout(
-        **get_base_layout(title=title, margin_t=160, theme=theme),
-        annotations=[theta_formula_annotation()],
+        **get_base_layout(
+            title=title,
+            margin_t=140 if equation_location == "math_band" else 160,
+            theme=theme,
+        ),
+        annotations=[formula_annotation()],
         legend=get_legend_props(theme=theme),
         xaxis=dict(title="x\u2081", range=x_range),
         yaxis=dict(title="\u0177", range=y_range),
         sliders=_hybrid_sliders(checkpoint_names, theme=theme),
         updatemenus=get_updatemenus(frame_duration, theme=theme),
     )
+    if equation_location == "math_band":
+        fig.update_layout(
+            xaxis2=dict(domain=[0.0, 1.0], range=[0, 1], visible=False, anchor="y2", fixedrange=True),
+            yaxis2=dict(domain=[0.91, 1.0], range=[0, 1], visible=False, anchor="x2", fixedrange=True),
+        )
+        fig.layout.yaxis.domain = [0.0, 0.86]
     return fig
 
 
@@ -310,6 +360,7 @@ def build_simple_lr_figure(
     frame_duration=80,
     animation_mode="native",
     interpolation_frames=3,
+    equation_location="plot",
     theme=None,
 ):
     """
@@ -321,13 +372,6 @@ def build_simple_lr_figure(
     Legacy mode:
       - Provide w_hist,b_hist => plot uses y = w*x + b (only correct for pure linear model in original space)
     """
-    # --- enforce inside the library ---
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     x1 = np.asarray(x1).ravel()
     y = np.asarray(y).ravel()
 
@@ -485,6 +529,7 @@ def build_simple_lr_figure(
             x_range=x_range,
             y_range=[y_range[0], y_max + 0.32 * y_span],
             y_text=y_max + 0.22 * y_span,
+            equation_location=equation_location,
             theme=theme,
         )
 

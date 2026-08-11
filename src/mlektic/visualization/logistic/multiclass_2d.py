@@ -139,12 +139,6 @@ def build_multiclass_2d_logistic_figure(
     theme=None,
 ):
     """Build the 2D multiclass logistic-regression probability surfaces."""
-    if show_loss and history_kind != "iterative":
-        if strict_loss:
-            raise ValueError("show_loss=True is only allowed for replayed incremental histories.")
-        show_loss = False
-        loss_hist = None
-
     x1 = np.asarray(x1).ravel()
     x2 = np.asarray(x2).ravel()
     y = np.asarray(y).ravel()

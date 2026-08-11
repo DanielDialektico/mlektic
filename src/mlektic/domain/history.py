@@ -22,9 +22,12 @@ class HistoryMetadata(TypedDict, total=False):
     displayed_steps: int
     step_indices: NDArray[np.int64]
     displayed_step_indices: NDArray[np.int64]
+    state_origins: NDArray[np.str_]
+    displayed_state_origins: NDArray[np.str_]
     alpha_values: NDArray[np.float64]
     final_state_matches_estimator: bool | None
     display_space: str
+    coefficient_space: str
     smoothing: dict[str, Any]
     decimation: dict[str, Any]
     warnings: list[dict[str, str]]
@@ -40,6 +43,7 @@ class LinearHistoryPayload(TypedDict, total=False):
     loss_raw: NDArray[np.float64]
     loss_display: NDArray[np.float64]
     step_indices: NDArray[np.int64]
+    state_origins: NDArray[np.str_]
     alpha_values: NDArray[np.float64]
     metadata: HistoryMetadata
     grid: dict[str, NDArray[np.float64]]
@@ -50,6 +54,7 @@ class LinearHistoryPayload(TypedDict, total=False):
     w_hist_learned: NDArray[np.float64] | None
     b_hist_learned: NDArray[np.float64] | None
     display_space: str
+    coefficient_space: str
 
 
 class LogisticHistoryPayload(TypedDict, total=False):
@@ -64,6 +69,7 @@ class LogisticHistoryPayload(TypedDict, total=False):
     loss_raw: NDArray[np.float64]
     loss_display: NDArray[np.float64]
     step_indices: NDArray[np.int64]
+    state_origins: NDArray[np.str_]
     alpha_values: NDArray[np.float64]
     metadata: HistoryMetadata
     grid: dict[str, NDArray[np.float64]]
@@ -75,3 +81,6 @@ class LogisticHistoryPayload(TypedDict, total=False):
     w_hist_learned: NDArray[np.float64] | None
     b_hist_learned: NDArray[np.float64] | None
     display_space: str
+    coefficient_space: str
+    probability_link: str
+    interpolation_target: str
