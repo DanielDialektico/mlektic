@@ -27,6 +27,19 @@ Plotly scenes redraw per frame and can be more expensive than two-dimensional
 traces. ``frame_duration`` changes speed, not checkpoint count. If a lesson view
 shows only data after re-execution, select its Model or Complete stage.
 
+Neural program coverage
+=======================
+
+The block view captures an execution path, not every path a dynamic PyTorch
+program may take. FX preserves supported functional operations and static
+branches; eager hooks preserve actually executed module calls but may expose an
+``Uncaptured operation`` for arbitrary tensor code. Custom autograd,
+distributed or quantized wrappers, opaque native extensions, and compiler
+internals do not yet have guaranteed exact semantic expansion. Generic blocks
+remain visible and are explicitly labeled instead of receiving speculative
+formulas. Large renderings collapse middle nodes only after the complete
+intermediate graph has been captured. See :doc:`neural_execution_graphs`.
+
 Export
 ======
 

@@ -17,13 +17,30 @@ the actual training process.
    :maxdepth: 2
    :caption: Contents
 
+   introduction
+   installation
    getting_started
+   linear_lesson
+   logistic_lesson
+   neural_lesson
+   neural_execution_graphs
    history_semantics
    mathematical_parity
+   mathematical_conventions
+   animation_performance
+   visual_design
+   themes_formats_sizes
+   model_hyperparameters
+   prediction_explanations
+   export
+   gallery
+   compatibility
+   limitations
    architecture
    api_reference
    visualization
    advanced
+   contributing_visual_qa
    changelog
 
 Indices

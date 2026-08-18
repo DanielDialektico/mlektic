@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Added `visualize_nn_hyperparameters()` and `view="hyperparameters"`, an
+  instance-based PyTorch contract that lists every detected effective module,
+  optimizer-group, objective, and scheduler setting without row truncation,
+  pairs each value with its mathematical role and definition, and marks
+  execution-only switches as non-mathematical. The neural recorder can now
+  retain optional scheduler configuration for later lessons.
+- Added separate neural fitted-prediction stages for Input, Substitution,
+  Output, and Reset; ``parameter_state="training_replay"`` preserves the
+  historical checkpoint animation as an explicit, distinct mode.
+- Added an optional synchronized recorded-loss panel to dense neural graph
+  animations, including the selected loss name and explicitly non-evaluated
+  hollow markers for perceptual interpolation frames.
+- Added ``visualize_nn_loss_landscape()`` for exact batch-loss evaluation on a
+  disclosed affine two-direction parameter slice with a projected recorded
+  optimization trajectory; it never labels the slice as the full landscape.
+- Added ``visualize_nn_backpropagation()`` and ``view="backpropagation"`` with
+  dense-layer chain-rule equations, globally comparable recorded layer
+  gradient norms, adjacent parameter-update norms, and current loss, while
+  distinguishing gradient computation from optimizer updates.
+- Added ``math_font_scale`` to neural public figures as an additive way to
+  enlarge LaTeX annotations whose size does not change with Plotly viewport
+  zoom.
+- Added a versioned renderer-independent neural execution graph, dual FX/eager
+  capture with explicit provenance, semantic descriptors, and native Plotly
+  block rendering for branches, merges, shared calls, multi-I/O, embeddings,
+  recurrent networks, attention, Transformers, and transparent generic blocks.
+- Added public `inspect_nn()`, `visualize_nn_blocks()`, opt-in
+  `architecture_mode="blocks"` / `view="blocks"`, and
+  `register_neural_descriptor()` extension APIs while preserving the legacy
+  architecture view as the default.
+- Added neural recorder history schema version 2 with independent buffers,
+  effective optimizer groups, optional optimizer-state norms, temporal phase
+  declarations, and buffer-aware historical replay.
+- Expanded the neural QA notebook with a complete large-network matrix covering
+  architecture, execution blocks, dense graph, prediction substitution,
+  performance, weights, activations, backpropagation, and loss geometry, in
+  addition to the existing public Plotly routes, synthetic and real datasets,
+  and complex graph structures.
+
 - Added the Phase-5 English documentation architecture: introduction,
   installation, rigorous linear/logistic/neural lessons, mathematical
   conventions, animation/performance, themes/formats/sizes, prediction
@@ -61,6 +100,94 @@ All notable changes to this project will be documented in this file.
 - Added a LaTeX-annotated architecture diagram with tensor dimensions, semantic layer shapes, formulas, configured hyperparameters, and compact summaries for large models.
 - Added an animated mathematical network graph with one stable frame per training step, true global min/max scales for node outputs and edge weights by default, optional relative node contrast and forward-signal edge modes, simultaneous wine-red backpropagation overlays, final model tensors, and readable hover data without raw LaTeX syntax.
 - Added a compact 2-by-2 learning-performance grid for loss and three independent metrics, automatic classification/regression metric inference from predictions and targets, and explicit empty metric panels when a history contains only loss.
+- Added opt-in neural graph ``updates`` and ``hybrid`` evolution modes with
+  signed parameter-update halos, previous-checkpoint or initial-state
+  references, truthful global or explicit frame-normalized scales, top-k edge
+  emphasis, update/gradient norm summaries, and smooth perceptual subframes
+  that remain distinct from recorded optimizer checkpoints. The established
+  absolute graph remains the default.
+- Positioned neural update diagnostics in a dedicated band below the semantic
+  timeline, with independent plotting coordinates so animated values remain
+  legible without covering equations, nodes, edges, or color scales.
+- Preserved neural activation heatmaps and mathematical color scales under
+  additive themes, including ``accessible``; neural nodes are no longer
+  restyled as generic data markers. The signal-color QA case now uses smooth
+  perceptual subframes across every recorded checkpoint.
+- Added a globally scaled forward-activity glow to every dense neural graph;
+  signed color plus thickness and opacity encode
+  ``s_ji = theta_ji * a_i`` independently of the opt-in parameter-update halo.
+  The network band is vertically bounded so upper nodes cannot overlap its
+  mathematical encoding legend.
+- Added explicit dense-replay dropout disclosure: dropout remains visible in
+  the semantic execution graph, while dense replay states that historical
+  stochastic masks are not recorded and that activity glow is not a dropout
+  encoding.
+
+### Changed
+- Replaced the obsolete README neural quick start with a complete recorder-v2
+  workflow and current calls for architecture, graph replay, training,
+  parameter evolution, fitted prediction, backpropagation, and effective
+  hyperparameter mathematics. The guide now states capture timing, view
+  separation, bounded-display semantics, and topology-routing guarantees.
+- Separated neural training observation from fitted prediction completely:
+  training replay now exposes only Play/Pause plus checkpoint navigation,
+  parameter/signal equations, and no fixed-query/result cards or duplicated
+  prediction; final prediction exposes only Input, numerical Substitution,
+  Output, and Reset stages.
+- Replaced the generic neural Substitution card with a fitted numerical
+  substitution that multiplies actual query values by the corresponding fitted
+  coefficients and reports the resulting first-unit pre-activation.
+- Allocated neural forward equations by rendered line count and moved prediction
+  controls to a reserved upper-left row, preventing multiline dense equations,
+  activation formulas, and stage cards from overlapping.
+- Replaced proportional neural forward-row spacing with an explicit MathJax
+  baseline pitch and inter-layer corridor. Four-row Linear expansions now keep
+  at least 0.08 paper coordinates before the following activation; replay uses
+  its available upper band, and only genuinely dense layouts fall back from
+  14-point to 13-point mathematics.
+- Bounded any single expanded Linear derivation to four rendered rows; larger
+  layers retain the exact computed vector but use the symbolic matrix form, so
+  a deep lesson cannot consume the spacing reserved for subsequent layers.
+- Increased the canonical large dense graph from five to eight sampled neurons
+  per layer and made node diameter adapt to visible density, while retaining
+  complete dimensions and sampled-count metadata.
+- Split convolutional pedagogy explicitly between the complete execution-block
+  topology and a bounded dense-classifier replay seeded by the actual first
+  ``Linear`` input; the latter discloses omitted spatial modules in the figure
+  and metadata.
+- Preserved builder-reserved 12 px neural Play/Pause controls under every
+  additive theme, including ``classroom``, instead of allowing theme typography
+  to enlarge the buttons.
+- Reduced the two overlaid neural loss-slice checkpoint labels from 17 px to
+  15 px while preserving the surrounding title, axes, colorbar, and secondary
+  explanatory typography.
+- Increased spacing between graph activity/update legends, moved recorded
+  objective headings safely inside their panels, and separated prediction
+  controls from input and substitution headings.
+- Made the per-edge recorded backpropagation overlay independently configurable
+  through ``show_backpropagation`` and disabled it by default to reduce animated
+  trace count. The neural QA gallery includes matched cases with and without it.
+- Enlarged legacy neural architecture equations and hyperparameter labels,
+  allocated parameter-evolution rows by rendered matrix height, increased the
+  loss/update panel height, and labeled the final recorded loss directly on the
+  three-dimensional loss slice without claiming convergence.
+- Standardized neural graph header, colorbar, slider, and panel spacing;
+  increased essential mathematical type; centered panel headings; and kept
+  large-network readability through semantic/tensor truncation instead of
+  shrinking all formulas.
+- Redesigned the dedicated backpropagation animation with readable per-layer
+  gradient, update, relative-update, loss, and loss-change values and slower
+  default playback. Its lines remain redundant encodings, not the sole lesson.
+- Reframed ``explain_nn_prediction()`` as an explicit Input / Substitution /
+  Output view and added a winning-class result only when BCE or cross-entropy
+  semantics justify it.
+- Replaced the verbose middle summary in collapsed execution graphs with a
+  compact visible operation count while retaining complete hover provenance.
+- Moved learning-performance metric summaries farther above subplot titles and
+  increased the upper margin.
+- Rebalanced parameter-evolution typography and vertical spacing, replacing
+  the disconnected floating vertical ellipsis with a plain-language count of
+  omitted intermediate tensors.
 - Moved neural parameter and forward-pass animation controls to a reserved upper-left area so buttons never cover the displayed equations.
 - Fixed the mathematical-network parameter readout so weights and the training step update through animation traces without forcing a flickering redraw, and separated the title from the composed-function equation.
 - Added explicit exact-zero and inactive-ReLU hover labels, inset the animated step readout, softened node outlines, and moved mathematical colorbar titles above their scales with wider outer margins.
@@ -83,6 +210,78 @@ All notable changes to this project will be documented in this file.
 - Extensive local test cases matching notebook scenarios, including large multivariable tests (100 and 150 variables).
 
 ### Fixed
+- Reserved a matrix-height row for bounded neural-weight omission notices, so
+  the omitted-parameter count cannot cross either adjacent matrix in any
+  animation frame. Crowded backpropagation readouts now alternate between two
+  fixed rows, while omitted-layer scope disclosure occupies a separate lower
+  caption below every gradient and update value.
+- Replaced unbounded single-line configuration captions in legacy neural
+  architecture figures with semantic multiline module columns. First and last
+  captions anchor inward, classroom typography remains readable, and complete
+  PyTorch configuration values remain available on hover.
+- Rebuilt neural prediction staging around a fixed paper-coordinate section
+  contract. The initial render is now Reset; Input, Substitution, and Output
+  reveal cumulative fixed shapes whose borders are independent of asynchronous
+  MathJax measurement. Summary vectors use at most two representative
+  coordinates and three decimals, while the substitution preview uses a bounded
+  three-row first-term / final-term / bias-and-result contract. Detailed vectors
+  use a precision-aware width budget and aligned layer-owned formula blocks, so wide
+  layers, deep networks, high decimal precision, themes, and public size
+  presets cannot push equations outside their derivation column.
+- Assigned neural graph content to invariant semantic rows for the model,
+  parameter snapshot, training phase, optional backpropagation equation,
+  heatmap legend, activity glow, update halo, and scope disclosure. Dynamic
+  parameter/step traces use an invisible graph axis that spans every header
+  row while node/edge content retains its bounded network domain. This keeps
+  all graph variants aligned without placing the forward equation beside
+  heatmap notation or clipping the evolving parameter snapshot when a loss
+  panel is present.
+- Reserved a 0.065 paper-coordinate clearance between the update-halo
+  explanation and the uppermost node in every update-aware dense graph,
+  including layouts with synchronized loss or diagnostics panels.
+- Made neural loss-slice playback progressive: the initial state contains only
+  its checkpoint marker, the projected path is revealed by frames, and the
+  fixed 15 px final-loss annotation appears only at the recorded endpoint. The
+  surface can no longer occlude or progressively shrink the final label, and a
+  disclosed visual-only z-offset prevents WebGL from hiding the endpoint marker.
+- Derived dense-graph node diameter from actual rendered vertical separation,
+  leaving a real inter-node gap even when optional lower panels compress the
+  graph. Numeric colorbar ticks now remain 11 px under every theme and size.
+- Routed graph requests to the complete execution topology whenever dense
+  replay would omit convolution, normalization, pooling, Dropout, tensor
+  operations, shared calls, or branches. Execution formulas alternate above
+  and below successive nodes, so CNN stages remain complete and their notation
+  cannot collide.
+- Prevented the generic lesson Data/Model/Objective/Complete menu from being
+  added to neural performance figures; their four plots now remain visible and
+  only the training Play/Pause controls and checkpoint slider are exposed.
+- Made mathematical-architecture node dimensions density-aware for collapsed
+  deep networks and replaced free-floating arrow glyphs with boundary-aware
+  connectors. Arrow shafts and heads now occupy only the corridor between
+  modules and never enter their semantic shapes.
+- Increased the rendered gap between tall neural weight matrices and their
+  matching bias vectors, and moved dropout/CNN scope disclosures below the
+  activity-glow definition rather than alongside it.
+- Fixed the multi-head-attention equation separator so MathJax receives
+  ``\quad head_i`` instead of the invalid raw command ``\quadhead_i``.
+- Expanded the mathematical safety padding of neural Substitution and Output
+  cards to 18 px and lowered the first layer in short prediction diagrams so
+  MathJax remains inside its borders without crowding the Input vector.
+- Fixed static neural prediction reports and reduced-motion alternatives so
+  removing staged controls first selects the complete Output explanation
+  instead of leaving an input-only figure under a three-stage title.
+- Contained the complete neural prediction output inside its bordered card and
+  reserved a separate lower row for the highlighted final prediction so it no
+  longer collides with the last activation substitution.
+- Lifted multi-row neural weight matrices above their matching bias vectors
+  using pair-aware rendered spacing, preventing MathJax matrix descenders from
+  crowding the bias notation without moving the remaining parameter rows.
+- Separated neural execution-block equations from node captions with a
+  pixel-stable offset, and moved formulas to hover for dense parallel columns
+  where an inline layout cannot remain collision-free.
+- Replaced raw LaTeX in neural block hover cards with readable Unicode/plain
+  mathematics, wrapped long attention/configuration details, and restored all
+  observed output shapes for eager multi-output modules.
 - Added theme-aware high-contrast boxes and borders to plotted prediction-value
   annotations (`y_hat` and `p_hat`) in linear, binary-logistic, multiclass, 2D,
   and 3D prediction explainers so values remain legible over model geometry.

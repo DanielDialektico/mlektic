@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -13,7 +14,8 @@ NOTEBOOKS = ROOT / "notebooks"
 
 def markdown(text: str):
     """Create a Markdown cell."""
-    return nbf.v4.new_markdown_cell(text.strip())
+    source = text.strip()
+    return nbf.v4.new_markdown_cell(source, id=_cell_id("markdown", source))
 
 
 def code(source: str, *, case_id: str | None = None, tags: list[str] | None = None):
@@ -23,7 +25,20 @@ def code(source: str, *, case_id: str | None = None, tags: list[str] | None = No
         metadata["mlektic_case_id"] = case_id
     if tags:
         metadata["tags"] = tags
-    return nbf.v4.new_code_cell(source.strip(), metadata=metadata, execution_count=None, outputs=[])
+    source = source.strip()
+    stable_key = case_id or source
+    return nbf.v4.new_code_cell(
+        source,
+        metadata=metadata,
+        execution_count=None,
+        outputs=[],
+        id=_cell_id("code", stable_key),
+    )
+
+
+def _cell_id(kind: str, value: str) -> str:
+    """Return a reproducible Jupyter cell identifier."""
+    return hashlib.sha256(f"{kind}:{value}".encode()).hexdigest()[:12]
 
 
 def setup(imports: str) -> list:
@@ -344,8 +359,8 @@ model, X, history = torch_xor_case()
         ),
         (
             "NN-PREDICTION",
-            "forward-pass substitutions evolving with retained parameter snapshots",
-            "display(explain_nn_prediction(model,X[1],history=history,max_frames=6,theme='academic'))",
+            "fitted-model input, numerical substitution, and output stages",
+            "display(explain_nn_prediction(model,X[1],history=history,parameter_state='final',theme='academic'))",
         ),
         (
             "NN-RELU-ADAM",
@@ -365,6 +380,617 @@ model, X, history = torch_xor_case()
         "PyTorch architecture, genuine recorded training, parameters, activations, graph semantics, and predictions.",
         cells,
         "qa/qa_03_neural.ipynb",
+    )
+
+
+def build_neural_structures() -> None:
+    imports = r"""
+from IPython.display import display
+import numpy as np
+import torch
+from sklearn.datasets import load_breast_cancer, load_digits, load_iris
+from sklearn.preprocessing import StandardScaler
+from mlektic import (TorchTrainingRecorder, explain_nn_prediction,
+                     register_neural_descriptor, visualize_nn,
+                     visualize_nn_architecture, visualize_nn_blocks,
+                     visualize_nn_backpropagation, visualize_nn_graph,
+                     visualize_nn_hyperparameters,
+                     visualize_nn_loss_landscape, visualize_nn_training,
+                     visualize_nn_weights)
+from notebooks._support import case_heading, torch_xor_case
+
+torch.manual_seed(17)
+
+class ResidualNet(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.first = torch.nn.Linear(4, 4)
+        self.activation = torch.nn.ReLU()
+        self.second = torch.nn.Linear(4, 4)
+    def forward(self, x):
+        return x + self.second(self.activation(self.first(x)))
+
+class SharedNet(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.shared = torch.nn.Linear(4, 4)
+    def forward(self, x):
+        return self.shared(x) + self.shared(x)
+
+class ConvNet(torch.nn.Module):
+    def __init__(self, classes=3, in_channels=3):
+        super().__init__()
+        self.features = torch.nn.Sequential(
+            torch.nn.Conv2d(in_channels, 4, 3, padding=1),
+            torch.nn.BatchNorm2d(4),
+            torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2),
+        )
+        self.classifier = torch.nn.Linear(4 * 4 * 4, classes)
+    def forward(self, x):
+        return self.classifier(torch.flatten(self.features(x), 1))
+
+class EmbeddingNet(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.embedding = torch.nn.Embedding(20, 6)
+        self.output = torch.nn.Linear(6, 3)
+    def forward(self, token_ids):
+        return self.output(self.embedding(token_ids).mean(dim=1))
+
+class SiameseNet(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.encoder = torch.nn.Linear(4, 3)
+        self.head = torch.nn.Linear(6, 2)
+    def forward(self, left, right):
+        left_state = torch.relu(self.encoder(left))
+        right_state = torch.relu(self.encoder(right))
+        score = self.head(torch.cat((left_state, right_state), dim=-1))
+        return score, left_state, right_state
+
+class DynamicBranch(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.positive = torch.nn.Linear(4, 2)
+        self.negative = torch.nn.Linear(4, 2)
+    def forward(self, x):
+        return self.positive(x) if x.sum().item() > 0 else self.negative(x)
+
+def record_case(model, X, y, loss_fn, *, task, steps=10, learning_rate=0.03):
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    recorder = TorchTrainingRecorder(
+        model,
+        optimizer=optimizer,
+        loss_fn=loss_fn,
+        capture_optimizer_state=True,
+    )
+    for step in range(steps):
+        optimizer.zero_grad()
+        prediction = model(X)
+        loss = loss_fn(prediction, y)
+        loss.backward()
+        optimizer.step()
+        recorder.record(
+            step + 1,
+            loss=loss,
+            predictions=prediction,
+            targets=y,
+            task=task,
+            capture_phase="post_step",
+        )
+    recorder.close()
+    return model, X, recorder.to_history()
+
+# Small synthetic binary classification.
+xor_model, xor_X, xor_history = torch_xor_case(steps=10)
+
+# Synthetic nonlinear regression.
+generator = torch.Generator().manual_seed(17)
+reg_X = torch.rand((96, 2), generator=generator) * 4.0 - 2.0
+reg_y = (0.7 * reg_X[:, :1] ** 2 - 0.4 * reg_X[:, 1:] + torch.sin(reg_X[:, :1]))
+reg_model, reg_X, reg_history = record_case(
+    torch.nn.Sequential(torch.nn.Linear(2, 10), torch.nn.Tanh(), torch.nn.Linear(10, 1)),
+    reg_X,
+    reg_y,
+    torch.nn.MSELoss(),
+    task="regression",
+    steps=12,
+)
+
+# Real Iris multiclass classification (bundled with Scikit-learn; no download).
+iris = load_iris()
+iris_X = torch.tensor(StandardScaler().fit_transform(iris.data), dtype=torch.float32)
+iris_y = torch.tensor(iris.target, dtype=torch.long)
+iris_model, iris_X, iris_history = record_case(
+    torch.nn.Sequential(torch.nn.Linear(4, 12), torch.nn.ReLU(), torch.nn.Linear(12, 3)),
+    iris_X,
+    iris_y,
+    torch.nn.CrossEntropyLoss(),
+    task="classification",
+    steps=12,
+)
+
+# Real breast-cancer binary classification.
+cancer = load_breast_cancer()
+cancer_X = torch.tensor(StandardScaler().fit_transform(cancer.data), dtype=torch.float32)
+cancer_y = torch.tensor(cancer.target[:, None], dtype=torch.float32)
+cancer_model, cancer_X, cancer_history = record_case(
+    torch.nn.Sequential(
+        torch.nn.Linear(cancer_X.shape[1], 16),
+        torch.nn.ReLU(),
+        torch.nn.Dropout(0.1),
+        torch.nn.Linear(16, 1),
+        torch.nn.Sigmoid(),
+    ),
+    cancer_X,
+    cancer_y,
+    torch.nn.BCELoss(),
+    task="classification",
+    steps=10,
+)
+
+# Real handwritten digits represented as 8x8 grayscale images.
+digits = load_digits()
+digits_X = torch.tensor(digits.images[:240, None] / 16.0, dtype=torch.float32)
+digits_y = torch.tensor(digits.target[:240], dtype=torch.long)
+digits_model, digits_X, digits_history = record_case(
+    ConvNet(classes=10, in_channels=1),
+    digits_X,
+    digits_y,
+    torch.nn.CrossEntropyLoss(),
+    task="classification",
+    steps=8,
+    learning_rate=0.02,
+)
+"""
+    cells = setup(imports)
+    cells.append(
+        markdown(
+            """
+This is the exhaustive neural figure gallery. It invokes every public Plotly
+figure route with progressively richer models and both synthetic and real
+datasets. The real datasets are bundled with Scikit-learn and require no
+network download. Hover blocks to inspect shapes, parameters, buffers,
+hyperparameters, readable mathematics, and capture provenance.
+
+Training fixtures use short deterministic full-batch runs to create genuine
+recorded states for visual inspection. They are not train/test benchmarks and
+must not be interpreted as generalization estimates.
+
+`build_nn_math_report`, `display_nn_math_report`, and `export_nn_math_report`
+produce HTML reports rather than Plotly figures, so they remain covered by the
+report tests and the dedicated neural documentation instead of this figure
+gallery.
+"""
+        )
+    )
+    cells.append(markdown("## Every `visualize_nn` figure route — synthetic XOR"))
+    routed_cases = [
+        (
+            "NN-ROUTER-ARCHITECTURE",
+            "the generic router's legacy architecture view",
+            "display(visualize_nn(xor_model,xor_X[:1],history=xor_history,view='architecture',theme='academic'))",
+        ),
+        (
+            "NN-ROUTER-BLOCKS",
+            "the generic router's execution-block view",
+            "display(visualize_nn(xor_model,xor_X[:1],view='blocks',theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-ROUTER-HYPERPARAMETERS",
+            "every effective model, optimizer-group, objective, and scheduler hyperparameter with its PyTorch-aligned mathematical definition",
+            "hyper_model=torch.nn.Sequential(torch.nn.Linear(4,8,bias=False),torch.nn.BatchNorm1d(8,eps=1e-4,momentum=0.2),torch.nn.LeakyReLU(0.15),torch.nn.Dropout(0.25),torch.nn.Linear(8,3))\nhyper_optimizer=torch.optim.Adam(hyper_model.parameters(),lr=0.002,betas=(0.8,0.95),weight_decay=0.01)\nhyper_objective=torch.nn.CrossEntropyLoss(label_smoothing=0.05)\nhyper_scheduler=torch.optim.lr_scheduler.StepLR(hyper_optimizer,step_size=3,gamma=0.4)\ndisplay(visualize_nn_hyperparameters(hyper_model,optimizer=hyper_optimizer,loss_fn=hyper_objective,scheduler=hyper_scheduler,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-ROUTER-GRAPH",
+            "the generic router's fluid hybrid animation with loss but without the optional backpropagation overlay",
+            "display(visualize_nn(xor_model,xor_X[1],history=xor_history,view='graph',max_frames=None,frame_duration=360,evolution_mode='hybrid',update_reference='previous',update_scale='global',show_update_panel=False,show_loss_panel=True,show_backpropagation=False,top_k_updates=6,interpolation_frames=3,math_font_scale=1.15))",
+        ),
+        (
+            "NN-ROUTER-TRAINING",
+            "the generic router's recorded loss and metric panels",
+            "display(visualize_nn(xor_model,history=xor_history,view='training',max_frames=6,theme='academic'))",
+        ),
+        (
+            "NN-ROUTER-WEIGHTS",
+            "the generic router's evolving parameter matrices",
+            "display(visualize_nn(xor_model,history=xor_history,view='weights',max_frames=6,theme='academic'))",
+        ),
+        (
+            "NN-ROUTER-ACTIVATIONS",
+            "the generic router's recorded activation vectors",
+            "display(visualize_nn(xor_model,xor_X[:1],history=xor_history,view='activations',max_frames=6,theme='accessible'))",
+        ),
+        (
+            "NN-ROUTER-BACKPROPAGATION",
+            "the generic router's chain-rule view with recorded layer-gradient norms",
+            "display(visualize_nn(xor_model,xor_X[:1],history=xor_history,view='backpropagation',max_frames=6,theme='academic',math_font_scale=1.2))",
+        ),
+        (
+            "NN-TRAINING-QUERY-REPLAY",
+            "an independent replay of recorded parameter and signal evolution without prediction cards",
+            "display(explain_nn_prediction(xor_model,xor_X[1],history=xor_history,max_frames=6,parameter_state='training_replay',theme='academic'))",
+        ),
+        (
+            "NN-GALLERY-FORWARD-SUBSTITUTION",
+            "a final-model input, numerical substitution, and output lesson for one XOR observation",
+            "display(explain_nn_prediction(xor_model,xor_X[1],history=xor_history,parameter_state='final',theme='academic',size='wide'))",
+        ),
+        (
+            "NN-GALLERY-GRAPH-SIGNAL",
+            "smooth relative-activation contrast with forward-signal edge coloring",
+            "display(visualize_nn_graph(xor_model,xor_X[1],xor_history,max_frames=None,frame_duration=360,interpolation_frames=3,node_color_mode='relative',edge_color_mode='signal',theme='accessible'))",
+        ),
+        (
+            "NN-GALLERY-REPORT-FIGURE",
+            "a static reduced-motion prediction figure for publication",
+            "display(explain_nn_prediction(xor_model,xor_X[2],history=xor_history,format='report',reduced_motion=True,size='wide'))",
+        ),
+    ]
+    for item in routed_cases:
+        cells.extend(case(*item))
+
+    cells.append(
+        markdown("""
+## Dense graph performance: without and with recorded backpropagation
+
+The default graph omits the per-edge gradient overlay. This reduces animated
+trace count while preserving forward activity, parameters, parameter updates,
+and optional loss. The second case explicitly enables the dotted reverse-mode
+gradient traces. Compare playback in the same notebook environment.
+""")
+    )
+    cells.extend(
+        case(
+            "NN-GRAPH-WITHOUT-BACKPROP",
+            "the default fluid graph with evolving parameters and loss but without per-edge gradient traces",
+            "display(visualize_nn_graph(xor_model,xor_X[1],xor_history,max_frames=None,frame_duration=360,interpolation_frames=3,show_backpropagation=False,show_loss_panel=True,theme='academic',size='wide'))",
+        )
+    )
+    cells.extend(
+        case(
+            "NN-GRAPH-WITH-BACKPROP",
+            "the same graph with optional recorded reverse-mode gradients",
+            "display(visualize_nn_graph(xor_model,xor_X[1],xor_history,max_frames=None,frame_duration=520,interpolation_frames=3,show_backpropagation=True,theme='academic',size='wide'))",
+        )
+    )
+
+    cells.append(
+        markdown("""
+## Parameter-update evolution modes
+
+The classic `absolute` graph remains the default. The following opt-in views
+make small parameter changes perceptually visible without replacing their
+mathematical values. A signed halo encodes the actual difference between the
+current parameters and the selected reference; its width and opacity encode
+the magnitude. Dashed edges continue to represent recorded gradients.
+
+`update_scale="global"` keeps magnitudes comparable throughout the animation.
+`update_scale="frame"` deliberately renormalizes every frame for contrast, so
+its color intensity must not be compared across time. Interpolated frames make
+motion smoother but are labeled as perceptual states, not optimizer steps; the
+slider contains only recorded checkpoints.
+""")
+    )
+    update_cases = [
+        (
+            "NN-GRAPH-HYBRID-UPDATES",
+            "absolute weights plus globally comparable signed update halos and smooth perceptual motion",
+            "display(visualize_nn_graph(xor_model,xor_X[1],xor_history,max_frames=None,frame_duration=360,evolution_mode='hybrid',update_reference='previous',update_scale='global',top_k_updates=6,interpolation_frames=3,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-GRAPH-CUMULATIVE-UPDATES",
+            "parameter displacement from the initial checkpoint without the absolute-weight color encoding",
+            "display(visualize_nn_graph(xor_model,xor_X[2],xor_history,max_frames=6,frame_duration=320,evolution_mode='updates',update_reference='initial',update_scale='global',interpolation_frames=2,theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-GRAPH-FRAME-NORMALIZED-UPDATES",
+            "maximum per-frame contrast with an explicit warning that intensity is not comparable across time",
+            "display(visualize_nn_graph(xor_model,xor_X[3],xor_history,max_frames=6,frame_duration=320,evolution_mode='updates',update_reference='previous',update_scale='frame',top_k_updates=4,theme='accessible',size='wide'))",
+        ),
+    ]
+    for item in update_cases:
+        cells.extend(case(*item))
+
+    cells.append(
+        markdown("""
+## Objective geometry and backpropagation
+
+The surface below is an exact evaluation of the selected loss on one affine
+two-direction slice through parameter space. It is not the full
+high-dimensional landscape. The recorded optimization path is projected onto
+that plane. The backpropagation figure separately shows the canonical chain
+rule and scales the backward paths by genuine recorded layer-gradient norms.
+""")
+    )
+    cells.extend(
+        case(
+            "NN-LOSS-LANDSCAPE-XOR",
+            "an exact BCELoss slice with the recorded XOR path projected onto it",
+            "display(visualize_nn_loss_landscape(xor_model,xor_X,torch.tensor([[0.],[1.],[1.],[0.]]),torch.nn.BCELoss(),xor_history,grid_size=17,max_frames=6,theme='academic',size='wide'))",
+        )
+    )
+    cells.extend(
+        case(
+            "NN-BACKPROP-XOR",
+            "forward equations, backward chain rule, and globally comparable recorded gradient norms",
+            "display(visualize_nn_backpropagation(xor_model,xor_history,input_sample=xor_X[:1],max_frames=None,frame_duration=1100,theme='classroom',math_font_scale=1.2,size='wide'))",
+        )
+    )
+
+    cells.append(markdown("## Synthetic nonlinear regression"))
+    regression_cases = [
+        (
+            "NN-SYNTH-REG-ARCHITECTURE",
+            "a small dense regression model in the established architecture style",
+            "display(visualize_nn_architecture(reg_model,reg_X[:1],history=reg_history,theme='academic'))",
+        ),
+        (
+            "NN-SYNTH-REG-BLOCKS",
+            "the same regression model as an execution graph with formulas",
+            "display(visualize_nn_blocks(reg_model,reg_X[:1],theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-SYNTH-REG-TRAINING",
+            "recorded MSE optimization and regression metrics",
+            "display(visualize_nn_training(reg_history,max_frames=8,theme='academic',format='lesson'))",
+        ),
+        (
+            "NN-SYNTH-REG-GRAPH",
+            "animated hidden activations, weights, and gradients for regression",
+            "display(visualize_nn_graph(reg_model,reg_X[3],reg_history,max_frames=8,frame_duration=260))",
+        ),
+        (
+            "NN-SYNTH-REG-PREDICTION",
+            "a final-model numerical regression substitution and prediction",
+            "display(explain_nn_prediction(reg_model,reg_X[3],history=reg_history,parameter_state='final',theme='academic'))",
+        ),
+    ]
+    for item in regression_cases:
+        cells.extend(case(*item))
+
+    cells.append(markdown("## Real Iris multiclass classification"))
+    iris_cases = [
+        (
+            "NN-REAL-IRIS-ARCHITECTURE",
+            "legacy architecture with real four-feature multiclass data",
+            "display(visualize_nn_architecture(iris_model,iris_X[:1],history=iris_history,theme='classroom'))",
+        ),
+        (
+            "NN-REAL-IRIS-BLOCKS",
+            "execution blocks and a three-logit output",
+            "display(visualize_nn_blocks(iris_model,iris_X[:1],theme='academic',size='wide'))",
+        ),
+        (
+            "NN-REAL-IRIS-TRAINING",
+            "cross-entropy with inferred multiclass metrics",
+            "display(visualize_nn_training(iris_history,max_frames=8,theme='academic'))",
+        ),
+        (
+            "NN-REAL-IRIS-WEIGHTS",
+            "real-data parameter evolution with bounded matrix display",
+            "display(visualize_nn_weights(iris_history,max_frames=8,max_rows=4,max_cols=5,theme='academic'))",
+        ),
+        (
+            "NN-REAL-IRIS-ACTIVATIONS",
+            "recorded hidden representations for multiclass learning",
+            "display(visualize_nn(iris_model,iris_X[:1],history=iris_history,view='activations',max_frames=8,theme='accessible'))",
+        ),
+        (
+            "NN-REAL-IRIS-GRAPH",
+            "animated neural graph for one real Iris observation",
+            "display(visualize_nn_graph(iris_model,iris_X[12],iris_history,max_frames=8,theme='classroom'))",
+        ),
+        (
+            "NN-REAL-IRIS-PREDICTION",
+            "layer-by-layer logits for one real Iris observation",
+            "display(explain_nn_prediction(iris_model,iris_X[12],history=iris_history,max_frames=8,theme='academic'))",
+        ),
+    ]
+    for item in iris_cases:
+        cells.extend(case(*item))
+
+    cells.append(markdown("## Real breast-cancer binary classification"))
+    cancer_cases = [
+        (
+            "NN-REAL-CANCER-BLOCKS",
+            "a wider 30-feature binary network with dropout and sigmoid",
+            "display(visualize_nn_blocks(cancer_model,cancer_X[:1],theme='accessible',size='wide'))",
+        ),
+        (
+            "NN-REAL-CANCER-TRAINING",
+            "binary cross-entropy and inferred classification metrics",
+            "display(visualize_nn_training(cancer_history,max_frames=8,theme='academic'))",
+        ),
+        (
+            "NN-REAL-CANCER-PREDICTION",
+            "a high-dimensional real-data binary forward explanation",
+            "display(explain_nn_prediction(cancer_model,cancer_X[20],history=cancer_history,max_frames=7,max_neurons_math=6,theme='academic',size='wide'))",
+        ),
+    ]
+    for item in cancer_cases:
+        cells.extend(case(*item))
+
+    cells.append(markdown("## Real handwritten digits with a convolutional network"))
+    digit_cases = [
+        (
+            "NN-REAL-DIGITS-ARCHITECTURE",
+            "legacy convolution, pooling, flatten, and ten-class architecture",
+            "display(visualize_nn_architecture(digits_model,digits_X[:1],history=digits_history,max_layers=8,theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-REAL-DIGITS-BLOCKS",
+            "shape-aware convolutional execution blocks for real 8x8 images",
+            "display(visualize_nn_blocks(digits_model,digits_X[:1],theme='academic',size='wide'))",
+        ),
+        (
+            "NN-REAL-DIGITS-DENSE-HEAD-GRAPH",
+            "complete executed CNN topology; convolution, normalization, pooling, reshape, and classifier are all visible",
+            "display(visualize_nn_graph(digits_model,digits_X[0],digits_history,max_neurons=8,max_frames=6,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-REAL-DIGITS-TRAINING",
+            "recorded ten-class CNN training metrics",
+            "display(visualize_nn_training(digits_history,max_frames=None,theme='academic'))",
+        ),
+        (
+            "NN-REAL-DIGITS-WEIGHTS",
+            "convolution kernels and dense matrices with explicit truncation",
+            "display(visualize_nn_weights(digits_history,max_frames=None,max_rows=3,max_cols=4,max_parameters=5,theme='academic',size='wide'))",
+        ),
+    ]
+    for item in digit_cases:
+        cells.extend(case(*item))
+
+    cells.append(markdown("## Structural and capture stress cases"))
+    cases = [
+        (
+            "NN-BLOCK-RESIDUAL",
+            "a residual branch and functional Add merge remain explicit",
+            "m=ResidualNet()\nx=torch.randn(2,4)\ndisplay(visualize_nn_blocks(m,x,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-SHARED",
+            "one shared Linear module appears as two ordered calls",
+            "m=SharedNet()\nx=torch.randn(2,4)\ndisplay(visualize_nn_blocks(m,x,show_formulas=True,size='wide'))",
+        ),
+        (
+            "NN-BLOCK-CONV",
+            "convolution, BatchNorm buffers, activation, pooling, flatten, and classifier shapes",
+            "m=ConvNet()\nx=torch.randn(2,3,8,8)\ndisplay(visualize_nn_blocks(m,x,theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-EMBEDDING",
+            "integer token dtype, embedding, sequence reduction, and classifier",
+            "m=EmbeddingNet()\ntokens=torch.tensor([[1,2,3,4],[3,5,7,9]],dtype=torch.long)\ndisplay(visualize_nn_blocks(m,tokens,theme='accessible',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-LSTM",
+            "a recurrent primitive with hidden/cell outputs and public hyperparameters",
+            "m=torch.nn.LSTM(5,7,num_layers=2,batch_first=True,bidirectional=True,dropout=0.1)\nx=torch.randn(2,4,5)\ndisplay(visualize_nn_blocks(m,x,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-ATTENTION",
+            "query, key, value inputs and both attention outputs as one semantic primitive",
+            "m=torch.nn.MultiheadAttention(8,2,batch_first=True,dropout=0.1)\nq=torch.randn(2,4,8)\ndisplay(visualize_nn_blocks(m,(q,q.clone(),q.clone()),theme='academic',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-MULTI-IO",
+            "Siamese inputs, shared encoder calls, concatenation, score, and auxiliary outputs",
+            "m=SiameseNet()\nleft,right=torch.randn(2,4),torch.randn(2,4)\ndisplay(visualize_nn_blocks(m,(left,right),theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-DYNAMIC",
+            "data-dependent Python control flow uses the disclosed eager fallback",
+            "m=DynamicBranch()\nx=torch.ones(2,4)\ndisplay(visualize_nn_blocks(m,x,theme='accessible',size='wide'))",
+        ),
+        (
+            "NN-BLOCK-COLLAPSE",
+            "a long network collapses visual middle nodes without changing capture",
+            "layers=[]\nfor _ in range(18):\n    layers.extend([torch.nn.Linear(8,8),torch.nn.ReLU()])\nm=torch.nn.Sequential(*layers)\ndisplay(visualize_nn_blocks(m,torch.randn(2,8),max_nodes=12,show_formulas=False,size='wide'))",
+        ),
+        (
+            "NN-BLOCK-CUSTOM",
+            "a project-defined semantic descriptor extends the block vocabulary",
+            "register_neural_descriptor('Identity',role='operation',label='Pedagogical identity',formula=r'\\mathbf{y}=\\mathbf{x}',replace=True)\nm=torch.nn.Identity()\ndisplay(visualize_nn_blocks(m,torch.randn(2,4),theme='academic'))",
+        ),
+        (
+            "NN-RECORDER-V2",
+            "buffers, optimizer groups, adaptive state norms, and temporal phases",
+            "m=torch.nn.Sequential(torch.nn.Linear(4,4),torch.nn.BatchNorm1d(4),torch.nn.ReLU(),torch.nn.Linear(4,1))\nx=torch.randn(12,4); y=torch.randn(12,1)\nopt=torch.optim.Adam([{'params':m[0].parameters(),'lr':0.01},{'params':list(m[1:].parameters()),'lr':0.003}],weight_decay=0.001)\nloss_fn=torch.nn.MSELoss()\nr=TorchTrainingRecorder(m,optimizer=opt,loss_fn=loss_fn,capture_optimizer_state=True)\nfor step in range(4):\n    opt.zero_grad(); prediction=m(x); loss=loss_fn(prediction,y); loss.backward(); opt.step(); r.record(step+1,loss=loss,predictions=prediction,targets=y,task='regression',capture_phase='post_step')\nr.close(); h=r.to_history()\ndisplay(visualize_nn_training(h,max_frames=None,theme='academic'))",
+        ),
+    ]
+    for item in cases:
+        cells.extend(case(*item))
+
+    cells.append(
+        markdown("""
+## Hundreds of neurons and many layers
+
+Large networks use semantic blocks rather than one glyph per neuron and one
+line per connection. `max_nodes` bounds the semantic block view. A graph
+request automatically prefers the complete executed topology whenever a dense
+neuron replay would omit Dropout, convolution, normalization, pooling, tensor
+operations, or branches. Pure dense graphs still sample up to `max_neurons`
+values per layer and derive marker diameter from actual pixel spacing. This
+keeps the visualization inspectable without presenting an incomplete network.
+""")
+    )
+    large_setup = """widths=[128,512,384,256,128,64,32,10]
+layers=[]
+for left,right in zip(widths[:-1],widths[1:]):
+    layers.extend([torch.nn.Linear(left,right),torch.nn.GELU(),torch.nn.Dropout(0.1)])
+large_model=torch.nn.Sequential(*layers[:-1])
+large_input=torch.randn(16,128)
+large_target=torch.randint(0,10,(16,))
+large_loss_fn=torch.nn.CrossEntropyLoss()
+large_optimizer=torch.optim.Adam(large_model.parameters(),lr=0.002)
+large_recorder=TorchTrainingRecorder(large_model,optimizer=large_optimizer,loss_fn=large_loss_fn,max_tensor_elements=300000,max_activation_elements=1024)
+for step in range(6):
+    large_optimizer.zero_grad(); large_prediction=large_model(large_input); large_loss=large_loss_fn(large_prediction,large_target); large_loss.backward(); large_optimizer.step()
+    large_recorder.record(step+1,loss=large_loss,predictions=large_prediction,targets=large_target,task='classification')
+large_recorder.close(); large_history=large_recorder.to_history()
+display(visualize_nn_architecture(large_model,large_input[:1],history=large_history,max_layers=8,theme='academic',size='wide'))"""
+    large_cases = [
+        (
+            "NN-LARGE-HUNDREDS-MANY-LAYERS",
+            "a trained 128-to-512 network fixture reused by every supported neural figure",
+            large_setup,
+        ),
+        (
+            "NN-LARGE-ARCHITECTURE",
+            "bounded mathematical architecture for hundreds of units",
+            "display(visualize_nn_architecture(large_model,large_input[:1],history=large_history,max_layers=8,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-LARGE-BLOCKS",
+            "execution graph with a concise collapsed summary node",
+            "display(visualize_nn_blocks(large_model,large_input[:1],max_nodes=18,show_formulas=False,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-LARGE-GRAPH",
+            "complete executed topology for the full deep network, including every Dropout stage",
+            "display(visualize_nn_graph(large_model,large_input[0],large_history,max_neurons=8,max_frames=6,show_loss_panel=True,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-LARGE-FORWARD-SUBSTITUTION",
+            "input, bounded layer substitutions, and ten-logit output",
+            "display(explain_nn_prediction(large_model,large_input[0],history=large_history,max_layers_math=6,max_neurons_math=6,max_frames=6,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-LARGE-TRAINING",
+            "cross-entropy and multiclass metrics",
+            "display(visualize_nn_training(large_history,max_frames=None,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-LARGE-WEIGHTS",
+            "bounded parameter matrices without reducing mathematical type",
+            "display(visualize_nn_weights(large_history,max_rows=3,max_cols=4,max_parameters=6,max_frames=6,theme='academic',size='wide'))",
+        ),
+        (
+            "NN-LARGE-ACTIVATIONS",
+            "recorded layer activation summaries",
+            "display(visualize_nn(large_model,large_input[:1],history=large_history,view='activations',max_frames=6,theme='accessible',size='wide'))",
+        ),
+        (
+            "NN-LARGE-BACKPROPAGATION",
+            "bounded per-layer gradients, updates, relative changes, and loss effect",
+            "display(visualize_nn_backpropagation(large_model,large_history,input_sample=large_input[:1],max_layers=6,max_frames=6,frame_duration=1100,theme='classroom',size='wide'))",
+        ),
+        (
+            "NN-LARGE-LOSS-LANDSCAPE",
+            "exact reduced-grid two-direction CrossEntropyLoss slice for the large model",
+            "display(visualize_nn_loss_landscape(large_model,large_input,large_target,large_loss_fn,large_history,grid_size=9,max_frames=4,theme='academic',size='wide'))",
+        ),
+    ]
+    for item in large_cases:
+        cells.extend(case(*item))
+    notebook(
+        "QA 08 — complete neural figure gallery",
+        "Every public neural Plotly figure, synthetic and real datasets, simple and complex topology, extensibility, scale, fallbacks, and recorder schema v2.",
+        cells,
+        "qa/qa_08_neural_structures.ipynb",
     )
 
 
@@ -761,11 +1387,58 @@ def build_learning() -> None:
             ),
             *case(
                 "LEARN-NN-PREDICTION",
-                "numerical forward pass through retained parameters",
+                "final fitted-model input, substitution, and output stages",
                 "display(explain_nn_prediction(model,X[1],history=history,max_frames=8))",
             ),
         ],
         "learn_03_neural_networks.ipynb",
+    )
+
+    lesson_common(
+        "Learn 04 — neural execution structures",
+        "Connect residual paths, repeated modules, attention, and capture provenance to executable tensor mathematics.",
+        [
+            code(
+                """from mlektic import inspect_nn, visualize_nn_blocks
+import torch
+
+class LessonResidual(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.hidden = torch.nn.Linear(4, 4)
+        self.output = torch.nn.Linear(4, 4)
+    def forward(self, x):
+        return x + self.output(torch.relu(self.hidden(x)))
+
+torch.manual_seed(17)
+x=torch.randn(2,4)"""
+            ),
+            markdown(
+                "## Residual paths\n\nThe tensor graph separates the transformed path from the identity path and joins them at Add."
+            ),
+            *case(
+                "LEARN-NN-BRANCHES",
+                "read a residual branch, tensor dimensions, and the merge equation",
+                "model=LessonResidual()\ndisplay(visualize_nn_blocks(model,x,theme='classroom',size='wide'))",
+            ),
+            markdown(
+                "## Attention as a semantic primitive\n\nQuery, key, and value are distinct argument ports. Hover the attention block to find embed_dim, num_heads, dropout, and output shapes."
+            ),
+            *case(
+                "LEARN-NN-ATTENTION",
+                "connect Q, K, V inputs to scaled dot-product multi-head attention",
+                "attention=torch.nn.MultiheadAttention(8,2,batch_first=True)\nq=torch.randn(2,4,8)\ndisplay(visualize_nn_blocks(attention,(q,q.clone(),q.clone()),theme='academic',size='wide'))",
+            ),
+            markdown(
+                "## Capture provenance\n\nFX can retain supported functional operations. Eager hooks record executed module calls when static tracing is not possible. Neither route claims to prove every possible dynamic path."
+            ),
+            *case(
+                "LEARN-NN-PROVENANCE",
+                "compare the visible figure with the renderer-independent graph contract",
+                "graph=inspect_nn(model,x)\ndisplay(visualize_nn_blocks(model,x,theme='accessible',show_formulas=False,size='wide'))",
+            ),
+        ],
+        "learn_04_neural_architectures.ipynb",
     )
 
 
@@ -784,7 +1457,55 @@ def build_manifest() -> None:
         "codeasdoc/getting_started.rst": ["LEARN-GETTING-PREDICTION"],
         "codeasdoc/linear_lesson.rst": ["LEARN-LINEAR-PLANE", "LEARN-LINEAR-POLY"],
         "codeasdoc/logistic_lesson.rst": ["LEARN-LOGISTIC-BINARY", "LEARN-LOGISTIC-MULTI"],
-        "codeasdoc/neural_lesson.rst": ["LEARN-NN-ARCHITECTURE", "LEARN-NN-TRAINING"],
+        "codeasdoc/neural_lesson.rst": [
+            "LEARN-NN-ARCHITECTURE",
+            "LEARN-NN-TRAINING",
+            "NN-ROUTER-HYPERPARAMETERS",
+            "NN-GALLERY-FORWARD-SUBSTITUTION",
+            "LEARN-NN-BRANCHES",
+            "LEARN-NN-ATTENTION",
+        ],
+        "codeasdoc/neural_execution_graphs.rst": [
+            "NN-ROUTER-ARCHITECTURE",
+            "NN-ROUTER-BLOCKS",
+            "NN-ROUTER-HYPERPARAMETERS",
+            "NN-ROUTER-GRAPH",
+            "NN-GRAPH-WITHOUT-BACKPROP",
+            "NN-GRAPH-WITH-BACKPROP",
+            "NN-ROUTER-BACKPROPAGATION",
+            "NN-LOSS-LANDSCAPE-XOR",
+            "NN-BACKPROP-XOR",
+            "NN-GRAPH-HYBRID-UPDATES",
+            "NN-GRAPH-CUMULATIVE-UPDATES",
+            "NN-GRAPH-FRAME-NORMALIZED-UPDATES",
+            "NN-ROUTER-TRAINING",
+            "NN-ROUTER-WEIGHTS",
+            "NN-ROUTER-ACTIVATIONS",
+            "NN-TRAINING-QUERY-REPLAY",
+            "NN-GALLERY-FORWARD-SUBSTITUTION",
+            "NN-SYNTH-REG-TRAINING",
+            "NN-REAL-IRIS-GRAPH",
+            "NN-REAL-CANCER-PREDICTION",
+            "NN-REAL-DIGITS-BLOCKS",
+            "NN-REAL-DIGITS-DENSE-HEAD-GRAPH",
+            "NN-BLOCK-RESIDUAL",
+            "NN-BLOCK-SHARED",
+            "NN-BLOCK-CONV",
+            "NN-BLOCK-EMBEDDING",
+            "NN-BLOCK-LSTM",
+            "NN-BLOCK-ATTENTION",
+            "NN-BLOCK-MULTI-IO",
+            "NN-LARGE-HUNDREDS-MANY-LAYERS",
+            "NN-LARGE-ARCHITECTURE",
+            "NN-LARGE-BLOCKS",
+            "NN-LARGE-GRAPH",
+            "NN-LARGE-FORWARD-SUBSTITUTION",
+            "NN-LARGE-TRAINING",
+            "NN-LARGE-WEIGHTS",
+            "NN-LARGE-ACTIVATIONS",
+            "NN-LARGE-BACKPROPAGATION",
+            "NN-LARGE-LOSS-LANDSCAPE",
+        ],
         "codeasdoc/history_semantics.rst": ["MOTION-NATIVE-SLOW", "MOTION-HYBRID-FLUID"],
         "codeasdoc/mathematical_parity.rst": ["LR-PIPE-ORIGINAL", "LOG-BINARY-THRESHOLD"],
         "codeasdoc/mathematical_conventions.rst": ["LR-POLYNOMIAL", "LOG-MULTI-FOCUS"],
@@ -793,10 +1514,37 @@ def build_manifest() -> None:
         "codeasdoc/themes_formats_sizes.rst": ["STYLE-THEME-ACCESSIBLE", "STYLE-SIZE-CLASSROOM"],
         "codeasdoc/prediction_explanations.rst": ["LR-PRED-EXTRAP", "LOG-PRED-BINARY"],
         "codeasdoc/export.rst": ["STYLE-RESPONSIVE", "NN-REPORT"],
-        "codeasdoc/gallery.rst": ["SMOKE-LR-2D", "SMOKE-LOG-MULTI-2D", "NN-GRAPH-EXACT"],
-        "codeasdoc/compatibility.rst": ["LR-PIPE-SCALED", "NN-RELU-ADAM"],
-        "codeasdoc/model_hyperparameters.rst": ["HYPER-LR-L2", "HYPER-LOG-C-STRONG", "HYPER-NN-REGRESSION"],
-        "codeasdoc/limitations.rst": ["LR-MANY-FEATURES", "LOG-MULTI-MANY-CLASSES"],
+        "codeasdoc/gallery.rst": [
+            "SMOKE-LR-2D",
+            "SMOKE-LOG-MULTI-2D",
+            "NN-GRAPH-EXACT",
+            "NN-SYNTH-REG-PREDICTION",
+            "NN-REAL-IRIS-TRAINING",
+            "NN-REAL-DIGITS-ARCHITECTURE",
+        ],
+        "codeasdoc/compatibility.rst": [
+            "LR-PIPE-SCALED",
+            "NN-RELU-ADAM",
+            "NN-BLOCK-ATTENTION",
+            "NN-BLOCK-MULTI-IO",
+            "NN-REAL-CANCER-BLOCKS",
+            "NN-REAL-DIGITS-TRAINING",
+        ],
+        "codeasdoc/model_hyperparameters.rst": [
+            "HYPER-LR-L2",
+            "HYPER-LOG-C-STRONG",
+            "HYPER-NN-REGRESSION",
+            "NN-BLOCK-CONV",
+            "NN-BLOCK-LSTM",
+            "NN-RECORDER-V2",
+            "NN-ROUTER-HYPERPARAMETERS",
+        ],
+        "codeasdoc/limitations.rst": [
+            "LR-MANY-FEATURES",
+            "LOG-MULTI-MANY-CLASSES",
+            "NN-BLOCK-DYNAMIC",
+            "NN-BLOCK-COLLAPSE",
+        ],
         "codeasdoc/visualization.rst": ["SMOKE-LOG-BIN-2D"],
         "codeasdoc/advanced.rst": ["LR-PRED-COUNTERFACTUAL", "LOG-MULTI-OVR"],
         "codeasdoc/architecture.rst": ["SMOKE-LR-ND", "NN-ARCHITECTURE"],
@@ -817,6 +1565,7 @@ def main() -> None:
     build_linear()
     build_logistic()
     build_neural()
+    build_neural_structures()
     build_motion()
     build_visual_system()
     build_hyperparameters()

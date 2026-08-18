@@ -22,9 +22,23 @@ Neural networks
 ===============
 
 Architecture views report layer topology, dimensions, activations, dropout, and
-normalization roles. Genuine optimizer, loss, and task evolution comes from
-``TorchTrainingRecorder``. The QA matrix includes binary classification,
-multiclass cross-entropy, regression MSE, deep dense, and convolutional examples.
+normalization roles. The block view additionally exposes stable public
+configuration for convolution, embedding, recurrence, attention, Transformer,
+pooling, and reshape modules. Genuine optimizer, loss, and task evolution comes
+from ``TorchTrainingRecorder``. History schema version 2 retains effective
+optimizer parameter groups per frame and can retain optimizer-state tensor
+norms. It does not claim that a displayed module attribute fully describes a
+custom optimizer or scheduler. The QA matrix includes binary classification,
+multiclass cross-entropy, regression MSE, deep dense, convolutional, recurrent,
+embedding, attention, branching, shared-module, and multi-I/O examples.
+
+Use ``visualize_nn_hyperparameters`` when the lesson must audit the exact
+configuration rather than infer it from architecture labels. The view reads
+the supplied model, each optimizer parameter group, the objective, and the
+learning-rate scheduler. It displays every detected effective value without
+row truncation and pairs it with a PyTorch-aligned mathematical definition.
+Runtime implementation switches remain present but are marked as
+non-mathematical. Live objects take precedence over recorder metadata.
 
 Coverage boundary
 =================
@@ -37,3 +51,6 @@ mathematical claim or visible condition.
 
 Inspect ``HYPER-LR-L2``, ``HYPER-LOG-C-STRONG``, and
 ``HYPER-NN-REGRESSION`` in ``notebooks/qa/qa_07_hyperparameters.ipynb``.
+Inspect ``NN-ROUTER-HYPERPARAMETERS`` in
+``notebooks/qa/qa_08_neural_structures.ipynb`` for the complete neural
+instance contract.

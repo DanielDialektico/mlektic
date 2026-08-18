@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 import numpy as np
 
+from .hyperparameters import scheduler_configuration
 from .introspection import _leaf_modules, _require_torch
 from .metrics import infer_performance_metrics
 
@@ -24,10 +25,13 @@ class TorchTrainingRecorder:
         *,
         optimizer: Any | None = None,
         loss_fn: Any | None = None,
+        scheduler: Any | None = None,
         record_every: int = 1,
         capture_weights: bool = True,
         capture_gradients: bool = True,
         capture_activations: bool = True,
+        capture_buffers: bool = True,
+        capture_optimizer_state: bool = False,
         max_tensor_elements: int = 4096,
         max_activation_elements: int = 512,
     ) -> None:
@@ -42,10 +46,13 @@ class TorchTrainingRecorder:
         self.model = model
         self.optimizer = optimizer
         self.loss_fn = loss_fn
+        self.scheduler = scheduler
         self.record_every = record_every
         self.capture_weights = capture_weights
         self.capture_gradients = capture_gradients
         self.capture_activations = capture_activations
+        self.capture_buffers = capture_buffers
+        self.capture_optimizer_state = capture_optimizer_state
         self.max_tensor_elements = max_tensor_elements
         self.max_activation_elements = max_activation_elements
         self.steps: List[int] = []
@@ -53,8 +60,13 @@ class TorchTrainingRecorder:
         self.metrics: Dict[str, List[float]] = defaultdict(list)
         self.parameters: Dict[str, List[np.ndarray]] = defaultdict(list)
         self.gradients: Dict[str, List[np.ndarray]] = defaultdict(list)
+        self.buffers: Dict[str, List[np.ndarray]] = defaultdict(list)
         self.parameter_norms: Dict[str, List[float]] = defaultdict(list)
         self.gradient_norms: Dict[str, List[float]] = defaultdict(list)
+        self.buffer_norms: Dict[str, List[float]] = defaultdict(list)
+        self.optimizer_groups: List[List[Dict[str, Any]]] = []
+        self.optimizer_state_norms: List[Dict[str, Dict[str, float]]] = []
+        self.frame_semantics: List[Dict[str, str]] = []
         self.activations: Dict[str, Dict[str, List[float]]] = defaultdict(
             lambda: {"mean": [], "std": [], "min": [], "max": []}
         )
@@ -100,6 +112,8 @@ class TorchTrainingRecorder:
         predictions: Any | None = None,
         targets: Any | None = None,
         task: str = "auto",
+        capture_phase: str = "post_step",
+        observation_phase: str | None = None,
     ) -> bool:
         """Save one frame and optionally infer three performance metrics.
 
@@ -110,6 +124,11 @@ class TorchTrainingRecorder:
             predictions: Model outputs used with ``targets`` for metric inference.
             targets: Ground-truth values paired with ``predictions``.
             task: ``"classification"``, ``"regression"`` or ``"auto"``.
+            capture_phase: Point at which parameters and buffers are captured:
+                ``"post_forward"``, ``"post_backward"``, or ``"post_step"``.
+            observation_phase: Phase associated with loss, predictions, targets,
+                and the latest activations. Defaults to ``"pre_step"`` when
+                parameters are captured after an optimizer step.
 
         Returns:
             ``True`` when a frame was captured and ``False`` when it was skipped.
@@ -119,15 +138,25 @@ class TorchTrainingRecorder:
         """
         if step % self.record_every:
             return False
-        self.steps.append(int(step))
-        self.loss.append(self._scalar(loss))
         if (predictions is None) != (targets is None):
             raise ValueError("predictions and targets must be provided together.")
-        provided = (
-            infer_performance_metrics(predictions, targets, task=task)
-            if predictions is not None
-            else {}
+        valid_phases = {"post_forward", "post_backward", "post_step"}
+        if capture_phase not in valid_phases:
+            raise ValueError("capture_phase must be 'post_forward', 'post_backward', or 'post_step'.")
+        if observation_phase is None:
+            observation_phase = "pre_step" if capture_phase == "post_step" else capture_phase
+        self.steps.append(int(step))
+        self.loss.append(self._scalar(loss))
+        self.frame_semantics.append(
+            {
+                "capture_phase": capture_phase,
+                "parameter_phase": capture_phase,
+                "buffer_phase": capture_phase,
+                "observation_phase": observation_phase,
+                "gradient_phase": "post_backward" if capture_phase == "post_step" else capture_phase,
+            }
         )
+        provided = infer_performance_metrics(predictions, targets, task=task) if predictions is not None else {}
         provided.update(metrics or {})
         metric_names = list(self.metrics)
         metric_names.extend(name for name in provided if name not in self.metrics)
@@ -150,19 +179,69 @@ class TorchTrainingRecorder:
                 gradient_values = gradient.detach().float().cpu().numpy().copy()
                 self.gradient_norms[name].append(float(np.linalg.norm(gradient_values)))
             if self.capture_gradients and values.size <= self.max_tensor_elements:
-                aligned_gradient = (
-                    np.zeros_like(values) if gradient_values is None else gradient_values
-                )
+                aligned_gradient = np.zeros_like(values) if gradient_values is None else gradient_values
                 self.gradients[name].append(aligned_gradient)
 
+        for name, buffer in self.model.named_buffers():
+            values = buffer.detach().float().cpu().numpy().copy()
+            self.buffer_norms[name].append(float(np.linalg.norm(values)))
+            if self.capture_buffers and values.size <= self.max_tensor_elements:
+                self.buffers[name].append(values)
+
+        self.optimizer_groups.append(self._optimizer_groups())
+        self.optimizer_state_norms.append(self._optimizer_state_snapshot())
+
         if self.capture_activations:
-            for name, summary in self._latest_activations.items():
-                for statistic, value in summary.items():
-                    if statistic == "vector":
-                        self.activation_vectors[name].append(np.asarray(value, dtype=float).copy())
-                        continue
-                    self.activations[name][statistic].append(value)
+            activation_names = set(self.activations) | set(self._latest_activations)
+            for name in activation_names:
+                summary = self._latest_activations.get(name, {})
+                for statistic in ("mean", "std", "min", "max"):
+                    values = self.activations[name][statistic]
+                    while len(values) < len(self.steps) - 1:
+                        values.append(float("nan"))
+                    values.append(float(summary.get(statistic, float("nan"))))
+                vector = summary.get("vector")
+                vectors = self.activation_vectors[name]
+                while len(vectors) < len(self.steps) - 1:
+                    vectors.append(np.asarray([], dtype=float))
+                vectors.append(
+                    np.asarray(vector, dtype=float).copy() if vector is not None else np.asarray([], dtype=float)
+                )
+            self._latest_activations.clear()
         return True
+
+    def _optimizer_groups(self) -> List[Dict[str, Any]]:
+        """Capture effective serializable values for every optimizer group."""
+        if self.optimizer is None:
+            return []
+        groups = []
+        for group in getattr(self.optimizer, "param_groups", []):
+            groups.append(
+                {
+                    name: value
+                    for name, value in group.items()
+                    if name != "params" and (value is None or isinstance(value, (bool, int, float, str, tuple, list)))
+                }
+            )
+        return groups
+
+    def _optimizer_state_snapshot(self) -> Dict[str, Dict[str, float]]:
+        """Capture compact optimizer-state norms without retaining full tensors."""
+        if self.optimizer is None or not self.capture_optimizer_state:
+            return {}
+        names = {id(parameter): name for name, parameter in self.model.named_parameters()}
+        snapshot: Dict[str, Dict[str, float]] = {}
+        for parameter, state in getattr(self.optimizer, "state", {}).items():
+            parameter_name = names.get(id(parameter), f"parameter_{len(snapshot)}")
+            values: Dict[str, float] = {}
+            for name, value in state.items():
+                if hasattr(value, "detach"):
+                    array = value.detach().float().cpu().numpy()
+                    values[name] = float(np.linalg.norm(array))
+                elif isinstance(value, (bool, int, float)):
+                    values[name] = float(value)
+            snapshot[parameter_name] = values
+        return snapshot
 
     @staticmethod
     def _scalar(value: Any | None) -> float:
@@ -182,17 +261,19 @@ class TorchTrainingRecorder:
             "metrics": {name: np.asarray(values, dtype=float) for name, values in self.metrics.items()},
             "parameters": {name: list(values) for name, values in self.parameters.items()},
             "gradients": {name: list(values) for name, values in self.gradients.items()},
-            "parameter_norms": {
-                name: np.asarray(values, dtype=float) for name, values in self.parameter_norms.items()
-            },
-            "gradient_norms": {
-                name: np.asarray(values, dtype=float) for name, values in self.gradient_norms.items()
-            },
+            "buffers": {name: list(values) for name, values in self.buffers.items()},
+            "parameter_norms": {name: np.asarray(values, dtype=float) for name, values in self.parameter_norms.items()},
+            "gradient_norms": {name: np.asarray(values, dtype=float) for name, values in self.gradient_norms.items()},
+            "buffer_norms": {name: np.asarray(values, dtype=float) for name, values in self.buffer_norms.items()},
             "activations": {
                 name: {statistic: np.asarray(values, dtype=float) for statistic, values in summary.items()}
                 for name, summary in self.activations.items()
             },
             "activation_vectors": {name: list(values) for name, values in self.activation_vectors.items()},
+            "optimizer_groups": list(self.optimizer_groups),
+            "optimizer_state_norms": list(self.optimizer_state_norms),
+            "frame_semantics": list(self.frame_semantics),
+            "history_schema_version": 2,
             "training_config": self._training_config(),
         }
 
@@ -210,6 +291,7 @@ class TorchTrainingRecorder:
                 for name, value in defaults.items()
                 if value is None or isinstance(value, (bool, int, float, str, tuple, list))
             }
+            config["parameter_groups"] = self._optimizer_groups()
         if self.loss_fn is not None:
             config["loss"] = self.loss_fn.__class__.__name__
             config["loss_hyperparameters"] = {
@@ -218,6 +300,22 @@ class TorchTrainingRecorder:
                 if not name.startswith("_")
                 and (value is None or isinstance(value, (bool, int, float, str, tuple, list)))
             }
+        if self.scheduler is not None:
+            config["scheduler"] = self.scheduler.__class__.__name__
+            config["scheduler_hyperparameters"] = {
+                name: value
+                for name, value in scheduler_configuration(self.scheduler).items()
+                if value is None or isinstance(value, (bool, int, float, str, tuple, list))
+            }
+        config["capture"] = {
+            "weights": self.capture_weights,
+            "gradients": self.capture_gradients,
+            "activations": self.capture_activations,
+            "buffers": self.capture_buffers,
+            "optimizer_state": self.capture_optimizer_state,
+            "max_tensor_elements": self.max_tensor_elements,
+            "max_activation_elements": self.max_activation_elements,
+        }
         return config
 
     def close(self) -> None:

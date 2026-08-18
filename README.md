@@ -266,10 +266,11 @@ from torch import nn
 
 from mlektic import (
     TorchTrainingRecorder,
-    build_nn_math_report,
     explain_nn_prediction,
     visualize_nn_architecture,
+    visualize_nn_backpropagation,
     visualize_nn_graph,
+    visualize_nn_hyperparameters,
     visualize_nn_training,
     visualize_nn_weights,
 )
@@ -279,16 +280,16 @@ network = nn.Sequential(
     nn.ReLU(),
     nn.Linear(8, 1),
 )
-
-architecture = visualize_nn_architecture(network, input_shape=(4,))
-graph = visualize_nn_graph(network, input_shape=(4,))
-weights = visualize_nn_weights(network)
-```
-
-For genuine training history, create a recorder and call it from the training loop at a consistent point:
-
-```python
-recorder = TorchTrainingRecorder(network, record_every=5)
+inputs = torch.randn(32, 4)
+targets = torch.randint(0, 2, (32, 1), dtype=torch.float32)
+criterion = nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(network.parameters(), lr=0.01)
+recorder = TorchTrainingRecorder(
+    network,
+    optimizer=optimizer,
+    loss_fn=criterion,
+    record_every=5,
+)
 
 for epoch in range(100):
     optimizer.zero_grad()
@@ -296,13 +297,63 @@ for epoch in range(100):
     loss = criterion(predictions, targets)
     loss.backward()
     optimizer.step()
+    recorder.record(
+        step=epoch + 1,
+        loss=loss,
+        predictions=predictions,
+        targets=targets,
+        task="classification",
+    )
 
-    recorder.record(step=epoch + 1, loss=float(loss.detach()))
+recorder.close()
+history = recorder.to_history()
 
-training_figure = visualize_nn_training(recorder)
+architecture = visualize_nn_architecture(network, inputs[:1], history=history)
+graph = visualize_nn_graph(network, inputs[0], history, max_frames=12)
+training = visualize_nn_training(history, max_frames=12)
+weights = visualize_nn_weights(history, max_frames=12)
+prediction = explain_nn_prediction(network, inputs[0], history=history)
+backpropagation = visualize_nn_backpropagation(
+    network,
+    history,
+    input_sample=inputs[:1],
+    max_frames=12,
+)
+hyperparameters = visualize_nn_hyperparameters(
+    network,
+    optimizer=optimizer,
+    loss_fn=criterion,
+)
 ```
 
-The mathematical report and prediction explainer are separate APIs so large derivations do not overload one interactive plot.
+Call ``record`` at one consistent point in the loop. The recommended placement
+shown above is after ``optimizer.step()`` and before the next
+``optimizer.zero_grad()``: the retained parameters are post-step, while the
+loss, predictions, activations, and gradients describe the forward/backward
+observation that produced that update. Recorder schema version 2 preserves
+this temporal distinction in metadata.
+
+The neural figures deliberately separate questions instead of overloading one
+canvas:
+
+- architecture and execution-block views explain structure;
+- the dense graph explains recorded parameter and signal evolution;
+- training, weights, activations, backpropagation, and loss-slice views explain
+  complementary parts of optimization;
+- ``explain_nn_prediction`` uses the fitted model through distinct Input,
+  Substitution, and Output stages, without mixing prediction with training;
+- ``visualize_nn_hyperparameters`` lists the effective module, optimizer,
+  objective, and scheduler settings with their mathematical roles.
+
+``max_frames``, ``max_layers``, ``max_parameters``, and related bounds reduce
+only the rendered lesson. They do not remove captured history or change model
+execution. Omitted tensors and layers are disclosed explicitly in dedicated
+layout rows, and the complete counts remain available in ``layout.meta``.
+Convolutional, recurrent, attention, branched, shared, or functional execution
+graphs use the complete block topology when a dense neuron view would be
+misleading. See the Sphinx neural lesson and
+``notebooks/qa/qa_08_neural_structures.ipynb`` for the exhaustive human visual
+matrix.
 
 ## HTML export
 

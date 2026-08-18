@@ -75,16 +75,31 @@ def gradient_snapshot(history: Dict[str, Any], frame_index: int) -> Dict[str, np
     return snapshot
 
 
+def buffer_snapshot(history: Dict[str, Any], frame_index: int) -> Dict[str, np.ndarray]:
+    """Collect all persistent buffer tensors available for one recorded frame."""
+    snapshot: Dict[str, np.ndarray] = {}
+    for name, values in history.get("buffers", {}).items():
+        if frame_index < len(values):
+            snapshot[name] = np.asarray(values[frame_index])
+    return snapshot
+
+
 def compact_parameter_line(
     stages: Sequence[Dict[str, Any]],
     snapshot: Dict[str, np.ndarray],
     *,
     dec: int = 3,
     values_per_layer: int = 3,
+    max_layers: int = 4,
 ) -> str:
     """Build one dynamic line with a few representative weights per dense layer."""
     parts: List[str] = []
-    for stage in stages:
+    selected_stages = display_indices(len(stages), max_layers)
+    split = len(selected_stages) // 2 if len(stages) > max_layers else None
+    for position, stage_index in enumerate(selected_stages):
+        if split is not None and position == split:
+            parts.append(r"\cdots")
+        stage = stages[stage_index]
         weights = snapshot.get(stage["weight_name"])
         if weights is None:
             continue
@@ -97,6 +112,7 @@ def compact_parameter_line(
 
 __all__ = [
     "compact_parameter_line",
+    "buffer_snapshot",
     "display_indices",
     "gradient_snapshot",
     "matrix_latex",

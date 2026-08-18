@@ -2,6 +2,72 @@
 Changelog
 =========
 
+Unreleased — neural execution-graph foundation
+===============================================
+
+Added
+-----
+
+- ``visualize_nn_hyperparameters`` and ``view="hyperparameters"`` now expose
+  every detected effective module, optimizer-group, objective, and scheduler
+  setting with its value, mathematical role, and PyTorch-aligned definition;
+  the recorder can retain optional scheduler configuration for this lesson;
+- a versioned renderer-independent neural graph with typed nodes, port-aware
+  tensor edges, parameter/buffer specifications, provenance, warnings, and
+  serializable metadata;
+- automatic ``torch.fx`` capture with truthful eager-hook fallback, preserving
+  supported branches, merges, shared calls, multiple inputs/outputs, and integer
+  embedding inputs;
+- an extensible semantic descriptor registry for common dense, convolutional,
+  normalization, embedding, recurrent, attention, Transformer, pooling,
+  reshape, reduction, activation, and merge operations;
+- opt-in native Plotly block figures and public ``inspect_nn``,
+  ``visualize_nn_blocks``, and ``register_neural_descriptor`` APIs;
+- neural recorder history schema version 2 with buffer snapshots, effective
+  optimizer groups, optional optimizer-state norms, and explicit temporal
+  capture/observation phases;
+- a dedicated execution-graph guide, implementation record, automated coverage,
+  human visual-QA matrix, and student architecture lesson.
+- an exhaustive 42-case neural QA gallery covering every public Plotly figure,
+  synthetic classification/regression, real Iris and breast-cancer tabular
+  data, a real handwritten-digit CNN, and simple-to-complex graph structures.
+- opt-in ``updates`` and ``hybrid`` neural evolution modes with signed update
+  halos, global or explicitly frame-normalized scales, previous/initial
+  references, update diagnostics, top-k emphasis, and perceptual subframes
+  that never masquerade as optimizer steps.
+
+Fixed
+-----
+
+- bounded neural-weight omission notices now own a matrix-height row instead
+  of floating over the next parameter tensor; crowded backpropagation values
+  alternate across two fixed rows and place omitted-layer scope in a separate
+  lower caption;
+- legacy neural architecture configuration captions now wrap within semantic
+  module columns, anchor inward at both canvas edges, and retain the complete
+  detected PyTorch settings on hover.
+- inline neural block equations now use a pixel-stable band below node labels;
+  dense parallel columns move formulas to hover with an explicit notice instead
+  of allowing labels, nodes, and equations to overlap.
+- neural block hover cards now use readable Unicode/plain-text mathematics
+  instead of exposing LaTeX commands in a Plotly surface that cannot render
+  MathJax; eager multi-output nodes also report every observed output shape.
+
+Changed
+-------
+
+- the README neural quick start now uses the recorder-v2 history contract and
+  current public APIs for structure, replay, training, prediction,
+  backpropagation, parameter tensors, and effective hyperparameters; it also
+  explains temporal capture semantics and presentation-only bounds.
+
+Compatibility
+-------------
+
+The established neural architecture figure remains the default. The block view
+is opt-in, and current animation cadence, classic styling, dimensions, and
+legacy history keys remain available.
+
 Unreleased — phase 5 documentation and release readiness
 =========================================================
 

@@ -139,7 +139,19 @@ Neural networks
 
 .. autofunction:: mlektic.api.neural.visualize_nn_architecture
 
+.. autofunction:: mlektic.api.neural.inspect_nn
+
+.. autofunction:: mlektic.api.neural.visualize_nn_blocks
+
+.. autofunction:: mlektic.api.neural.visualize_nn_hyperparameters
+
+.. autofunction:: mlektic.api.neural.register_neural_descriptor
+
 .. autofunction:: mlektic.api.neural.visualize_nn_graph
+
+.. autofunction:: mlektic.api.neural.visualize_nn_backpropagation
+
+.. autofunction:: mlektic.api.neural.visualize_nn_loss_landscape
 
 .. autofunction:: mlektic.api.neural.visualize_nn_training
 
@@ -152,3 +164,14 @@ Neural networks
 .. autofunction:: mlektic.api.neural.display_nn_math_report
 
 .. autofunction:: mlektic.api.neural.export_nn_math_report
+
+.. module:: mlektic.neural.graph_ir
+
+.. autoclass:: mlektic.neural.graph_ir.NeuralGraph
+   :members:
+
+.. autoclass:: mlektic.neural.graph_ir.NeuralNode
+
+.. autoclass:: mlektic.neural.graph_ir.NeuralEdge
+
+.. autoclass:: mlektic.neural.graph_ir.CaptureProvenance

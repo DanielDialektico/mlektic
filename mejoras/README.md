@@ -33,6 +33,7 @@ The review covered:
 11. [Phase 3 implementation record](10_phase_3_implementation_record.md)
 12. [Permanent visual-QA notebook policy](11_visual_qa_notebook_policy.md)
 13. [Phase 5 implementation record](12_phase_5_implementation_record.md)
+14. [Neural execution-graph foundation](13_neural_graph_foundation.md)
 
 ## Recommended order
 

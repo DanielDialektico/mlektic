@@ -2,6 +2,140 @@
 Changelog
 =========
 
+Unreleased — neural execution-graph foundation
+===============================================
+
+Added
+-----
+
+- ``visualize_nn_hyperparameters`` and ``view="hyperparameters"`` now expose
+  every detected effective module, optimizer-group, objective, and scheduler
+  setting with its value, mathematical role, and PyTorch-aligned definition;
+  the recorder can retain optional scheduler configuration for this lesson;
+- a versioned renderer-independent neural graph with typed nodes, port-aware
+  tensor edges, parameter/buffer specifications, provenance, warnings, and
+  serializable metadata;
+- automatic ``torch.fx`` capture with truthful eager-hook fallback, preserving
+  supported branches, merges, shared calls, multiple inputs/outputs, and integer
+  embedding inputs;
+- an extensible semantic descriptor registry for common dense, convolutional,
+  normalization, embedding, recurrent, attention, Transformer, pooling,
+  reshape, reduction, activation, and merge operations;
+- opt-in native Plotly block figures and public ``inspect_nn``,
+  ``visualize_nn_blocks``, and ``register_neural_descriptor`` APIs;
+- neural recorder history schema version 2 with buffer snapshots, effective
+  optimizer groups, optional optimizer-state norms, and explicit temporal
+  capture/observation phases;
+- a dedicated execution-graph guide, implementation record, automated coverage,
+  human visual-QA matrix, and student architecture lesson.
+- an exhaustive 42-case neural QA gallery covering every public Plotly figure,
+  synthetic classification/regression, real Iris and breast-cancer tabular
+  data, a real handwritten-digit CNN, and simple-to-complex graph structures.
+- opt-in ``updates`` and ``hybrid`` neural evolution modes with signed update
+  halos, global or explicitly frame-normalized scales, previous/initial
+  references, update diagnostics, top-k emphasis, and perceptual subframes
+  that never masquerade as optimizer steps.
+
+Fixed
+-----
+
+- bounded neural-weight omission notices now own a matrix-height row instead
+  of floating over the next parameter tensor; crowded backpropagation values
+  alternate across two fixed rows and place omitted-layer scope in a separate
+  lower caption;
+- legacy neural architecture configuration captions now wrap within semantic
+  module columns, anchor inward at both canvas edges, and retain the complete
+  detected PyTorch settings on hover.
+- inline neural block equations now use a pixel-stable band below node labels;
+  dense parallel columns move formulas to hover with an explicit notice instead
+  of allowing labels, nodes, and equations to overlap.
+- neural block hover cards now use readable Unicode/plain-text mathematics
+  instead of exposing LaTeX commands in a Plotly surface that cannot render
+  MathJax; eager multi-output nodes also report every observed output shape.
+
+Changed
+-------
+
+- the README neural quick start now uses the recorder-v2 history contract and
+  current public APIs for structure, replay, training, prediction,
+  backpropagation, parameter tensors, and effective hyperparameters; it also
+  explains temporal capture semantics and presentation-only bounds.
+
+Compatibility
+-------------
+
+The established neural architecture figure remains the default. The block view
+is opt-in, and current animation cadence, classic styling, dimensions, and
+legacy history keys remain available.
+
+Unreleased — phase 5 documentation and release readiness
+=========================================================
+
+Added
+-----
+
+- a complete English guide architecture covering installation, first lessons,
+  mathematical conventions, motion, visual options, predictions, export,
+  compatibility, limitations, gallery, and contribution policy;
+- eight deterministic human visual-QA notebooks and four student notebooks with
+  98 stable real-figure cases and cleared committed output;
+- an enforced documentation-to-notebook manifest: new public documentation must
+  add a corresponding assertion-free human inspection cell;
+- notebook generation, validation, and non-mutating execution scripts;
+- Python 3.9–3.13, PyTorch, docs, package, clean-import, notebook-smoke, and
+  scheduled full-notebook CI workflows;
+- complete package metadata and public version discovery.
+- a dedicated estimator-hyperparameter guide and visual matrix spanning
+  regularization, learning rates, weighting, neural topology, task, and loss.
+
+Changed
+-------
+
+- earlier phase notebooks now live in the versioned archive, while the original
+  large exploratory notebooks remain locally preserved with a tracked checksum
+  inventory instead of bloating the release repository.
+- postponed evaluation of Scikit-learn adapter type annotations preserves the
+  documented Python 3.9 import contract without changing runtime behavior;
+- strict Sphinx builds now start from a fresh environment and write to an
+  ignored build directory, preventing committed artifacts from affecting CI.
+
+Fixed
+-----
+
+- Python 3.9 test collection no longer fails while evaluating the
+  ``np.ndarray | None`` return annotation;
+- the compatibility guide no longer contains a duplicated fragment that Sphinx
+  reports as unexpected indentation.
+
+Compatibility
+-------------
+
+No visualization default changed. Classic dashboard styling, current sizes,
+fluid animation, history semantics, and public figure behavior remain intact.
+
+Unreleased — phase 3 visual design
+==================================
+
+Added
+-----
+
+- opt-in academic, classroom, compact, and accessible themes backed by public
+  immutable design tokens;
+- dashboard, lesson, compact, and report compositions;
+- named sizes, explicit dimensions, responsive scaling, reduced-motion output,
+  and responsive export inheritance;
+- ``layout.meta["mlektic_visual"]`` audit metadata across tabular, prediction,
+  and neural public figures;
+- non-color marker and line redundancy for accessible views;
+- a dedicated :doc:`visual_design` guide and Phase 3 showcase notebook.
+
+Compatibility
+-------------
+
+Classic remains the default. Dashboard, lesson, and compact formats preserve
+every retained frame and the existing animation cadence. Only explicit report
+and reduced-motion choices freeze the exact final displayed state.
+
 Unreleased — phase 1 mathematical parity
 =========================================
 
@@ -108,7 +242,8 @@ Known limitations
 - tabular replay remains reconstructed even though its separately labeled
   endpoint is the exact fitted estimator;
 - a fully offline MathJax bundle is not supplied;
-- responsive reflow and alternative themes are planned, not implemented;
+- responsive scaling is implemented; structural reflow requires choosing a
+  dedicated compact, lesson, or report format;
 - full objective/regularization introspection belongs to the next phase.
 
 Earlier development history

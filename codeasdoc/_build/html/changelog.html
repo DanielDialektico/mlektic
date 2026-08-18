@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Advanced usage" href="advanced.html" /> 
+    <link rel="prev" title="Contributing and human visual QA policy" href="contributing_visual_qa.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -43,24 +43,63 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="linear_lesson.html">First rigorous linear-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="linear_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logistic_lesson.html">First rigorous logistic-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logistic_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="neural_lesson.html">First rigorous neural-network lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="neural_execution_graphs.html">Extensible neural-network execution maps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mathematical_parity.html">Tabular mathematical detail contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mathematical_conventions.html">Mathematical conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="animation_performance.html">Animation and performance semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visual_design.html">Visual design contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="themes_formats_sizes.html">Themes, formats, and sizes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_hyperparameters.html">Model parameters and hyperparameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prediction_explanations.html">Prediction explanations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export.html">Export and publishing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compatibility.html">Compatibility matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="limitations.html">Limitations and troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing_visual_qa.html">Contributing and human visual QA policy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing_visual_qa.html#workflow">Workflow</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-1-mathematical-parity">Unreleased — phase 1 mathematical parity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-neural-execution-graph-foundation">Unreleased — neural execution-graph foundation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#added">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixed">Fixed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#changed">Changed</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#compatibility">Compatibility</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-0-integrity-contract">Unreleased — phase 0 integrity contract</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-5-documentation-and-release-readiness">Unreleased — phase 5 documentation and release readiness</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id1">Added</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id2">Changed</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id3">Compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Fixed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-3-visual-design">Unreleased — phase 3 visual design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-1-mathematical-parity">Unreleased — phase 1 mathematical parity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id8">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased-phase-0-integrity-contract">Unreleased — phase 0 integrity contract</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">Added</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">Changed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">Compatibility</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#known-limitations">Known limitations</a></li>
 </ul>
 </li>
@@ -95,10 +134,148 @@
              
   <section id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading"></a></h1>
-<section id="unreleased-phase-1-mathematical-parity">
-<h2>Unreleased — phase 1 mathematical parity<a class="headerlink" href="#unreleased-phase-1-mathematical-parity" title="Link to this heading"></a></h2>
+<section id="unreleased-neural-execution-graph-foundation">
+<h2>Unreleased — neural execution-graph foundation<a class="headerlink" href="#unreleased-neural-execution-graph-foundation" title="Link to this heading"></a></h2>
 <section id="added">
 <h3>Added<a class="headerlink" href="#added" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">visualize_nn_hyperparameters</span></code> and <code class="docutils literal notranslate"><span class="pre">view=&quot;hyperparameters&quot;</span></code> now expose
+every detected effective module, optimizer-group, objective, and scheduler
+setting with its value, mathematical role, and PyTorch-aligned definition;
+the recorder can retain optional scheduler configuration for this lesson;</p></li>
+<li><p>a versioned renderer-independent neural graph with typed nodes, port-aware
+tensor edges, parameter/buffer specifications, provenance, warnings, and
+serializable metadata;</p></li>
+<li><p>automatic <code class="docutils literal notranslate"><span class="pre">torch.fx</span></code> capture with truthful eager-hook fallback, preserving
+supported branches, merges, shared calls, multiple inputs/outputs, and integer
+embedding inputs;</p></li>
+<li><p>an extensible semantic descriptor registry for common dense, convolutional,
+normalization, embedding, recurrent, attention, Transformer, pooling,
+reshape, reduction, activation, and merge operations;</p></li>
+<li><p>opt-in native Plotly block figures and public <code class="docutils literal notranslate"><span class="pre">inspect_nn</span></code>,
+<code class="docutils literal notranslate"><span class="pre">visualize_nn_blocks</span></code>, and <code class="docutils literal notranslate"><span class="pre">register_neural_descriptor</span></code> APIs;</p></li>
+<li><p>neural recorder history schema version 2 with buffer snapshots, effective
+optimizer groups, optional optimizer-state norms, and explicit temporal
+capture/observation phases;</p></li>
+<li><p>a dedicated execution-graph guide, implementation record, automated coverage,
+human visual-QA matrix, and student architecture lesson.</p></li>
+<li><p>an exhaustive 42-case neural QA gallery covering every public Plotly figure,
+synthetic classification/regression, real Iris and breast-cancer tabular
+data, a real handwritten-digit CNN, and simple-to-complex graph structures.</p></li>
+<li><p>opt-in <code class="docutils literal notranslate"><span class="pre">updates</span></code> and <code class="docutils literal notranslate"><span class="pre">hybrid</span></code> neural evolution modes with signed update
+halos, global or explicitly frame-normalized scales, previous/initial
+references, update diagnostics, top-k emphasis, and perceptual subframes
+that never masquerade as optimizer steps.</p></li>
+</ul>
+</section>
+<section id="fixed">
+<h3>Fixed<a class="headerlink" href="#fixed" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>bounded neural-weight omission notices now own a matrix-height row instead
+of floating over the next parameter tensor; crowded backpropagation values
+alternate across two fixed rows and place omitted-layer scope in a separate
+lower caption;</p></li>
+<li><p>legacy neural architecture configuration captions now wrap within semantic
+module columns, anchor inward at both canvas edges, and retain the complete
+detected PyTorch settings on hover.</p></li>
+<li><p>inline neural block equations now use a pixel-stable band below node labels;
+dense parallel columns move formulas to hover with an explicit notice instead
+of allowing labels, nodes, and equations to overlap.</p></li>
+<li><p>neural block hover cards now use readable Unicode/plain-text mathematics
+instead of exposing LaTeX commands in a Plotly surface that cannot render
+MathJax; eager multi-output nodes also report every observed output shape.</p></li>
+</ul>
+</section>
+<section id="changed">
+<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>the README neural quick start now uses the recorder-v2 history contract and
+current public APIs for structure, replay, training, prediction,
+backpropagation, parameter tensors, and effective hyperparameters; it also
+explains temporal capture semantics and presentation-only bounds.</p></li>
+</ul>
+</section>
+<section id="compatibility">
+<h3>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading"></a></h3>
+<p>The established neural architecture figure remains the default. The block view
+is opt-in, and current animation cadence, classic styling, dimensions, and
+legacy history keys remain available.</p>
+</section>
+</section>
+<section id="unreleased-phase-5-documentation-and-release-readiness">
+<h2>Unreleased — phase 5 documentation and release readiness<a class="headerlink" href="#unreleased-phase-5-documentation-and-release-readiness" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Added<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>a complete English guide architecture covering installation, first lessons,
+mathematical conventions, motion, visual options, predictions, export,
+compatibility, limitations, gallery, and contribution policy;</p></li>
+<li><p>eight deterministic human visual-QA notebooks and four student notebooks with
+98 stable real-figure cases and cleared committed output;</p></li>
+<li><p>an enforced documentation-to-notebook manifest: new public documentation must
+add a corresponding assertion-free human inspection cell;</p></li>
+<li><p>notebook generation, validation, and non-mutating execution scripts;</p></li>
+<li><p>Python 3.9–3.13, PyTorch, docs, package, clean-import, notebook-smoke, and
+scheduled full-notebook CI workflows;</p></li>
+<li><p>complete package metadata and public version discovery.</p></li>
+<li><p>a dedicated estimator-hyperparameter guide and visual matrix spanning
+regularization, learning rates, weighting, neural topology, task, and loss.</p></li>
+</ul>
+</section>
+<section id="id2">
+<h3>Changed<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>earlier phase notebooks now live in the versioned archive, while the original
+large exploratory notebooks remain locally preserved with a tracked checksum
+inventory instead of bloating the release repository.</p></li>
+<li><p>postponed evaluation of Scikit-learn adapter type annotations preserves the
+documented Python 3.9 import contract without changing runtime behavior;</p></li>
+<li><p>strict Sphinx builds now start from a fresh environment and write to an
+ignored build directory, preventing committed artifacts from affecting CI.</p></li>
+</ul>
+</section>
+<section id="id3">
+<h3>Fixed<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Python 3.9 test collection no longer fails while evaluating the
+<code class="docutils literal notranslate"><span class="pre">np.ndarray</span> <span class="pre">|</span> <span class="pre">None</span></code> return annotation;</p></li>
+<li><p>the compatibility guide no longer contains a duplicated fragment that Sphinx
+reports as unexpected indentation.</p></li>
+</ul>
+</section>
+<section id="id4">
+<h3>Compatibility<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<p>No visualization default changed. Classic dashboard styling, current sizes,
+fluid animation, history semantics, and public figure behavior remain intact.</p>
+</section>
+</section>
+<section id="unreleased-phase-3-visual-design">
+<h2>Unreleased — phase 3 visual design<a class="headerlink" href="#unreleased-phase-3-visual-design" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3>Added<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>opt-in academic, classroom, compact, and accessible themes backed by public
+immutable design tokens;</p></li>
+<li><p>dashboard, lesson, compact, and report compositions;</p></li>
+<li><p>named sizes, explicit dimensions, responsive scaling, reduced-motion output,
+and responsive export inheritance;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">layout.meta[&quot;mlektic_visual&quot;]</span></code> audit metadata across tabular, prediction,
+and neural public figures;</p></li>
+<li><p>non-color marker and line redundancy for accessible views;</p></li>
+<li><p>a dedicated <a class="reference internal" href="visual_design.html"><span class="doc">Visual design contract</span></a> guide and Phase 3 showcase notebook.</p></li>
+</ul>
+</section>
+<section id="id6">
+<h3>Compatibility<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>Classic remains the default. Dashboard, lesson, and compact formats preserve
+every retained frame and the existing animation cadence. Only explicit report
+and reduced-motion choices freeze the exact final displayed state.</p>
+</section>
+</section>
+<section id="unreleased-phase-1-mathematical-parity">
+<h2>Unreleased — phase 1 mathematical parity<a class="headerlink" href="#unreleased-phase-1-mathematical-parity" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>Added<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>opt-in <code class="docutils literal notranslate"><span class="pre">academic</span></code> and <code class="docutils literal notranslate"><span class="pre">complete</span></code> mathematical detail for linear and
 logistic training figures while <code class="docutils literal notranslate"><span class="pre">essential</span></code> keeps the compact main view;</p></li>
@@ -114,8 +291,8 @@ mathematics for non-affine pipelines;</p></li>
 record.</p></li>
 </ul>
 </section>
-<section id="changed">
-<h3>Changed<a class="headerlink" href="#changed" title="Link to this heading"></a></h3>
+<section id="id8">
+<h3>Changed<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">show_loss=True</span></code> now displays empirical MSE or log-loss along synthetic
 interpolation instead of silently removing the curve; labels explicitly
@@ -140,8 +317,8 @@ synchronized as a redraw-free trace;</p></li>
 logistic interpolation targets parameters or probabilities.</p></li>
 </ul>
 </section>
-<section id="compatibility">
-<h3>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading"></a></h3>
+<section id="id9">
+<h3>Compatibility<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
 <p>The essential default retains compact styling, controls, frame counts, and
 motion. Its evolving one-dimensional equation now uses the shared LaTeX math
 band instead of covering the data region. Academic panels are separate
@@ -151,8 +328,8 @@ animation stays fluid.</p>
 </section>
 <section id="unreleased-phase-0-integrity-contract">
 <h2>Unreleased — phase 0 integrity contract<a class="headerlink" href="#unreleased-phase-0-integrity-contract" title="Link to this heading"></a></h2>
-<section id="id1">
-<h3>Added<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<section id="id10">
+<h3>Added<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">show_class_labels=False</span></code> for indexed-by-default logistic figures with
 optional fitted semantic labels and persistent class metadata;</p></li>
@@ -168,8 +345,8 @@ optional fitted semantic labels and persistent class metadata;</p></li>
 <li><p>phase 0 contract tests.</p></li>
 </ul>
 </section>
-<section id="id2">
-<h3>Changed<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<section id="id11">
+<h3>Changed<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>invalid history enum values and unknown metrics now fail early;</p></li>
 <li><p>explicit iterative mode requires <code class="docutils literal notranslate"><span class="pre">partial_fit</span></code>;</p></li>
@@ -189,8 +366,8 @@ spacing across 1D, 2D, and nD routes;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">show_optimized</span></code> documentation is English and IPython is imported lazily.</p></li>
 </ul>
 </section>
-<section id="id3">
-<h3>Compatibility<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<section id="id12">
+<h3>Compatibility<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
 <p>Classic colors, fixed dimensions, trace geometry, and animation behavior remain
 the defaults. <code class="docutils literal notranslate"><span class="pre">loss_hist</span></code> remains available as an alias of
 <code class="docutils literal notranslate"><span class="pre">loss_display</span></code>. New subtitles and slider labels are intentional transparency
@@ -202,7 +379,8 @@ changes. Previously ignored invalid values may now raise actionable exceptions.<
 <li><p>tabular replay remains reconstructed even though its separately labeled
 endpoint is the exact fitted estimator;</p></li>
 <li><p>a fully offline MathJax bundle is not supplied;</p></li>
-<li><p>responsive reflow and alternative themes are planned, not implemented;</p></li>
+<li><p>responsive scaling is implemented; structural reflow requires choosing a
+dedicated compact, lesson, or report format;</p></li>
 <li><p>full objective/regularization introspection belongs to the next phase.</p></li>
 </ul>
 </section>
@@ -222,7 +400,7 @@ Future entries should remain English-first and distinguish source semantics.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="advanced.html" class="btn btn-neutral float-left" title="Advanced usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contributing_visual_qa.html" class="btn btn-neutral float-left" title="Contributing and human visual QA policy" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>

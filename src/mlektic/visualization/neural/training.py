@@ -86,7 +86,7 @@ def _metric_annotation(step: int, loss: float, metrics: Sequence[tuple[str, floa
     parts.extend(rf"\mathrm{{{name}}}={value:.4f}" for name, value in metrics if np.isfinite(value))
     return {
         "x": 0.99,
-        "y": 1.08,
+        "y": 1.15,
         "xref": "paper",
         "yref": "paper",
         "text": "$" + r"\quad".join(parts) + "$",
@@ -237,7 +237,7 @@ def build_nn_training_figure(
         title = "Learning performance"
     layout = neural_layout(title, height=720)
     layout["title"]["x"] = 0.16
-    layout["margin"] = {"t": 120, "r": 40, "b": 100, "l": 70}
+    layout["margin"] = {"t": 145, "r": 40, "b": 100, "l": 70}
     first_metrics = [(name, float(values[0])) for name, values in metrics]
     figure.update_layout(
         **layout,
@@ -248,6 +248,22 @@ def build_nn_training_figure(
             _metric_annotation(int(steps[0]), float(loss[0]), first_metrics),
         ],
         showlegend=False,
+        meta={
+            "mlektic_neural_history": {
+                "history_schema_version": history.get("history_schema_version", 1),
+                "recorded_steps": int(steps.size),
+                "training_config": dict(history.get("training_config", {})),
+                "frame_semantics": list(history.get("frame_semantics", [])),
+                "optimizer_groups": list(history.get("optimizer_groups", [])),
+                "captured": {
+                    "parameters": bool(history.get("parameters")),
+                    "buffers": bool(history.get("buffers")),
+                    "gradients": bool(history.get("gradients")),
+                    "activations": bool(history.get("activations")),
+                    "optimizer_state_norms": bool(history.get("optimizer_state_norms")),
+                },
+            }
+        },
     )
     for row in (1, 2):
         for column in (1, 2):
@@ -290,12 +306,13 @@ def _weight_annotations(
     dec: int,
     max_rows: int,
     max_cols: int,
+    omitted_count: int,
 ) -> List[Dict[str, Any]]:
     snapshot = parameter_snapshot(history, frame_index)
     annotations: List[Dict[str, Any]] = [
         {
             "x": 0.5,
-            "y": 1.10,
+            "y": 0.98,
             "xref": "paper",
             "yref": "paper",
             "text": (
@@ -304,11 +321,11 @@ def _weight_annotations(
                 r"\boldsymbol{\theta}^{(\ell)}_{0,t}\in\mathbb{R}^{d_\ell}$"
             ),
             "showarrow": False,
-            "font": {"size": 16, "color": NEURAL_COLORS["text"]},
+            "font": {"size": 17, "color": NEURAL_COLORS["text"]},
         },
         {
             "x": 0.5,
-            "y": 1.02,
+            "y": 0.88,
             "xref": "paper",
             "yref": "paper",
             "text": rf"$t={step}\quad\text{{Each row of }}\Theta^{{(\ell)}}\text{{ produces one output pre-activation }}z_j^{{(\ell)}}.$",
@@ -316,7 +333,74 @@ def _weight_annotations(
             "font": {"size": 13, "color": NEURAL_COLORS["muted"]},
         },
     ]
-    y_positions = np.linspace(0.88, 0.13, max(len(selected_names), 1))
+    matrix_count = 0
+    visual_heights = []
+    for name in selected_names:
+        if name is None:
+            # The omission disclosure owns a matrix-sized corridor. A plain
+            # text-height placeholder lets the following MathJax matrix extend
+            # upward through the notice even when their anchors differ.
+            visual_heights.append(5.00)
+            continue
+        array = snapshot.get(name)
+        if array is not None and array.ndim >= 2:
+            matrix_count += 1
+            displayed_rows = min(int(array.shape[0]), max_rows)
+            ellipsis_row = int(array.shape[0]) > max_rows
+            visual_heights.append(0.70 + 1.25 * (displayed_rows + int(ellipsis_row)))
+        else:
+            visual_heights.append(1.20)
+    # MathJax matrices extend above and below their annotation anchors. Reserve
+    # a full visual row between tensors, including an omitted-row marker.
+    gap = 3.2 if matrix_count > 2 else 2.0
+    total_height = sum(visual_heights) + gap * max(len(visual_heights) - 1, 0)
+    available_span = 0.70
+    scale = available_span / max(total_height, 1e-12)
+    y_positions = []
+    cursor = 0.84
+    for visual_height in visual_heights:
+        item_height = visual_height * scale
+        y_positions.append(cursor - item_height / 2.0)
+        cursor -= item_height + gap * scale
+    # MathJax's visible matrix box is not perfectly symmetric around Plotly's
+    # annotation anchor: tall matrices extend farther below it.  Lift a
+    # multi-row weight matrix when its matching bias vector follows so the
+    # rendered pair keeps a clear visual gap without moving the vector or
+    # compressing the remaining parameter list.
+    for index, name in enumerate(selected_names[:-1]):
+        if name is None or not name.endswith(".weight"):
+            continue
+        matching_bias = f"{name.removesuffix('.weight')}.bias"
+        if selected_names[index + 1] != matching_bias:
+            continue
+        array = snapshot.get(name)
+        if array is None or array.ndim < 2:
+            continue
+        displayed_rows = min(int(array.shape[0]), max_rows)
+        has_ellipsis_row = int(array.shape[0]) > max_rows
+        visible_rows = displayed_rows + int(has_ellipsis_row)
+        if visible_rows <= 1:
+            continue
+        anchor_lift = min(0.095, 0.02375 * (visible_rows - 1))
+        upper_bound = 0.82 if index == 0 else y_positions[index - 1] - 0.08
+        y_positions[index] = max(
+            y_positions[index],
+            min(y_positions[index] + anchor_lift, upper_bound),
+        )
+    # A subsequent matrix can be lifted toward its bias after the general row
+    # allocation. Preserve the omission row by translating that matrix and all
+    # following tensors together, rather than sacrificing either clearance.
+    omission_matrix_clearance = 0.14
+    minimum_bottom_anchor = 0.05
+    for index, name in enumerate(selected_names[:-1]):
+        if name is not None:
+            continue
+        shortfall = omission_matrix_clearance - (y_positions[index] - y_positions[index + 1])
+        if shortfall <= 0:
+            continue
+        shift = min(shortfall, max(0.0, y_positions[-1] - minimum_bottom_anchor))
+        for following in range(index + 1, len(y_positions)):
+            y_positions[following] -= shift
     layer_number = 0
     for y_position, name in zip(y_positions, selected_names):
         if name is None:
@@ -326,9 +410,12 @@ def _weight_annotations(
                     "y": y_position,
                     "xref": "paper",
                     "yref": "paper",
-                    "text": r"$\vdots$",
+                    "text": (
+                        f"<b>{omitted_count} intermediate parameter tensor"
+                        f"{'s' if omitted_count != 1 else ''} omitted from this bounded view</b>"
+                    ),
                     "showarrow": False,
-                    "font": {"size": 24, "color": NEURAL_COLORS["muted"]},
+                    "font": {"size": 12, "color": NEURAL_COLORS["muted"]},
                 }
             )
             continue
@@ -354,7 +441,7 @@ def _weight_annotations(
                 "yref": "paper",
                 "text": rf"${symbol}={matrix}\in\mathbb{{R}}^{{{dimensions}}}\quad {role}$",
                 "showarrow": False,
-                "font": {"size": 13, "color": NEURAL_COLORS["text"]},
+                "font": {"size": 14, "color": NEURAL_COLORS["text"]},
             }
         )
     return annotations
@@ -381,6 +468,7 @@ def build_nn_weight_figure(
     if not available:
         raise ValueError("No parameter tensors were captured. Increase max_tensor_elements if needed.")
     selected_names = select_with_ellipsis(available, max_parameters)
+    omitted_count = max(0, len(available) - sum(name is not None for name in selected_names))
     steps = _history_array(history, "steps").astype(int)
     frame_count = min(steps.size, min(len(parameters[name]) for name in available))
     steps = steps[:frame_count]
@@ -401,6 +489,7 @@ def build_nn_weight_figure(
                     3,
                     max_rows,
                     max_cols,
+                    omitted_count,
                 )
             ),
         )
@@ -413,12 +502,38 @@ def build_nn_weight_figure(
     )
     if title is None:
         title = "Parameter evolution in mathematical notation"
-    layout = neural_layout(title, height=max(650, 210 + 115 * len(selected_names)))
-    layout["title"]["x"] = 0.16
-    layout["margin"] = {"t": 125, "r": 35, "b": 100, "l": 35}
+    matrix_rows = sum(
+        min(int(np.asarray(parameters[name][0]).shape[0]), max_rows)
+        for name in selected_names
+        if name is not None and np.asarray(parameters[name][0]).ndim >= 2
+    )
+    layout = neural_layout(
+        title,
+        height=max(650, 250 + 72 * len(selected_names) + 30 * matrix_rows),
+    )
+    layout["title"]["x"] = 0.5
+    layout["title"]["xanchor"] = "center"
+    layout["margin"] = {"t": 150, "r": 35, "b": 95, "l": 35}
+    layout["meta"] = {
+        "mlektic_neural_weights": {
+            "omission_notice_layout": "reserved-matrix-height-row",
+            "omission_notice_visual_height": 5.0,
+            "omission_to_matrix_target_clearance": 0.14,
+            "omitted_parameter_count": omitted_count,
+        }
+    }
     figure.update_layout(
         **layout,
-        annotations=_weight_annotations(history, 0, selected_names, int(steps[0]), 3, max_rows, max_cols),
+        annotations=_weight_annotations(
+            history,
+            0,
+            selected_names,
+            int(steps[0]),
+            3,
+            max_rows,
+            max_cols,
+            omitted_count,
+        ),
         updatemenus=controls,
         sliders=sliders,
         showlegend=False,

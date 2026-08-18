@@ -350,6 +350,246 @@
       "notebook": "notebooks/qa/qa_07_hyperparameters.ipynb",
       "cell_index": 26
     },
+    "NN-ROUTER-ARCHITECTURE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 6
+    },
+    "NN-ROUTER-BLOCKS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 8
+    },
+    "NN-ROUTER-HYPERPARAMETERS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 10
+    },
+    "NN-ROUTER-GRAPH": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 12
+    },
+    "NN-ROUTER-TRAINING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 14
+    },
+    "NN-ROUTER-WEIGHTS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 16
+    },
+    "NN-ROUTER-ACTIVATIONS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 18
+    },
+    "NN-ROUTER-BACKPROPAGATION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 20
+    },
+    "NN-TRAINING-QUERY-REPLAY": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 22
+    },
+    "NN-GALLERY-FORWARD-SUBSTITUTION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 24
+    },
+    "NN-GALLERY-GRAPH-SIGNAL": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 26
+    },
+    "NN-GALLERY-REPORT-FIGURE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 28
+    },
+    "NN-GRAPH-WITHOUT-BACKPROP": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 31
+    },
+    "NN-GRAPH-WITH-BACKPROP": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 33
+    },
+    "NN-GRAPH-HYBRID-UPDATES": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 36
+    },
+    "NN-GRAPH-CUMULATIVE-UPDATES": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 38
+    },
+    "NN-GRAPH-FRAME-NORMALIZED-UPDATES": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 40
+    },
+    "NN-LOSS-LANDSCAPE-XOR": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 43
+    },
+    "NN-BACKPROP-XOR": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 45
+    },
+    "NN-SYNTH-REG-ARCHITECTURE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 48
+    },
+    "NN-SYNTH-REG-BLOCKS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 50
+    },
+    "NN-SYNTH-REG-TRAINING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 52
+    },
+    "NN-SYNTH-REG-GRAPH": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 54
+    },
+    "NN-SYNTH-REG-PREDICTION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 56
+    },
+    "NN-REAL-IRIS-ARCHITECTURE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 59
+    },
+    "NN-REAL-IRIS-BLOCKS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 61
+    },
+    "NN-REAL-IRIS-TRAINING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 63
+    },
+    "NN-REAL-IRIS-WEIGHTS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 65
+    },
+    "NN-REAL-IRIS-ACTIVATIONS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 67
+    },
+    "NN-REAL-IRIS-GRAPH": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 69
+    },
+    "NN-REAL-IRIS-PREDICTION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 71
+    },
+    "NN-REAL-CANCER-BLOCKS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 74
+    },
+    "NN-REAL-CANCER-TRAINING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 76
+    },
+    "NN-REAL-CANCER-PREDICTION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 78
+    },
+    "NN-REAL-DIGITS-ARCHITECTURE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 81
+    },
+    "NN-REAL-DIGITS-BLOCKS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 83
+    },
+    "NN-REAL-DIGITS-DENSE-HEAD-GRAPH": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 85
+    },
+    "NN-REAL-DIGITS-TRAINING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 87
+    },
+    "NN-REAL-DIGITS-WEIGHTS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 89
+    },
+    "NN-BLOCK-RESIDUAL": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 92
+    },
+    "NN-BLOCK-SHARED": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 94
+    },
+    "NN-BLOCK-CONV": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 96
+    },
+    "NN-BLOCK-EMBEDDING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 98
+    },
+    "NN-BLOCK-LSTM": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 100
+    },
+    "NN-BLOCK-ATTENTION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 102
+    },
+    "NN-BLOCK-MULTI-IO": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 104
+    },
+    "NN-BLOCK-DYNAMIC": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 106
+    },
+    "NN-BLOCK-COLLAPSE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 108
+    },
+    "NN-BLOCK-CUSTOM": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 110
+    },
+    "NN-RECORDER-V2": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 112
+    },
+    "NN-LARGE-HUNDREDS-MANY-LAYERS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 115
+    },
+    "NN-LARGE-ARCHITECTURE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 117
+    },
+    "NN-LARGE-BLOCKS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 119
+    },
+    "NN-LARGE-GRAPH": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 121
+    },
+    "NN-LARGE-FORWARD-SUBSTITUTION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 123
+    },
+    "NN-LARGE-TRAINING": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 125
+    },
+    "NN-LARGE-WEIGHTS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 127
+    },
+    "NN-LARGE-ACTIVATIONS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 129
+    },
+    "NN-LARGE-BACKPROPAGATION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 131
+    },
+    "NN-LARGE-LOSS-LANDSCAPE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 133
+    },
     "LEARN-GETTING-STARTED": {
       "notebook": "notebooks/learn/learn_00_getting_started.ipynb",
       "cell_index": 6
@@ -393,6 +633,18 @@
     "LEARN-NN-PREDICTION": {
       "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
       "cell_index": 13
+    },
+    "LEARN-NN-BRANCHES": {
+      "notebook": "notebooks/learn/learn_04_neural_architectures.ipynb",
+      "cell_index": 6
+    },
+    "LEARN-NN-ATTENTION": {
+      "notebook": "notebooks/learn/learn_04_neural_architectures.ipynb",
+      "cell_index": 9
+    },
+    "LEARN-NN-PROVENANCE": {
+      "notebook": "notebooks/learn/learn_04_neural_architectures.ipynb",
+      "cell_index": 12
     }
   },
   "documents": {
@@ -415,7 +667,52 @@
     ],
     "codeasdoc/neural_lesson.rst": [
       "LEARN-NN-ARCHITECTURE",
-      "LEARN-NN-TRAINING"
+      "LEARN-NN-TRAINING",
+      "NN-ROUTER-HYPERPARAMETERS",
+      "NN-GALLERY-FORWARD-SUBSTITUTION",
+      "LEARN-NN-BRANCHES",
+      "LEARN-NN-ATTENTION"
+    ],
+    "codeasdoc/neural_execution_graphs.rst": [
+      "NN-ROUTER-ARCHITECTURE",
+      "NN-ROUTER-BLOCKS",
+      "NN-ROUTER-HYPERPARAMETERS",
+      "NN-ROUTER-GRAPH",
+      "NN-GRAPH-WITHOUT-BACKPROP",
+      "NN-GRAPH-WITH-BACKPROP",
+      "NN-ROUTER-BACKPROPAGATION",
+      "NN-LOSS-LANDSCAPE-XOR",
+      "NN-BACKPROP-XOR",
+      "NN-GRAPH-HYBRID-UPDATES",
+      "NN-GRAPH-CUMULATIVE-UPDATES",
+      "NN-GRAPH-FRAME-NORMALIZED-UPDATES",
+      "NN-ROUTER-TRAINING",
+      "NN-ROUTER-WEIGHTS",
+      "NN-ROUTER-ACTIVATIONS",
+      "NN-TRAINING-QUERY-REPLAY",
+      "NN-GALLERY-FORWARD-SUBSTITUTION",
+      "NN-SYNTH-REG-TRAINING",
+      "NN-REAL-IRIS-GRAPH",
+      "NN-REAL-CANCER-PREDICTION",
+      "NN-REAL-DIGITS-BLOCKS",
+      "NN-REAL-DIGITS-DENSE-HEAD-GRAPH",
+      "NN-BLOCK-RESIDUAL",
+      "NN-BLOCK-SHARED",
+      "NN-BLOCK-CONV",
+      "NN-BLOCK-EMBEDDING",
+      "NN-BLOCK-LSTM",
+      "NN-BLOCK-ATTENTION",
+      "NN-BLOCK-MULTI-IO",
+      "NN-LARGE-HUNDREDS-MANY-LAYERS",
+      "NN-LARGE-ARCHITECTURE",
+      "NN-LARGE-BLOCKS",
+      "NN-LARGE-GRAPH",
+      "NN-LARGE-FORWARD-SUBSTITUTION",
+      "NN-LARGE-TRAINING",
+      "NN-LARGE-WEIGHTS",
+      "NN-LARGE-ACTIVATIONS",
+      "NN-LARGE-BACKPROPAGATION",
+      "NN-LARGE-LOSS-LANDSCAPE"
     ],
     "codeasdoc/history_semantics.rst": [
       "MOTION-NATIVE-SLOW",
@@ -452,20 +749,33 @@
     "codeasdoc/gallery.rst": [
       "SMOKE-LR-2D",
       "SMOKE-LOG-MULTI-2D",
-      "NN-GRAPH-EXACT"
+      "NN-GRAPH-EXACT",
+      "NN-SYNTH-REG-PREDICTION",
+      "NN-REAL-IRIS-TRAINING",
+      "NN-REAL-DIGITS-ARCHITECTURE"
     ],
     "codeasdoc/compatibility.rst": [
       "LR-PIPE-SCALED",
-      "NN-RELU-ADAM"
+      "NN-RELU-ADAM",
+      "NN-BLOCK-ATTENTION",
+      "NN-BLOCK-MULTI-IO",
+      "NN-REAL-CANCER-BLOCKS",
+      "NN-REAL-DIGITS-TRAINING"
     ],
     "codeasdoc/model_hyperparameters.rst": [
       "HYPER-LR-L2",
       "HYPER-LOG-C-STRONG",
-      "HYPER-NN-REGRESSION"
+      "HYPER-NN-REGRESSION",
+      "NN-BLOCK-CONV",
+      "NN-BLOCK-LSTM",
+      "NN-RECORDER-V2",
+      "NN-ROUTER-HYPERPARAMETERS"
     ],
     "codeasdoc/limitations.rst": [
       "LR-MANY-FEATURES",
-      "LOG-MULTI-MANY-CLASSES"
+      "LOG-MULTI-MANY-CLASSES",
+      "NN-BLOCK-DYNAMIC",
+      "NN-BLOCK-COLLAPSE"
     ],
     "codeasdoc/visualization.rst": [
       "SMOKE-LOG-BIN-2D"

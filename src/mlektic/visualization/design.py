@@ -442,10 +442,13 @@ def _style_axes(fig: Any, tokens: VisualTokens) -> None:
 
 def _style_controls(fig: Any, tokens: VisualTokens) -> None:
     for menu in fig.layout.updatemenus or ():
+        # A builder may reserve a precise control size for a dense composition.
+        # Themes recolor that control without unexpectedly enlarging it.
+        resolved_size = menu.font.size or tokens.control_size
         menu.update(
             bgcolor=tokens.control_background,
             bordercolor=tokens.grid,
-            font={"color": tokens.control_text, "size": tokens.control_size},
+            font={"color": tokens.control_text, "size": resolved_size},
         )
     for slider in fig.layout.sliders or ():
         slider.font.update(color=tokens.text, size=tokens.control_size)
@@ -455,6 +458,8 @@ def _style_controls(fig: Any, tokens: VisualTokens) -> None:
 def _style_trace(trace: Any, tokens: VisualTokens) -> None:
     name = str(getattr(trace, "name", "") or "").lower()
     uid = str(getattr(trace, "uid", "") or "")
+    if uid.startswith(("NN_BLOCK_", "NN_GRAPH_")) or name.startswith("neural graph"):
+        return
     mode = str(getattr(trace, "mode", "") or "")
     is_loss = uid == "LOSS_LINE" or "loss" in name or "mse" in name
     is_model = uid == "MODEL_LINE" or any(word in name for word in ("model", "probability curve", "boundary"))
@@ -562,6 +567,13 @@ def _apply_report_format(fig: Any, tokens: VisualTokens) -> None:
 
 
 def _apply_lesson_format(fig: Any, tokens: VisualTokens) -> None:
+    metadata = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
+    if "mlektic_neural_history" in metadata:
+        # A neural performance dashboard already exposes one synchronized
+        # temporal control. Concept-stage visibility buttons hide entire
+        # metric curves and make the recorded learning evidence incomplete;
+        # they are therefore deliberately unsupported for this figure family.
+        return
     traces = list(fig.data)
     if not traces:
         return
