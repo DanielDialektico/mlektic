@@ -41,13 +41,33 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="linear_lesson.html">First rigorous linear-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="linear_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logistic_lesson.html">First rigorous logistic-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="logistic_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="neural_lesson.html">First rigorous neural-network lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="neural_execution_graphs.html">Extensible neural-network execution maps</a></li>
 <li class="toctree-l1"><a class="reference internal" href="history_semantics.html">History provenance and time semantics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mathematical_parity.html">Tabular mathematical detail contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mathematical_conventions.html">Mathematical conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="animation_performance.html">Animation and performance semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="visual_design.html">Visual design contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="themes_formats_sizes.html">Themes, formats, and sizes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="model_hyperparameters.html">Model parameters and hyperparameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prediction_explanations.html">Prediction explanations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export.html">Export and publishing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gallery.html">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compatibility.html">Compatibility matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="limitations.html">Limitations and troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="visualization.html">Visualization mathematics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing_visual_qa.html">Contributing and human visual QA policy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing_visual_qa.html#workflow">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
@@ -88,8 +108,11 @@
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -129,6 +152,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.visualization.theme.annotate_history_semantics">annotate_history_semantics() (in module mlektic.visualization.theme)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.visualization.design.available_themes">available_themes() (in module mlektic.visualization.design)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -147,6 +172,10 @@
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.b_hist_learned">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.backend">backend (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.background">background (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.config.LinearHistoryConfig.baseline">baseline (mlektic.domain.config.LinearHistoryConfig attribute)</a>
 
       <ul>
@@ -155,6 +184,10 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.body_size">body_size (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.boundary">boundary (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.history.metrics.build_linear_metrics">build_linear_metrics() (in module mlektic.history.metrics)</a>
 </li>
       <li><a href="api_reference.html#mlektic.visualization.logistic.router.build_logistic_figure">build_logistic_figure() (in module mlektic.visualization.logistic.router)</a>
@@ -171,6 +204,8 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.call_index">call_index (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.history.engine.HistoryEngine.capture_linear">capture_linear() (mlektic.history.engine.HistoryEngine method)</a>
 
       <ul>
@@ -189,14 +224,16 @@
       </ul></li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.captured_steps">captured_steps (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance">CaptureProvenance (class in mlektic.neural.graph_ir)</a>
+</li>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.classes">classes (mlektic.adapters.sklearn.SklearnAdapter property)</a>
 
       <ul>
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.classes">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.clone_for_replay">clone_for_replay() (mlektic.adapters.sklearn.SklearnAdapter method)</a>
 </li>
       <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.close">close() (mlektic.neural.recorder.TorchTrainingRecorder method)</a>
@@ -211,20 +248,36 @@
       </ul></li>
       <li><a href="api_reference.html#mlektic.visualization.theme.configure_animation">configure_animation() (in module mlektic.visualization.theme)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.control_background">control_background (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.control_size">control_size (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.control_text">control_text (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.data">data (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.data_border">data_border (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.data_symbol">data_symbol (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.history.sampling.decimate_history">decimate_history() (in module mlektic.history.sampling)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.decimation">decimation (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.decision_function">decision_function() (mlektic.adapters.sklearn.SklearnAdapter method)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.density">density (mlektic.visualization.design.VisualSpec attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.api.neural.display_nn_math_report">display_nn_math_report() (in module mlektic.api.neural)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.config.LinearHistoryConfig.display_space">display_space (mlektic.domain.config.LinearHistoryConfig attribute)</a>
 
       <ul>
@@ -237,8 +290,6 @@
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.display_space">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.displayed_state_origins">displayed_state_origins (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.displayed_step_indices">displayed_step_indices (mlektic.domain.history.HistoryMetadata attribute)</a>
@@ -251,14 +302,20 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.edges">edges (mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.equation_size">equation_size (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.exact_for_input">exact_for_input (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.api.logistic.explain_logistic_prediction">explain_logistic_prediction() (in module mlektic.api.logistic)</a>
 </li>
       <li><a href="api_reference.html#mlektic.api.linear.explain_lr_prediction">explain_lr_prediction() (in module mlektic.api.linear)</a>
 </li>
-      <li><a href="api_reference.html#mlektic.api.neural.explain_nn_prediction">explain_nn_prediction() (in module mlektic.api.neural)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.api.neural.explain_nn_prediction">explain_nn_prediction() (in module mlektic.api.neural)</a>
+</li>
       <li><a href="api_reference.html#mlektic.api.optimize.export_figure">export_figure() (in module mlektic.api.optimize)</a>
 </li>
       <li><a href="api_reference.html#mlektic.api.neural.export_nn_math_report">export_nn_math_report() (in module mlektic.api.neural)</a>
@@ -279,9 +336,15 @@
 </li>
       <li><a href="api_reference.html#mlektic.services.linear_history.fit_history">fit_history() (in module mlektic.services.linear_history)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.services.linear_history.fit_history_logistic">fit_history_logistic() (in module mlektic.services.linear_history)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_reference.html#mlektic.services.linear_history.fit_history_logistic">fit_history_logistic() (in module mlektic.services.linear_history)</a>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.font_family">font_family (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.format">format (mlektic.visualization.design.VisualSpec attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.formula">formula (mlektic.neural.graph_ir.NeuralNode attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.config.LinearHistoryConfig.frame_step">frame_step (mlektic.domain.config.LinearHistoryConfig attribute)</a>
 
@@ -301,10 +364,14 @@
 </li>
       <li><a href="api_reference.html#mlektic.visualization.theme.get_sliders">get_sliders() (in module mlektic.visualization.theme)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.visualization.design.get_theme_tokens">get_theme_tokens() (in module mlektic.visualization.design)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.grid">grid (mlektic.domain.history.LinearHistoryPayload attribute)</a>
 
       <ul>
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.grid">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
+</li>
+        <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.grid">(mlektic.visualization.design.VisualTokens attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -327,6 +394,8 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.height">height (mlektic.visualization.design.VisualSpec attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.history_kind">history_kind (mlektic.domain.history.LinearHistoryPayload attribute)</a>
 
       <ul>
@@ -345,18 +414,32 @@
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata">HistoryMetadata (class in mlektic.domain.history)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.hyperparameters">hyperparameters (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.id">id (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.includes_dynamic_control_flow">includes_dynamic_control_flow (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.includes_functional_ops">includes_functional_ops (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.input_nodes">input_nodes (mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.inputs">inputs (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.api.neural.inspect_nn">inspect_nn() (in module mlektic.api.neural)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.interpolation_target">interpolation_target (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.history.strategy_interp.InterpolationCapture">InterpolationCapture (class in mlektic.history.strategy_interp)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.is_iterative">is_iterative (mlektic.adapters.sklearn.SklearnAdapter property)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.is_multiclass">is_multiclass (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
@@ -366,16 +449,46 @@
   </ul></td>
 </tr></table>
 
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.kind">kind (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.kind">(mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.label">label (mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.label">(mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.legend_background">legend_background (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.legend_text">legend_text (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.line_width">line_width (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.config.LinearHistoryConfig">LinearHistoryConfig (class in mlektic.domain.config)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload">LinearHistoryPayload (class in mlektic.domain.history)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.config.LogisticHistoryConfig">LogisticHistoryConfig (class in mlektic.domain.config)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload">LogisticHistoryPayload (class in mlektic.domain.history)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.loss">loss (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.loss_dash">loss_dash (mlektic.visualization.design.VisualTokens attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.loss_display">loss_display (mlektic.domain.history.LinearHistoryPayload attribute)</a>
 
@@ -383,8 +496,6 @@
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.loss_display">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.loss_hist">loss_hist (mlektic.domain.history.LinearHistoryPayload attribute)</a>
 
       <ul>
@@ -403,6 +514,10 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.math_font_family">math_font_family (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.math_status">math_status (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.config.LinearHistoryConfig.max_frames">max_frames (mlektic.domain.config.LinearHistoryConfig attribute)</a>
 
       <ul>
@@ -414,7 +529,13 @@
       <ul>
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.metadata">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.metadata">(mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
       </ul></li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.metadata">metadata() (mlektic.visualization.design.VisualSpec method)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.metric_size">metric_size (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.config.LinearHistoryConfig.metrics">metrics (mlektic.domain.config.LinearHistoryConfig attribute)</a>
 
       <ul>
@@ -505,6 +626,13 @@
         <li><a href="api_reference.html#module-mlektic.history.strategy_iterative">module</a>
 </li>
       </ul></li>
+      <li>
+    mlektic.neural.graph_ir
+
+      <ul>
+        <li><a href="api_reference.html#module-mlektic.neural.graph_ir">module</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
@@ -512,6 +640,13 @@
 
       <ul>
         <li><a href="api_reference.html#module-mlektic.services.linear_history">module</a>
+</li>
+      </ul></li>
+      <li>
+    mlektic.visualization.design
+
+      <ul>
+        <li><a href="api_reference.html#module-mlektic.visualization.design">module</a>
 </li>
       </ul></li>
       <li>
@@ -541,6 +676,12 @@
         <li><a href="api_reference.html#mlektic.domain.config.LogisticHistoryConfig.mode">(mlektic.domain.config.LogisticHistoryConfig attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.model">model (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.model_dash">model_dash (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.model_type">model_type (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
       <li>
     module
 
@@ -569,7 +710,11 @@
 </li>
         <li><a href="api_reference.html#module-mlektic.history.strategy_iterative">mlektic.history.strategy_iterative</a>
 </li>
+        <li><a href="api_reference.html#module-mlektic.neural.graph_ir">mlektic.neural.graph_ir</a>
+</li>
         <li><a href="api_reference.html#module-mlektic.services.linear_history">mlektic.services.linear_history</a>
+</li>
+        <li><a href="api_reference.html#module-mlektic.visualization.design">mlektic.visualization.design</a>
 </li>
         <li><a href="api_reference.html#module-mlektic.visualization.linear.router">mlektic.visualization.linear.router</a>
 </li>
@@ -578,7 +723,49 @@
         <li><a href="api_reference.html#module-mlektic.visualization.theme">mlektic.visualization.theme</a>
 </li>
       </ul></li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.module_path">module_path (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.module_type">module_type (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.config.LogisticHistoryConfig.multiclass_link">multiclass_link (mlektic.domain.config.LogisticHistoryConfig attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.muted">muted (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.name">name (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge">NeuralEdge (class in mlektic.neural.graph_ir)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph">NeuralGraph (class in mlektic.neural.graph_ir)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode">NeuralNode (class in mlektic.neural.graph_ir)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.node_map">node_map() (mlektic.neural.graph_ir.NeuralGraph method)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.nodes">nodes (mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.notes">notes (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.op">op (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.output_nodes">output_nodes (mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.outputs">outputs (mlektic.neural.graph_ir.NeuralNode attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -592,6 +779,10 @@
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.p_plane_hist">p_plane_hist (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.panel">panel (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.parameters">parameters (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.partial_fit">partial_fit() (mlektic.adapters.sklearn.SklearnAdapter method)</a>
@@ -602,13 +793,21 @@
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.probability_link">probability_link (mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.provenance">provenance (mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.radius">radius (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.record">record() (mlektic.neural.recorder.TorchTrainingRecorder method)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.reduced_motion">reduced_motion (mlektic.visualization.design.VisualSpec attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.api.neural.register_neural_descriptor">register_neural_descriptor() (in module mlektic.api.neural)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.requested_mode">requested_mode (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
@@ -620,6 +819,10 @@
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.resolved_mode">resolved_mode (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.responsive">responsive (mlektic.visualization.design.VisualSpec attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.role">role (mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -627,8 +830,16 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.schema_version">schema_version (mlektic.domain.history.HistoryMetadata attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.schema_version">(mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.section_size">section_size (mlektic.visualization.design.VisualTokens attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.api.optimize.show_optimized">show_optimized() (in module mlektic.api.optimize)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.size">size (mlektic.visualization.design.VisualSpec attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter">SklearnAdapter (class in mlektic.adapters.sklearn)</a>
 </li>
@@ -647,10 +858,24 @@
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.smoothing">smoothing (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.source">source (mlektic.domain.history.HistoryMetadata attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.source">(mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.source_detail">source_detail (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.source_detail">source_detail (mlektic.domain.history.HistoryMetadata attribute)</a>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.source_port">source_port (mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.space_lg">space_lg (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.space_md">space_md (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.space_sm">space_sm (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.space_xs">space_xs (mlektic.visualization.design.VisualTokens attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.state_origins">state_origins (mlektic.domain.history.HistoryMetadata attribute)</a>
 
@@ -674,27 +899,53 @@
         <li><a href="api_reference.html#mlektic.domain.config.LogisticHistoryConfig.steps">(mlektic.domain.config.LogisticHistoryConfig attribute)</a>
 </li>
       </ul></li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.subtitle_size">subtitle_size (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.target">target (mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralNode.target">(mlektic.neural.graph_ir.NeuralNode attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.target_port">target_port (mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.task">task (mlektic.domain.history.LinearHistoryPayload attribute)</a>
 
       <ul>
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.task">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
-      <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.to_history">to_history() (mlektic.neural.recorder.TorchTrainingRecorder method)</a>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralEdge.tensor">tensor (mlektic.neural.graph_ir.NeuralEdge attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.text">text (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.theme">theme (mlektic.visualization.design.VisualSpec attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.title_size">title_size (mlektic.visualization.design.VisualTokens attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.to_dict">to_dict() (mlektic.neural.graph_ir.NeuralGraph method)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder.to_history">to_history() (mlektic.neural.recorder.TorchTrainingRecorder method)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.tokens">tokens (mlektic.visualization.design.VisualSpec attribute)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.neural.graph_ir.CaptureProvenance.torch_version">torch_version (mlektic.neural.graph_ir.CaptureProvenance attribute)</a>
+</li>
       <li><a href="api_reference.html#mlektic.neural.recorder.TorchTrainingRecorder">TorchTrainingRecorder (class in mlektic.neural.recorder)</a>
 </li>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.training_total_steps">training_total_steps (mlektic.domain.history.HistoryMetadata attribute)</a>
 </li>
       <li><a href="api_reference.html#mlektic.adapters.sklearn.SklearnAdapter.transform_X">transform_X() (mlektic.adapters.sklearn.SklearnAdapter method)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens.typography_scale">typography_scale (mlektic.visualization.design.VisualTokens attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -708,15 +959,27 @@
 </li>
       <li><a href="api_reference.html#mlektic.api.neural.visualize_nn">visualize_nn() (in module mlektic.api.neural)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_architecture">visualize_nn_architecture() (in module mlektic.api.neural)</a>
 </li>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_backpropagation">visualize_nn_backpropagation() (in module mlektic.api.neural)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_blocks">visualize_nn_blocks() (in module mlektic.api.neural)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_graph">visualize_nn_graph() (in module mlektic.api.neural)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_hyperparameters">visualize_nn_hyperparameters() (in module mlektic.api.neural)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_loss_landscape">visualize_nn_loss_landscape() (in module mlektic.api.neural)</a>
 </li>
       <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_training">visualize_nn_training() (in module mlektic.api.neural)</a>
 </li>
       <li><a href="api_reference.html#mlektic.api.neural.visualize_nn_weights">visualize_nn_weights() (in module mlektic.api.neural)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec">VisualSpec (class in mlektic.visualization.design)</a>
+</li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualTokens">VisualTokens (class in mlektic.visualization.design)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -730,15 +993,21 @@
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.w_hist">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.LinearHistoryPayload.w_hist_learned">w_hist_learned (mlektic.domain.history.LinearHistoryPayload attribute)</a>
 
       <ul>
         <li><a href="api_reference.html#mlektic.domain.history.LogisticHistoryPayload.w_hist_learned">(mlektic.domain.history.LogisticHistoryPayload attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_reference.html#mlektic.domain.history.HistoryMetadata.warnings">warnings (mlektic.domain.history.HistoryMetadata attribute)</a>
+
+      <ul>
+        <li><a href="api_reference.html#mlektic.neural.graph_ir.NeuralGraph.warnings">(mlektic.neural.graph_ir.NeuralGraph attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="api_reference.html#mlektic.visualization.design.VisualSpec.width">width (mlektic.visualization.design.VisualSpec attribute)</a>
 </li>
   </ul></td>
 </tr></table>

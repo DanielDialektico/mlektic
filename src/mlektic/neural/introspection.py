@@ -43,10 +43,23 @@ def _as_model_input(model: Any, input_sample: Any):
     kwargs: Dict[str, Any] = {}
     if parameter is not None:
         kwargs["device"] = parameter.device
-        if parameter.is_floating_point():
-            kwargs["dtype"] = parameter.dtype
     sample = torch.as_tensor(input_sample, **kwargs)
-    return sample.unsqueeze(0) if sample.ndim == 1 else sample
+    if parameter is not None and parameter.is_floating_point() and sample.is_floating_point():
+        sample = sample.to(dtype=parameter.dtype)
+    if sample.ndim == 1:
+        return sample.unsqueeze(0)
+    first_leaf = next(_leaf_modules(model), (None, None))[1]
+    convolution_rank = {
+        "Conv1d": 1,
+        "ConvTranspose1d": 1,
+        "Conv2d": 2,
+        "ConvTranspose2d": 2,
+        "Conv3d": 3,
+        "ConvTranspose3d": 3,
+    }.get(first_leaf.__class__.__name__ if first_leaf is not None else "")
+    if convolution_rank is not None and sample.ndim == convolution_rank + 1:
+        return sample.unsqueeze(0)
+    return sample
 
 
 def describe_torch_model(model: Any, input_sample: Any | None = None) -> List[Dict[str, Any]]:
@@ -123,6 +136,7 @@ def run_torch_forward(
     model: Any,
     input_sample: Any,
     parameter_values: Dict[str, np.ndarray] | None = None,
+    buffer_values: Dict[str, np.ndarray] | None = None,
 ) -> Tuple[Any, "OrderedDict[str, Dict[str, np.ndarray]]"]:
     """Run one inference while retaining inputs and outputs of leaf modules."""
     torch = _require_torch()
@@ -143,6 +157,7 @@ def run_torch_forward(
 
     hooks = [module.register_forward_hook(capture(name)) for name, module in _leaf_modules(model)]
     originals: Dict[str, Any] = {}
+    original_buffers: Dict[str, Any] = {}
     if parameter_values:
         with torch.no_grad():
             for name, parameter in model.named_parameters():
@@ -152,6 +167,15 @@ def run_torch_forward(
                 replacement = torch.as_tensor(parameter_values[name], device=parameter.device, dtype=parameter.dtype)
                 if replacement.shape == parameter.shape:
                     parameter.copy_(replacement)
+    if buffer_values:
+        with torch.no_grad():
+            for name, buffer in model.named_buffers():
+                if name not in buffer_values:
+                    continue
+                original_buffers[name] = buffer.detach().clone()
+                replacement = torch.as_tensor(buffer_values[name], device=buffer.device, dtype=buffer.dtype)
+                if replacement.shape == buffer.shape:
+                    buffer.copy_(replacement)
     was_training = model.training
     try:
         model.eval()
@@ -164,6 +188,11 @@ def run_torch_forward(
                 for name, parameter in model.named_parameters():
                     if name in originals:
                         parameter.copy_(originals[name])
+        if original_buffers:
+            with torch.no_grad():
+                for name, buffer in model.named_buffers():
+                    if name in original_buffers:
+                        buffer.copy_(original_buffers[name])
         for hook in hooks:
             hook.remove()
     return output, records

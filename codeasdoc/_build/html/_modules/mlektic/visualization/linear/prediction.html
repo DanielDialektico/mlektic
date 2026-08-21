@@ -41,12 +41,32 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../linear_lesson.html">First rigorous linear-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../linear_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logistic_lesson.html">First rigorous logistic-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../logistic_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../neural_lesson.html">First rigorous neural-network lesson</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../history_semantics.html">History provenance and time semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mathematical_parity.html">Tabular mathematical detail contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../mathematical_conventions.html">Mathematical conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../animation_performance.html">Animation and performance semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../visual_design.html">Visual design contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../themes_formats_sizes.html">Themes, formats, and sizes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../model_hyperparameters.html">Model parameters and hyperparameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../prediction_explanations.html">Prediction explanations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../export.html">Export and publishing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../gallery.html">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../compatibility.html">Compatibility matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../limitations.html">Limitations and troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../visualization.html">Visualization mathematics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing_visual_qa.html">Contributing and human visual QA policy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing_visual_qa.html#workflow">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../changelog.html">Changelog</a></li>
 </ul>
 
@@ -81,12 +101,14 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">plotly.subplots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_subplots</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">..design</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_visual_system</span><span class="p">,</span> <span class="n">resolve_visual_spec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..theme</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_resolve</span><span class="p">,</span>
     <span class="n">data_3d_marker_style</span><span class="p">,</span>
     <span class="n">data_marker_style</span><span class="p">,</span>
     <span class="n">get_base_layout</span><span class="p">,</span>
     <span class="n">model_line_style</span><span class="p">,</span>
+    <span class="n">prediction_label_box</span><span class="p">,</span>
     <span class="n">surface_style</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -387,6 +409,7 @@
                 <span class="n">text</span><span class="o">=</span><span class="sa">rf</span><span class="s2">&quot;$\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2">=</span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">$&quot;</span><span class="p">,</span>
                 <span class="n">showarrow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">arrowhead</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">ay</span><span class="o">=-</span><span class="mi">35</span><span class="p">,</span>
                 <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">ann_color</span><span class="p">),</span>
+                <span class="o">**</span><span class="n">prediction_label_box</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
             <span class="p">))</span>
         <span class="k">return</span> <span class="n">ann</span>
 
@@ -531,6 +554,7 @@
                 <span class="n">text</span><span class="o">=</span><span class="sa">rf</span><span class="s2">&quot;$\hat</span><span class="se">{{</span><span class="s2">y</span><span class="se">}}</span><span class="s2">=</span><span class="si">{</span><span class="n">_fmt</span><span class="p">(</span><span class="n">yhat</span><span class="p">,</span><span class="w"> </span><span class="n">dec</span><span class="p">)</span><span class="si">}</span><span class="s2">$&quot;</span><span class="p">,</span>
                 <span class="n">showarrow</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">arrowhead</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">ay</span><span class="o">=-</span><span class="mi">35</span><span class="p">,</span>
                 <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">ann_color</span><span class="p">),</span>
+                <span class="o">**</span><span class="n">prediction_label_box</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
             <span class="p">)]</span>
         <span class="k">return</span> <span class="p">[]</span>
 
@@ -807,6 +831,13 @@
     <span class="n">validation_rtol</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span>
     <span class="n">validation_atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;dashboard&quot;</span><span class="p">,</span>
+    <span class="n">density</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">size</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>
+    <span class="n">width</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">height</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">responsive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">reduced_motion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an auditable visual explanation for one linear prediction.</span>
 
@@ -815,6 +846,17 @@
 <span class="sd">    counterfactual demonstration. Queries outside the observed feature ranges</span>
 <span class="sd">    are explicitly marked as extrapolations and remain visible in the plot.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">visual_spec</span> <span class="o">=</span> <span class="n">resolve_visual_spec</span><span class="p">(</span>
+        <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;essential&quot;</span><span class="p">,</span>
+        <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
+        <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span>
+        <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+        <span class="n">responsive</span><span class="o">=</span><span class="n">responsive</span><span class="p">,</span>
+        <span class="n">reduced_motion</span><span class="o">=</span><span class="n">reduced_motion</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">_validate_prediction_options</span><span class="p">(</span>
         <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
         <span class="n">grid_points</span><span class="o">=</span><span class="n">grid_points</span><span class="p">,</span>
@@ -923,6 +965,7 @@
             <span class="p">}</span>
         <span class="p">}</span>
     <span class="p">)</span>
+    <span class="n">apply_visual_system</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">visual_spec</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;linear-prediction&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fig</span></div>
 
 

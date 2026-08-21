@@ -41,13 +41,32 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../linear_lesson.html">First rigorous linear-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../linear_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logistic_lesson.html">First rigorous logistic-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logistic_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../neural_lesson.html">First rigorous neural-network lesson</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../history_semantics.html">History provenance and time semantics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../mathematical_parity.html">Tabular mathematical detail contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mathematical_conventions.html">Mathematical conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../animation_performance.html">Animation and performance semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visual_design.html">Visual design contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../themes_formats_sizes.html">Themes, formats, and sizes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model_hyperparameters.html">Model parameters and hyperparameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_explanations.html">Prediction explanations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../export.html">Export and publishing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../compatibility.html">Compatibility matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../limitations.html">Limitations and troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Visualization mathematics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing_visual_qa.html">Contributing and human visual QA policy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing_visual_qa.html#workflow">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
@@ -86,6 +105,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..mathematics</span><span class="w"> </span><span class="kn">import</span> <span class="n">attach_math_contract</span><span class="p">,</span> <span class="n">build_linear_math_contract</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..services.linear_history</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit_history</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.design</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_visual_system</span><span class="p">,</span> <span class="n">resolve_visual_spec</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.linear.prediction</span><span class="w"> </span><span class="kn">import</span> <span class="n">explain_lr_prediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.linear.router</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_lr_figure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..visualization.theme</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -128,6 +148,13 @@
     <span class="n">feature_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">theme</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;dashboard&quot;</span><span class="p">,</span>
+    <span class="n">density</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">size</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">,</span>
+    <span class="n">width</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">height</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">responsive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">reduced_motion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate an animated visualization for a linear regression model.</span>
@@ -201,12 +228,40 @@
 <span class="sd">            input features. DataFrame column names are used automatically.</span>
 <span class="sd">        sample_index (int | None, optional): Training observation used for the</span>
 <span class="sd">            visible contribution calculation. ``None`` selects index 0.</span>
-<span class="sd">        theme (str | None, optional): Registered visualization theme. The only</span>
-<span class="sd">            phase-0 theme is the backward-compatible ``&quot;classic&quot;`` default.</span>
+<span class="sd">        theme (str | None, optional): ``&quot;classic&quot;`` (default), ``&quot;academic&quot;``,</span>
+<span class="sd">            ``&quot;classroom&quot;``, ``&quot;compact&quot;``, or ``&quot;accessible&quot;``.</span>
+<span class="sd">        format (str, optional): Composition preset: ``&quot;dashboard&quot;`` keeps the</span>
+<span class="sd">            existing figure, ``&quot;lesson&quot;`` adds staged concept controls,</span>
+<span class="sd">            ``&quot;compact&quot;`` reduces unused space, and ``&quot;report&quot;`` produces a</span>
+<span class="sd">            static final-state composition.</span>
+<span class="sd">        density (str | None, optional): Alias for mathematical ``detail``.</span>
+<span class="sd">            When omitted, ``detail`` remains authoritative.</span>
+<span class="sd">        size (str, optional): Named canvas preset: ``&quot;default&quot;``, ``&quot;compact&quot;``,</span>
+<span class="sd">            ``&quot;notebook&quot;``, ``&quot;wide&quot;``, or ``&quot;classroom&quot;``.</span>
+<span class="sd">        width (int | None, optional): Explicit canvas width. It overrides the</span>
+<span class="sd">            named size when supplied.</span>
+<span class="sd">        height (int | None, optional): Explicit canvas height. It overrides the</span>
+<span class="sd">            named size when supplied.</span>
+<span class="sd">        responsive (bool, optional): Make the resolved composition scale with</span>
+<span class="sd">            its container. Structural reflow is selected with ``format``.</span>
+<span class="sd">        reduced_motion (bool, optional): Render the exact final state without</span>
+<span class="sd">            animation controls. Defaults to False, preserving fluid motion.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        plotly.graph_objects.Figure: The animated Plotly figure object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">visual_spec</span> <span class="o">=</span> <span class="n">resolve_visual_spec</span><span class="p">(</span>
+        <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span>
+        <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">,</span>
+        <span class="nb">format</span><span class="o">=</span><span class="nb">format</span><span class="p">,</span>
+        <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span>
+        <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+        <span class="n">responsive</span><span class="o">=</span><span class="n">responsive</span><span class="p">,</span>
+        <span class="n">reduced_motion</span><span class="o">=</span><span class="n">reduced_motion</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="n">visual_spec</span><span class="o">.</span><span class="n">density</span>
     <span class="n">X_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
     <span class="n">dimensions</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">X_array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">X_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="n">show_loss</span><span class="p">,</span> <span class="n">strict_loss</span><span class="p">,</span> <span class="n">show_history_context</span><span class="p">)):</span>
@@ -289,6 +344,7 @@
     <span class="n">annotate_history_semantics</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">show_title</span><span class="o">=</span><span class="n">show_history_context</span><span class="p">)</span>
     <span class="n">annotate_loss_semantics</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">hist</span><span class="p">)</span>
     <span class="n">attach_math_contract</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">math_contract</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span>
+    <span class="n">apply_visual_system</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">visual_spec</span><span class="p">,</span> <span class="n">family</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">attach_highlight</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">)</span></div>
 
 

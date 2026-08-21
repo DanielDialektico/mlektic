@@ -23,6 +23,7 @@ the actual training process.
    linear_lesson
    logistic_lesson
    neural_lesson
+   neural_execution_graphs
    history_semantics
    mathematical_parity
    mathematical_conventions

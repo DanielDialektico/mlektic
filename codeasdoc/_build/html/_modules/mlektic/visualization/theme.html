@@ -41,13 +41,32 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../linear_lesson.html">First rigorous linear-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../linear_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logistic_lesson.html">First rigorous logistic-regression lesson</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../logistic_lesson.html#what-is-exact">What is exact?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../neural_lesson.html">First rigorous neural-network lesson</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../history_semantics.html">History provenance and time semantics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../mathematical_parity.html">Tabular mathematical detail contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mathematical_conventions.html">Mathematical conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../animation_performance.html">Animation and performance semantics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../visual_design.html">Visual design contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../themes_formats_sizes.html">Themes, formats, and sizes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../model_hyperparameters.html">Model parameters and hyperparameters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../prediction_explanations.html">Prediction explanations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../export.html">Export and publishing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gallery.html">Gallery</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../compatibility.html">Compatibility matrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../limitations.html">Limitations and troubleshooting</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_reference.html">API reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../visualization.html">Visualization mathematics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../advanced.html">Advanced usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing_visual_qa.html">Contributing and human visual QA policy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing_visual_qa.html#workflow">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Changelog</a></li>
 </ul>
 
@@ -76,15 +95,17 @@
            <div itemprop="articleBody">
              
   <h1>Source code for mlektic.visualization.theme</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Theme utilities for Mlektic Plotly visualization.</span>
+<span></span><span class="sd">&quot;&quot;&quot;Backward-compatible Plotly helpers backed by the additive visual system.</span>
 
-<span class="sd">Supports one standard theme:</span>
-<span class="sd">  - ``&quot;classic&quot;``  — the original dark-mode theme (default).</span>
+<span class="sd">``classic`` remains the default; academic, classroom, compact, and accessible</span>
+<span class="sd">palettes are opt-in and resolve through :mod:`mlektic.visualization.design`.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.design</span><span class="w"> </span><span class="kn">import</span> <span class="n">available_themes</span><span class="p">,</span> <span class="n">theme_palette</span>
 
 <span class="c1"># ── colour palettes ─────────────────────────────────────────────</span>
 
@@ -122,6 +143,11 @@
 
 <span class="n">_THEMES</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;classic&quot;</span><span class="p">:</span> <span class="n">_CLASSIC</span><span class="p">,</span>
+    <span class="o">**</span><span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">theme_palette</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">available_themes</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;classic&quot;</span>
+    <span class="p">},</span>
 <span class="p">}</span>
 
 
@@ -247,7 +273,7 @@
             <span class="n">bgcolor</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;btn_bg&quot;</span><span class="p">],</span>
             <span class="n">bordercolor</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;btn_border&quot;</span><span class="p">],</span>
             <span class="n">borderwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;btn_font_color&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">),</span>
+            <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;btn_font_color&quot;</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;control_size&quot;</span><span class="p">,</span> <span class="mi">14</span><span class="p">)),</span>
             <span class="n">buttons</span><span class="o">=</span><span class="n">_build_play_pause_buttons</span><span class="p">(</span><span class="n">frame_duration</span><span class="p">,</span> <span class="n">theme</span><span class="o">=</span><span class="n">theme</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="p">]</span>
@@ -326,6 +352,8 @@
         <span class="n">m</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker_border&quot;</span><span class="p">]:</span>
         <span class="n">m</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker_border&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data_marker_symbol&quot;</span><span class="p">):</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">&quot;symbol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker_symbol&quot;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">m</span>
 
 
@@ -335,6 +363,8 @@
     <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;model_line_width&quot;</span><span class="p">],</span> <span class="n">simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;model_line&quot;</span><span class="p">]:</span>
         <span class="n">d</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;model_line&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;model_line_dash&quot;</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;dash&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;model_line_dash&quot;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">d</span>
 
 
@@ -344,7 +374,20 @@
     <span class="n">d</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;loss_line_width&quot;</span><span class="p">],</span> <span class="n">simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;loss_line&quot;</span><span class="p">]:</span>
         <span class="n">d</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;loss_line&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss_line_dash&quot;</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;dash&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;loss_line_dash&quot;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">prediction_label_box</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">theme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a high-contrast box for prediction-value annotations.&quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">theme</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;bgcolor&quot;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;panel_bg&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bg&quot;</span><span class="p">,</span> <span class="s2">&quot;#111111&quot;</span><span class="p">)),</span>
+        <span class="s2">&quot;bordercolor&quot;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;prediction_label_border&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss_line&quot;</span><span class="p">,</span> <span class="s2">&quot;#00cc96&quot;</span><span class="p">)),</span>
+        <span class="s2">&quot;borderwidth&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;borderpad&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">surface_style</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">theme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -364,6 +407,8 @@
         <span class="n">m</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker&quot;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker_border&quot;</span><span class="p">]:</span>
         <span class="n">m</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker_border&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data_marker_symbol&quot;</span><span class="p">):</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">&quot;symbol&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;data_marker_symbol&quot;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">m</span>
 
 
