@@ -70,6 +70,32 @@ class TestVisualizeLR:
         assert isinstance(fig, go.Figure)
         assert len(fig.frames) == 5
 
+    def test_feature_names_label_only_model_input_axes(self, trained_sgd_1d, trained_sgd_2d):
+        model_1d, X_1d, y_1d = trained_sgd_1d
+        fig_1d = visualize_lr(
+            model_1d,
+            X_1d,
+            y_1d,
+            steps=5,
+            show_loss=True,
+            feature_names=["BMI estandarizado"],
+        )
+        assert fig_1d.layout.xaxis.title.text == "BMI estandarizado"
+        assert fig_1d.layout.xaxis2.title.text == "Replay / fitted state"
+        assert fig_1d.layout.yaxis2.title.text == "MSE"
+
+        model_2d, X_2d, y_2d = trained_sgd_2d
+        fig_2d = visualize_lr(
+            model_2d,
+            X_2d,
+            y_2d,
+            steps=5,
+            feature_names=["BMI estandarizado", "Presión arterial"],
+        )
+        assert fig_2d.layout.scene.xaxis.title.text == "BMI estandarizado"
+        assert fig_2d.layout.scene.yaxis.title.text == "Presión arterial"
+        assert fig_2d.layout.scene.zaxis.title.text == "ŷ"
+
     def test_visualize_lr_nd(self, trained_sgd_5d):
         model, X, y = trained_sgd_5d
         fig = visualize_lr(model, X, y, steps=5, show_loss=True)
@@ -122,13 +148,27 @@ class TestVisualizeLR:
         assert fig.data[3].yaxis == "y4"
         assert fig.data[3].text[0].startswith("$\\hat{y}=")
         assert fig.layout.yaxis.domain[1] < fig.layout.yaxis4.domain[0]
-        assert fig.data[4].mode == "markers+text"
+        assert fig.data[4].mode == "text"
         assert fig.data[4].marker.symbol == "square"
-        assert fig.data[4].textfont.color == "black"
+        assert fig.data[4].marker.size == 1
+        assert fig.data[4].textfont.color == "#ffffff"
         assert fig.layout.xaxis3.visible is False
         assert len(set(fig.data[4].x)) == 1
         assert len(set(fig.data[4].y)) == len(fig.data[4].y)
         assert fig.layout.updatemenus[0].showactive is False
+
+    def test_default_history_ticks_and_metrics_remain_readable(self, trained_sgd_1d):
+        model, X, y = trained_sgd_1d
+        fig = visualize_lr(model, X, y, steps=60)
+        metric_trace = next(trace for trace in fig.data if trace.uid == "METRIC_VALUES")
+
+        assert fig.layout.yaxis2.title.text == "MSE"
+        assert len(fig.layout.xaxis2.tickvals) <= 9
+        assert fig.layout.xaxis2.tickvals[0] == 0
+        assert fig.layout.xaxis2.tickvals[-1] == len(fig.layout.sliders[0].steps) - 1
+        assert metric_trace.mode == "text"
+        assert all("=" in text for text in metric_trace.text)
+        assert metric_trace.marker.color == "rgba(0,0,0,0)"
 
     def test_transition_is_bounded_below_frame_duration(self, trained_sgd_1d):
         model, X, y = trained_sgd_1d
@@ -229,6 +269,43 @@ class TestExplainLRPrediction:
         assert isinstance(fig, go.Figure)
         annotations = " ".join(str(item.text) for item in fig.layout.annotations)
         assert r"\hat{y}" in annotations
+
+    def test_ten_feature_prediction_exposes_its_local_explanation_stages(self):
+        X, y = _make_dummy_linear_data(60, 10)
+        model = SGDRegressor(max_iter=20, random_state=42).fit(X, y)
+        fig = explain_lr_prediction(model, X, y, x_query=X[2], size="wide")
+        labels = [
+            str(button.label)
+            for menu in fig.layout.updatemenus or ()
+            for button in menu.buttons or ()
+        ]
+
+        assert labels == ["Input", "Substitution", "Output", "Reset"]
+        assert not {"1 Data", "2 Model", "3 Objective", "4 Complete"}.intersection(labels)
+        output_button = fig.layout.updatemenus[0].buttons[2]
+        output_text = " ".join(
+            str(annotation["text"])
+            for annotation in output_button.args[1]["annotations"]
+        )
+        assert r"\hat{y} &=" in output_text
+
+    @pytest.mark.parametrize("static_option", ["report", "reduced_motion"])
+    def test_ten_feature_static_prediction_freezes_complete_output(self, static_option):
+        X, y = _make_dummy_linear_data(60, 10)
+        model = SGDRegressor(max_iter=20, random_state=42).fit(X, y)
+        interactive = explain_lr_prediction(model, X, y, x_query=X[2], size="wide")
+        expected_text = [
+            str(annotation.get("text", ""))
+            for annotation in interactive.layout.updatemenus[0].buttons[2].args[1]["annotations"]
+        ]
+        kwargs = {"format": "report"} if static_option == "report" else {"reduced_motion": True}
+        fig = explain_lr_prediction(model, X, y, x_query=X[2], size="wide", **kwargs)
+        annotation_text = " ".join(str(annotation.text) for annotation in fig.layout.annotations)
+
+        assert len(fig.layout.updatemenus or ()) == 0
+        assert [str(annotation.text or "") for annotation in fig.layout.annotations] == expected_text
+        assert r"\hat{y} &=" in annotation_text
+        assert "Result" in annotation_text
 
     def test_explain_prediction_pipeline_scaled(self, trained_pipeline_1d):
         model, X, y = trained_pipeline_1d

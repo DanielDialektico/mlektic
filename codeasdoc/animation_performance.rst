@@ -23,12 +23,14 @@ slowly. ``transition_duration`` controls supported Plotly trace interpolation;
 it does not create mathematical states or hide the model. Three-dimensional
 traces retain redraw semantics.
 
-Lesson format
-=============
+Figure-owned controls
+=====================
 
-Re-executing a ``format="lesson"`` cell intentionally resets the composition to
-stage ``1 Data``. Choose ``2 Model`` or ``4 Complete`` to reveal the model before
-pressing Play. This is visibility state, not a lost fitted line.
+The dashboard starts with the complete data, model, objective, and metric
+composition. Training figures preserve Play/Pause and the checkpoint slider.
+Prediction explainers retain their distinct Input, Substitution, Output, and
+Reset controls because those change the mathematical explanation rather than
+duplicate the training timeline.
 
-Inspect ``MOTION-FRAME-STEP`` and ``MOTION-LESSON`` in
+Inspect ``MOTION-FRAME-STEP`` and ``MOTION-NATIVE-SLOW`` in
 ``notebooks/qa/qa_04_motion.ipynb``.

@@ -1,3 +1,7 @@
+import re
+from html import escape
+from textwrap import wrap
+
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -27,12 +31,39 @@ from ..theme import (
 )
 
 
-def _class_label_text(value):
-    """Format numeric and string labels safely inside a LaTeX expression."""
-    if isinstance(value, (str, np.str_)):
-        escaped = str(value).replace("_", r"\_")
-        return rf"\mathrm{{{escaped}}}"
-    return str(value)
+def _wrapped_class_label(value, *, width):
+    """Keep semantic class names readable inside a staged prediction panel."""
+    label = str(value)
+    if "_" in label:
+        lines = []
+        line = ""
+        for token in re.split(r"(?<=_)", label):
+            if not token:
+                continue
+            if line and len(line) + len(token) > width:
+                lines.append(line)
+                line = ""
+            if len(token) > width:
+                parts = wrap(token, width=width, break_long_words=True)
+                lines.extend(parts[:-1])
+                token = parts[-1]
+            line += token
+        if line:
+            lines.append(line)
+    else:
+        lines = wrap(label, width=width, break_long_words=True, break_on_hyphens=True)
+    return "<br>".join(escape(line) for line in lines) or "&nbsp;"
+
+
+def _prediction_layout(title, theme, *, right, bottom, show_class_labels):
+    """Reserve a separate header row for the subtitle and stage controls."""
+    layout = get_base_layout(title=title, margin_t=160, theme=theme)
+    layout["margin"] = dict(t=160, r=right, l=60, b=bottom)
+    layout["height"] = max(
+        int(layout.get("height") or 600) + 50,
+        810 if show_class_labels else 0,
+    )
+    return layout
 
 
 def _binary_class_context(classes, y_train):
@@ -56,32 +87,26 @@ def _binary_class_context(classes, y_train):
     return classes, numeric_targets
 
 
-def _binary_result_tex(p_hat, y_hat, classes, dec, show_class_labels):
+def _binary_result_tex(p_hat, y_hat, classes, dec):
     """Build an explicit binary probability comparison and class decision."""
     winner_index = int(np.flatnonzero(classes == y_hat)[0])
-    winner_label = (
-        rf"\;({_class_label_text(y_hat)})" if show_class_labels else ""
-    )
     return (
         r"$\begin{aligned}"
         rf"\hat{{\mathbf{{p}}}} &=(\hat{{p}}_0,\hat{{p}}_1)="
         rf"({_fmt(1.0 - p_hat, dec)},\,{_fmt(p_hat, dec)})\\"
-        rf"\hat{{y}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}{winner_label}"
+        rf"\hat{{y}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}"
         r"\end{aligned}$"
     )
 
 
-def _multiclass_winner_tex(p_hat, y_hat, classes, dec, show_class_labels):
-    """Build an indexed multiclass decision with optional semantic label."""
+def _multiclass_winner_tex(p_hat, classes, dec):
+    """Build an indexed multiclass decision; semantic labels get their own row."""
     winner_index = int(np.argmax(p_hat))
-    winner_label = (
-        rf"\;({_class_label_text(y_hat)})" if show_class_labels else ""
-    )
     return (
         r"$\begin{aligned}"
         rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(float(np.max(p_hat)), dec)} \\"
         rf"&\hat{{y}} = \arg\max_{{k\in\{{0,\ldots,{len(classes) - 1}\}}}}"
-        rf"\hat{{p}}_k = {winner_index}{winner_label}"
+        rf"\hat{{p}}_k = {winner_index}"
         r"\end{aligned}$"
     )
 
@@ -116,17 +141,7 @@ def _explain_log_1d(
     x_range = [x_min_plot, x_max_plot]
 
     # Math formulas
-    class_mapping = (
-        rf"\\&\text{{Class }}0={_class_label_text(classes[0])},\quad "
-        rf"\text{{Class }}1={_class_label_text(classes[1])}"
-        if show_class_labels
-        else ""
-    )
-    vars_tex = (
-        r"$\begin{aligned}"
-        + rf"x_1 &= {_fmt(xq1_disp, dec)}{class_mapping}"
-        + r"\end{aligned}$"
-    )
+    vars_tex = rf"$x_1={_fmt(xq1_disp, dec)}$"
 
     subst_tex = (
         r"$\begin{aligned}"
@@ -136,7 +151,7 @@ def _explain_log_1d(
         r"\end{aligned}$"
     )
 
-    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec, show_class_labels)
+    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec)
 
     fig = make_subplots(
         rows=1, cols=2,
@@ -168,10 +183,7 @@ def _explain_log_1d(
                 x=[x_decision, x_decision],
                 y=y_range,
                 mode="lines",
-                name=(
-                    f"Decision boundary: P({classes[1]} | x) = 0.5"
-                    if show_class_labels else "Decision boundary: p1 = 0.5"
-                ),
+                name="Decision boundary: p1 = 0.5",
                 line=dict(color="gray", dash="dash", width=1.5),
                 legendgroup="fit",
                 showlegend=True,
@@ -181,7 +193,7 @@ def _explain_log_1d(
     fig.add_trace(go.Scatter(
         x=x_grid, y=y_grid,
         mode="lines",
-        name=(f"Model: P({classes[1]} | x)" if show_class_labels else "Model: p1"),
+        name="Model: p1",
         line=model_line_style(theme=theme),
         hoverlabel=dict(bgcolor="white", font=dict(color="black")),
         legendgroup="fit",
@@ -210,7 +222,16 @@ def _explain_log_1d(
             fillcolor="rgba(220,220,220,0.10)", layer="below",
         )
 
-    shapes = [block_rect(0.69, 0.98), block_rect(0.29, 0.67), block_rect(0.02, 0.27)]
+    # One input needs little height; give the three-line sigmoid substitution
+    # the released space. Semantic class labels still need the taller input.
+    input_bottom = 0.63 if show_class_labels else 0.78
+    substitution_top = 0.61 if show_class_labels else 0.76
+    substitution_body_y = 0.55 if show_class_labels else 0.68
+    shapes = [
+        block_rect(input_bottom, 0.98),
+        block_rect(0.29, substitution_top),
+        block_rect(0.02, 0.27),
+    ]
 
     def title_annot(tex_title, y):
         return dict(
@@ -236,9 +257,25 @@ def _explain_log_1d(
         r_body = "" if stage < 3 else res_tex
         ann = [
             title_annot(T1, 0.96), body_annot(v_body, 0.89),
-            title_annot(T2, 0.65), body_annot(s_body, 0.61),
-            title_annot(T3, 0.25), body_annot(r_body, 0.20),
+            title_annot(T2, substitution_top - 0.02), body_annot(s_body, substitution_body_y),
+            title_annot(T3, 0.25),
         ]
+        if show_class_labels and stage >= 1:
+            for index, y in enumerate((0.82, 0.72)):
+                ann.append(dict(
+                    x=0.06, y=y, xref="x1", yref="y1",
+                    text=f"c{chr(8320 + index)} = {_wrapped_class_label(classes[index], width=28)}",
+                    showarrow=False, xanchor="left", yanchor="top", align="left",
+                    font=dict(size=12, color=text_color),
+                ))
+        if show_class_labels and stage >= 3:
+            ann.append(dict(
+                x=0.06, y=0.08, xref="x1", yref="y1",
+                text=f"Predicted class: {_wrapped_class_label(y_hat, width=28)}",
+                showarrow=False, xanchor="left", yanchor="top", align="left",
+                font=dict(size=12, color=text_color),
+            ))
+        ann.append(body_annot(r_body, 0.19))
         if stage == 3:
             ann.append(dict(
                 x=x_disp[0], y=p_hat, xref="x2", yref="y2",
@@ -274,8 +311,9 @@ def _explain_log_1d(
         make_btn("Reset", 0),
     ]
 
-    layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
-    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
+    layout_kwargs = _prediction_layout(
+        title, theme, right=50, bottom=80, show_class_labels=show_class_labels,
+    )
 
     fig.update_layout(
         **layout_kwargs,
@@ -285,13 +323,10 @@ def _explain_log_1d(
     )
     fig.update_xaxes(title="x₁", range=x_range, row=1, col=2)
     fig.update_yaxes(
-        title=(f"P({classes[1]} | x)" if show_class_labels else "p1"),
+        title="p₁",
         range=y_range,
         tickvals=[0.0, 0.5, 1.0],
-        ticktext=(
-            [f"0 - {classes[0]}", "0.5 threshold", f"1 - {classes[1]}"]
-            if show_class_labels else ["0", "0.5 threshold", "1"]
-        ),
+        ticktext=["0", "0.5", "1"],
         row=1,
         col=2,
     )
@@ -328,15 +363,9 @@ def _explain_log_2d(
     z_range = [-0.08, 1.08]
     CAMERA = dict(eye=dict(x=1.55, y=1.55, z=1.15))
 
-    class_mapping = (
-        rf"\\&\text{{Class }}0={_class_label_text(classes[0])},\quad "
-        rf"\text{{Class }}1={_class_label_text(classes[1])}"
-        if show_class_labels
-        else ""
-    )
     vars_tex = (
         r"$\begin{aligned}"
-        + rf"&x_1 = {_fmt(xq1_disp, dec)},\quad x_2 = {_fmt(xq2_disp, dec)}{class_mapping}"
+        + rf"&x_1 = {_fmt(xq1_disp, dec)},\quad x_2 = {_fmt(xq2_disp, dec)}"
         + r"\end{aligned}$"
     )
 
@@ -348,7 +377,7 @@ def _explain_log_2d(
         r"\end{aligned}$"
     )
 
-    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec, show_class_labels)
+    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec)
 
     fig = make_subplots(
         rows=1, cols=2, column_widths=[0.64, 0.36],
@@ -369,7 +398,7 @@ def _explain_log_2d(
     # 2. Surface
     fig.add_trace(go.Surface(
         x=X1g, y=X2g, z=Pg,
-        name=(f"Model: P({classes[1]} | x)" if show_class_labels else "Model: p1"),
+        name="Model: p1",
         **surface_style(theme=theme),
         showlegend=True, legendgroup="fit",
         uid="MODEL_PLANE",
@@ -396,10 +425,7 @@ def _explain_log_2d(
         y=boundary_x2,
         z=np.full(boundary_x1.shape, 0.5),
         mode="lines",
-        name=(
-            f"Decision boundary: P({classes[1]} | x) = 0.5"
-            if show_class_labels else "Decision boundary: p1 = 0.5"
-        ),
+        name="Decision boundary: p1 = 0.5",
         line=dict(color="gray", dash="dash", width=6),
         showlegend=True,
         legendgroup="fit",
@@ -425,7 +451,7 @@ def _explain_log_2d(
             line=dict(width=1),
             fillcolor="rgba(220,220,220,0.10)", layer="below",
         )
-    shapes = [block_rect(0.69, 0.98), block_rect(0.29, 0.67), block_rect(0.02, 0.27)]
+    shapes = [block_rect(0.63, 0.98), block_rect(0.29, 0.61), block_rect(0.02, 0.27)]
 
     def title_annot(tex_title, y):
         return dict(
@@ -449,11 +475,28 @@ def _explain_log_2d(
         v_body = "" if stage < 1 else vars_tex
         s_body = "" if stage < 2 else subst_tex
         r_body = "" if stage < 3 else res_tex
-        return [
+        ann = [
             title_annot(T1, 0.96), body_annot(v_body, 0.89),
-            title_annot(T2, 0.65), body_annot(s_body, 0.61),
-            title_annot(T3, 0.25), body_annot(r_body, 0.20),
+            title_annot(T2, 0.59), body_annot(s_body, 0.55),
+            title_annot(T3, 0.25),
         ]
+        if show_class_labels and stage >= 1:
+            for index, y in enumerate((0.82, 0.72)):
+                ann.append(dict(
+                    x=0.06, y=y, xref="x1", yref="y1",
+                    text=f"c{chr(8320 + index)} = {_wrapped_class_label(classes[index], width=39)}",
+                    showarrow=False, xanchor="left", yanchor="top", align="left",
+                    font=dict(size=12, color=text_color),
+                ))
+        if show_class_labels and stage >= 3:
+            ann.append(dict(
+                x=0.06, y=0.08, xref="x1", yref="y1",
+                text=f"Predicted class: {_wrapped_class_label(y_hat, width=39)}",
+                showarrow=False, xanchor="left", yanchor="top", align="left",
+                font=dict(size=12, color=text_color),
+            ))
+        ann.append(body_annot(r_body, 0.19))
+        return ann
 
     def scene_ann(stage: int):
         if stage == 3:
@@ -487,8 +530,9 @@ def _explain_log_2d(
         make_btn("Reset", 0),
     ]
 
-    layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
-    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=80)
+    layout_kwargs = _prediction_layout(
+        title, theme, right=50, bottom=80, show_class_labels=show_class_labels,
+    )
 
     fig.update_layout(
         **layout_kwargs,
@@ -499,13 +543,10 @@ def _explain_log_2d(
             xaxis=dict(title="x₁", range=x1_range),
             yaxis=dict(title="x₂", range=x2_range),
             zaxis=dict(
-                title=(f"P({classes[1]} | x)" if show_class_labels else "p1"),
+                title="p₁",
                 range=z_range,
                 tickvals=[0.0, 0.5, 1.0],
-                ticktext=(
-                    [f"0 - {classes[0]}", "0.5", f"1 - {classes[1]}" ]
-                    if show_class_labels else ["0", "0.5", "1"]
-                ),
+                ticktext=["0", "0.5", "1"],
             ),
             aspectmode="cube",
             camera=CAMERA,
@@ -560,11 +601,12 @@ def _explain_log_multiclass_1d(
     normalizer = float(np.sum(components))
 
     def p_subst(k):
-        return (
-            rf"z_{{{k + 1}}}={exp_tex(k)},\quad {component_symbol}_{{{k + 1}}}="
-            rf"{_fmt(components[k], dec)},\quad\hat{{p}}(Y=c_{{{k + 1}}}\mid x)="
-            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}"
-        )
+        return [
+            rf"z_{{{k + 1}}}={exp_tex(k)}",
+            rf"{component_symbol}_{{{k + 1}}}={_fmt(components[k], dec)},\quad"
+            rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid x)="
+            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}",
+        ]
 
     subst_lines = []
     header1 = (
@@ -572,27 +614,27 @@ def _explain_log_multiclass_1d(
         + rf",\quad {normalizer_symbol}=\sum_{{j=1}}^K{component_symbol}_j={_fmt(normalizer, dec)},\quad "
     )
     header2 = r"z_k(\mathbf{x}) = \theta_{1,k} x_1 + \theta_{0,k}"
-    subst_lines.append(header1 + header2 + r" \\[-6pt]")
+    subst_lines.extend((header1, header2))
 
     y_hat_idx = int(np.argmax(p_hat))
     if K <= 3:
         for k in range(K):
-            subst_lines.append(p_subst(k))
+            subst_lines.extend(p_subst(k))
     else:
-        subst_lines.append(p_subst(0))
+        subst_lines.extend(p_subst(0))
         subst_lines.append(r"\vdots")
         if 0 < y_hat_idx < K - 1:
-            subst_lines.append(p_subst(y_hat_idx))
+            subst_lines.extend(p_subst(y_hat_idx))
             subst_lines.append(r"\vdots")
-        subst_lines.append(p_subst(K - 1))
+        subst_lines.extend(p_subst(K - 1))
 
     subst_tex = r"$\begin{gathered}" + r" \\[2pt]".join(subst_lines) + r"\end{gathered}$"
 
-    res_tex = _multiclass_winner_tex(p_hat, y_hat, classes, dec, show_class_labels)
+    res_tex = _multiclass_winner_tex(p_hat, classes, dec)
 
     fig = make_subplots(
         rows=3, cols=2,
-        row_heights=[0.11, 0.71, 0.18],
+        row_heights=([0.12, 0.62, 0.26] if show_class_labels else [0.11, 0.71, 0.18]),
         column_widths=[0.55, 0.45],
         vertical_spacing=0.02, horizontal_spacing=0.05,
         specs=[
@@ -608,7 +650,7 @@ def _explain_log_multiclass_1d(
         fig.update_yaxes(visible=False, row=(1 if idx==1 else 2 if idx==3 else 3), col=1)
 
     fig.update_xaxes(title="x₁", range=[x_min_plot, x_max_plot], row=1, col=2)
-    fig.update_yaxes(title_text="p(y=k|x)", title_standoff=5, range=[-0.05, 1.05], row=1, col=2)
+    fig.update_yaxes(title_text="pₖ", title_standoff=5, range=[-0.05, 1.05], row=1, col=2)
 
     fig.add_trace(go.Scatter(x=[], y=[], mode="lines", showlegend=False), row=1, col=2)
 
@@ -624,7 +666,10 @@ def _explain_log_multiclass_1d(
         fig.add_trace(go.Scatter(
             x=x_grid, y=p_curves[k],
             mode="lines",
-            name=(f"Class {k} - {classes[k]}" if show_class_labels else f"Class {k}"),
+            name=(
+                f"Class {k}<br>{_wrapped_class_label(classes[k], width=25)}"
+                if show_class_labels else f"Class {k}"
+            ),
             line=dict(color=color, width=2),
             legendgroup=f"class_{k}", showlegend=True,
         ), row=1, col=2)
@@ -677,6 +722,13 @@ def _explain_log_multiclass_1d(
             title_annot(3, T2), body_annot(3, s_body),
             title_annot(4, T3), body_annot(4, r_body),
         ]
+        if show_class_labels and stage >= 3:
+            ann.append(dict(
+                x=0.04, y=0.38, xref="x4", yref="y4",
+                text=f"Predicted class: {_wrapped_class_label(y_hat, width=42)}",
+                showarrow=False, xanchor="left", yanchor="top", align="left",
+                font=dict(size=12, color=text_color),
+            ))
         if stage == 3:
             # Place annotations without overlap in data coordinates using bottom-up layout
             sorted_selected = sorted(selected_classes, key=lambda c: p_hat[c], reverse=True)
@@ -736,8 +788,10 @@ def _explain_log_multiclass_1d(
         make_btn("Reset", 0),
     ]
 
-    layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
-    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=40)
+    layout_kwargs = _prediction_layout(
+        title, theme, right=230 if show_class_labels else 50,
+        bottom=40, show_class_labels=show_class_labels,
+    )
 
     fig.update_layout(
         **layout_kwargs, shapes=shapes, annotations=ann_slots(0),
@@ -755,9 +809,9 @@ def _explain_log_multiclass_nd(
     link_name = r"\operatorname{OvR}_{\sigma}" if probability_link == "ovr" else r"\operatorname{softmax}"
     model_formula_tex = rf"$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \hat{{\mathbf{{p}}}}={link_name}(\mathbf{{z}})$"
 
-    x_rows, x_cols = 15, 1
+    x_rows, x_cols = min(d, 7), 1
     x_items = [rf"{_fmt(x_disp[j], dec)}" for j in range(d)]
-    x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 7, 7))
+    x_mat_inner = r" \\ ".join(_matrix_compact(x_items, x_rows, x_cols, 3, 3))
     x_mat_tex = rf"$\mathbf{{x}}=\begin{{bmatrix}} {x_mat_inner} \end{{bmatrix}}$"
     x_dim_tex = rf"$\mathbf{{x}}\in\mathbb{{R}}^{{{d}}}$"
 
@@ -778,11 +832,12 @@ def _explain_log_multiclass_nd(
     normalizer = float(np.sum(components))
 
     def p_subst(k):
-        return (
-            rf"z_{{{k + 1}}}={exp_tex(k)},\quad {component_symbol}_{{{k + 1}}}="
-            rf"{_fmt(components[k], dec)},\quad\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})="
-            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}"
-        )
+        return [
+            rf"z_{{{k + 1}}}={exp_tex(k)}",
+            rf"{component_symbol}_{{{k + 1}}}={_fmt(components[k], dec)},\quad"
+            rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})="
+            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}",
+        ]
 
     subst_lines = []
     header1 = (
@@ -790,23 +845,23 @@ def _explain_log_multiclass_nd(
         + rf",\quad {normalizer_symbol}=\sum_{{j=1}}^K{component_symbol}_j={_fmt(normalizer, dec)},\quad "
     )
     header2 = r"z_k(\mathbf{x}) = \sum_{j=1}^{D} \theta_{j,k} x_j + \theta_{0,k}"
-    subst_lines.append(header1 + header2 + r" \\[8pt]")
+    subst_lines.extend((header1, header2))
 
     y_hat_idx = int(np.argmax(p_hat))
     if K <= 3:
         for k in range(K):
-            subst_lines.append(p_subst(k))
+            subst_lines.extend(p_subst(k))
     else:
-        subst_lines.append(p_subst(0))
+        subst_lines.extend(p_subst(0))
         subst_lines.append(r"\vdots")
         if 0 < y_hat_idx < K - 1:
-            subst_lines.append(p_subst(y_hat_idx))
+            subst_lines.extend(p_subst(y_hat_idx))
             subst_lines.append(r"\vdots")
-        subst_lines.append(p_subst(K - 1))
+        subst_lines.extend(p_subst(K - 1))
 
-    subst_tex = r"$\begin{gathered}" + r" \\[-2pt]".join(subst_lines) + r"\end{gathered}$"
+    subst_tex = r"$\begin{gathered}" + r" \\[3pt]".join(subst_lines) + r"\end{gathered}$"
 
-    res_tex = _multiclass_winner_tex(p_hat, y_hat, classes, dec, show_class_labels)
+    res_tex = _multiclass_winner_tex(p_hat, classes, dec)
 
     y_dim_tex = rf"$\hat{{\mathbf{{p}}}}\in\Delta^{{{K - 1}}}$"
 
@@ -841,6 +896,23 @@ def _explain_log_multiclass_nd(
 
         ann.append(title_annot(1, T1, 0.96))
         ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.89, size=14, x=0.03))
+        if show_class_labels and stage >= 1:
+            shown = list(range(K)) if K <= 3 else [0, K - 1]
+            for position, index in enumerate(shown):
+                label_y = (0.45 - 0.11 * position) if K <= 3 else (0.45 - 0.22 * position)
+                ann.append(dict(
+                    x=0.03, y=label_y + DY,
+                    xref="x1", yref="y1",
+                    text=f"c{index} = {_wrapped_class_label(classes[index], width=27)}",
+                    showarrow=False, xanchor="left", yanchor="top", align="left",
+                    font=dict(size=11, color=text_color),
+                ))
+            if K > 3:
+                ann.append(dict(
+                    x=0.03, y=0.34 + DY, xref="x1", yref="y1",
+                    text="⋮", showarrow=False, xanchor="left", yanchor="top",
+                    font=dict(size=15, color=text_color),
+                ))
 
         ann.append(title_annot(2, T2, 0.96))
         ann.append(dict(x=0.5, y=0.90 + DY, xref="x2", yref="y2", text="" if stage < 2 else subst_tex, showarrow=False, xanchor="center", yanchor="top", align="center", font=dict(size=13, color=text_color)))
@@ -850,6 +922,13 @@ def _explain_log_multiclass_nd(
             ann.append(dict(x=0.05, y=0.85 + DY, xref="x3", yref="y3", text="", showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color)))
         else:
             ann.append(dict(x=0.05, y=0.85 + DY, xref="x3", yref="y3", text=res_tex, showarrow=False, xanchor="left", yanchor="top", font=dict(size=16, color=text_color)))
+            if show_class_labels:
+                ann.append(dict(
+                    x=0.05, y=0.64 + DY, xref="x3", yref="y3",
+                    text=f"Predicted class:<br>{_wrapped_class_label(y_hat, width=22)}",
+                    showarrow=False, xanchor="left", yanchor="top", align="left",
+                    font=dict(size=12, color=text_color),
+                ))
 
         return ann
 
@@ -860,8 +939,9 @@ def _explain_log_multiclass_nd(
         dict(label="Reset", method="update", args=[{"visible": [True, True, True]}, {"annotations": ann_slots(0)}]),
     ]
 
-    layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
-    layout_kwargs["margin"] = dict(t=110, r=50, l=60, b=40)
+    layout_kwargs = _prediction_layout(
+        title, theme, right=50, bottom=40, show_class_labels=show_class_labels,
+    )
 
     up_kwargs = dict(x=0.08, xanchor="left") if d >= 10 else {}
 
@@ -905,9 +985,9 @@ def explain_logistic_prediction(
     fitted estimator or reported class identity.
 
     ``show_class_labels=False`` keeps the mathematical view indexed and omits
-    semantic labels from equations, axes, and legends. Setting it to ``True``
-    appends fitted labels while retaining the class index. Labels and fitted
-    order are always preserved in ``layout.meta``.
+    semantic labels from the visible layout. Setting it to ``True`` shows the
+    fitted names in separate, wrapped label rows while keeping plot axes and
+    formulas compact. Labels and fitted order remain in ``layout.meta``.
 
     ``multiclass_link="auto"`` uses the estimator's exact probability semantics;
     explicit ``"softmax"`` and ``"ovr"`` values support custom estimators.

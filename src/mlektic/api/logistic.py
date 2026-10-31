@@ -18,6 +18,7 @@ from ..visualization.logistic.router import build_logistic_figure
 from ..visualization.theme import (
     annotate_history_semantics,
     annotate_loss_semantics,
+    apply_feature_axis_names,
     attach_highlight,
     configure_animation,
 )
@@ -126,13 +127,14 @@ def visualize_logistic(
             or cross-entropy line in the mathematical panel.
         show_regularization: ``"auto"`` or bool controlling the estimator-backed
             regularization summary. Private normalization is not inferred.
-        feature_names: Optional original feature-name sequence. DataFrame
-            columns are used automatically.
+        feature_names: Optional original feature-name sequence. Names label the
+            visible model-input axes; equations retain canonical symbols such
+            as ``x_1`` and ``x_1^2``. DataFrame columns are used automatically.
         sample_index: Training observation used for the visible substitution;
             ``None`` selects index 0.
         theme: Optional visualization theme.
-        format: ``"dashboard"``, ``"lesson"``, ``"compact"``, or the static
-            final-state ``"report"`` composition.
+        format: ``"dashboard"``, ``"compact"``, or the static final-state
+            ``"report"`` composition.
         density: Optional alias for mathematical ``detail``.
         size: Named canvas preset: ``"default"``, ``"compact"``,
             ``"notebook"``, ``"wide"``, or ``"classroom"``.
@@ -219,6 +221,7 @@ def visualize_logistic(
         dec=dec,
         frame_duration=frame_duration,
         max_theta_cols=max_theta_cols,
+        size=visual_spec.size,
         theme=theme,
     )
 
@@ -238,6 +241,7 @@ def visualize_logistic(
     annotate_loss_semantics(fig, hist)
     attach_math_contract(fig, math_contract, theme=theme)
     apply_visual_system(fig, visual_spec, family="logistic")
+    apply_feature_axis_names(fig, math_contract["feature_space"]["input_feature_names"])
     return attach_highlight(fig, theme=theme)
 
 

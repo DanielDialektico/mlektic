@@ -38,13 +38,13 @@ def infer_multiclass_link(scores: np.ndarray, probabilities: np.ndarray) -> str:
 
 
 def multiclass_link_latex(link: str, classes: int | str = "K") -> str:
-    """Return a compact rigorous LaTeX definition for a multiclass link."""
+    """Return a zero-based LaTeX definition; K is declared by the figure."""
     if link == "ovr":
         return (
             r"q_k=\sigma(z_k)=\frac{1}{1+e^{-z_k}},\qquad "
-            rf"\hat{{p}}_k=\frac{{q_k}}{{\sum_{{j=1}}^{{{classes}}}q_j}}"
+            r"\hat{p}_k=\frac{q_k}{\sum_{\ell=0}^{K-1}q_\ell}"
         )
-    return rf"\hat{{p}}_k=\frac{{e^{{z_k}}}}{{\sum_{{j=1}}^{{{classes}}}e^{{z_j}}}}"
+    return r"\hat{p}_k=\frac{e^{z_k}}{\sum_{\ell=0}^{K-1}e^{z_\ell}}"
 
 
 def multiclass_link_name(link: str) -> str:

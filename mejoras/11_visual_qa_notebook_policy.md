@@ -14,7 +14,7 @@ exports, and limitations.
 Unit tests can prove that arrays, metadata, formulas, coordinates, and frame
 contracts are internally consistent. They cannot decide whether two LaTeX rows
 overlap, a prediction label disappears over a surface, a matrix becomes
-unreadable, a lesson stage hides a model unexpectedly, or a layout wastes its
+unreadable, a control hides a model unexpectedly, or a layout wastes its
 available space. Public visual documentation therefore requires both machine
 invariants and human visual evidence.
 
@@ -51,6 +51,6 @@ option, example, or visual claim. Reviewers make that determination explicitly.
 
 Review the first and final states, Play/Pause, relevant slider positions,
 equations, geometry, metric cards, legends, prediction boxes, long values,
-responsive/static output, and lesson stages. Confirm that recorded, replayed,
+responsive/static output, and figure-owned controls. Confirm that recorded, replayed,
 interpolated, and fitted states are labeled honestly and that perceptual
 subframes are never presented as optimizer steps.

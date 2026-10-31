@@ -10,6 +10,7 @@ import nbformat as nbf
 
 ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOKS = ROOT / "notebooks"
+QA_SIZE_PRESETS = ("default", "compact", "notebook", "wide", "classroom")
 
 
 def markdown(text: str):
@@ -78,6 +79,28 @@ def case(case_id: str, purpose: str, source: str):
         markdown(f"### `{case_id}`\n\n**Inspect:** {purpose}"),
         code(f'case_heading("{case_id}", "{purpose}")\n{source}', case_id=case_id),
     ]
+
+
+def add_size_coverage(cells: list, prefix: str, source_template: str) -> None:
+    """Append one representative visual case for every public canvas size."""
+    cells.append(
+        markdown(
+            """
+## Canvas-size coverage
+
+Run the same representative figure in every supported size. Inspect clipping,
+mathematical spacing, controls, legends, axes, and any below-plot derivation.
+"""
+        )
+    )
+    for size in QA_SIZE_PRESETS:
+        cells.extend(
+            case(
+                f"{prefix}-SIZE-{size.upper()}",
+                f"{size} canvas preset for this notebook's representative figure",
+                source_template.replace("__SIZE__", size),
+            )
+        )
 
 
 def notebook(title: str, introduction: str, cells: list, path: str) -> None:
@@ -151,6 +174,11 @@ from notebooks._support import case_heading, linear_case, binary_case, multiclas
     ]
     for item in cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "SMOKE",
+        "c=linear_case(1)\ndisplay(visualize_lr(c.model,c.X,c.y,steps=6,max_frames=4,size='__SIZE__'))",
+    )
     notebook(
         "QA 00 — public route smoke matrix",
         "A fast visual pass across every tabular dimensional route.",
@@ -215,7 +243,12 @@ from notebooks._support import case_heading, linear_case, polynomial_linear_case
         (
             "LR-PRED-EXTRAP",
             "extrapolation notice and visible query outside the training range",
-            "c=linear_case(2)\nquery=(c.X.max(axis=0)+1.5).reshape(1,-1)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=query,format='lesson',size='wide'))",
+            "c=linear_case(2)\nquery=(c.X.max(axis=0)+1.5).reshape(1,-1)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=query,size='wide'))",
+        ),
+        (
+            "LR-PRED-10D-STAGES",
+            "ten-variable prediction with distinct Input, Substitution, Output, and Reset controls",
+            "c=linear_case(10)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=c.X[[4]],size='wide'))",
         ),
         (
             "LR-PRED-COUNTERFACTUAL",
@@ -225,11 +258,173 @@ from notebooks._support import case_heading, linear_case, polynomial_linear_case
     ]
     for item in cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "LR",
+        "c=linear_case(1)\ndisplay(visualize_lr(c.model,c.X,c.y,steps=7,max_frames=5,detail='academic',size='__SIZE__'))",
+    )
     notebook(
         "QA 01 — linear regression",
         "Linear estimators, feature spaces, mathematical density, and prediction edge cases.",
         cells,
         "qa/qa_01_linear.ipynb",
+    )
+
+
+def build_polynomial() -> None:
+    """Build focused visual QA for polynomial geometry and equations."""
+    imports = """\
+import numpy as np
+from IPython.display import display
+from sklearn.datasets import load_diabetes
+from sklearn.linear_model import LinearRegression, Ridge, SGDRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+from mlektic import visualize_lr
+from notebooks._support import case_heading
+
+SEED = 42
+rng = np.random.default_rng(SEED)
+"""
+    cells = setup(imports)
+    cells.extend(
+        [
+            markdown(
+                """
+## Qué valida este notebook
+
+Una regresión polinómica conserva una entrada original 1D, pero transforma esa
+entrada en términos como `x`, `x²`, `x³`, etc. Por eso la geometría visible debe
+ser una **curva**, no una recta, y la ecuación superior debe mostrar las
+potencias que realmente consume el estimador.
+
+Revise en cada caso:
+
+1. que el eje X use el `feature_names` solicitado;
+2. que la línea del modelo tenga curvatura visible;
+3. que la fórmula simbólica y la sustitución animada usen `x₁`, `x₁²`, `x₁³`, etc.;
+4. que el último estado coincida con el modelo ajustado;
+5. que grados altos se abrevien con `…` sin desbordar el lienzo.
+
+Con `Ridge`/`LinearRegression`, los estados son una interpolación sintética
+desde la línea base hasta la curva final. Con `SGDRegressor`, Mlektic reconstruye
+un replay incremental y reserva el último estado para el estimador suministrado.
+"""
+            ),
+            code(
+                """X_quadratic = np.linspace(-2.8, 2.8, 110).reshape(-1, 1)
+y_quadratic = 3.0 - 1.2 * X_quadratic[:, 0] + 2.4 * X_quadratic[:, 0] ** 2
+
+X_waves = np.linspace(-3.0, 3.0, 180).reshape(-1, 1)
+y_waves = (
+    35 * np.sin(2.7 * X_waves[:, 0])
+    + 16 * np.cos(5.2 * X_waves[:, 0])
+    + 5 * X_waves[:, 0] ** 2
+    + rng.normal(0, 4, len(X_waves))
+)
+
+diabetes = load_diabetes()
+X_bmi = diabetes.data[:, [2]]
+y_diabetes = diabetes.target
+
+print('Parábola:', X_quadratic.shape)
+print('Ondas:', X_waves.shape)
+print('Diabetes/BMI:', X_bmi.shape)"""
+            ),
+            *case(
+                "POLY-QUADRATIC-POWERS",
+                "parábola inequívoca, eje descriptivo posición y ecuaciones canónicas x₁ y x₁²",
+                """quadratic = make_pipeline(
+    PolynomialFeatures(degree=2, include_bias=False),
+    LinearRegression(),
+).fit(X_quadratic, y_quadratic)
+display(visualize_lr(
+    quadratic, X_quadratic, y_quadratic,
+    steps=16, max_frames=8, animation_mode='hybrid', interpolation_frames=4,
+    detail='complete', feature_names=['posición'],
+    title='QA polinómica: parábola y potencias explícitas', size='wide',
+))""",
+            ),
+            *case(
+                "POLY-CUBIC-SCALED-DIABETES",
+                "curva cúbica real con eje BMI y ecuaciones canónicas x₁, x₁² y x₁³",
+                """cubic_bmi = make_pipeline(
+    PolynomialFeatures(degree=3, include_bias=False),
+    StandardScaler(),
+    Ridge(alpha=4.0),
+).fit(X_bmi, y_diabetes)
+display(visualize_lr(
+    cubic_bmi, X_bmi, y_diabetes,
+    steps=20, max_frames=10, mode='final_interp',
+    animation_mode='hybrid', interpolation_frames=4, fps=35,
+    metrics=['mse', 'mae', 'r2'], detail='complete',
+    feature_names=['BMI'], title='QA polinómica: eje BMI y potencias de x₁',
+    theme='academic', size='wide',
+))""",
+            ),
+            *case(
+                "POLY-WAVY-HIGH-DEGREE",
+                "deformación extrema desde una línea base hasta una curva con muchas oscilaciones",
+                """wavy = make_pipeline(
+    PolynomialFeatures(degree=14, include_bias=False),
+    StandardScaler(),
+    Ridge(alpha=0.08),
+).fit(X_waves, y_waves)
+display(visualize_lr(
+    wavy, X_waves, y_waves,
+    steps=40, max_frames=20, mode='final_interp',
+    animation_mode='hybrid', interpolation_frames=5, fps=35,
+    metrics=['mse', 'mae', 'r2'], detail='academic',
+    feature_names=['posición'],
+    title='QA polinómica: múltiples oscilaciones y grado 14 abreviado',
+    theme='academic', size='wide',
+))""",
+            ),
+            *case(
+                "POLY-ITERATIVE-REPLAY",
+                "aproximaciones reconstruidas de un polinomio incremental y cierre en el estimador exacto",
+                """iterative_poly = make_pipeline(
+    PolynomialFeatures(degree=5, include_bias=False),
+    StandardScaler(),
+    SGDRegressor(max_iter=1200, tol=1e-4, random_state=SEED),
+).fit(X_waves, y_waves)
+display(visualize_lr(
+    iterative_poly, X_waves, y_waves,
+    steps=24, max_frames=12, mode='iterative', animation_mode='native',
+    smooth='ema', smooth_beta=0.9,
+    metrics=['mse', 'mae', 'r2'], detail='complete',
+    feature_names=['posición'],
+    title='QA polinómica: replay incremental reconstruido',
+    theme='accessible', size='wide',
+))""",
+            ),
+            markdown(
+                """
+## Lectura esperada
+
+- Los tres primeros casos no afirman mostrar pasos privados de entrenamiento:
+  el subtítulo debe decir **Synthetic interpolation**.
+- El caso incremental debe decir **Reconstructed replay** y terminar en
+  **fitted**.
+- `smooth='ema'` sólo afecta la pérdida del replay incremental. No se aplica a
+  la interpolación sintética, que conserva el extremo exacto.
+- En grado 14, la ecuación superior debe mostrar las primeras potencias,
+  `\\cdots` y la potencia 14; la curva completa sí usa todos los coeficientes.
+"""
+            ),
+        ]
+    )
+    add_size_coverage(
+        cells,
+        "POLY",
+        "X_size=np.linspace(-2.8,2.8,110).reshape(-1,1)\ny_size=3.0-1.2*X_size[:,0]+2.4*X_size[:,0]**2\nm_size=make_pipeline(PolynomialFeatures(degree=2,include_bias=False),LinearRegression()).fit(X_size,y_size)\ndisplay(visualize_lr(m_size,X_size,y_size,steps=7,max_frames=5,feature_names=['posición'],size='__SIZE__'))",
+    )
+    notebook(
+        "QA 09 — regresión polinómica y deformación de curvas",
+        "Curvas 1D, potencias transformadas, interpolación sintética, replay incremental y límites de grado alto.",
+        cells,
+        "qa/qa_09_polynomial.ipynb",
     )
 
 
@@ -253,13 +448,18 @@ from notebooks._support import case_heading, binary_case, multiclass_case, scale
         ),
         (
             "LOG-BINARY-THRESHOLD",
-            "non-default binary threshold in equations and boundary",
+            "non-default binary threshold with numeric tick and separate τ label inside the geometry",
             "c=binary_case(2)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,threshold=0.7,detail='academic'))",
         ),
         (
             "LOG-BINARY-IMBALANCED",
             "imbalanced data with empirical log-loss and metrics",
             "c=binary_case(2,imbalanced=True)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,show_loss=True,detail='complete'))",
+        ),
+        (
+            "LOG-BINARY-30D-WRAP",
+            "thirty-variable equation defines sigmoid once, wraps the intercept, and centers metric readouts",
+            "c=binary_case(30)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=12,max_frames=6,show_loss=True,metrics=['log_loss','accuracy','f1'],detail='complete',format='compact',size='wide'))",
         ),
         (
             "LOG-SGD-REPLAY",
@@ -279,12 +479,12 @@ from notebooks._support import case_heading, binary_case, multiclass_case, scale
         (
             "LOG-MULTI-FOCUS",
             "one selected class surface while preserving fitted order",
-            "c=multiclass_case(2,string_labels=True)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,class_focus='group-1',show_class_labels=True,detail='academic'))",
+            "c=multiclass_case(2,string_labels=True)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,class_focus='group-1',show_class_labels=True,show_loss=True,detail='academic'))",
         ),
         (
             "LOG-MULTI-OVR",
             "normalized one-vs-rest semantics from SGDClassifier",
-            "c=multiclass_case(2)\nfrom sklearn.linear_model import SGDClassifier\nm=SGDClassifier(loss='log_loss',max_iter=1000,random_state=17).fit(c.X,c.y)\ndisplay(visualize_logistic(m,c.X,c.y,steps=12,max_frames=6,multiclass_link='ovr',show_loss=True))",
+            "c=multiclass_case(2)\nfrom sklearn.linear_model import SGDClassifier\nm=SGDClassifier(loss='log_loss',max_iter=1000,random_state=17).fit(c.X,c.y)\ndisplay(visualize_logistic(m,c.X,c.y,steps=12,max_frames=6,multiclass_link='ovr',show_loss=True,detail='academic'))",
         ),
         (
             "LOG-MULTI-MANY-CLASSES",
@@ -309,6 +509,30 @@ from notebooks._support import case_heading, binary_case, multiclass_case, scale
     ]
     for item in cases:
         cells.extend(case(*item))
+    cells.append(markdown(
+        """
+## Reading the multiclass layouts
+
+The animated coefficient matrices and equations display at most four decimal
+places (`min(dec, 4)`); the fitted-model derivation below the figure honors
+the requested `dec`. The short `log-loss` card uses the history source stated
+in the subtitle and timeline; full loss provenance also remains in metadata.
+
+`default`, `wide`, and `classroom` share the expanded multivariable notation:
+endpoint scores on one line and numeric exponents in the probability fractions.
+`compact` and `notebook` keep shorter symbolic fractions. Check the endpoint
+continuation marks, the gap below the generic probability definition, and the
+centering of the vertical ellipsis for both zero and fitted coefficients.
+Omitted matrix columns are indicated by conventional ellipses, without an
+extra caption. In binary 1D predictions, inspect the Substitution and Output
+stages: the single-input panel gives the sigmoid derivation more vertical room.
+"""
+    ))
+    add_size_coverage(
+        cells,
+        "LOG-ND",
+        "c=multiclass_case(6,classes=6)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=8,max_frames=5,show_loss=True,metrics=['log_loss','accuracy','f1'],max_theta_cols=2,detail='complete',size='__SIZE__'))",
+    )
     notebook(
         "QA 02 — logistic regression",
         "Binary and multiclass links, labels, thresholds, imbalance, preprocessing, and predictions.",
@@ -345,7 +569,7 @@ model, X, history = torch_xor_case()
         (
             "NN-TRAINING",
             "recorded loss plus inferred accuracy, precision, and recall",
-            "display(visualize_nn_training(history,max_frames=6,format='lesson'))",
+            "display(visualize_nn_training(history,max_frames=6))",
         ),
         (
             "NN-WEIGHTS",
@@ -375,6 +599,11 @@ model, X, history = torch_xor_case()
     ]
     for item in cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "NN",
+        "display(visualize_nn_architecture(model,X[:1],history=history,theme='academic',size='__SIZE__'))",
+    )
     notebook(
         "QA 03 — neural networks",
         "PyTorch architecture, genuine recorded training, parameters, activations, graph semantics, and predictions.",
@@ -734,7 +963,7 @@ rule and scales the backward paths by genuine recorded layer-gradient norms.
         (
             "NN-SYNTH-REG-TRAINING",
             "recorded MSE optimization and regression metrics",
-            "display(visualize_nn_training(reg_history,max_frames=8,theme='academic',format='lesson'))",
+            "display(visualize_nn_training(reg_history,max_frames=8,theme='academic'))",
         ),
         (
             "NN-SYNTH-REG-GRAPH",
@@ -986,6 +1215,11 @@ display(visualize_nn_architecture(large_model,large_input[:1],history=large_hist
     ]
     for item in large_cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "NN-GALLERY",
+        "display(visualize_nn_architecture(xor_model,xor_X[:1],history=xor_history,theme='academic',size='__SIZE__'))",
+    )
     notebook(
         "QA 08 — complete neural figure gallery",
         "Every public neural Plotly figure, synthetic and real datasets, simple and complex topology, extensibility, scale, fallbacks, and recorder schema v2.",
@@ -1008,9 +1242,8 @@ logistic = binary_case(1,estimator='sgd')
 `steps=K` creates semantic checkpoints. `max_frames=N` retains at most N of
 those checkpoints. `interpolation_frames=q` inserts perceptual intervals in
 hybrid linear motion; they are not optimizer updates. `frame_duration` controls
-playback time, never whether the model trace exists. Re-executing a lesson cell
-resets it to stage **1 Data**; click **2 Model** or **4 Complete** to reveal the
-model before playing the semantic frames.
+playback time, never whether the model trace exists. The dashboard retains the
+complete composition and its temporal controls.
 """)
     )
     cases = [
@@ -1040,11 +1273,6 @@ model before playing the semantic frames.
             "display(visualize_logistic(logistic.model,logistic.X,logistic.y,steps=18,max_frames=7,show_loss=True,frame_duration=420,transition_duration=280))",
         ),
         (
-            "MOTION-LESSON",
-            "staged lesson composition with complete-stage recovery",
-            "display(visualize_lr(linear.model,linear.X,linear.y,steps=18,max_frames=7,format='lesson',frame_duration=240))",
-        ),
-        (
             "MOTION-REDUCED",
             "exact final state without playback controls",
             "display(visualize_lr(linear.model,linear.X,linear.y,steps=18,max_frames=7,reduced_motion=True,detail='academic'))",
@@ -1057,9 +1285,14 @@ model before playing the semantic frames.
     ]
     for item in cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "MOTION",
+        "display(visualize_lr(linear.model,linear.X,linear.y,steps=12,max_frames=6,animation_mode='native',size='__SIZE__'))",
+    )
     notebook(
         "QA 04 — motion and temporal semantics",
-        "Playback controls, decimation, smoothing, lesson stages, and static accessibility modes.",
+        "Playback controls, decimation, smoothing, complete dashboard composition, and static accessibility modes.",
         cells,
         "qa/qa_04_motion.ipynb",
     )
@@ -1081,7 +1314,7 @@ c=linear_case(1)
                 f"display(visualize_lr(c.model,c.X,c.y,steps=7,max_frames=5,theme='{theme}'))",
             )
         )
-    for fmt in ["dashboard", "lesson", "compact", "report"]:
+    for fmt in ["dashboard", "compact", "report"]:
         cells.extend(
             case(
                 f"STYLE-FORMAT-{fmt.upper()}",
@@ -1212,6 +1445,11 @@ from notebooks._support import binary_case, case_heading, linear_case, multiclas
     ]
     for item in cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "HYPER",
+        "c=linear_case(2)\ndisplay(visualize_lr(c.model,c.X,c.y,steps=7,max_frames=5,detail='complete',size='__SIZE__'))",
+    )
     notebook(
         "QA 07 — model parameters and hyperparameters",
         "Estimator-owned regularization, optimization, weighting, topology, activation, loss, and task variants.",
@@ -1258,6 +1496,11 @@ from notebooks._support import case_heading, linear_case, multiclass_case
     ]
     for item in cases:
         cells.extend(case(*item))
+    add_size_coverage(
+        cells,
+        "DATA",
+        "c=multiclass_case(2,classes=4,string_labels=True)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=7,max_frames=5,class_focus='group-2',show_class_labels=True,size='__SIZE__'))",
+    )
     notebook(
         "QA 06 — data regimes and edge cases",
         "Numerical scale, noise, constant targets, overlap, and additional class counts.",
@@ -1289,7 +1532,7 @@ def build_learning() -> None:
             *case(
                 "LEARN-GETTING-STARTED",
                 "synthetic interpolation is labeled and ends at the fitted model",
-                "display(visualize_lr(model,X,y,steps=12,max_frames=7,format='lesson',theme='classroom'))",
+                "display(visualize_lr(model,X,y,steps=12,max_frames=7,theme='classroom'))",
             ),
             markdown(
                 "## 2. Explain a prediction\n\nCompare the symbolic rule, numerical substitution, and plotted output."
@@ -1316,7 +1559,7 @@ def build_learning() -> None:
             *case(
                 "LEARN-LINEAR-PLANE",
                 "coefficients, plane geometry, loss, and fitted derivation agree",
-                "display(visualize_lr(c.model,c.X,c.y,steps=14,max_frames=8,detail='complete',format='lesson'))",
+                "display(visualize_lr(c.model,c.X,c.y,steps=14,max_frames=8,detail='complete'))",
             ),
             markdown("## Linear in parameters is not always a straight raw-space line"),
             *case(
@@ -1343,14 +1586,37 @@ def build_learning() -> None:
             *case(
                 "LEARN-LOGISTIC-BINARY",
                 "score, sigmoid probability, threshold, and boundary",
-                "display(visualize_logistic(b.model,b.X,b.y,steps=14,max_frames=8,threshold=0.65,detail='complete',show_loss=True,format='lesson'))",
+                "display(visualize_logistic(b.model,b.X,b.y,steps=14,max_frames=8,threshold=0.65,detail='complete',show_loss=True))",
             ),
             *case(
                 "LEARN-LOGISTIC-PREDICTION",
                 "winning class index and optional semantic label",
                 "display(explain_logistic_prediction(b.model,b.X,b.y,x_query=b.X[[5]],show_class_labels=True))",
             ),
-            markdown("## Multiclass probability"),
+            markdown(
+                r"""
+## Multiclass probability and indices
+
+Here $K$ counts fitted classes, $k=0,\ldots,K-1$ indexes a class in `model.classes_`,
+and $d$ counts input features. For every class, including those abbreviated
+by $\vdots$ in the figure, use the same two equations:
+
+$$z_k(\mathbf{x})=\theta_{0,k}+\sum_{j=1}^{d}\theta_{j,k}x_j,\qquad
+\hat p(Y=c_k\mid\mathbf{x})=\frac{e^{z_k}}{\sum_{\ell=0}^{K-1}e^{z_\ell}}.$$
+
+For $d=1$, $z_k=\theta_{0,k}+\theta_{1,k}x_1$. For $d=2$, add
+$\theta_{2,k}x_2$ to that *same* score formula. As a numerical example with
+$K=3$, $x_1=2$, intercepts $(0.2,-0.4,0)$, and coefficient columns
+$(1,-0.5,0.25)$, the scores are $(2.2,-1.4,0.5)$. Therefore
+$\hat p(Y=c_0\mid\mathbf{x})=e^{2.2}/(e^{2.2}+e^{-1.4}+e^{0.5})\approx0.8264$;
+repeat the substitution with each remaining column for $c_1$ and $c_2$.
+With $x_2=1$ and second-feature coefficients $(0.1,0.4,-0.2)$, the scores
+become $(2.3,-1.0,0.3)$ and the same Softmax rule gives
+$(0.8531,0.0315,0.1155)$. These numbers illustrate the notation; the plot
+uses fitted coefficients. Binary logistic regression instead displays one
+logit and a sigmoid for its positive class.
+"""
+            ),
             *case(
                 "LEARN-LOGISTIC-MULTI",
                 "Softmax probabilities sum to one and argmax selects a class",
@@ -1378,7 +1644,7 @@ def build_learning() -> None:
             *case(
                 "LEARN-NN-TRAINING",
                 "recorded loss and classification metrics",
-                "display(visualize_nn_training(history,max_frames=8,format='lesson'))",
+                "display(visualize_nn_training(history,max_frames=8))",
             ),
             *case(
                 "LEARN-NN-GRAPH",
@@ -1439,6 +1705,832 @@ x=torch.randn(2,4)"""
             ),
         ],
         "learn_04_neural_architectures.ipynb",
+    )
+
+
+def build_realistic_scenarios() -> None:
+    """Build the end-to-end realistic scenario and configuration reference."""
+    imports = """\
+from IPython.display import display
+import inspect
+import numpy as np
+from sklearn.datasets import load_breast_cancer, load_diabetes, load_digits, load_iris, load_wine
+from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+
+from mlektic import (
+    TorchTrainingRecorder,
+    explain_logistic_prediction,
+    explain_lr_prediction,
+    explain_nn_prediction,
+    inspect_nn,
+    visualize_logistic,
+    visualize_lr,
+    visualize_nn,
+    visualize_nn_architecture,
+    visualize_nn_backpropagation,
+    visualize_nn_blocks,
+    visualize_nn_graph,
+    visualize_nn_hyperparameters,
+    visualize_nn_loss_landscape,
+    visualize_nn_training,
+    visualize_nn_weights,
+)
+from notebooks._support import case_heading
+
+SEED = 17
+np.random.seed(SEED)
+"""
+    cells = setup(imports)
+    cells.extend(
+        [
+            markdown(
+                """
+## Cómo usar este laboratorio
+
+Cada sección combina un conjunto de datos incluido en scikit-learn (sin descargas), un modelo reproducible y las figuras públicas que corresponden a su dimensionalidad. Ejecute las celdas en orden. Los ejemplos reducen pasos y muestras para que la exploración sea ágil; aumente `steps`, `max_frames` o los pasos de entrenamiento cuando quiera mayor resolución.
+
+**Lectura honesta del tiempo:** un estimador ya ajustado no conserva su trayectoria privada. `mode='auto'` reconstruye un replay cuando el estimador es incremental y, en los demás casos, muestra interpolación sintética hasta el punto final exacto. En redes, el historial sí es registrado durante el entrenamiento por `TorchTrainingRecorder`.
+"""
+            ),
+            markdown(
+                """
+## Configuración visual compartida por todas las familias
+
+Estos argumentos controlan presentación, no el modelo ni sus predicciones. La columna **Cuándo tocarlo** sirve como guía de exploración.
+
+| Parámetro | Valores admitidos | Qué hace | Cuándo tocarlo |
+|---|---|---|---|
+| `theme` | `None`/`'classic'`, `'academic'`, `'classroom'`, `'compact'`, `'accessible'` | Cambia colores, tipografía, contrastes, grosores y redundancia visual; no elimina información matemática. `'classroom'` se conserva como alias compatible de `'academic'`: el tamaño de pantalla se controla con `size`, no agrandando ejes y ecuaciones. | Compare `'academic'` para lectura técnica, `'compact'` para poco espacio y `'accessible'` cuando el color no deba ser la única señal. |
+| `format` | `'dashboard'`, `'compact'`, `'report'` | Controla la composición. `'dashboard'` mantiene la vista interactiva completa y los controles propios de cada figura; `'compact'` reduce espacio y `'report'` fija el estado final sin controles. | Use `'dashboard'` al explorar y `'report'` para exportar/capturar una figura estática. |
+| `detail` | `'essential'`, `'academic'`, `'complete'` | En lineal/logística decide cuánta derivación, diagnóstico y contexto se muestran. | Suba a `'complete'` para auditar todos los paneles; vuelva a `'essential'` para comprobar la vista mínima. |
+| `density` | `None` o `'essential'`, `'academic'`, `'complete'` | Alias de densidad visual; en lineal/logística complementa `detail` y en redes es el nombre principal. No debe contradecir un `detail` explícito no predeterminado. | Úselo para probar cuánto contenido cabe en cada tamaño de lienzo. |
+| `size` | `'default'`, `'compact'`, `'notebook'`, `'wide'`, `'classroom'` | Selecciona un preset de lienzo y espaciado. `'classroom'` se conserva como alias compatible de `'wide'`. | Pruebe `'notebook'` en Jupyter y `'wide'` con matrices, fórmulas largas o una pantalla grande. |
+| `width` | `None` o entero `>=320` | Sustituye sólo el ancho del preset de `size`. | Fuerce anchos estrechos y amplios para detectar solapamientos y saltos de texto. |
+| `height` | `None` o entero `>=320` | Sustituye sólo la altura del preset de `size`. | Auméntelo si hay muchos paneles; redúzcalo para probar el límite vertical. |
+| `responsive` | `False`/`True` | Hace que el HTML escale con el contenedor manteniendo su relación interna. | Actívelo en notebooks o páginas cuyo ancho cambia; no sustituye elegir una composición adecuada. |
+| `reduced_motion` | `False`/`True` | Desactiva la reproducción, retira controles temporales y deja un estado final legible. | Valide accesibilidad o genere una vista estable sin modificar el historial. |
+| `title` | `None` o texto | Sustituye el título automático de la figura; `None` conserva el nombre generado a partir del caso. | Compruebe títulos largos, caracteres Unicode y nombres de dominio reales. |
+
+Use `format='report'` para exportación estática, `theme='accessible'` cuando el color no deba ser la única señal y `size='wide'` para fórmulas o matrices grandes.
+"""
+            ),
+            code(
+                """public_figures = [
+    visualize_lr, explain_lr_prediction, visualize_logistic, explain_logistic_prediction,
+    visualize_nn, visualize_nn_architecture, visualize_nn_blocks, visualize_nn_graph,
+    visualize_nn_training, visualize_nn_hyperparameters, visualize_nn_loss_landscape,
+    visualize_nn_backpropagation, visualize_nn_weights, explain_nn_prediction,
+]
+for function in public_figures:
+    print(f"{function.__name__}{inspect.signature(function)}")"""
+            ),
+            markdown(
+                """
+# 1. Regresión lineal
+
+`visualize_lr` selecciona la geometría desde las variables originales: con 1 variable muestra un trazo 2D, que será recta para un modelo afín y curva si un `Pipeline` crea términos polinómicos; con 2 variables muestra una superficie 3D; con 3 o más usa una expansión/matriz matemática. Parámetros exclusivos:
+
+### `visualize_lr`: datos, historia y evaluación
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `trained_estimator` | estimador ajustado | Fuente de coeficientes y predicciones. Acepta estimadores compatibles y `Pipeline`; la figura no vuelve a entrenar el objeto final. |
+| `X`, `y` | matrices obligatorias | Datos usados para reconstruir/representar la trayectoria y calcular métricas. Las columnas originales de `X` deciden la familia visual: trazo 1D, superficie 2D o resumen N-D. Una expansión polinómica no convierte una entrada original 1D en la vista matricial: deforma su trazo. |
+| `steps` | `60`, entero `>=1` | Cantidad de estados solicitados al reconstruir la historia. Más pasos suavizan la evolución, pero pueden ser submuestreados por `max_frames`. |
+| `mode` | `'auto'`; `'iterative'`, `'final_interp'` | Decide cómo obtener la historia. `'auto'` reconstruye un replay si el estimador es incremental; `'iterative'` lo exige; `'final_interp'` interpola sintéticamente desde la línea base hasta el modelo ajustado. El replay tampoco afirma recuperar la llamada privada original a `fit`. |
+| `baseline` | `'mean'`; también `'zeros'` | Punto inicial de la interpolación: predicción media con pendiente cero o todos los parámetros en cero. Cambia el recorrido, nunca el estado final. |
+| `display_space` | `'original'` o `'scaled'` | En estimadores con transformación, muestra coeficientes/ejes en unidades originales o en el espacio transformado. Es especialmente visible con `StandardScaler`. |
+| `show_history_context` | `True` | Muestra el subtítulo que declara si la trayectoria es replay real o interpolación sintética. Desactívelo sólo si ese contexto ya está explicado fuera de la figura. |
+| `show_loss` | `True` | Añade la curva/panel temporal de pérdida. En 1D cambia de forma importante la composición disponible. |
+| `metrics` | `None`; lista o diccionario | `None` usa la selección de la vista. Una lista admite `loss`, `mse`, `mae`, `r2`/`r_2`; un diccionario `{nombre: callable}` permite métricas propias. Controla tarjetas y series visibles. |
+| `strict_loss` | `False` | Si es `True`, un error al calcular la pérdida detiene la figura; si es `False`, conserva la visualización y degrada ese panel. Útil para auditar integraciones. |
+| `smooth` | `'ema'` o `None` | Aplica una media móvil exponencial sólo a la pérdida de un replay reconstruido o deja valores crudos. En interpolación sintética se conserva la evaluación sin EMA para mantener exacto el extremo final. No modifica el modelo ni las métricas crudas almacenadas. |
+| `smooth_beta` | `0.85`, en `[0,1)` | Memoria de la EMA: cerca de 0 sigue los datos; cerca de 1 produce una curva más estable y retrasada. Sólo tiene efecto con `smooth='ema'` y una historia de tipo replay. |
+
+### `visualize_lr`: tiempo, matemática y selección visible
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `frame_duration` | `80`, milisegundos `>=0` | Tiempo que permanece cada estado. Cambia velocidad de reproducción, no cuántos estados existen. |
+| `transition_duration` | `None` o milisegundos `>=0` | Duración de la transición Plotly entre estados; `None` deja que la vista elija un valor coherente. |
+| `max_frames` | `60`, entero o `None` | Tope de estados renderizados. Al reducirlo se seleccionan estados representativos, conservando primero y último; `None` delega el muestreo a `frame_step`. |
+| `frame_step` | `10`, entero `>=1` | Salto entre estados cuando no se fija `max_frames`; valores altos aligeran HTML y hacen la evolución más discreta. |
+| `animation_mode` | `'auto'`, `'native'`, `'hybrid'` | En 1D elige animación Plotly nativa o una interpolación híbrida más fluida; `'auto'` selecciona según el caso. En 2D/N-D no cambia de motor. |
+| `fps` | `None` o número positivo | Objetivo de cuadros por segundo del modo híbrido 1D. Ajusta la cadencia; no crea estados del entrenamiento. |
+| `interpolation_frames` | `3`, entero `>=1` | Intervalos visuales entre dos estados en modo híbrido 1D. Valores mayores hacen más fluida la deformación sin inventar nuevos estados semánticos. |
+| `dec` | `4`, entero `>=0` | Número de decimales en ecuaciones, coeficientes, predicción y métricas. No altera ningún cálculo. |
+| `show_objective` | `'auto'` o booleano | Muestra/oculta la función objetivo. `'auto'` la incorpora cuando la densidad y el espacio lo permiten. |
+| `show_regularization` | `'auto'` o booleano | Muestra el término de regularización detectado, por ejemplo Ridge/Lasso. `True` es útil para comprobar que un `Pipeline` se interpreta correctamente. |
+| `feature_names` | `None` o secuencia de textos | Nombra únicamente los ejes de entrada según las columnas originales de `X`. La matemática mantiene símbolos canónicos (`x₁`, `x₂`, …); en un `Pipeline` polinómico muestra `x₁²`, `x₁x₂`, `x₂³`, etc., aunque el nombre descriptivo del eje sea largo. |
+| `sample_index` | `None` o índice válido | Elige la fila destacada en la derivación/predicción. `None` usa una muestra representativa; pruebe extremos para forzar ecuaciones largas. |
+| `detail` | `'essential'`, `'academic'`, `'complete'` | Controla cuánto contexto matemático y diagnóstico aparece; compárelo con la tabla visual compartida. |
+
+### `explain_lr_prediction`: explicación local de una predicción
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `trained_estimator`, `X_train`, `y_train` | obligatorios | Definen el modelo y el contexto de entrenamiento contra el que se explica una consulta. |
+| `x_query` | `None` o una observación | Punto cuya predicción se desarrolla. Si falta, se escoge una fila de entrenamiento. |
+| `yhat` | `None` o valor | Predicción suministrada externamente. Su uso depende de `prediction_source`. |
+| `prediction_source` | `'model'`, `'provided'`, `'validate'` | `'model'` calcula con el estimador; `'provided'` usa `yhat`; `'validate'` compara `yhat` con el modelo y falla si no coincide dentro de las tolerancias. |
+| `validation_rtol`, `validation_atol` | `1e-7`, `1e-9` | Tolerancias relativa y absoluta de la validación numérica. Súbalas sólo si hay diferencias esperadas de precisión. |
+| `grid_points` | `250`, entero | Resolución de la recta/contexto 1D. Más puntos producen un trazo más denso y un HTML algo mayor. |
+| `grid_2d_points` | `40`, entero | Resolución por eje de la superficie 2D; el coste crece aproximadamente con su cuadrado. |
+| `display_space` | `'original'` o `'scaled'` | Explica entradas y coeficientes antes o después del preprocesamiento. |
+| `dec` | `4`, entero `>=0` | Precisión textual de la sustitución numérica. |
+| Parámetros visuales | tabla compartida | `title`, `theme`, `format`, `density`, `size`, `width`, `height`, `responsive` y `reduced_motion` sólo alteran la presentación. |
+"""
+            ),
+            code(
+                """diabetes = load_diabetes()
+X_diabetes = diabetes.data
+y_diabetes = diabetes.target
+print(diabetes.DESCR.splitlines()[0])
+print("X:", X_diabetes.shape, "y:", y_diabetes.shape)
+print("Variables:", list(diabetes.feature_names))"""
+            ),
+            *case(
+                "REAL-LR-1D-DIABETES",
+                "recta, residuos, ecuación y animación híbrida con BMI del conjunto Diabetes",
+                """X = X_diabetes[:, [2]]
+lr_1d = LinearRegression().fit(X, y_diabetes)
+display(visualize_lr(
+    lr_1d, X, y_diabetes, steps=16, max_frames=8,
+    animation_mode='hybrid', interpolation_frames=4, fps=35,
+    metrics=['mse', 'mae', 'r2'], detail='academic',
+    feature_names=['BMI estandarizado'], theme='academic', size='default',
+))""",
+            ),
+            *case(
+                "REAL-LR-2D-DIABETES",
+                "cambio de recta a plano 3D usando BMI y presión arterial",
+                """X = X_diabetes[:, [2, 3]]
+lr_2d = LinearRegression().fit(X, y_diabetes)
+display(visualize_lr(
+    lr_2d, X, y_diabetes, steps=14, max_frames=7, baseline='zeros',
+    show_loss=True, detail='academic', format='dashboard', size='default',
+    feature_names=['BMI estandarizado', 'Presión arterial estandarizada'], sample_index=25,
+))""",
+            ),
+            *case(
+                "REAL-LR-ND-DIABETES",
+                "límite N-dimensional: matriz de coeficientes, escalado, regularización y nombres reales",
+                """lr_nd = make_pipeline(StandardScaler(), Ridge(alpha=25.0)).fit(X_diabetes, y_diabetes)
+display(visualize_lr(
+    lr_nd, X_diabetes, y_diabetes, steps=18, max_frames=6,
+    display_space='original', metrics=['mse', 'mae', 'r2'], dec=5,
+    detail='complete', show_objective=True, show_regularization=True,
+    feature_names=diabetes.feature_names, sample_index=len(y_diabetes)-1,
+    theme='academic', format='compact', size='wide',
+))""",
+            ),
+            markdown(
+                """
+### Regresión polinómica: qué cambia en la figura
+
+`PolynomialFeatures` transforma una variable original en varias columnas de
+modelo. Para grado 3 y una entrada llamada `BMI`, el estimador recibe
+`BMI`, `BMI²` y `BMI³`. La figura continúa siendo 1D porque sólo existe una
+variable original, pero el trazo se deforma y deja de ser una recta. `BMI` es
+una etiqueta descriptiva del eje; no sustituye el símbolo matemático.
+
+La banda matemática superior ahora muestra dos niveles sincronizados:
+
+- la forma simbólica
+  `ŷ = θ₀ + θ₁·x₁ + θ₂·x₁² + θ₃·x₁³`;
+- la sustitución numérica de todos esos coeficientes en cada estado.
+
+Si hay `StandardScaler` después de la expansión, el encabezado declara
+**transformed feature space**: los símbolos siguen siendo `x₁`, `x₁²` y
+`x₁³`, mientras los valores y coeficientes pertenecen a las columnas
+polinómicas escaladas. Para
+grados mayores que cinco, la ecuación abrevia los términos centrales con
+`…`; el cálculo y la curva siguen utilizando todos los coeficientes.
+
+Con `Ridge` o `LinearRegression`, `mode='auto'` produce una interpolación
+sintética desde `baseline` hasta la curva ajustada. `steps` crea estados
+semánticos, `max_frames` decide cuántos se conservan e `interpolation_frames`
+suaviza visualmente la deformación híbrida. Para observar un replay
+reconstruido use un estimador incremental, como `SGDRegressor`, con
+`mode='iterative'`.
+"""
+            ),
+            *case(
+                "REAL-LR-NONLINEAR-DIABETES",
+                "regresión polinómica: eje BMI y ecuaciones animadas con x₁, x₁² y x₁³",
+                """X = X_diabetes[:, [2]]
+poly_lr = make_pipeline(
+    PolynomialFeatures(degree=3, include_bias=False),
+    StandardScaler(),
+    Ridge(alpha=4.0),
+).fit(X, y_diabetes)
+display(visualize_lr(
+    poly_lr, X, y_diabetes, steps=24, max_frames=12,
+    mode='final_interp', animation_mode='hybrid', interpolation_frames=4, fps=35,
+    metrics=['mse', 'mae', 'r2'], detail='complete',
+    feature_names=['BMI'], title='Regresión polinómica cúbica sobre BMI',
+    theme='academic', size='wide',
+))""",
+            ),
+            markdown(
+                """
+### Límites que cambian la lectura
+
+- Con una variable hay geometría directa y animación `hybrid`; al pasar a dos aparece un plano 3D y sólo se admite animación nativa.
+- A partir de tres variables no se inventa una proyección: la figura cambia a álgebra multivariable.
+- Escalas muy distintas hacen ilegible una sustitución ingenua; un `Pipeline` y `display_space` permiten distinguir parámetros escalados y originales.
+- Una transformación polinómica cubre no linealidad **en x**, aunque el estimador siga siendo lineal en sus coeficientes. Las potencias se muestran explícitamente en ecuaciones y sustituciones; una interpolación de `Ridge` no debe confundirse con pasos privados de entrenamiento. La librería no es un visualizador genérico de árboles, kernels o splines.
+"""
+            ),
+            *case(
+                "REAL-LR-PREDICTIONS",
+                "todas las geometrías de explicación de predicción: 1D, 2D y N-D, incluida extrapolación",
+                """display(explain_lr_prediction(
+    lr_1d, X_diabetes[:, [2]], y_diabetes,
+    x_query=[[X_diabetes[:, 2].max() + 0.04]], grid_points=180,
+    theme='accessible',
+))
+display(explain_lr_prediction(
+    lr_2d, X_diabetes[:, [2, 3]], y_diabetes,
+    x_query=(X_diabetes[:, [2, 3]].max(axis=0) + 0.03).reshape(1, -1),
+    grid_2d_points=28, size='wide',
+))
+display(explain_lr_prediction(
+    lr_nd, X_diabetes, y_diabetes, x_query=X_diabetes[[40]],
+    dec=5, size='wide',
+))""",
+            ),
+            *case(
+                "REAL-LR-VISUAL-PRESETS",
+                "configuraciones visuales en sus extremos: dashboard accesible y reporte estático con tamaño explícito",
+                """display(visualize_lr(
+    lr_1d, X_diabetes[:, [2]], y_diabetes, steps=8, max_frames=5,
+    show_history_context=False, theme='accessible',
+    density='academic', responsive=True, size='notebook',
+))
+display(visualize_lr(
+    lr_1d, X_diabetes[:, [2]], y_diabetes, steps=8, max_frames=5,
+    theme='compact', format='report', width=900, height=620,
+    reduced_motion=True, show_loss=False,
+))""",
+            ),
+            markdown(
+                """
+# 2. Regresión logística
+
+La forma depende de variables **y** clases: binaria 1D (sigmoide), binaria 2D (frontera/plano), binaria N-D (expansión), multiclase 1D (curvas), multiclase 2D (superficies/regiones) y multiclase N-D (matrices).
+
+### `visualize_logistic`: datos, historia y evaluación
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `trained_estimator` | clasificador ajustado | Aporta clases, coeficientes y probabilidades. Puede ser un `Pipeline`; la figura respeta su preprocesamiento. |
+| `X`, `y` | matrices obligatorias | Contexto de datos. El número de columnas y clases determina sigmoide, frontera/superficie o resumen matricial. |
+| `steps` | `60`, entero `>=1` | Número de estados solicitados para replay/interpolación. No equivale a `max_iter` del clasificador. |
+| `mode` | `'auto'`, `'iterative'`, `'final_interp'` | Selecciona replay incremental cuando es posible o interpolación hasta el modelo final. Fuerce modos para comprobar que el subtítulo describe honestamente la procedencia. |
+| `baseline` | `'prior'` o `'uniform'` | Estado inicial: probabilidades según frecuencia de clases o equiprobables. Cambia la trayectoria y la pérdida inicial, no el clasificador final. |
+| `display_space` | `'original'` o `'scaled'` | Decide si ejes, coeficientes y consulta se expresan en unidades del dato o del transformador. |
+| `show_history_context` | `True` | Conserva el subtítulo de replay/interpolación y progreso. Ocultarlo no cambia la animación. |
+| `show_loss` | `False` | Añade la evolución de log-loss. Active/desactive para probar composiciones con y sin panel temporal. |
+| `metrics` | `None`; lista o diccionario | Admite `loss`, `log_loss`/`logloss`, `accuracy`, `f1`/`f1_score`, o `{nombre: callable}`. Controla tarjetas/series; no reentrena. |
+| `strict_loss` | `False` | Convierte problemas al evaluar la pérdida en error (`True`) o permite una degradación visual (`False`). |
+| `smooth` | `'ema'` o `None` | Suaviza las curvas de historia o muestra cada valor sin filtrar. |
+| `smooth_beta` | `0.85`, en `[0,1)` | Intensidad/memoria del suavizado EMA; valores altos suavizan más y reaccionan más lento. |
+
+### `visualize_logistic`: decisión, multiclase, tiempo y matemática
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `threshold` | `0.5`, estrictamente en `(0,1)` | Umbral de decisión binaria. Desplaza el punto/frontera donde cambia la clase; no cambia la curva de probabilidad. El eje conserva sólo el valor numérico y la geometría recibe una etiqueta corta `τ=…`, evitando que “threshold” invada el título de probabilidad. |
+| `class_focus` | `None`, etiqueta o índice | En multiclase selecciona qué clase enfatizar en superficies y derivaciones. `None` deja que la vista elija; la etiqueta debe pertenecer a `classes_`. |
+| `multiclass_link` | `'auto'`, `'softmax'`, `'ovr'` | Define cómo interpretar logits multiclase: normalización conjunta o una-vs-rest. `'auto'` intenta inferir la semántica del estimador. |
+| `max_theta_cols` | `5`, entero `>=1` | Limita columnas de coeficientes mostradas en vistas N-D/multiclase. Es truncado visual: no elimina variables del cálculo. |
+| `show_class_labels` | `False` | Sustituye índices por etiquetas reales en leyendas, ejes, probabilidades y ecuaciones cuando están disponibles. |
+| `frame_duration` | `80`, milisegundos `>=0` | Tiempo de permanencia de cada estado de la animación. |
+| `transition_duration` | `None` o milisegundos `>=0` | Duración de interpolación visual entre estados. |
+| `max_frames` | `60`, entero o `None` | Tope de cuadros renderizados; conserva extremos al submuestrear. `None` permite gobernar con `frame_step`. |
+| `frame_step` | `10`, entero `>=1` | Salto entre estados cuando no se aplica un tope explícito. |
+| `dec` | `4`, entero `>=0` | Precisión textual de probabilidades, coeficientes y métricas. |
+| `show_objective` | `'auto'` o booleano | Controla la ecuación de log-loss/objetivo según espacio y densidad. |
+| `show_regularization` | `'auto'` o booleano | Muestra el término de penalización detectado; fuerce `True` para comparar valores de `C`. |
+| `feature_names` | `None` o secuencia de textos | Nombra los ejes de entrada respetando el orden de `X`; las ecuaciones conservan `x₁`, `x₂`, … y sus transformaciones. |
+| `sample_index` | `None` o índice válido | Escoge la observación usada en la derivación puntual. Use muestras cercanas y lejanas a la frontera para comparar. |
+| `detail` | `'essential'`, `'academic'`, `'complete'` | Incrementa el contenido matemático/diagnóstico visible sin cambiar probabilidades. |
+
+### `explain_logistic_prediction`: explicación local
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `trained_estimator`, `X_train`, `y_train` | obligatorios | Proporcionan modelo, clases y contexto de referencia. |
+| `x_query` | `None` o una observación | Punto cuya probabilidad y clase se descomponen; `None` escoge una observación de entrenamiento. |
+| `p_hat` | `None`, probabilidad o vector | Probabilidad suministrada para explicaciones desacopladas del estimador. Debe respetar el orden de clases. |
+| `y_hat` | `None` o etiqueta | Clase predicha suministrada; se usa o valida según `prediction_source`. |
+| `prediction_source` | `'model'`, `'provided'`, `'validate'` | Calcula con el modelo, confía en `p_hat`/`y_hat`, o compara ambos caminos y falla ante una discrepancia. |
+| `validation_rtol`, `validation_atol` | `1e-7`, `1e-9` | Tolerancias relativa/absoluta al validar probabilidades numéricas. |
+| `grid_points` | `250`, entero | Resolución del dominio 1D sobre el que se dibujan probabilidades y frontera. |
+| `show_class_labels` | `False` | Usa nombres reales de clases en vez de índices. |
+| `display_space` | `'original'` o `'scaled'` | Expresa la consulta y los coeficientes antes o después del preprocesamiento. |
+| `multiclass_link` | `'auto'`, `'softmax'`, `'ovr'` | Elige la transformación de puntuaciones a probabilidades para la derivación multiclase. |
+| `dec` | `4`, entero `>=0` | Cantidad de decimales en logits, probabilidades y sustituciones. |
+| Parámetros visuales | tabla compartida | `title`, `theme`, `format`, `density`, `size`, `width`, `height`, `responsive` y `reduced_motion` afectan sólo la presentación. |
+"""
+            ),
+            code(
+                """cancer = load_breast_cancer()
+iris = load_iris()
+wine = load_wine()
+print("Breast cancer:", cancer.data.shape, list(cancer.target_names))
+print("Iris:", iris.data.shape, list(iris.target_names))
+print("Wine:", wine.data.shape, list(wine.target_names))"""
+            ),
+            markdown(
+                """
+### Una sola clase: frontera matemática del modelo
+
+Regresión logística estima probabilidades **entre clases**. Con una única clase no existe frontera ni función de pérdida identificable; scikit-learn rechaza el ajuste y Mlektic no debe fabricar una figura. Esta celda documenta el límite y continúa el laboratorio.
+"""
+            ),
+            code(
+                """X_one_class = cancer.data[cancer.target == 0, [0]]
+y_one_class = np.repeat('malignant', len(X_one_class))
+try:
+    LogisticRegression().fit(X_one_class, y_one_class)
+except ValueError as error:
+    print("Caso esperado, sin figura válida:", error)"""
+            ),
+            *case(
+                "REAL-LOG-BINARY-1D",
+                "sigmoide binaria 1D con clases semánticas y umbral alto",
+                """X = cancer.data[:, [0]]
+y = cancer.target_names[cancer.target]
+log_1d = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1500)).fit(X, y)
+display(visualize_logistic(
+    log_1d, X, y, steps=16, max_frames=8, show_loss=True,
+    threshold=0.72, show_class_labels=True, metrics=['log_loss', 'accuracy', 'f1'],
+    detail='complete', feature_names=['radio medio'], theme='classroom',
+))""",
+            ),
+            *case(
+                "REAL-LOG-BINARY-2D",
+                "frontera binaria 2D con umbral etiquetado dentro de la geometría, sin invadir el eje de probabilidad",
+                """X = cancer.data[:, [0, 3]]
+y = cancer.target
+log_2d = make_pipeline(StandardScaler(), LogisticRegression(C=0.35, max_iter=1500)).fit(X, y)
+display(visualize_logistic(
+    log_2d, X, y, steps=14, max_frames=7, show_loss=True,
+    display_space='original', threshold=0.35, detail='complete',
+    feature_names=['radio medio', 'área media'], size='wide',
+))""",
+            ),
+            *case(
+                "REAL-LOG-BINARY-ND",
+                "treinta variables: identidad sigmoide única, sesgo en una fila independiente y métricas alineadas",
+                """log_nd = make_pipeline(StandardScaler(), LogisticRegression(C=0.15, max_iter=1500)).fit(cancer.data, cancer.target)
+display(visualize_logistic(
+    log_nd, cancer.data, cancer.target, steps=12, max_frames=6,
+    show_loss=True, metrics=['log_loss', 'accuracy', 'f1'], max_theta_cols=4,
+    detail='complete', show_regularization=True,
+    feature_names=list(cancer.feature_names), sample_index=120,
+    theme='academic', format='compact', size='wide',
+))""",
+            ),
+            *case(
+                "REAL-LOG-MULTI-1D",
+                "tres curvas de Iris con definición vectorial alineada y derivaciones verticalmente separadas",
+                """X = iris.data[:, [2]]
+y = iris.target_names[iris.target]
+iris_1d = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1500)).fit(X, y)
+display(visualize_logistic(
+    iris_1d, X, y, steps=14, max_frames=7, show_loss=True,
+    show_class_labels=True, multiclass_link='softmax',
+    feature_names=['longitud de pétalo'], theme='accessible',
+))""",
+            ),
+            *case(
+                "REAL-LOG-MULTI-2D",
+                "tres superficies de Iris con la misma notación de una variable",
+                """X = iris.data[:, [2, 3]]
+y = iris.target_names[iris.target]
+iris_2d = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1500)).fit(X, y)
+display(visualize_logistic(
+    iris_2d, X, y, steps=14, max_frames=7, show_loss=True,
+    show_class_labels=True, multiclass_link='softmax',
+    feature_names=['longitud de pétalo', 'ancho de pétalo'], theme='accessible',
+))""",
+            ),
+            *case(
+                "REAL-LOG-MULTI-ND",
+                "trece variables y tres clases de vino: matrices coherentes y clases intermedias explícitamente abreviadas",
+                """wine_labels = wine.target_names[wine.target]
+wine_model = make_pipeline(StandardScaler(), LogisticRegression(C=0.4, max_iter=1800)).fit(wine.data, wine_labels)
+display(visualize_logistic(
+    wine_model, wine.data, wine_labels, steps=14, max_frames=6,
+    show_loss=True, show_class_labels=True, max_theta_cols=3,
+    metrics=['log_loss', 'accuracy', 'f1'], detail='complete',
+    feature_names=wine.feature_names, sample_index=75,
+    theme='academic', size='wide',
+))""",
+            ),
+            *case(
+                "REAL-LOG-MULTI-ND-NOTEBOOK",
+                "mismas trece variables en tamaño notebook: fracciones compactas y puntos suspensivos alineados",
+                """display(visualize_logistic(
+    wine_model, wine.data, wine_labels, steps=14, max_frames=6,
+    show_loss=True, show_class_labels=True, max_theta_cols=3,
+    metrics=['log_loss', 'accuracy', 'f1'], detail='complete',
+    feature_names=wine.feature_names, sample_index=75,
+    theme='academic', size='notebook',
+))""",
+            ),
+            *case(
+                "REAL-LOG-PREDICTIONS",
+                "explicación local binaria 1D/2D y multiclase N-D",
+                """display(explain_logistic_prediction(
+    log_1d, cancer.data[:, [0]], cancer.target_names[cancer.target],
+    x_query=[[18.0]], show_class_labels=True, grid_points=180,
+    theme='classroom',
+))
+display(explain_logistic_prediction(
+    log_2d, cancer.data[:, [0, 3]], cancer.target,
+    x_query=cancer.data[[12]][:, [0, 3]], show_class_labels=True, size='wide',
+))
+display(explain_logistic_prediction(
+    wine_model, wine.data, wine_labels, x_query=wine.data[[10]],
+    show_class_labels=True, dec=5, size='wide', format='report',
+))""",
+            ),
+            markdown(
+                """
+# 3. Redes neuronales artificiales (PyTorch)
+
+Las figuras no dependen sólo del número de variables, sino de la **topología ejecutada** y de lo que se registró. `visualize_nn(..., view=...)` enruta a `architecture`, `blocks`, `hyperparameters`, `graph`, `training`, `weights`, `activations` o `backpropagation`.
+
+### Router `visualize_nn`: entradas y selección de vista
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `model` | módulo PyTorch obligatorio | Red que se inspecciona. Se usa su topología y, según la vista, sus parámetros/ejecución; no se entrena dentro de la función. |
+| `input_sample` | `None` o tensor/estructura de entrada | Permite ejecutar y capturar formas, activaciones y ramas reales. Es necesario en `graph`/`activations` y para arquitecturas dinámicas. |
+| `history` | `None` o historial del recorder | Proporciona pasos, pérdidas, pesos, gradientes y activaciones. Las vistas animadas sólo pueden mostrar campos que fueron registrados. |
+| `optimizer`, `loss_fn`, `scheduler` | `None` u objetos PyTorch | Enriquecen `view='hyperparameters'` con grupos, tasa de aprendizaje, penalizaciones, función de pérdida y planificador. |
+| `view` | `'architecture'` | Enruta a `'architecture'`, `'blocks'`, `'hyperparameters'`, `'graph'`, `'training'`, `'weights'`, `'activations'` o `'backpropagation'`. Cambiarlo puede exigir `input_sample` o `history`. |
+| `title` | `None` o texto | Sustituye el encabezado automático de la vista elegida. |
+| `capture_backend` | `'auto'`, `'fx'`, `'hooks'` | Motor para descubrir el grafo ejecutado. FX ofrece estructura simbólica; hooks observan una ejecución real y suelen cubrir modelos no trazables; `'auto'` intenta el mejor camino. |
+| `input_kwargs` | `None` o diccionario | Argumentos nombrados que se pasan al `forward` junto con `input_sample`; imprescindible en modelos con múltiples entradas o parámetros keyword-only. |
+| `max_nodes` | `48`, entero positivo | Tope de operaciones/bloques dibujados en grafos capturados. Trunca la representación, no la ejecución de la red. |
+| `show_formulas` | `True` | Incluye ecuaciones/resúmenes de cada operación cuando existen; desactivarlo libera espacio en grafos largos. |
+
+### Grafo denso y evolución: `visualize_nn_graph`
+
+Los siguientes argumentos también se aceptan en el router y se usan cuando `view='graph'`.
+
+| Parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `model`, `input_sample`, `history` | obligatorios en la función directa | Combinan topología, activación de una muestra y estados temporales. |
+| `max_neurons` | `8`, entero positivo | Número máximo de neuronas visibles por capa; las restantes se resumen. No poda ni modifica la red. |
+| `max_frames` | `20`, entero o `None` | Limita estados del historial y conserva una muestra temporal representativa; `None` usa todos. |
+| `frame_duration` | `180` ms (router: `120`) | Cadencia de reproducción de los estados registrados. |
+| `node_color_mode` | `'value'`, `'relative'` | Colorea nodos por magnitud/valor absoluto o normalizado respecto al conjunto visible. Compare ambos cuando las capas tienen escalas distintas. |
+| `edge_color_mode` | `'weight'`, `'signal'` | Codifica en aristas el peso del parámetro o la señal resultante peso×activación. `'signal'` depende también de la muestra. |
+| `evolution_mode` | `'absolute'`, `'updates'`, `'hybrid'` | Muestra valores absolutos, cambios entre estados o ambos. `'updates'` sirve para ver qué aprendió, aunque los pesos absolutos sean grandes. |
+| `update_reference` | `'previous'`, `'initial'` | Calcula el cambio contra el cuadro anterior o contra el primero; sólo afecta modos con actualizaciones. |
+| `update_scale` | `'global'`, `'frame'` | Mantiene una escala de color comparable en toda la animación o reescala cada cuadro para revelar cambios pequeños. |
+| `show_update_panel` | `None` o booleano | Fuerza/oculta el resumen de actualizaciones; `None` lo decide a partir de `evolution_mode` y espacio. |
+| `show_loss_panel` | `False` | Añade la pérdida alineada con el cuadro activo. Requiere que el historial contenga `loss`. |
+| `show_backpropagation` | `False` | Superpone información de gradiente/flujo hacia atrás cuando fue registrada. |
+| `top_k_updates` | `None` o entero positivo | Reduce el panel a los K cambios de mayor magnitud; no altera las aristas del modelo. |
+| `interpolation_frames` | `0`, entero `>=0` | Inserta cuadros visuales entre estados registrados para suavizar el movimiento; no inventa nuevas actualizaciones de entrenamiento. |
+| `capture_backend`, `input_kwargs`, `max_nodes`, `show_formulas` | valores del router | Controlan la captura del grafo ejecutado antes de construir la vista densa. |
+
+### Arquitectura, bloques e inspección
+
+| Función / parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `visualize_nn_architecture(model, input_sample)` | `input_sample=None` | Dibuja una síntesis por capas; con muestra puede inferir formas y arquitectura ejecutada. |
+| `history` | `None` | Añade contexto registrado si está disponible, sin ser obligatorio para una arquitectura estática. |
+| `max_layers` | `8`, entero positivo | Limita capas visibles y resume el resto. Pruebe una red profunda para comprobar la elipsis. |
+| `architecture_mode` | `'legacy'`, `'blocks'` | `'legacy'` usa la vista pedagógica por capas; `'blocks'` usa el grafo de operaciones capturado, mejor para ramas/CNN/RNN. |
+| `capture_backend`, `input_kwargs`, `max_nodes`, `show_formulas` | como en el router | Se aplican principalmente a `architecture_mode='blocks'`. |
+| `inspect_nn(model, inputs)` | devuelve `NeuralGraph` | Inspección sin figura para revisar nodos, aristas, formas y procedencia antes de visualizar. |
+| `backend` | `'auto'`, `'fx'`, `'hooks'` | Equivalente a `capture_backend`, pero con el nombre propio de `inspect_nn`/`visualize_nn_blocks`. |
+| `visualize_nn_blocks(model, inputs)` | entradas obligatorias | Dibuja directamente el grafo de bloques ejecutados; acepta `input_kwargs`, `backend`, `title`, `max_nodes` y `show_formulas`. |
+
+### Vistas dedicadas de entrenamiento
+
+| Función / parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `visualize_nn_training(history)` | historial obligatorio | Anima pérdida y métricas alineadas con los pasos. |
+| `max_metrics` | `3`, entero `<=3` | Tope de series de métricas para conservar legibilidad; el historial no se recorta. |
+| `max_frames`, `frame_duration` | `30`, `120` ms | Submuestreo temporal y velocidad de reproducción. |
+| `visualize_nn_hyperparameters(model)` | modelo obligatorio | Resume arquitectura y configuración de optimización; acepta `history`, `optimizer`, `loss_fn` y `scheduler`, cada uno opcional. |
+| `history` | `None` | Añade metadatos observados del entrenamiento y permite contrastarlos con los objetos actuales. |
+| `optimizer` | `None` | Muestra algoritmo, grupos, learning rate, momentum/betas y regularización disponibles. |
+| `loss_fn` | `None` | Identifica la función objetivo y sus opciones relevantes. |
+| `scheduler` | `None` | Expone la estrategia que cambia la tasa de aprendizaje. |
+| `visualize_nn_weights(history)` | historial con pesos | Muestra matrices/vectores de parámetros a través del tiempo. |
+| `parameter` | `None` o nombre exacto | Selecciona un tensor, por ejemplo `'0.weight'`; `None` deja que la vista elija/resuma varios. |
+| `max_rows`, `max_cols` | `4`, `5` | Recortan la matriz visible para evitar celdas ilegibles; no cambian el tensor registrado. |
+| `max_parameters` | `6` | Tope de tensores mostrados cuando no se selecciona uno. |
+| `max_frames`, `frame_duration` | `30`, `120` ms | Cantidad de estados visibles y velocidad. |
+| Activaciones (`view='activations'`) | `input_sample`, `history` | Reproduce resúmenes/vectores capturados por capa. Requiere `capture_activations=True`; usa `max_frames` y `frame_duration`. |
+| `visualize_nn_backpropagation(model, history)` | modelo e historial obligatorios | Visualiza magnitudes/flujo de gradiente por capa; requiere gradientes registrados. |
+| `input_sample` | `None` | Añade contexto de activación para la muestra; puede omitirse si el historial basta. |
+| `max_layers` | `8` | Limita capas visibles en redes profundas. |
+| `max_frames`, `frame_duration` | `20`, `900` ms | Submuestreo y pausa por fase; la duración alta facilita seguir el recorrido hacia atrás. |
+
+### Paisaje de pérdida y explicación de una predicción
+
+| Función / parámetro | Predeterminado / opciones | Qué hace y qué debería observar |
+|---|---|---|
+| `visualize_nn_loss_landscape(model, inputs, targets, loss_fn, history)` | cinco argumentos obligatorios | Evalúa un corte 2D reproducible alrededor de los parámetros y superpone la trayectoria. Es una proyección, no todo el espacio de parámetros. |
+| `grid_size` | `23`, entero entre `9` y `61` | Resolución por eje del paisaje; el coste crece aproximadamente con el cuadrado. |
+| `span` | `None` o número `>0` | Radio del corte alrededor del punto de referencia; `None` estima una escala a partir de la trayectoria. |
+| `max_frames`, `frame_duration` | `20`, `180` ms | Puntos temporales de la trayectoria que se animan y su cadencia. |
+| `seed` | `17`, entero | Fija las dos direcciones aleatorias del corte para poder comparar configuraciones. |
+| `explain_nn_prediction(model, x_query)` | modelo y consulta obligatorios | Desarrolla capas, operaciones y salida para una muestra concreta. |
+| `history` | `None` | Permite explicar estados registrados cuando `parameter_state='training_replay'`. |
+| `dec` | `4`, entero `>=0` | Precisión de activaciones, pesos y resultados mostrados. |
+| `max_layers_math` | `6`, entero positivo | Límite de capas desarrolladas algebraicamente; las restantes se resumen. |
+| `max_neurons_math` | `8`, entero positivo | Límite de neuronas/términos por capa en las ecuaciones. |
+| `max_frames`, `frame_duration` | `12`, `220` ms | Estados explicados y velocidad cuando se reproduce historia. |
+| `parameter_state` | `'final'`, `'training_replay'` | Usa los parámetros actuales o reconstruye los registrados. Es clave para no confundir la predicción final con una etapa temprana. |
+
+Todas las figuras de redes aceptan `theme`, `format`, `density`, `size`, `width`, `height`, `responsive` y `reduced_motion`. `math_font_scale` admite valores entre `0.75` y `2.0` y escala solamente ecuaciones/anotaciones matemáticas. Los límites `max_*` cambian sólo la representación visible: nunca cambian la red.
+"""
+            ),
+            markdown(
+                """
+## Registro reproducible de una red simple sobre Iris
+
+`TorchTrainingRecorder` no cambia el entrenamiento: toma instantáneas compactas para que las figuras dispongan de una historia real. Llame `record` después de `optimizer.step()` y antes de borrar gradientes si quiere conservar tanto el parámetro actualizado como el gradiente que lo produjo.
+
+| Parámetro del constructor | Predeterminado | Qué registra / para qué sirve |
+|---|---|---|
+| `model` | obligatorio | Red observada; los hooks se conectan a sus módulos hoja. |
+| `optimizer` | `None` | Grupos e hiperparámetros; necesario para enriquecer la vista de hiperparámetros/estado. |
+| `loss_fn` | `None` | Identidad y configuración de la función objetivo. |
+| `scheduler` | `None` | Estado/configuración del planificador de learning rate. |
+| `record_every` | `1`, entero `>=1` | Guarda uno de cada N llamados a `record`; reduce memoria y resolución temporal. |
+| `capture_weights` | `True` | Copia tensores de parámetros para `weights`, grafo evolutivo y replay. |
+| `capture_gradients` | `True` | Copia gradientes para backpropagación y actualizaciones. Debe registrarse antes de `zero_grad()`. |
+| `capture_activations` | `True` | Instala hooks y guarda estadísticas/vectores para la vista de activaciones; desactívelo para reducir coste. |
+| `capture_buffers` | `True` | Guarda buffers como medias/varianzas de BatchNorm, útiles en redes con estado no entrenable. |
+| `capture_optimizer_state` | `False` | Conserva resúmenes del estado interno del optimizador; aporta detalle, pero consume más memoria. |
+| `max_tensor_elements` | `4096`, entero `>=1` | No copia completo un tensor mayor que el límite; mantiene sus normas/resúmenes para que el registro sea acotado. |
+| `max_activation_elements` | `512`, entero `>=1` | Límite del vector de activación conservado por capa; siempre se guardan estadísticas compactas. |
+
+`record(step, ...)` acepta `loss`, `metrics`, `predictions`, `targets`, `task={'auto','classification','regression'}`, `capture_phase` y `observation_phase`. Con predicciones y objetivos puede inferir métricas; las fases documentan si una observación corresponde a antes o después de la actualización. Para pesos/backpropagación se requieren las capturas correspondientes; para activaciones, `capture_activations=True`.
+"""
+            ),
+            code(
+                """import torch
+
+torch.manual_seed(SEED)
+iris_X_np = StandardScaler().fit_transform(iris.data).astype('float32')
+iris_y_np = iris.target.astype('int64')
+iris_X_t = torch.tensor(iris_X_np)
+iris_y_t = torch.tensor(iris_y_np)
+
+iris_nn = torch.nn.Sequential(
+    torch.nn.Linear(4, 8), torch.nn.Tanh(), torch.nn.Linear(8, 3)
+)
+iris_opt = torch.optim.Adam(iris_nn.parameters(), lr=0.04, weight_decay=0.001)
+iris_loss = torch.nn.CrossEntropyLoss()
+iris_sched = torch.optim.lr_scheduler.StepLR(iris_opt, step_size=4, gamma=0.7)
+iris_rec = TorchTrainingRecorder(
+    iris_nn, optimizer=iris_opt, loss_fn=iris_loss, scheduler=iris_sched,
+    capture_weights=True, capture_gradients=True, capture_activations=True,
+    max_tensor_elements=4096, max_activation_elements=128,
+)
+for step in range(1, 9):
+    iris_opt.zero_grad()
+    logits = iris_nn(iris_X_t)
+    loss = iris_loss(logits, iris_y_t)
+    loss.backward()
+    iris_opt.step()
+    iris_sched.step()
+    iris_rec.record(step, loss=loss, predictions=logits, targets=iris_y_t, task='classification')
+iris_rec.close()
+iris_history = iris_rec.to_history()
+print("Frames registrados:", iris_history['steps'])"""
+            ),
+            *case(
+                "REAL-NN-SIMPLE-ALL-VIEWS-A",
+                "arquitectura, grafo de bloques e hiperparámetros de la red Iris",
+                """display(visualize_nn_architecture(
+    iris_nn, iris_X_t[:1], history=iris_history,
+    max_layers=8, architecture_mode='legacy', theme='classroom',
+))
+display(visualize_nn_architecture(
+    iris_nn, iris_X_t[:1], architecture_mode='blocks', capture_backend='auto',
+    max_nodes=16, show_formulas=True, theme='academic', size='wide',
+))
+graph_ir = inspect_nn(iris_nn, iris_X_t[:1], backend='auto')
+print("Grafo capturado:", len(graph_ir.nodes), "nodos y", len(graph_ir.edges), "aristas")
+display(visualize_nn_hyperparameters(
+    iris_nn, history=iris_history, optimizer=iris_opt,
+    loss_fn=iris_loss, scheduler=iris_sched,
+    theme='academic', size='wide',
+))""",
+            ),
+            *case(
+                "REAL-NN-SIMPLE-ALL-VIEWS-B",
+                "entrenamiento, pesos, activaciones y retropropagación registrados",
+                """display(visualize_nn_training(
+    iris_history, max_frames=None, max_metrics=3,
+    frame_duration=220, theme='academic',
+))
+display(visualize_nn_weights(
+    iris_history, parameter='0.weight', max_rows=4, max_cols=4,
+    max_parameters=4, max_frames=8, theme='academic', size='wide',
+))
+display(visualize_nn(
+    iris_nn, iris_X_t[:1], history=iris_history, view='activations',
+    max_frames=8, frame_duration=220, theme='accessible', size='wide',
+))
+display(visualize_nn_backpropagation(
+    iris_nn, iris_history, input_sample=iris_X_t[:1],
+    max_layers=6, max_frames=8, frame_duration=650,
+    theme='classroom', math_font_scale=1.15, size='wide',
+))""",
+            ),
+            *case(
+                "REAL-NN-GRAPH-MODES",
+                "modos absolutos y de actualización en el grafo denso animado",
+                """display(visualize_nn_graph(
+    iris_nn, iris_X_t[12], iris_history,
+    max_neurons=8, max_frames=8, frame_duration=260,
+    node_color_mode='value', edge_color_mode='weight', evolution_mode='absolute',
+    show_loss_panel=True, theme='academic', size='wide',
+))
+display(visualize_nn_graph(
+    iris_nn, iris_X_t[12], iris_history,
+    max_neurons=6, max_frames=6, frame_duration=300,
+    node_color_mode='relative', edge_color_mode='signal', evolution_mode='hybrid',
+    update_reference='initial', update_scale='frame', show_update_panel=True,
+    show_backpropagation=True, top_k_updates=6, interpolation_frames=2,
+    theme='accessible', size='wide',
+))""",
+            ),
+            *case(
+                "REAL-NN-PREDICTION-LANDSCAPE",
+                "sustitución de una predicción final, replay y corte 2D del paisaje de pérdida",
+                """display(explain_nn_prediction(
+    iris_nn, iris_X_t[12], history=iris_history,
+    parameter_state='final', dec=4, max_layers_math=5, max_neurons_math=6,
+    theme='academic', size='wide',
+))
+display(explain_nn_prediction(
+    iris_nn, iris_X_t[12], history=iris_history,
+    parameter_state='training_replay', max_frames=6, frame_duration=260,
+    theme='classroom', size='wide',
+))
+display(visualize_nn_loss_landscape(
+    iris_nn, iris_X_t, iris_y_t, iris_loss, iris_history,
+    grid_size=9, span=None, max_frames=5, frame_duration=280, seed=SEED,
+    theme='academic', size='wide',
+))""",
+            ),
+            markdown(
+                """
+## Red densa más compleja sobre Digits
+
+Digits contiene imágenes reales de dígitos manuscritos de 8×8. Primero las tratamos como 64 variables para forzar truncamientos representativos (`max_layers`, `max_nodes`, `max_neurons`, `max_parameters`) sin ocultar que la red real es mayor.
+"""
+            ),
+            code(
+                """digits = load_digits()
+digits_X_t = torch.tensor((digits.data / 16.0).astype('float32'))
+digits_y_t = torch.tensor(digits.target.astype('int64'))
+
+torch.manual_seed(SEED)
+digits_dense = torch.nn.Sequential(
+    torch.nn.Linear(64, 48), torch.nn.ReLU(),
+    torch.nn.Linear(48, 24), torch.nn.ReLU(),
+    torch.nn.Linear(24, 12), torch.nn.ReLU(),
+    torch.nn.Linear(12, 10),
+)
+digits_opt = torch.optim.Adam(digits_dense.parameters(), lr=0.015)
+digits_loss = torch.nn.CrossEntropyLoss()
+digits_rec = TorchTrainingRecorder(digits_dense, optimizer=digits_opt, loss_fn=digits_loss)
+train_X, train_y = digits_X_t[:512], digits_y_t[:512]
+for step in range(1, 7):
+    digits_opt.zero_grad(); logits = digits_dense(train_X); loss = digits_loss(logits, train_y)
+    loss.backward(); digits_opt.step()
+    digits_rec.record(step, loss=loss, predictions=logits, targets=train_y, task='classification')
+digits_rec.close(); digits_history = digits_rec.to_history()"""
+            ),
+            *case(
+                "REAL-NN-COMPLEX-DENSE",
+                "red profunda y ancha con límites visuales que resumen sin cambiar el modelo",
+                """display(visualize_nn_architecture(
+    digits_dense, digits_X_t[:1], history=digits_history,
+    max_layers=6, theme='classroom', size='wide',
+))
+display(visualize_nn_blocks(
+    digits_dense, digits_X_t[:1], max_nodes=7, show_formulas=False,
+    backend='auto', theme='academic', size='wide',
+))
+display(visualize_nn_training(
+    digits_history, max_frames=None, theme='academic', size='wide',
+))
+display(visualize_nn_weights(
+    digits_history, max_rows=3, max_cols=4, max_parameters=3,
+    max_frames=6, theme='academic', size='wide',
+))""",
+            ),
+            markdown(
+                """
+## CNN, red recurrente y otras topologías
+
+Para convoluciones, recurrencia, atención y ramas, una cuadrícula de neuronas densas sería engañosa. Mlektic captura el grafo ejecutado y muestra bloques, fórmulas y formas tensoriales. En estos casos `visualize_nn(..., view='graph')` puede enrutar deliberadamente a bloques y dejar constancia en `layout.meta`.
+"""
+            ),
+            code(
+                """class DigitsCNN(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.features = torch.nn.Sequential(
+            torch.nn.Conv2d(1, 4, kernel_size=3), torch.nn.ReLU(),
+            torch.nn.MaxPool2d(2),
+        )
+        self.classifier = torch.nn.Sequential(torch.nn.Flatten(), torch.nn.Linear(36, 10))
+    def forward(self, x):
+        return self.classifier(self.features(x))
+
+class DigitsLSTM(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.lstm = torch.nn.LSTM(8, 12, batch_first=True, bidirectional=True)
+        self.output = torch.nn.Linear(24, 10)
+    def forward(self, x):
+        sequence, _ = self.lstm(x)
+        return self.output(sequence[:, -1, :])
+
+class ResidualClassifier(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.hidden = torch.nn.Linear(8, 8)
+        self.output = torch.nn.Linear(8, 3)
+    def forward(self, x):
+        residual = x + torch.relu(self.hidden(x))
+        return self.output(residual)
+
+cnn = DigitsCNN()
+lstm = DigitsLSTM()
+residual = ResidualClassifier()
+digits_images = digits_X_t.reshape(-1, 1, 8, 8)
+digits_sequences = digits_X_t.reshape(-1, 8, 8)"""
+            ),
+            *case(
+                "REAL-NN-CNN-RNN",
+                "CNN y LSTM sobre Digits: operaciones y dimensiones tensoriales completas",
+                """display(visualize_nn_architecture(
+    cnn, digits_images[:1], architecture_mode='blocks',
+    capture_backend='auto', max_nodes=20, show_formulas=True,
+    theme='classroom', size='wide',
+))
+display(visualize_nn_blocks(
+    lstm, digits_sequences[:2], backend='auto', max_nodes=20,
+    show_formulas=True, theme='academic', size='wide',
+))""",
+            ),
+            *case(
+                "REAL-NN-BRANCH-ATTENTION",
+                "rama residual y atención multi-cabeza como casos no secuenciales",
+                """display(visualize_nn_blocks(
+    residual, torch.randn(2, 8), backend='auto',
+    theme='accessible', show_formulas=True, size='wide',
+))
+attention = torch.nn.MultiheadAttention(8, 2, dropout=0.1, batch_first=True)
+q = torch.randn(2, 6, 8)
+display(visualize_nn_blocks(
+    attention, (q, q.clone(), q.clone()), backend='auto',
+    theme='academic', max_nodes=24, show_formulas=True, size='wide',
+))""",
+            ),
+            markdown(
+                """
+## Guía de elección
+
+- **¿Cómo cambia el modelo durante el ajuste?** `training`, `weights`, `activations`, `backpropagation` y `graph`, siempre con historial registrado.
+- **¿Qué cálculo ejecutó esta entrada?** `blocks`/`inspect_nn`; es la opción fiel para CNN, LSTM, atención y ramas.
+- **¿Qué significa una predicción concreta?** `explain_*_prediction` o `explain_nn_prediction`.
+- **¿Necesito una lámina?** `format='report'`, `reduced_motion=True`, tamaño explícito o `size='wide'`.
+- **¿La figura se satura?** reduzca `max_frames`, `max_nodes`, `max_neurons`, `max_layers`, `max_parameters`, filas/columnas o use `class_focus`; estos controles resumen la vista, no el cálculo.
+
+Con esto quedan ejercitadas todas las familias de figura públicas y todos los cambios estructurales por dimensionalidad, número de clases, topología e historial. Las tablas anteriores son la referencia de parámetros; las firmas impresas al inicio permiten comprobar los valores predeterminados de la versión instalada.
+"""
+            ),
+        ]
+    )
+    notebook(
+        "Escenarios realistas y referencia completa de figuras",
+        "Laboratorio integral de regresión lineal, regresión logística y redes neuronales con datos reales, límites matemáticos y configuraciones visuales.",
+        cells,
+        "learn/learn_05_realistic_scenarios_with_neural.ipynb",
     )
 
 
@@ -1509,10 +2601,14 @@ def build_manifest() -> None:
         "codeasdoc/history_semantics.rst": ["MOTION-NATIVE-SLOW", "MOTION-HYBRID-FLUID"],
         "codeasdoc/mathematical_parity.rst": ["LR-PIPE-ORIGINAL", "LOG-BINARY-THRESHOLD"],
         "codeasdoc/mathematical_conventions.rst": ["LR-POLYNOMIAL", "LOG-MULTI-FOCUS"],
-        "codeasdoc/animation_performance.rst": ["MOTION-FRAME-STEP", "MOTION-LESSON"],
-        "codeasdoc/visual_design.rst": ["STYLE-THEME-ACADEMIC", "STYLE-FORMAT-LESSON"],
+        "codeasdoc/animation_performance.rst": ["MOTION-FRAME-STEP", "MOTION-NATIVE-SLOW"],
+        "codeasdoc/visual_design.rst": ["STYLE-THEME-ACADEMIC", "STYLE-FORMAT-DASHBOARD"],
         "codeasdoc/themes_formats_sizes.rst": ["STYLE-THEME-ACCESSIBLE", "STYLE-SIZE-CLASSROOM"],
-        "codeasdoc/prediction_explanations.rst": ["LR-PRED-EXTRAP", "LOG-PRED-BINARY"],
+        "codeasdoc/prediction_explanations.rst": [
+            "LR-PRED-EXTRAP",
+            "LR-PRED-10D-STAGES",
+            "LOG-PRED-BINARY",
+        ],
         "codeasdoc/export.rst": ["STYLE-RESPONSIVE", "NN-REPORT"],
         "codeasdoc/gallery.rst": [
             "SMOKE-LR-2D",
@@ -1563,6 +2659,7 @@ def main() -> None:
     """Generate every canonical notebook and its coverage manifest."""
     build_smoke()
     build_linear()
+    build_polynomial()
     build_logistic()
     build_neural()
     build_neural_structures()
@@ -1571,6 +2668,7 @@ def main() -> None:
     build_hyperparameters()
     build_data_edges()
     build_learning()
+    build_realistic_scenarios()
     build_manifest()
 
 

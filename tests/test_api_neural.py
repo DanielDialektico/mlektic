@@ -651,9 +651,9 @@ def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_
     assert summary.y >= 1.15
 
 
-def test_neural_lesson_format_never_adds_concept_stage_filters(trained_small_network):
+def test_neural_dashboard_exposes_only_training_controls(trained_small_network):
     _model, _X, history = trained_small_network
-    figure = visualize_nn_training(history, max_frames=3, format="lesson")
+    figure = visualize_nn_training(history, max_frames=3)
 
     labels = [button.label for menu in figure.layout.updatemenus for button in menu.buttons]
     assert labels == ["Play", "Pause"]
@@ -819,8 +819,8 @@ def test_activations_and_forward_math_evolve_over_time(trained_small_network):
         annotation for annotation in output_annotations if r"z^{(1)}_1&=" in str(annotation["text"])
     )
     assert ")(" in str(substitution_card["text"])
-    assert output_card.get("borderwidth") is None
-    assert substitution_card.get("borderwidth") is None
+    assert output_card.get("borderwidth") == 0
+    assert substitution_card.get("borderwidth") == 0
     assert r"\phantom{00000000}" not in str(substitution_card["text"])
     assert r"\\&\quad+" in str(substitution_card["text"])
     assert r"\\\hat{k}&=" in str(output_card["text"])

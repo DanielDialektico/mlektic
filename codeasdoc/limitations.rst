@@ -24,8 +24,9 @@ Rendering and performance
 
 Reduce ``max_frames`` before reducing mathematical fidelity. Three-dimensional
 Plotly scenes redraw per frame and can be more expensive than two-dimensional
-traces. ``frame_duration`` changes speed, not checkpoint count. If a lesson view
-shows only data after re-execution, select its Model or Complete stage.
+traces. ``frame_duration`` changes speed, not checkpoint count. Dashboard views
+start with the complete composition and use only controls owned by the
+underlying figure.
 
 Neural program coverage
 =======================

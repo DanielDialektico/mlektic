@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Removed the unused ``format="lesson"`` prototype before release. The public
+  formats are now ``dashboard``, ``compact``, and ``report``. Static linear and
+  logistic prediction explanations apply their complete Output stage before
+  controls are removed, avoiding empty high-dimensional panels.
+- Separated descriptive input-axis labels from algebraic feature symbols.
+  Polynomial equations now render canonical terms such as ``x_1``, ``x_1^2``,
+  and ``x_1*x_2`` regardless of the length of ``feature_names``.
+- Kept binary threshold ticks numeric and moved the short ``tau`` label inside
+  the 1D/2D geometry, preventing it from colliding with probability-axis titles.
+
 ### Added
 - Added `visualize_nn_hyperparameters()` and `view="hyperparameters"`, an
   instance-based PyTorch contract that lists every detected effective module,
@@ -72,15 +83,15 @@ All notable changes to this project will be documented in this file.
   convolutional configurations.
 - Added the opt-in Phase-3 visual system across linear, logistic, prediction,
   and neural public figures: immutable `VisualTokens`, `classic`, `academic`,
-  `classroom`, `compact`, and `accessible` themes; `dashboard`, `lesson`,
-  `compact`, and `report` formats; named sizes; explicit dimensions;
+  `classroom`, `compact`, and `accessible` themes; `dashboard`, `compact`, and
+  `report` formats; named sizes; explicit dimensions;
   responsive scaling; and reduced-motion final-state rendering.
 - Added schema-versioned `layout.meta["mlektic_visual"]` metadata containing
   every resolved visual choice, token, dimension, motion decision,
   accessibility declaration, and responsive export setting.
-- Added non-color redundancy in the accessible theme, staged pedagogical
-  controls in lesson format, responsive HTML inheritance, a Phase-3 Sphinx
-  guide, implementation record, and executable end-user showcase notebook.
+- Added non-color redundancy in the accessible theme, responsive HTML
+  inheritance, a Phase-3 Sphinx guide, implementation record, and executable
+  end-user showcase notebook.
 - Added Phase-1 mathematical detail levels to `visualize_lr()` and `visualize_logistic()`: `detail="essential"` keeps the compact main visualization, while `"academic"` and `"complete"` add a stable fitted-model derivation without reducing animation frames or hybrid motion.
 - Added estimator-backed `layout.meta["mlektic_math"]` contracts for linear, binary logistic, and multiclass logistic figures, including dimensions, feature space, parameters, one observation's contributions, reconstructed/model predictions, objective values, decisions, fitted class order, probability link, regularization settings, and canonical-versus-exact optimizer semantics.
 - Added `show_objective`, `show_regularization`, `feature_names`, and `sample_index` controls to linear and logistic training figures; added binary `threshold` and multiclass `class_focus` controls to logistic figures.
@@ -252,9 +263,8 @@ All notable changes to this project will be documented in this file.
   operations, shared calls, or branches. Execution formulas alternate above
   and below successive nodes, so CNN stages remain complete and their notation
   cannot collide.
-- Prevented the generic lesson Data/Model/Objective/Complete menu from being
-  added to neural performance figures; their four plots now remain visible and
-  only the training Play/Pause controls and checkpoint slider are exposed.
+- Kept all four neural performance plots visible with only the training
+  Play/Pause controls and checkpoint slider exposed.
 - Made mathematical-architecture node dimensions density-aware for collapsed
   deep networks and replaced free-floating arrow glyphs with boundary-aware
   connectors. Arrow shafts and heads now occupy only the corridor between
@@ -330,8 +340,8 @@ All notable changes to this project will be documented in this file.
   and ``notebooks/archive``. Earlier phase notebooks retain Git history; seven
   very large exploratory notebooks remain preserved locally and ignored rather
   than being deleted or committed with stale embedded output.
-- Preserved every retained animation frame in the new dashboard, compact, and
-  lesson formats. Only the explicit report and reduced-motion alternatives
+- Preserved every retained animation frame in the dashboard and compact
+  formats. Only the explicit report and reduced-motion alternatives
   freeze the exact final displayed state and remove temporal controls.
 - Made `density` a validated alias of the Phase-1 `detail` contract for tabular
   training figures while leaving `detail` authoritative when density is

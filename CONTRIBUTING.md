@@ -40,7 +40,7 @@ as end-user examples. Commit canonical notebooks with all outputs cleared.
 - Confirm equations, geometry, cards, legends, and prediction labels agree.
 - Confirm replay/interpolation/recorded provenance is visible and accurate.
 - Check the relevant themes, formats, sizes, density, and motion settings.
-- For a lesson composition, inspect Data, Model, Objective, and Complete stages.
+- Confirm dashboard figures start complete and expose only figure-owned controls.
 - Check long feature names, large values, and high-dimensional truncation.
 - Preserve the classic default unless a versioned compatibility change is approved.
 

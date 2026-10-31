@@ -413,10 +413,8 @@ from 14 to 13 px, but the reserved layer corridor is never removed.
 ### Post-inspection decision: training performance has one interaction model
 
 Neural performance plots always show loss and all three metric panels together.
-The generic lesson-stage Data/Model/Objective/Complete filter is not attached,
-including under `format="lesson"`; only Play/Pause and the semantic checkpoint
-slider remain. This prevents a presentation-only control from making an
-unchanged metric curve disappear.
+Only Play/Pause and the semantic checkpoint slider are attached. This prevents
+a presentation-only control from making an unchanged metric curve disappear.
 
 ### Post-inspection decision: instance-based hyperparameter contract
 

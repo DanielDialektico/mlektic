@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ..design import get_theme_tokens
 from ..theme import (
     create_annotation,
     data_marker_style,
@@ -62,33 +65,114 @@ def _format_math_number(value, dec):
     return f"{float(value):.{dec}f}".replace("-", "\u2212")
 
 
-def _numeric_equation_text(w_values, b_values, position, dec):
+def _latex_feature_label(name):
+    """Format canonical algebraic variables separately from descriptive labels."""
+    value = str(name).replace("\\", "").strip()
+    canonical_parts = [
+        re.fullmatch(r"([xu])_(\d+)(?:\^(\d+))?", part)
+        for part in value.split()
+    ]
+    if canonical_parts and all(canonical_parts):
+        terms = []
+        for match in canonical_parts:
+            symbol, index, power = match.groups()
+            term = rf"{symbol}_{{{index}}}"
+            if power is not None:
+                term += rf"^{{{power}}}"
+            terms.append(term)
+        return "".join(terms)
+    match = re.fullmatch(r"(.+?)\^(\d+)", value)
+    if match:
+        base, power = match.groups()
+        escaped = base.replace("_", r"\_").replace("%", r"\%").replace(" ", r"\,")
+        return rf"\mathrm{{{escaped}}}^{{{power}}}"
+    escaped = value.replace("_", r"\_").replace("%", r"\%").replace(" ", r"\,")
+    return rf"\mathrm{{{escaped}}}"
+
+
+def _html_feature_label(name):
+    value = str(name).strip()
+    canonical_parts = [
+        re.fullmatch(r"([xu])_(\d+)(?:\^(\d+))?", part)
+        for part in value.split()
+    ]
+    if canonical_parts and all(canonical_parts):
+        return "".join(
+            f"{match.group(1)}<sub>{match.group(2)}</sub>"
+            + (f"<sup>{match.group(3)}</sup>" if match.group(3) else "")
+            for match in canonical_parts
+        )
+    match = re.fullmatch(r"(.+?)\^(\d+)", value)
+    return f"{match.group(1)}<sup>{match.group(2)}</sup>" if match else value
+
+
+def _visible_term_indices(count, maximum=5):
+    if count <= maximum:
+        return list(range(count)), False
+    return list(range(maximum - 1)) + [count - 1], True
+
+
+def _symbolic_equation_latex(feature_names=None):
+    if not feature_names:
+        return r"$\hat{y}=\theta_0+\theta_1 x_1$"
+    indices, omitted = _visible_term_indices(len(feature_names))
+    terms = []
+    for position, index in enumerate(indices):
+        if omitted and position == len(indices) - 1:
+            terms.append(r"\cdots")
+        terms.append(rf"\theta_{{{index + 1}}}{_latex_feature_label(feature_names[index])}")
+    return r"$\hat{y}=\theta_0+" + "+".join(terms) + "$"
+
+
+def _numeric_equation_text(w_values, b_values, position, dec, feature_names=None):
     if w_values is None or b_values is None:
         return "\u0177 = f<sub>t</sub>(x<sub>1</sub>)"
-    weight = _format_math_number(_interpolate_at(w_values, position), dec)
     bias = _format_math_number(_interpolate_at(b_values, position), dec)
-    return f"\u0177 = ({weight})x<sub>1</sub> + ({bias})"
+    weights = np.atleast_1d(_interpolate_at(w_values, position))
+    if weights.size == 1:
+        weight = _format_math_number(weights[0], dec)
+        return f"\u0177 = ({weight})x<sub>1</sub> + ({bias})"
+    names = list(feature_names or [f"x_{index + 1}" for index in range(weights.size)])
+    indices, omitted = _visible_term_indices(weights.size)
+    terms = [f"({bias})"]
+    for term_position, index in enumerate(indices):
+        if omitted and term_position == len(indices) - 1:
+            terms.append("…")
+        terms.append(
+            f"({_format_math_number(weights[index], dec)}){_html_feature_label(names[index])}"
+        )
+    return "\u0177 = " + " + ".join(terms)
 
 
-def _numeric_equation_latex(w_values, b_values, position, dec):
+def _numeric_equation_latex(w_values, b_values, position, dec, feature_names=None):
     """Return the interpolated fitted equation as MathJax-ready LaTeX."""
     if w_values is None or b_values is None:
         return r"$\hat{y}=f_t(x_1)$"
-    weight = float(_interpolate_at(w_values, position))
     bias = float(_interpolate_at(b_values, position))
-    return rf"$\hat{{y}}=({weight:.{dec}f})x_1+({bias:.{dec}f})$"
+    weights = np.atleast_1d(_interpolate_at(w_values, position)).astype(float)
+    if weights.size == 1:
+        return rf"$\hat{{y}}=({weights[0]:.{dec}f})x_1+({bias:.{dec}f})$"
+    names = list(feature_names or [f"x_{index + 1}" for index in range(weights.size)])
+    indices, omitted = _visible_term_indices(weights.size)
+    terms = [rf"({bias:.{dec}f})"]
+    for term_position, index in enumerate(indices):
+        if omitted and term_position == len(indices) - 1:
+            terms.append(r"\cdots")
+        terms.append(rf"({weights[index]:.{dec}f}){_latex_feature_label(names[index])}")
+    return r"$\hat{y}=" + "+".join(terms) + "$"
 
 
 def _metric_card_texts(metrics_hist, position):
+    """Return compact, auto-sized metric equations for the side rail."""
     if not metrics_hist:
         return []
-    cards = []
+    equations = []
     for name, values in metrics_hist.items():
         value = float(_interpolate_at(values, position))
         label = str(name).upper().replace("R2", "R\u00b2")
         precision = 6 if str(name).lower() == "loss" else 4
-        cards.append(f"<b>{label}</b><br>{value:.{precision}f}")
-    return cards
+        equations.append(f"<b>{label}</b><br>= {value:.{precision}f}")
+    return equations
 
 
 def _hybrid_sliders(checkpoint_names, *, theme=None):
@@ -128,6 +212,7 @@ def _build_hybrid_figure(
     frame_duration,
     interpolation_frames,
     theta_formula_annotation,
+    equation_feature_names,
     x_range,
     y_range,
     y_text,
@@ -137,6 +222,7 @@ def _build_hybrid_figure(
     """Build a trace-only 1D animation with interpolated visual subframes."""
     steps_n = line_history.shape[0]
     positions, frame_names, checkpoint_names = _hybrid_timeline(steps_n, interpolation_frames)
+    tokens = get_theme_tokens(theme)
 
     def formula_annotation():
         annotation = theta_formula_annotation()
@@ -153,9 +239,13 @@ def _build_hybrid_figure(
             yaxis=("y4" if show_loss else "y2") if in_math_band else None,
             mode="text",
             text=[
-                _numeric_equation_latex(w_values, b_values, position, dec)
+                _numeric_equation_latex(
+                    w_values, b_values, position, dec, equation_feature_names
+                )
                 if in_math_band
-                else _numeric_equation_text(w_values, b_values, position, dec)
+                else _numeric_equation_text(
+                    w_values, b_values, position, dec, equation_feature_names
+                )
             ],
             textfont=dict(family=_MATH_TEXT_FONT, size=18, color="white"),
             cliponaxis=False,
@@ -208,15 +298,21 @@ def _build_hybrid_figure(
             return go.Scatter(
                 x=np.full(metric_count, 0.5),
                 y=metric_y,
-                mode="markers+text",
+                mode="text",
                 text=_metric_card_texts(metrics_hist, position),
                 textposition="middle center",
-                textfont=dict(family="Helvetica", size=12, color="black"),
+                textfont=dict(
+                    family=tokens.font_family,
+                    size=min(tokens.metric_size, 14),
+                    color=tokens.text,
+                ),
+                # Preserve the marker metadata used by older consumers, while
+                # rendering auto-sized text instead of fixed 68 px boxes.
                 marker=dict(
                     symbol="square",
-                    size=68,
-                    color="white",
-                    line=dict(color="#641E2E", width=1.5),
+                    size=1,
+                    color="rgba(0,0,0,0)",
+                    line=dict(width=0),
                 ),
                 cliponaxis=False,
                 hoverinfo="skip",
@@ -227,8 +323,8 @@ def _build_hybrid_figure(
         fig = make_subplots(
             rows=1,
             cols=3,
-            column_widths=[0.58, 0.30, 0.12],
-            horizontal_spacing=0.05,
+            column_widths=[0.56, 0.28, 0.16],
+            horizontal_spacing=0.045,
             specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
         )
         fig.add_trace(
@@ -361,6 +457,9 @@ def build_simple_lr_figure(
     animation_mode="native",
     interpolation_frames=3,
     equation_location="plot",
+    equation_w_hist=None,
+    equation_b_hist=None,
+    equation_feature_names=None,
     theme=None,
 ):
     """
@@ -395,10 +494,29 @@ def build_simple_lr_figure(
         def y_line(t: int):
             return y_line_hist[t]
 
-        # If theta history is also provided, show numeric equation; else show generic
+        # Feature-expanding pipelines keep a separate model-space parameter
+        # history so their polynomial terms can be shown explicitly.
         w_disp = None
         b_disp = None
-        if w_hist is not None and b_hist is not None:
+        resolved_equation_names = None
+        if equation_w_hist is not None and equation_b_hist is not None:
+            equation_w_arr = np.asarray(equation_w_hist, dtype=float)
+            equation_b_arr = np.asarray(equation_b_hist, dtype=float).ravel()
+            if equation_w_arr.ndim != 2 or equation_w_arr.shape[0] != steps_n:
+                raise ValueError("equation_w_hist must have shape (steps, transformed_features).")
+            if equation_b_arr.size != steps_n:
+                raise ValueError("equation_b_hist must have one value per step.")
+            if (
+                equation_feature_names is not None
+                and len(equation_feature_names) != equation_w_arr.shape[1]
+            ):
+                raise ValueError(
+                    "equation_feature_names must match transformed equation coefficients."
+                )
+            w_disp = equation_w_arr
+            b_disp = equation_b_arr
+            resolved_equation_names = list(equation_feature_names or ()) or None
+        elif w_hist is not None and b_hist is not None:
             w_arr = np.asarray(w_hist, dtype=float)
             b_arr = np.asarray(b_hist, dtype=float).ravel()
 
@@ -410,12 +528,12 @@ def build_simple_lr_figure(
                 b_disp = b_arr
 
         def theta_formula_text():
-            return r"$\hat{y}=\theta_0+\theta_1 x_1$"
+            return _symbolic_equation_latex(resolved_equation_names)
 
         def eq_text(t: int):
-            if w_disp is None:
-                return r"$\hat{y} = f(x_1)$"
-            return rf"$\hat{{y}} = ({w_disp[t]:.{dec}f})x_1 + ({b_disp[t]:.{dec}f})$"
+            return _numeric_equation_latex(
+                w_disp, b_disp, float(t), dec, resolved_equation_names
+            )
 
         x_min, x_max = float(x1_grid.min()), float(x1_grid.max())
 
@@ -454,6 +572,7 @@ def build_simple_lr_figure(
 
         w_disp = w_hist[:, 0]
         b_disp = b_hist
+        resolved_equation_names = None
 
     if steps_n < 1:
         raise ValueError("Need at least 1 step to animate.")
@@ -526,6 +645,7 @@ def build_simple_lr_figure(
             frame_duration=frame_duration,
             interpolation_frames=interpolation_frames,
             theta_formula_annotation=theta_formula_annotation,
+            equation_feature_names=resolved_equation_names,
             x_range=x_range,
             y_range=[y_range[0], y_max + 0.32 * y_span],
             y_text=y_max + 0.22 * y_span,

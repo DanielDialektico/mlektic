@@ -5,7 +5,7 @@ MULTICLASS_PROBABILITY_FONT_SIZE = 13
 MULTICLASS_ELLIPSIS_FONT_SIZE = 22
 
 
-def compact_probability_fraction_latex(class_number: int, classes: int, probability_link: str) -> str:
+def compact_probability_fraction_latex(class_index: int, classes: int, probability_link: str) -> str:
     """Return an exact compact multiclass probability fraction.
 
     The expanded score remains visible separately.  This form is used only in
@@ -13,8 +13,8 @@ def compact_probability_fraction_latex(class_number: int, classes: int, probabil
     would cross into an adjacent plot.
     """
     if probability_link == "ovr":
-        return rf"\frac{{q_{{{class_number}}}}}{{\sum_{{j=1}}^{{{classes}}}q_j}},\quad q_j=\sigma(z_j)"
-    return rf"\frac{{e^{{z_{{{class_number}}}}}}}{{\sum_{{j=1}}^{{{classes}}}e^{{z_j}}}}"
+        return rf"\frac{{q_{{{class_index}}}}}{{\sum_{{\ell=0}}^{{K-1}}q_\ell}},\quad q_\ell=\sigma(z_\ell)"
+    return rf"\frac{{e^{{z_{{{class_index}}}}}}}{{\sum_{{\ell=0}}^{{K-1}}e^{{z_\ell}}}}"
 
 
 __all__ = [

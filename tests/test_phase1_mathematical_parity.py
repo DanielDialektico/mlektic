@@ -1,10 +1,12 @@
 import numpy as np
+import plotly.graph_objects as go
 import pytest
 from sklearn.linear_model import LinearRegression, LogisticRegression, SGDClassifier, SGDRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from mlektic import visualize_logistic, visualize_lr
+from mlektic.mathematics import attach_math_contract
 from mlektic.services.linear_history import fit_history_logistic
 from mlektic.utils.math import _sigmoid
 from mlektic.utils.probability import multiclass_probabilities
@@ -35,6 +37,35 @@ def _multiclass_data(dimensions=2):
     y = np.array(["blue", "green", "red"])[np.argmax(scores, axis=1)]
     y[:3] = np.array(["blue", "green", "red"])
     return X, y
+
+
+@pytest.mark.parametrize("detail", ["academic", "complete"])
+@pytest.mark.parametrize(
+    "family", ["linear_regression", "binary_logistic_regression", "multiclass_logistic_regression"]
+)
+def test_fitted_model_heading_has_extra_gap_without_changing_later_row_spacing(detail, family):
+    figure = go.Figure(layout=dict(height=600, margin=dict(t=110, b=70)))
+    figure.frames = [go.Frame(name="0", layout=dict(annotations=[]))]
+    contract = {
+        "detail": detail,
+        "family": family,
+        "panel": [
+            "<b>Fitted-model derivation</b>",
+            {"text": r"$z=\underbrace{\mathbf{x}^\top\boldsymbol{\theta}}_{\text{contributions}}$", "visual_lines": 4},
+            "$z=1$",
+        ],
+    }
+    attach_math_contract(figure, contract)
+    heading, expansion, following = figure.layout.annotations
+    plot_height = 600 - 110 - 70
+    # Heading 32 px; expansion 52 + 3*24 px; normal gap 10 px;
+    # only the heading-to-equation gap receives another 12 px.
+    assert (heading.y - expansion.y) * plot_height == pytest.approx(100)
+    assert (expansion.y - following.y) * plot_height == pytest.approx(88)
+    if family == "multiclass_logistic_regression":
+        assert [item.y for item in figure.frames[0].layout.annotations] == [
+            item.y for item in figure.layout.annotations
+        ]
 
 
 def test_linear_academic_contract_reconstructs_prediction_and_metrics():
@@ -98,8 +129,75 @@ def test_non_affine_pipeline_uses_transformed_feature_mathematics_honestly():
     assert contract["feature_space"]["is_affine"] is False
     assert contract["feature_space"]["raw_space_coefficients_available"] is False
     assert contract["feature_names"] == ["x_1", "x_1^2"]
+    assert contract["symbolic_feature_names"] == ["x_1", "x_1^2"]
     assert contract["sample"]["matches_model"] is True
     assert "Raw-space coefficients are not claimed" in contract["feature_space"]["statement"]
+
+    symbolic = next(
+        annotation.text
+        for annotation in figure.layout.annotations
+        if annotation.text.startswith(r"$\hat{y}=\theta_0")
+    )
+    final_equation = next(
+        trace.text[0]
+        for trace in figure.frames[-1].data
+        if trace.uid == "NUMERIC_EQUATION"
+    )
+    fitted_coefficients = model.named_steps["linearregression"].coef_
+    assert r"\theta_{1}x_{1}" in symbolic
+    assert r"\theta_{2}x_{1}^{2}" in symbolic
+    assert r"x_{1}^{2}" in final_equation
+    assert "f_t" not in final_equation
+    assert f"({fitted_coefficients[1]:.4f})" in final_equation
+
+
+def test_polynomial_equations_use_canonical_x_symbols_not_long_axis_names():
+    X = np.linspace(-2.0, 2.0, 70).reshape(-1, 1)
+    y = 1.0 - 0.5 * X[:, 0] + 2.0 * X[:, 0] ** 2 - 0.3 * X[:, 0] ** 3
+    model = make_pipeline(PolynomialFeatures(3, include_bias=False), LinearRegression()).fit(X, y)
+    descriptive_name = "Body mass index standardized with a deliberately long label"
+
+    figure = visualize_lr(
+        model,
+        X,
+        y,
+        steps=5,
+        detail="complete",
+        feature_names=[descriptive_name],
+    )
+    contract = figure.layout.meta["mlektic_math"]
+    symbolic = next(
+        annotation.text
+        for annotation in figure.layout.annotations
+        if annotation.text.startswith(r"$\hat{y}=\theta_0")
+    )
+    final_equation = next(
+        trace.text[0]
+        for trace in figure.frames[-1].data
+        if trace.uid == "NUMERIC_EQUATION"
+    )
+    lower_math = " ".join(
+        str(annotation.text)
+        for annotation in figure.layout.annotations
+        if float(annotation.y or 0) < 0
+    )
+
+    assert figure.layout.xaxis.title.text == descriptive_name
+    assert contract["feature_space"]["input_feature_names"] == [descriptive_name]
+    assert contract["feature_names"] == [
+        descriptive_name,
+        f"{descriptive_name}^2",
+        f"{descriptive_name}^3",
+    ]
+    assert contract["symbolic_feature_names"] == ["x_1", "x_1^2", "x_1^3"]
+    assert r"\theta_{1}x_{1}" in symbolic
+    assert r"\theta_{2}x_{1}^{2}" in symbolic
+    assert r"\theta_{3}x_{1}^{3}" in symbolic
+    assert descriptive_name not in symbolic
+    assert descriptive_name not in final_equation
+    assert descriptive_name not in lower_math
+    assert r"x_{1}^{3}" in final_equation
+    assert r"_{x_{1}^{3}}" in lower_math
 
 
 def test_non_affine_logistic_pipeline_reconstructs_transformed_probability():
@@ -147,8 +245,42 @@ def test_binary_contract_uses_fitted_class_order_and_custom_threshold_without_la
     np.testing.assert_allclose(contract["sample"]["model_probabilities"], probabilities)
     np.testing.assert_allclose(contract["sample"]["reconstructed_probabilities"], probabilities)
     assert tuple(figure.layout.scene.zaxis.tickvals) == (0.0, threshold, 1.0)
+    assert tuple(figure.layout.scene.zaxis.ticktext) == ("0", "0.7", "1")
+    assert figure.layout.scene.zaxis.title.text == "P(class 1 | x)"
+    assert [annotation.text for annotation in figure.layout.scene.annotations] == [r"$\tau=0.7$"]
+    assert all(
+        [annotation.text for annotation in frame.layout.scene.annotations] == [r"$\tau=0.7$"]
+        for frame in figure.frames
+    )
     assert "admitted" not in figure.layout.annotations[-1].text
     assert "not_admitted" not in figure.layout.annotations[-1].text
+
+
+def test_binary_1d_threshold_label_is_inside_geometry_not_in_probability_ticks():
+    X, y = _binary_data(1)
+    model = LogisticRegression(max_iter=1000).fit(X, y)
+
+    figure = visualize_logistic(
+        model,
+        X,
+        y,
+        steps=4,
+        detail="academic",
+        threshold=0.65,
+    )
+
+    assert tuple(figure.layout.yaxis.ticktext) == ("0", "0.65", "1")
+    assert figure.layout.yaxis.title.text == "P(class 1 | x)"
+    threshold_annotations = [
+        annotation for annotation in figure.layout.annotations if annotation.text == r"$\tau=0.65$"
+    ]
+    assert len(threshold_annotations) == 1
+    assert threshold_annotations[0].xref == "x"
+    assert threshold_annotations[0].yref == "y"
+    assert all(
+        any(annotation.text == r"$\tau=0.65$" for annotation in frame.layout.annotations)
+        for frame in figure.frames
+    )
 
 
 @pytest.mark.parametrize(
@@ -184,7 +316,10 @@ def test_multiclass_contract_matches_estimator_link_and_selected_surface(estimat
     )
     surface_visibility = [trace.visible for trace in figure.data[1:4]]
     assert surface_visibility == [index == selected for index in range(3)]
-    assert f"class focus c_{selected} (1/3)" in figure.layout.title.text
+    assert f"class focus c_{selected} ({selected + 1}/3)" in figure.layout.title.text
+    rendered_math = " ".join(str(annotation.text) for annotation in figure.layout.annotations)
+    assert r"\quadp" not in rendered_math
+    assert rf"\text{{For }}c_{{{selected}}}" in rendered_math
 
 
 def test_logistic_parameter_interpolation_is_mathematically_synchronized():
@@ -268,7 +403,9 @@ def test_closed_form_nd_shows_default_empirical_path_curve_without_calling_it_op
     assert figure.data[0].uid == "LOSS_LINE"
     assert figure.data[0].name == "Interpolation MSE"
     assert figure.layout.xaxis2.title.text == "Interpolation progress"
-    assert figure.layout.yaxis2.title.text == "Empirical MSE along interpolation"
+    assert figure.layout.yaxis2.title.text == "MSE"
+    assert semantics["axis_label"] == "Empirical MSE along interpolation"
+    assert semantics["visible_axis_label"] == "MSE"
     assert figure.layout.yaxis2.domain == (0.12, 0.68)
     assert figure.layout.height == 640
     assert semantics["optimizer_loss"] is False
@@ -300,8 +437,9 @@ def test_nd_fitted_contributions_wrap_without_horizontal_truncation():
     )
 
     assert calculation.count(r"\\[4pt]") == 3
-    latex_names = [name.replace("_", r"\_") for name in names]
-    assert all(rf"\mathrm{{{name}}}" in calculation for name in latex_names)
+    assert all(rf"x_{{{index}}}" in calculation for index in range(1, 7))
+    assert all(name not in calculation for name in names)
+    assert figure.layout.meta["mlektic_math"]["feature_space"]["input_feature_names"] == names
     assert "display truncated" not in calculation
 
 
@@ -329,6 +467,36 @@ def test_high_dimensional_panel_wraps_a_bounded_selection_and_discloses_omission
     assert "every value remains available" not in calculation
 
 
+def test_high_dimensional_omission_notice_is_separated_from_fitted_value():
+    X, y = _linear_data(10)
+    model = LinearRegression().fit(X, y)
+
+    figure = visualize_lr(
+        model,
+        X,
+        y,
+        steps=3,
+        detail="complete",
+        feature_names=[f"feature_{index + 1}" for index in range(10)],
+    )
+    calculation = next(
+        annotation
+        for annotation in figure.layout.annotations
+        if annotation.y < 0 and r"\begin{aligned}" in annotation.text
+    )
+    notice = next(
+        annotation
+        for annotation in figure.layout.annotations
+        if "Showing 9 of 10 contributions" in annotation.text
+    )
+    plot_height = figure.layout.height - figure.layout.margin.t - figure.layout.margin.b
+
+    # Five visual equation rows reserve 148 px. With a 32 px notice, the
+    # extra disclosure gap keeps their boxes at least 28 px apart.
+    center_distance = abs(float(notice.y) - float(calculation.y)) * plot_height
+    assert center_distance >= 117.5
+
+
 def test_logistic_interpolation_can_show_empirical_path_without_optimizer_claims():
     X, y = _binary_data(2)
     model = LogisticRegression(max_iter=1000).fit(X, y)
@@ -338,7 +506,9 @@ def test_logistic_interpolation_can_show_empirical_path_without_optimizer_claims
     semantics = figure.layout.meta["mlektic_history"]["loss_display_semantics"]
 
     assert loss_trace.name == "Interpolation log-loss"
-    assert figure.layout.yaxis.title.text == "Empirical log-loss along interpolation"
+    assert figure.layout.yaxis.title.text == "log-loss"
+    assert semantics["axis_label"] == "Empirical log-loss along interpolation"
+    assert semantics["visible_axis_label"] == "log-loss"
     assert semantics["optimizer_loss"] is False
     assert semantics["smoothing"] is None
 
@@ -353,6 +523,10 @@ def test_logistic_default_regularization_reports_effective_l2_not_deprecation_se
     assert regularization["type"] == "l2"
     assert regularization["strength_parameter"]["name"] == "C"
     assert regularization["strength_parameter"]["meaning"] == "inverse strength"
+    line = next(str(item.text) for item in figure.layout.annotations if "Regularization:" in str(item.text))
+    assert line.startswith("$") and line.endswith("$") and line.count("$") == 2
+    assert r"R(\boldsymbol{\theta})=\lambda\lVert\boldsymbol{\theta}\rVert_2^2" in line
+    assert r"C=1.0" in line
 
 
 def test_all_detail_levels_share_the_hybrid_latex_math_band_and_smooth_motion():

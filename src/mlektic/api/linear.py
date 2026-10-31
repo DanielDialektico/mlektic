@@ -14,6 +14,7 @@ from ..visualization.linear.router import build_lr_figure
 from ..visualization.theme import (
     annotate_history_semantics,
     annotate_loss_semantics,
+    apply_feature_axis_names,
     attach_highlight,
     configure_animation,
 )
@@ -126,15 +127,16 @@ def visualize_lr(
             normalization is never inferred. ``"auto"`` enables this in the
             complete detail level.
         feature_names (Sequence[str] | None, optional): Names for the original
-            input features. DataFrame column names are used automatically.
+            input features. They label the visible model-input axes; equations
+            retain canonical symbols such as ``x_1`` and ``x_1^2``. DataFrame
+            columns are used automatically.
         sample_index (int | None, optional): Training observation used for the
             visible contribution calculation. ``None`` selects index 0.
         theme (str | None, optional): ``"classic"`` (default), ``"academic"``,
             ``"classroom"``, ``"compact"``, or ``"accessible"``.
         format (str, optional): Composition preset: ``"dashboard"`` keeps the
-            existing figure, ``"lesson"`` adds staged concept controls,
-            ``"compact"`` reduces unused space, and ``"report"`` produces a
-            static final-state composition.
+            existing figure, ``"compact"`` reduces unused space, and
+            ``"report"`` produces a static final-state composition.
         density (str | None, optional): Alias for mathematical ``detail``.
             When omitted, ``detail`` remains authoritative.
         size (str, optional): Named canvas preset: ``"default"``, ``"compact"``,
@@ -238,6 +240,11 @@ def visualize_lr(
         animation_mode=resolved_animation_mode,
         interpolation_frames=interpolation_frames,
         equation_location="math_band",
+        equation_feature_names=(
+            math_contract["symbolic_feature_names"]
+            if dimensions == 1 and math_contract["dimensions"]["features"] > 1
+            else None
+        ),
         theme=theme,
     )
 
@@ -246,6 +253,7 @@ def visualize_lr(
     annotate_loss_semantics(fig, hist)
     attach_math_contract(fig, math_contract, theme=theme)
     apply_visual_system(fig, visual_spec, family="linear")
+    apply_feature_axis_names(fig, math_contract["feature_space"]["input_feature_names"])
     return attach_highlight(fig, theme=theme)
 
 

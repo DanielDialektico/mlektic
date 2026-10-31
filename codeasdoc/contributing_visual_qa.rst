@@ -20,7 +20,7 @@ Workflow
 4. Register the new case under its page in the generated manifest mapping.
 5. Run ``python scripts/validate_notebook_policy.py``.
 6. Execute the relevant notebook and inspect text, spacing, first/final state,
-   playback, lesson stages, and responsive/static behavior.
+   playback, figure-owned controls, and responsive/static behavior.
 7. Commit notebooks with cleared outputs.
 
 Existing documentation-only wording changes may retain an existing mapping only

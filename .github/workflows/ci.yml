@@ -12,7 +12,8 @@ permissions:
 jobs:
   core-tests:
     name: Python ${{ matrix.python-version }} core
-    runs-on: ubuntu-latest
+    # Python 3.9 has setup-python builds for 24.04, but not for 26.04.
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

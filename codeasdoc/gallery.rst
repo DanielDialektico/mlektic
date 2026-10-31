@@ -2,8 +2,8 @@ Gallery
 -------
 
 The canonical interactive gallery is the notebook suite, because equations,
-sliders, lesson stages, and three-dimensional rotation cannot be evaluated from
-a screenshot alone.
+sliders, prediction stages, and three-dimensional rotation cannot be evaluated
+from a screenshot alone.
 
 * ``qa_00_smoke_matrix.ipynb`` — every tabular dimensional route;
 * ``qa_01_linear.ipynb`` — linear models, preprocessing, and predictions;

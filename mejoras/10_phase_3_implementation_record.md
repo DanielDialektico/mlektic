@@ -21,7 +21,7 @@ No theme, format, or size option changes history construction. In particular:
 - `frame_duration`, `transition_duration`, `fps`, and
   `interpolation_frames` still determine playback cadence;
 - smoothing still affects only its documented display series;
-- `dashboard`, `compact`, and `lesson` preserve all retained frames;
+- `dashboard` and `compact` preserve all retained frames;
 - only `format="report"` and `reduced_motion=True` intentionally freeze the
   exact last displayed state and remove playback controls.
 
@@ -67,14 +67,9 @@ contain local fallbacks.
 Format controls composition, not color or mathematical truth:
 
 - `dashboard`: the existing combined animated view;
-- `lesson`: adds Data, Model, Objective, and Complete stages while retaining
-  the original Play/Pause controls and every frame;
 - `compact`: reduces canvas height and margins without decimating motion;
 - `report`: applies the last frame exactly, removes temporal controls, and
   reclaims the slider area for a static academic artifact.
-
-The lesson stages change Plotly trace visibility. They do not recompute or
-discard any trace. A learner can reveal the full composition at any time.
 
 ### Density
 
@@ -176,7 +171,7 @@ Automated Phase 3 tests cover:
 - JSON serialization of the visual contract.
 
 Manual rendered-image inspection covered classic, academic, compact,
-classroom lesson, academic report, and accessible logistic figures. It found
+classroom dashboard, academic report, and accessible logistic figures. It found
 and corrected a report-only title/equation collision by preserving the original
 top mathematical band while removing the unused slider region. Notebook review
 also exposed a compact-plus-academic collision: shrinking the canvas and the
@@ -188,9 +183,9 @@ reduced.
 ## Known boundaries
 
 - Responsive mode scales the chosen composition; narrow structural reflow
-  requires selecting `compact`, `lesson`, or `report`.
+  requires selecting `compact` or `report`.
 - A 700-pixel two-panel dashboard is usable but intentionally dense. The
-  compact format is recommended, and report/lesson are preferable when long
+  compact format is recommended, and report is preferable when long
   equations or many classes are involved.
 - Accessibility redundancy is strongest for 2D scatter/line views. Plotly 3D
   surfaces still depend partly on hue and spatial geometry, accompanied by
@@ -204,5 +199,5 @@ reduced.
 `phase_3_visual_design.ipynb` is the executable user-facing showcase. It uses
 real fitted estimators and renders real figures without unit-test assertions.
 It demonstrates compatibility, independent visual axes, motion preservation,
-lesson staging, accessible encodings, report output, responsive sizing,
+accessible encodings, report output, responsive sizing,
 prediction explainers, and metadata inspection.

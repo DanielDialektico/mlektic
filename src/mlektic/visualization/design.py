@@ -150,16 +150,11 @@ _ACADEMIC = VisualTokens(
 _CLASSROOM = VisualTokens(
     **{
         **asdict(_ACADEMIC),
-        "title_size": 27,
-        "subtitle_size": 15,
-        "section_size": 19,
-        "body_size": 16,
-        "equation_size": 19,
-        "metric_size": 16,
-        "control_size": 16,
-        "space_lg": 28,
-        "line_width": 4.5,
-        "typography_scale": 1.18,
+        # Backward-compatible alias.  Earlier releases enlarged every text
+        # surface here, including axes and MathJax annotations.  That made the
+        # same composition overflow merely by changing theme.  Canvas size is
+        # the supported way to target a projector or a larger screen.
+        "typography_scale": _ACADEMIC.typography_scale,
     }
 )
 
@@ -209,14 +204,15 @@ _THEMES = {
     "compact": _COMPACT,
     "accessible": _ACCESSIBLE,
 }
-_FORMATS = {"dashboard", "lesson", "compact", "report"}
+_FORMATS = {"dashboard", "compact", "report"}
 _DENSITIES = {"essential", "academic", "complete"}
 _SIZE_PRESETS: dict[str, tuple[int | None, float]] = {
     "default": (None, 1.0),
     "compact": (820, 0.84),
     "notebook": (1000, 0.95),
     "wide": (1400, 1.08),
-    "classroom": (1400, 1.18),
+    # Retain the public name without maintaining a second, taller layout.
+    "classroom": (1400, 1.08),
 }
 
 
@@ -301,7 +297,7 @@ def resolve_visual_spec(
     if density is not None and detail != "essential" and detail != resolved_density:
         raise ValueError("detail and density must match when both are explicitly non-default.")
     if not isinstance(format, str) or format.lower() not in _FORMATS:
-        raise ValueError("format must be 'dashboard', 'lesson', 'compact', or 'report'.")
+        raise ValueError("format must be 'dashboard', 'compact', or 'report'.")
     if not isinstance(size, str) or size.lower() not in _SIZE_PRESETS:
         choices = ", ".join(_SIZE_PRESETS)
         raise ValueError(f"size must be one of: {choices}.")
@@ -335,8 +331,6 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
 
     if spec.format == "compact":
         _apply_compact_format(fig, spec.tokens)
-    elif spec.format == "lesson":
-        _apply_lesson_format(fig, spec.tokens)
     elif spec.format == "report":
         _freeze_to_final_state(fig)
         _apply_report_format(fig, spec.tokens)
@@ -345,6 +339,8 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
         _freeze_to_final_state(fig)
 
     _apply_size(fig, spec)
+    tabular_fit = _apply_tabular_narrow_layout(fig, spec, family=family)
+    annotation_fit = _remove_annotation_boxes(fig, spec.tokens)
     if spec.responsive:
         fig.layout.autosize = True
         if spec.width is None:
@@ -360,6 +356,8 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
             "autosize": bool(fig.layout.autosize),
             "motion_preserved": bool(fig.frames) and not spec.reduced_motion and spec.format != "report",
             "responsive_config": {"responsive": spec.responsive},
+            "narrow_layout_fit": tabular_fit,
+            "annotation_boxes": annotation_fit,
             "reflow_strategy": (
                 "select a dedicated format for structural reflow; responsive scales the resolved composition"
             ),
@@ -372,6 +370,155 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     metadata["mlektic_visual"] = visual
     fig.update_layout(meta=metadata, uirevision=f"mlektic-{spec.theme}-{spec.format}")
     return fig
+
+
+def _remove_annotation_boxes(fig: Any, tokens: VisualTokens) -> dict[str, Any]:
+    """Render every explanatory annotation as text without fixed boxes.
+
+    Fixed annotation backgrounds and borders do not grow reliably with
+    MathJax or long numeric values.  Apply the policy to the live layout,
+    animation frames, sliders, and staged update-menu payloads so switching a
+    frame or explanation stage cannot reintroduce an overflowing rectangle.
+    Controls and legends keep their own backgrounds because they are not
+    explanatory annotations.
+    """
+    processed: set[int] = set()
+    count = 0
+
+    def strip(annotation: Any) -> None:
+        nonlocal count
+        identity = id(annotation)
+        if identity in processed:
+            return
+        processed.add(identity)
+        if isinstance(annotation, dict):
+            previous_background = annotation.get("bgcolor")
+            previous_border = annotation.get("borderwidth")
+            annotation.pop("bgcolor", None)
+            annotation.pop("bordercolor", None)
+            annotation["borderwidth"] = 0
+            annotation["borderpad"] = 0
+            font = annotation.setdefault("font", {})
+            if previous_background or previous_border or font.get("color") in {
+                "black", "#000", "#000000", "white", "#fff", "#ffffff"
+            }:
+                font["color"] = tokens.text
+        else:
+            previous_background = getattr(annotation, "bgcolor", None)
+            previous_border = getattr(annotation, "borderwidth", None)
+            annotation.update(bgcolor=None, bordercolor=None, borderwidth=0, borderpad=0)
+            current_color = getattr(getattr(annotation, "font", None), "color", None)
+            if previous_background or previous_border or current_color in {
+                "black", "#000", "#000000", "white", "#fff", "#ffffff"
+            }:
+                annotation.font.color = tokens.text
+        count += 1
+
+    def walk_payload(value: Any) -> None:
+        if isinstance(value, dict):
+            annotations = value.get("annotations")
+            if isinstance(annotations, (list, tuple)):
+                for annotation in annotations:
+                    strip(annotation)
+            for child in value.values():
+                walk_payload(child)
+        elif isinstance(value, (list, tuple)):
+            for child in value:
+                walk_payload(child)
+
+    for annotation in fig.layout.annotations or ():
+        strip(annotation)
+    for frame in fig.frames or ():
+        if frame.layout is not None:
+            for annotation in frame.layout.annotations or ():
+                strip(annotation)
+    for menu in fig.layout.updatemenus or ():
+        for button in menu.buttons or ():
+            walk_payload(button.args)
+    for slider in fig.layout.sliders or ():
+        for step in slider.steps or ():
+            walk_payload(step.args)
+    return {"policy": "borderless", "annotations_processed": count}
+
+
+def _apply_tabular_narrow_layout(fig: Any, spec: VisualSpec, *, family: str) -> dict[str, Any]:
+    """Keep tabular titles and equations readable on compact/notebook canvases."""
+    if not family.startswith(("linear", "logistic")):
+        return {"applied": False}
+    resolved_width = int(fig.layout.width or 1100)
+    if resolved_width > 1000:
+        return {"applied": False}
+
+    title_cap = 20 if resolved_width <= 850 else 22
+    equation_cap = 14 if resolved_width <= 850 else 16
+    panel_cap = 12 if resolved_width <= 850 else 13
+    if fig.layout.title is not None:
+        current_title_size = int(fig.layout.title.font.size or spec.tokens.title_size)
+        fig.layout.title.update(
+            # Leave enough physical pixels above the first glyph. Plotly's
+            # title box can clip a two-line title when top-anchored at 0.99.
+            y=0.96,
+            yanchor="top",
+            font={"size": min(current_title_size, title_cap)},
+        )
+
+    metadata = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
+    math_contract = metadata.get("mlektic_math", {}) if isinstance(metadata, dict) else {}
+    borderless_math = math_contract.get("detail") in {"academic", "complete"}
+
+    def fit_annotations(annotations: Any) -> None:
+        for annotation in annotations or ():
+            y_value = float(annotation.y or 0)
+            current_size = int(annotation.font.size or spec.tokens.body_size)
+            if y_value > 1:
+                annotation.font.size = min(current_size, equation_cap)
+            elif y_value < 0 and borderless_math:
+                annotation.font.size = min(current_size, panel_cap)
+                annotation.bgcolor = "rgba(0,0,0,0)"
+                annotation.borderwidth = 0
+                annotation.borderpad = 0
+            if _is_metric_annotation(annotation.text):
+                annotation.font.size = min(current_size, panel_cap)
+                annotation.font.color = spec.tokens.text
+                annotation.bgcolor = "rgba(0,0,0,0)"
+                annotation.borderwidth = 0
+                annotation.borderpad = 0
+
+    fit_annotations(fig.layout.annotations)
+    for frame in fig.frames or ():
+        if frame.layout is not None:
+            fit_annotations(frame.layout.annotations)
+
+    def fit_equation_trace(trace: Any) -> None:
+        if getattr(trace, "uid", None) != "NUMERIC_EQUATION":
+            return
+        current_size = int(trace.textfont.size or spec.tokens.equation_size)
+        trace.textfont.size = min(current_size, equation_cap)
+
+    for trace in fig.data:
+        fit_equation_trace(trace)
+    for frame in fig.frames or ():
+        for trace in frame.data or ():
+            fit_equation_trace(trace)
+
+    return {
+        "applied": True,
+        "resolved_width": resolved_width,
+        "title_size_cap": title_cap,
+        "equation_size_cap": equation_cap,
+        "borderless_math_panel": borderless_math,
+    }
+
+
+def _is_metric_annotation(text: Any) -> bool:
+    """Return whether an annotation is one of the tabular metric readouts."""
+    normalized = str(text or "").upper()
+    if "<B>" not in normalized:
+        return False
+    return any(
+        label in normalized
+        for label in ("LOSS", "MSE", "MAE", "R²", "R2", "ACCURACY", "F1", "LOG-LOSS")
+    )
 
 
 def _optional_dimension(name: str, value: Any) -> None:
@@ -566,77 +713,9 @@ def _apply_report_format(fig: Any, tokens: VisualTokens) -> None:
         fig.layout.title.font.size = tokens.title_size
 
 
-def _apply_lesson_format(fig: Any, tokens: VisualTokens) -> None:
-    metadata = fig.layout.meta if isinstance(fig.layout.meta, dict) else {}
-    if "mlektic_neural_history" in metadata:
-        # A neural performance dashboard already exposes one synchronized
-        # temporal control. Concept-stage visibility buttons hide entire
-        # metric curves and make the recorded learning evidence incomplete;
-        # they are therefore deliberately unsupported for this figure family.
-        return
-    traces = list(fig.data)
-    if not traces:
-        return
-    groups = [_trace_group(trace) for trace in traces]
-
-    def mask(*allowed: str) -> list[bool]:
-        return [group in allowed for group in groups]
-
-    for trace, visible in zip(traces, mask("data")):
-        trace.visible = visible
-
-    margin = fig.layout.margin.to_plotly_json()
-    margin["r"] = max(150, int(margin.get("r", 30)))
-    fig.layout.margin.update(margin)
-
-    menus = list(fig.layout.updatemenus or ())
-    menus.append(
-        {
-            "type": "buttons",
-            "direction": "down",
-            "x": 1.04,
-            "y": 0.98,
-            "xanchor": "left",
-            "yanchor": "top",
-            "showactive": True,
-            "active": 0,
-            "bgcolor": tokens.control_background,
-            "bordercolor": tokens.grid,
-            "font": {"color": tokens.control_text, "size": tokens.control_size},
-            "buttons": [
-                {"label": "1 Data", "method": "update", "args": [{"visible": mask("data")}]},
-                {
-                    "label": "2 Model",
-                    "method": "update",
-                    "args": [{"visible": mask("data", "model")}],
-                },
-                {
-                    "label": "3 Objective",
-                    "method": "update",
-                    "args": [{"visible": mask("objective")}],
-                },
-                {"label": "4 Complete", "method": "update", "args": [{"visible": [True] * len(traces)}]},
-            ],
-        }
-    )
-    fig.update_layout(updatemenus=menus)
-
-
-def _trace_group(trace: Any) -> str:
-    name = str(getattr(trace, "name", "") or "").lower()
-    uid = str(getattr(trace, "uid", "") or "")
-    mode = str(getattr(trace, "mode", "") or "")
-    if uid in {"LOSS_LINE", "METRIC_VALUES"} or "loss" in name or "mse" in name:
-        return "objective"
-    if uid == "MODEL_LINE" or any(word in name for word in ("model", "probability", "boundary", "surface")):
-        return "model"
-    if name == "data" or "markers" in mode or name.startswith("class "):
-        return "data"
-    return "model"
-
-
 def _freeze_to_final_state(fig: Any) -> None:
     if not fig.frames:
+        _apply_static_output_stage(fig)
         fig.layout.updatemenus = ()
         fig.layout.sliders = ()
         return
@@ -660,13 +739,75 @@ def _freeze_to_final_state(fig: Any) -> None:
     fig.layout.sliders = ()
 
 
+def _apply_static_output_stage(fig: Any) -> bool:
+    """Select a prediction explainer's complete Output stage before freezing.
+
+    Prediction explainers use update menus rather than Plotly frames.  Merely
+    deleting those controls produced empty N-dimensional panels in report and
+    reduced-motion modes.  Apply the exact payload supplied by the public
+    Output button first, then let the caller remove the now-redundant menu.
+    """
+    for menu in fig.layout.updatemenus or ():
+        output_button = next(
+            (
+                button
+                for button in menu.buttons or ()
+                if str(getattr(button, "label", "")).strip().lower() == "output"
+            ),
+            None,
+        )
+        if output_button is None or not output_button.args:
+            continue
+
+        args = list(output_button.args)
+        method = str(output_button.method or "update").lower()
+        if method == "update":
+            trace_update = args[0] if args and isinstance(args[0], dict) else {}
+            layout_update = args[1] if len(args) > 1 and isinstance(args[1], dict) else {}
+            visible = trace_update.get("visible")
+            if isinstance(visible, (list, tuple)):
+                for trace, is_visible in zip(fig.data, visible):
+                    trace.visible = is_visible
+            if layout_update:
+                _replace_staged_layout_content(fig, layout_update)
+            return True
+        if method == "relayout" and args and isinstance(args[0], dict):
+            _replace_staged_layout_content(fig, args[0])
+            return True
+    return False
+
+
+def _replace_staged_layout_content(fig: Any, payload: dict[str, Any]) -> None:
+    """Apply stage-owned arrays by replacement rather than Plotly tuple merge."""
+    scalar_updates: dict[str, Any] = {}
+    for key, value in payload.items():
+        if key == "annotations":
+            fig.layout.annotations = value
+        elif key == "shapes":
+            fig.layout.shapes = value
+        elif key.endswith(".annotations"):
+            container_name = key.removesuffix(".annotations")
+            container = getattr(fig.layout, container_name, None)
+            if container is not None:
+                container.annotations = value
+        else:
+            scalar_updates[key] = value
+    if scalar_updates:
+        fig.update_layout(**scalar_updates)
+
+
 def _apply_size(fig: Any, spec: VisualSpec) -> None:
     preset_width, height_scale = _SIZE_PRESETS[spec.size]
     current_height = int(fig.layout.height or 600)
     if spec.size != "default":
         fig.layout.width = preset_width
         has_below_plot = any(float(annotation.y or 0) < 0 for annotation in fig.layout.annotations or ())
-        safe_height_scale = max(1.0, height_scale) if has_below_plot else height_scale
+        # Below-plot annotations use paper coordinates resolved against the
+        # plot domain.  Scaling total height without scaling the bottom margin
+        # moves their centers past the canvas edge.  Their builder has already
+        # computed an exact content-aware height, so size presets change width
+        # only for these compositions.
+        safe_height_scale = 1.0 if has_below_plot else height_scale
         fig.layout.height = max(320, round(current_height * safe_height_scale))
     if spec.width is not None:
         fig.layout.width = int(spec.width)

@@ -6,7 +6,10 @@ from pathlib import Path
 
 import nbformat
 
+from mlektic.visualization.design import _SIZE_PRESETS
+
 ROOT = Path(__file__).resolve().parents[1]
+QA_SIZE_PRESETS = set(_SIZE_PRESETS)
 
 
 def _load_validator():
@@ -36,6 +39,19 @@ def test_canonical_notebooks_are_small_generated_and_cleared():
                 if cell.cell_type == "code":
                     assert cell.execution_count is None
                     assert cell.outputs == []
+
+
+def test_every_qa_notebook_exercises_every_canvas_size():
+    """Each QA area catches size-specific clipping in its own representative figure."""
+    for path in (ROOT / "notebooks" / "qa").glob("*.ipynb"):
+        notebook = nbformat.read(path, as_version=4)
+        source = "\n".join(cell.source for cell in notebook.cells if cell.cell_type == "code")
+        covered = {
+            size
+            for size in QA_SIZE_PRESETS
+            if f"size='{size}'" in source or f'size="{size}"' in source
+        }
+        assert covered == QA_SIZE_PRESETS, (path.name, sorted(QA_SIZE_PRESETS - covered))
 
 
 def test_archive_manifest_preserves_original_exploratory_names():

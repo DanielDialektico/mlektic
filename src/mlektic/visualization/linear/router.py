@@ -33,6 +33,9 @@ def build_lr_figure(
     animation_mode="native",
     interpolation_frames=3,
     equation_location="plot",
+    equation_w_hist=None,
+    equation_b_hist=None,
+    equation_feature_names=None,
     theme=None,
 ):
     """
@@ -65,6 +68,12 @@ def build_lr_figure(
         equation_location (str, optional): Location of the evolving 1D hybrid
             equation: ``"plot"`` preserves the classic layout, while
             ``"math_band"`` reserves a LaTeX band above the plotting axes.
+        equation_w_hist (np.ndarray, optional): Coefficient history used by the
+            equation, including transformed-feature coefficients when applicable.
+        equation_b_hist (np.ndarray, optional): Intercept history paired with
+            ``equation_w_hist``.
+        equation_feature_names (Sequence[str] | None, optional): Canonical feature
+            symbols used in the evolving equation.
         theme (str | None, optional): Visualization theme name. Defaults to None.
 
     Returns:
@@ -98,6 +107,12 @@ def build_lr_figure(
         # Prefer display coefficients, which respect fit_history display_space.
         w_hist = _first_not_none(history.get("w_hist", None), w_hist)
         b_hist = _first_not_none(history.get("b_hist", None), b_hist)
+        equation_w_hist = _first_not_none(
+            history.get("equation_w_hist", None), equation_w_hist
+        )
+        equation_b_hist = _first_not_none(
+            history.get("equation_b_hist", None), equation_b_hist
+        )
 
         if d == 1:
             y_line_hist = _first_not_none(history.get("y_line_hist", None), y_line_hist)
@@ -131,6 +146,9 @@ def build_lr_figure(
             animation_mode=animation_mode,
             interpolation_frames=interpolation_frames,
             equation_location=equation_location,
+            equation_w_hist=equation_w_hist,
+            equation_b_hist=equation_b_hist,
+            equation_feature_names=equation_feature_names,
             theme=theme,
         )
 

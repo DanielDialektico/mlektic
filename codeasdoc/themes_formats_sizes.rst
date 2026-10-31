@@ -14,7 +14,7 @@ axes control presentation without changing estimator mathematics:
      - classic, academic, classroom, compact, accessible
      - Color, typography, line, marker, and contrast tokens
    * - ``format``
-     - dashboard, lesson, compact, report
+     - dashboard, compact, report
      - Composition and interaction structure
    * - ``density``
      - essential, academic, complete

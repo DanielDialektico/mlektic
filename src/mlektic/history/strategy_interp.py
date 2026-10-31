@@ -68,6 +68,21 @@ class InterpolationCapture(HistoryCaptureStrategy):
                 if d == 2:
                     z_plane_hist[t] = gt.reshape(X1g.shape)
 
+        # Preserve model-space coefficients for equations when preprocessing
+        # expands a raw feature into several terms (for example x, x^2, x^3).
+        # Geometry still comes from estimator predictions on the original grid.
+        equation_wF, equation_bF = adapter.extract_linear_theta()
+        equation_w_hist = equation_b_hist = None
+        if equation_wF is not None and equation_bF is not None:
+            equation_wF = np.asarray(equation_wF, dtype=float).ravel()
+            equation_w_hist = np.zeros((steps, equation_wF.size), dtype=float)
+            equation_b_hist = np.zeros(steps, dtype=float)
+            equation_b0 = 0.0 if config.baseline == "zeros" else float(np.mean(y))
+            for t in range(steps):
+                alpha = t / (steps - 1) if steps > 1 else 1.0
+                equation_w_hist[t] = alpha * equation_wF
+                equation_b_hist[t] = (1 - alpha) * equation_b0 + alpha * float(equation_bF)
+
         wF, bF = adapter.extract_linear_theta(d_expected=d)
         w_hist = b_hist = None
         if wF is not None and bF is not None:
@@ -102,6 +117,8 @@ class InterpolationCapture(HistoryCaptureStrategy):
             "z_plane_hist": z_plane_hist,
             "w_hist_learned": w_hist,
             "b_hist_learned": b_hist,
+            "equation_w_hist": equation_w_hist,
+            "equation_b_hist": equation_b_hist,
             "scaler_params": scaler_params,
             "coefficient_space": coefficient_space,
         }
