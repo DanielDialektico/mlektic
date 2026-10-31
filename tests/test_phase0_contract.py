@@ -1,4 +1,6 @@
+from html.parser import HTMLParser
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import numpy as np
 import plotly.graph_objects as go
@@ -9,6 +11,18 @@ from mlektic import explain_logistic_prediction, export_figure, visualize_logist
 from mlektic.api.linear import explain_lr_prediction
 from mlektic.domain.config import LinearHistoryConfig, LogisticHistoryConfig
 from mlektic.services.linear_history import fit_history, fit_history_logistic
+
+
+class _ScriptSources(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.sources = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "script":
+            source = dict(attrs).get("src")
+            if source:
+                self.sources.append(source)
 
 
 def _linear_data():
@@ -509,13 +523,37 @@ def test_nd_figures_do_not_keep_an_empty_loss_subplot_when_loss_is_hidden():
     assert not hasattr(logistic_figure.layout, "xaxis2")
 
 
-def test_export_figure_declares_plotly_and_mathjax_dependencies(tmp_path):
+@pytest.mark.parametrize("include_plotly", ["inline", "cdn"])
+@pytest.mark.parametrize("include_mathjax", ["cdn", False])
+def test_export_figure_declares_plotly_and_mathjax_dependencies(tmp_path, include_plotly, include_mathjax):
     figure = go.Figure(go.Scatter(x=[0, 1], y=[0, 1])).update_layout(title=r"$y=x$")
-    destination = export_figure(figure, tmp_path / "mathematical-figure")
+    destination = export_figure(
+        figure, tmp_path / "mathematical-figure",
+        include_plotly=include_plotly, include_mathjax=include_mathjax,
+    )
 
     assert destination == (tmp_path / "mathematical-figure.html").resolve()
     assert isinstance(destination, Path)
     html = destination.read_text(encoding="utf-8")
-    assert "MathJax.js" in html
-    assert "plotly.js" in html
+    scripts = _ScriptSources()
+    scripts.feed(html)
+    # Plotly 6 loads MathJax 2 (MathJax.js); Plotly 7 loads MathJax 3
+    # (tex-svg.min.js). Check actual script dependencies, not a bundle filename
+    # or a MathJax reference embedded inside the inline Plotly source.
+    mathjax_sources = [urlsplit(source) for source in scripts.sources if "mathjax" in source.lower()]
+    if include_mathjax == "cdn":
+        assert len(mathjax_sources) == 1
+        assert mathjax_sources[0].scheme == "https"
+        assert mathjax_sources[0].path.endswith(".js")
+    else:
+        assert not mathjax_sources
+    plotly_sources = [urlsplit(source) for source in scripts.sources if "plotly" in source.lower()]
+    if include_plotly == "cdn":
+        assert len(plotly_sources) == 1
+        assert plotly_sources[0].scheme == "https"
+        assert plotly_sources[0].path.endswith(".js")
+    else:
+        assert not plotly_sources
+        assert "plotly.js" in html
+    assert "Plotly.newPlot(" in html
     assert r"$y=x$" in html
