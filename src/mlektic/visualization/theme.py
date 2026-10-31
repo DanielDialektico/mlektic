@@ -6,6 +6,7 @@ palettes are opt-in and resolve through :mod:`mlektic.visualization.design`.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List
 
 from .design import available_themes, theme_palette
@@ -277,13 +278,16 @@ def loss_line_style(*, theme: str | None = None) -> Dict[str, Any]:
 
 
 def prediction_label_box(*, theme: str | None = None) -> Dict[str, Any]:
-    """Return a high-contrast box for prediction-value annotations."""
-    p = _resolve(theme)
+    """Return the borderless prediction-label contract.
+
+    The historical helper name is retained for internal compatibility.  Text
+    color is resolved by the visual-system pass; fixed rectangles are avoided
+    because they do not resize reliably around MathJax or long values.
+    """
+    _resolve(theme)
     return {
-        "bgcolor": p.get("panel_bg", p.get("bg", "#111111")),
-        "bordercolor": p.get("prediction_label_border", p.get("loss_line", "#00cc96")),
-        "borderwidth": 1,
-        "borderpad": 5,
+        "borderwidth": 0,
+        "borderpad": 0,
     }
 
 
@@ -413,6 +417,52 @@ def configure_animation(fig, frame_duration: int, transition_duration: int | Non
     return fig
 
 
+def apply_feature_axis_names(fig, feature_names):
+    """Label only model-input axes with their resolved feature names.
+
+    Figure builders use compact placeholders such as ``x₁`` and ``x₂`` so
+    they remain independent from pandas and from the public API.  This final
+    semantic pass replaces those placeholders after the mathematical contract
+    has resolved explicit ``feature_names`` or DataFrame column names.  Loss,
+    time, probability, prediction, and hidden mathematical-panel axes are left
+    untouched.
+    """
+    names = [str(name) for name in feature_names or ()]
+    if not names:
+        return fig
+
+    def feature_index(title_text):
+        if not isinstance(title_text, str):
+            return None
+        token = title_text.strip().lower()
+        token = token.replace("₁", "1").replace("₂", "2")
+        token = token.replace("₃", "3").replace("₄", "4")
+        token = token.translate(str.maketrans("", "", "${}_"))
+        token = "".join(token.split())
+        if token == "x":
+            return 0
+        match = re.fullmatch(r"x(\d+)", token)
+        return int(match.group(1)) - 1 if match else None
+
+    def rename_axis(axis):
+        title = getattr(getattr(axis, "title", None), "text", None)
+        index = feature_index(title)
+        if index is not None and 0 <= index < len(names):
+            axis.update(title_text=names[index])
+
+    layout_json = fig.layout.to_plotly_json()
+    for layout_name, layout_value in layout_json.items():
+        if not isinstance(layout_value, dict):
+            continue
+        if layout_name.startswith(("xaxis", "yaxis")):
+            rename_axis(getattr(fig.layout, layout_name))
+        elif layout_name.startswith("scene"):
+            scene = getattr(fig.layout, layout_name)
+            rename_axis(scene.xaxis)
+            rename_axis(scene.yaxis)
+    return fig
+
+
 def annotate_history_semantics(fig, history: dict, *, show_title: bool = True):
     """Expose capture provenance and retained temporal coordinates in a figure.
 
@@ -480,13 +530,26 @@ def annotate_history_semantics(fig, history: dict, *, show_title: bool = True):
         if title_text != "Step":
             continue
         axis = getattr(fig.layout, axis_name)
+        tick_positions = _sparse_timeline_positions(len(labels), maximum=9)
         axis.update(
             title_text=axis_title,
             tickmode="array",
-            tickvals=list(range(len(labels))),
-            ticktext=labels,
+            tickvals=tick_positions,
+            ticktext=[labels[position] for position in tick_positions],
         )
     return fig
+
+
+def _sparse_timeline_positions(count: int, *, maximum: int) -> list[int]:
+    """Select readable timeline ticks while retaining the first and last states."""
+    if count <= maximum:
+        return list(range(count))
+    return sorted(
+        {
+            int(round(index * (count - 1) / (maximum - 1)))
+            for index in range(maximum)
+        }
+    )
 
 
 def annotate_loss_semantics(fig, history: dict):
@@ -517,7 +580,13 @@ def annotate_loss_semantics(fig, history: dict):
             if source == "interpolated"
             else f"Replay empirical {quantity_label}"
         )
-        card_label = f"INTERP. {quantity_label}" if source == "interpolated" else metric_label
+        # Logistic interpolation is already identified in the title and
+        # timeline. Keep its metric card short beside long model equations.
+        card_label = (
+            quantity_label if task == "logistic" and source == "interpolated"
+            else f"INTERP. {quantity_label}" if source == "interpolated"
+            else metric_label
+        )
 
     semantics = {
         "quantity": quantity,
@@ -530,6 +599,7 @@ def annotate_loss_semantics(fig, history: dict):
         "smoothing": smoothing_method,
         "metric_label": metric_label,
         "axis_label": axis_label,
+        "visible_axis_label": quantity_label,
     }
     metadata["loss_display_semantics"] = semantics
     layout_meta = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
@@ -567,7 +637,9 @@ def annotate_loss_semantics(fig, history: dict):
         title_value = axis_value.get("title", {})
         title_text = title_value.get("text") if isinstance(title_value, dict) else title_value
         if title_text in {"Loss", "Log-loss"}:
-            getattr(fig.layout, axis_name).update(title_text=axis_label)
+            # Full provenance remains in the legend and layout metadata. The
+            # short visible label stays legible in every multi-panel width.
+            getattr(fig.layout, axis_name).update(title_text=quantity_label)
     return fig
 
 

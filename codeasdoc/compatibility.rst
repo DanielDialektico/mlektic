@@ -31,8 +31,10 @@ notebook and documentation tools are extras.
 
 Affine preprocessing can be expressed in original or scaled units. Non-affine
 transformers remain in transformed-feature space when names and coefficients can
-be inspected safely. Unsupported estimators fail explicitly rather than
-fabricating mathematics. Inspect ``LR-PIPE-SCALED`` and ``NN-RELU-ADAM``.
+be inspected safely. Descriptive input names label axes, while equations use
+canonical :math:`x_j` symbols and transformed powers/interactions. Unsupported
+estimators fail explicitly rather than fabricating mathematics. Inspect
+``LR-PIPE-SCALED`` and ``NN-RELU-ADAM``.
 
 The opt-in neural block view retains inputs, dtype, shapes, branches, merge
 operations, and repeated calls. Exact coverage depends on the supplied example

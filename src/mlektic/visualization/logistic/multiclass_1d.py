@@ -16,16 +16,18 @@ from ..theme import (
 from ._math_layout import (
     MULTICLASS_ELLIPSIS_FONT_SIZE,
     MULTICLASS_PROBABILITY_FONT_SIZE,
-    MULTICLASS_PROBABILITY_ROW_GAP,
 )
 
 
 def _row1_formula_latex(K):
-    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \mathbf{{x}}\in\mathbb{{R}},\quad \Theta\in\mathbb{{R}}^{{1\times {K}}},\quad \boldsymbol{{\theta}}_0\in\mathbb{{R}}^{{{K}}}$$"
+    return rf"$$\mathbf{{z}}=\Theta^\top\mathbf{{x}}+\boldsymbol{{\theta}}_0,\quad \mathbf{{x}}=(x_1)\in\mathbb{{R}}^1,\quad \Theta\in\mathbb{{R}}^{{1\times {K}}},\quad \boldsymbol{{\theta}}_0\in\mathbb{{R}}^{{{K}}},\quad K={K}$$"
 
 def _row3_formula_latex(K, probability_link):
     definition = multiclass_link_latex(probability_link, K)
-    return rf"$$z_k(x)=\theta_{{1,k}}x+\theta_{{0,k}},\quad {definition},\quad k=1,\ldots,{K}$$"
+    if probability_link == "ovr":
+        link, probability = definition.split(r",\qquad ", 1)
+        definition = rf"{probability},\quad {link}"
+    return rf"$${definition},\quad z_k(\mathbf{{x}})=\theta_{{0,k}}+\theta_{{1,k}}x_1,\quad k=0,\ldots,{K - 1}$$"
 
 def _theta_matrix_latex_math_style(w_hist, b_hist, t, max_elems, dec):
     theta = np.asarray(w_hist[t, 0], dtype=float)
@@ -47,7 +49,7 @@ def _theta_matrix_latex_math_style(w_hist, b_hist, t, max_elems, dec):
         bias_items = [fmt(bias[j]) for j in indices[:head]] + [r"\cdots"] + [fmt(bias[j]) for j in indices[head:]]
     theta_row = " & ".join(theta_items)
     bias_row = " & ".join(bias_items)
-    return rf"$$\begin{{aligned}}\Theta_t&=\begin{{bmatrix}}{theta_row}\end{{bmatrix}}\in\mathbb{{R}}^{{1\times {K_local}}}\\\boldsymbol{{\theta}}_{{0,t}}&=\begin{{bmatrix}}{bias_row}\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
+    return rf"$$\begin{{aligned}}\Theta&=\begin{{bmatrix}}{theta_row}\end{{bmatrix}}\in\mathbb{{R}}^{{1\times {K_local}}}\\[5pt]\boldsymbol{{\theta}}_0&=\begin{{bmatrix}}{bias_row}\end{{bmatrix}}\in\mathbb{{R}}^{{{K_local}}}\end{{aligned}}$$"
 
 def _z_numeric_expr_univar(Theta, class_idx, dec):
     def num(v):
@@ -55,7 +57,7 @@ def _z_numeric_expr_univar(Theta, class_idx, dec):
 
     theta_1k = num(Theta[0, class_idx])
     theta_0k = num(Theta[1, class_idx])
-    return rf"\left({theta_1k}\right)x + \left({theta_0k}\right)"
+    return rf"\left({theta_0k}\right)+\left({theta_1k}\right)x_1"
 
 def _linked_term(expression, probability_link):
     return rf"\sigma\!\left({expression}\right)" if probability_link == "ovr" else rf"e^{{{expression}}}"
@@ -70,48 +72,34 @@ def _denom_three_terms_tex(Theta, K_local, dec, probability_link):
         z2 = _z_numeric_expr_univar(Theta, 1, dec=dec)
         return rf"{_linked_term(z1, probability_link)} + {_linked_term(z2, probability_link)}"
 
+    if K_local == 3:
+        z2 = _z_numeric_expr_univar(Theta, 1, dec=dec)
+        z3 = _z_numeric_expr_univar(Theta, 2, dec=dec)
+        return rf"{_linked_term(z1, probability_link)} + {_linked_term(z2, probability_link)} + {_linked_term(z3, probability_link)}"
+
     zK = _z_numeric_expr_univar(Theta, K_local - 1, dec=dec)
     return rf"{_linked_term(z1, probability_link)} + \cdots + {_linked_term(zK, probability_link)}"
 
-def _final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability_link):
+def _score_examples_latex(w_hist, b_hist, t, dec):
     Theta = np.vstack([w_hist[t, 0], b_hist[t]])
     K_local = Theta.shape[1]
+    first = rf"z_0(\mathbf{{x}})={_z_numeric_expr_univar(Theta, 0, dec)}"
+    if K_local == 1:
+        return rf"$${first}$$"
+    last = rf"z_{{{K_local - 1}}}(\mathbf{{x}})={_z_numeric_expr_univar(Theta, K_local - 1, dec)}"
+    separator = r"\quad\cdots\quad " if K_local > 2 else r"\qquad "
+    return rf"$${first}{separator}{last}$$"
 
-    k = int(example_class)
-    k = max(0, min(k, K_local - 1))
-
-    z_k = _z_numeric_expr_univar(Theta, k, dec=dec)
-    num_tex = _linked_term(z_k, probability_link)
-    denom_tex = _denom_three_terms_tex(Theta, K_local, dec, probability_link)
-
-    return (
-        r"$$"
-        r"\begin{aligned}"
-        + rf"z_{{{k + 1}}}(x)&={z_k}"
-        + MULTICLASS_PROBABILITY_ROW_GAP
-        + rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid x)&=\frac{{{num_tex}}}{{{denom_tex}}}"
-        r"\end{aligned}"
-        r"$$"
-    )
+def _probability_latex(w_hist, b_hist, t, class_index, dec, probability_link):
+    Theta = np.vstack([w_hist[t, 0], b_hist[t]])
+    K_local = Theta.shape[1]
+    k = max(0, min(int(class_index), K_local - 1))
+    numerator = _linked_term(_z_numeric_expr_univar(Theta, k, dec), probability_link)
+    denominator = _denom_three_terms_tex(Theta, K_local, dec, probability_link)
+    return rf"$$\hat{{p}}(Y=c_{{{k}}}\mid\mathbf{{x}})=\frac{{{numerator}}}{{{denominator}}}$$"
 
 def _vertical_dots_latex():
     return r"$$\vdots$$"
-
-def _last_class_tail_latex(w_hist, b_hist, t, dec, probability_link):
-    Theta = np.vstack([w_hist[t, 0], b_hist[t]])
-    K_local = Theta.shape[1]
-    last_idx = K_local - 1
-
-    z_last = _z_numeric_expr_univar(Theta, last_idx, dec=dec)
-    num_tex = _linked_term(z_last, probability_link)
-    denom_tex = _denom_three_terms_tex(Theta, K_local, dec, probability_link)
-
-    return (
-        r"$$"
-        r"\begin{aligned}" + rf"\hat{{p}}(Y=c_{{{K_local}}}\mid x)&=\frac{{{num_tex}}}{{{denom_tex}}}"
-        r"\end{aligned}"
-        r"$$"
-    )
 
 def build_multiclass_1d_logistic_figure(
     x1,
@@ -193,14 +181,14 @@ def build_multiclass_1d_logistic_figure(
         column_widths = [0.68, 0.32]
         specs = [[{"type": "xy"}, {"type": "xy"}], [{"type": "xy"}, {"type": "xy"}]]
         X_TEXT = 0.27
-        X_VDOTS = X_TEXT
+        X_VDOTS = 0.328
     else:
         cols = 2
         rows = 1
         column_widths = [0.68, 0.32]
         specs = [[{"type": "xy"}, {"type": "xy"}]]
         X_TEXT = 0.27
-        X_VDOTS = X_TEXT
+        X_VDOTS = 0.328
 
     ep = np.arange(steps_n)
     ep_list = ep.tolist()
@@ -215,7 +203,7 @@ def build_multiclass_1d_logistic_figure(
     )
     if show_loss:
         kwargs_subplots["row_heights"] = [0.55, 0.45]
-        kwargs_subplots["vertical_spacing"] = 0.12
+        kwargs_subplots["vertical_spacing"] = 0.18
 
     fig = make_subplots(**kwargs_subplots)
 
@@ -265,12 +253,15 @@ def build_multiclass_1d_logistic_figure(
 
     def make_annotations(t):
         base_ann = [
-            dict(x=0.39, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            # Keep the vector definition aligned with the mathematical panel
+            # instead of centering it toward the probability charts.
+            dict(x=0.33, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=_theta_matrix_latex_math_style(w_hist, b_hist, t, max_theta_cols, dec), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=X_TEXT, y=0.48, xref="paper", yref="paper", text=_final_prob_example_latex(w_hist, b_hist, t, example_class, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
-            dict(x=X_VDOTS, y=0.19, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
-            dict(x=X_TEXT, y=-0.04, xref="paper", yref="paper", text=_last_class_tail_latex(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="bottom", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=X_TEXT, y=0.44, xref="paper", yref="paper", text=_score_examples_latex(w_hist, b_hist, t, dec), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=X_TEXT, y=0.35, xref="paper", yref="paper", text=_probability_latex(w_hist, b_hist, t, 0, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=X_VDOTS, y=0.22, xref="paper", yref="paper", text=_vertical_dots_latex(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
+            dict(x=X_TEXT, y=0.14, xref="paper", yref="paper", text=_probability_latex(w_hist, b_hist, t, K - 1, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
         ]
 
         base_ann.append(
@@ -340,7 +331,7 @@ def build_multiclass_1d_logistic_figure(
         fig.update_xaxes(visible=False, row=2, col=1, range=[0, 1])
         fig.update_yaxes(visible=False, row=2, col=1, range=[0, 1])
 
-    fig.update_xaxes(title=r"$x$$", row=1, col=2)
+    fig.update_xaxes(title=r"$x$$", title_standoff=4, row=1, col=2)
 
     if show_loss:
         fig.update_yaxes(range=[-0.02, 1.02], row=1, col=2)

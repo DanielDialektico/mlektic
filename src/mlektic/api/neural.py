@@ -281,7 +281,7 @@ def visualize_nn(
         show_formulas: Show alternating above/below formulas when the captured
             execution graph is small.
         theme: Additive visual theme; ``None`` preserves the classic default.
-        format: ``"dashboard"``, ``"lesson"``, ``"compact"``, or ``"report"``.
+        format: ``"dashboard"``, ``"compact"``, or ``"report"``.
         density: Mathematical information density recorded in visual metadata.
         size: Named canvas size preset.
         width: Optional explicit canvas width in pixels.

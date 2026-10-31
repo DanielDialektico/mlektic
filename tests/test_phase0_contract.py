@@ -191,11 +191,63 @@ def test_binary_2d_prediction_maps_string_classes_and_shows_model_geometry():
     labeled_figure = explain_logistic_prediction(
         model, X, y, x_query=[[0.4, 0.1]], show_class_labels=True
     )
-    assert labeled_figure.data[1].name == "Model: P(rejected | x)"
-    labeled_output = labeled_figure.layout.updatemenus[0].buttons[2].args[1]["annotations"][-1]["text"]
-    assert r"=0\;(\mathrm{accepted})" in labeled_output
-    assert "accepted" in labeled_figure.layout.scene.zaxis.ticktext[0]
-    assert "rejected" in labeled_figure.layout.scene.zaxis.ticktext[-1]
+    assert labeled_figure.data[1].name == "Model: p1"
+    labeled_output = labeled_figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
+    assert r"\hat{y} &= \arg\max" in labeled_output[-1]["text"]
+    assert "accepted" in next(item["text"] for item in labeled_output if "Predicted class:" in item["text"])
+    assert tuple(labeled_figure.layout.scene.zaxis.ticktext) == ("0", "0.5", "1")
+
+
+@pytest.mark.parametrize("dimensions", [1, 2])
+def test_binary_prediction_keeps_long_class_labels_below_inputs_and_results(dimensions):
+    rng = np.random.default_rng(202 + dimensions)
+    X = rng.normal(size=(80, dimensions))
+    labels = (
+        "accepted_application_with_additional_review",
+        "rejected_application_after_initial_screening",
+    )
+    y = np.where(X[:, 0] > 0, labels[0], labels[1])
+    model = LogisticRegression(max_iter=1000).fit(X, y)
+    figure = explain_logistic_prediction(model, X, y, x_query=X[0], show_class_labels=True)
+
+    output = figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
+    class_rows = [item for item in output if str(item["text"]).startswith(("c₀ =", "c₁ ="))]
+    assert len(class_rows) == 2
+    assert class_rows[0]["y"] > class_rows[1]["y"]
+    assert all("<br>" in item["text"] for item in class_rows)
+    assert any("Predicted class:" in item["text"] for item in output)
+    assert all(label not in str(trace.name) for trace in figure.data for label in labels)
+    if dimensions == 1:
+        assert figure.layout.yaxis2.title.text == "p₁"
+        assert tuple(figure.layout.yaxis2.ticktext) == ("0", "0.5", "1")
+    else:
+        assert figure.layout.scene.zaxis.title.text == "p₁"
+        assert tuple(figure.layout.scene.zaxis.ticktext) == ("0", "0.5", "1")
+
+
+@pytest.mark.parametrize("dimensions", [1, 5])
+def test_multiclass_prediction_wraps_long_semantic_labels(dimensions):
+    rng = np.random.default_rng(302 + dimensions)
+    X = rng.normal(size=(120, dimensions))
+    labels = np.array([
+        "class_zero_with_a_very_long_description",
+        "class_one_with_a_very_long_description",
+        "class_two_with_a_very_long_description",
+    ])
+    y = labels[np.digitize(X[:, 0], [-0.5, 0.5])]
+    model = LogisticRegression(max_iter=1000).fit(X, y)
+    figure = explain_logistic_prediction(model, X, y, x_query=X[0], show_class_labels=True)
+    output = figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
+
+    result = next(item["text"] for item in output if r"\hat{y} = \arg\max" in str(item["text"]))
+    assert all(label not in result for label in labels)
+    predicted = next(item["text"] for item in output if "Predicted class:" in str(item["text"]))
+    assert str(model.predict(X[:1])[0]) == predicted.replace("<br>", "").replace("Predicted class:", "").strip()
+    if dimensions == 1:
+        assert figure.layout.yaxis2.title.text == "pₖ"
+        assert all("<br>" in trace.name for trace in figure.data if str(trace.name).startswith("Class "))
+    else:
+        assert sum(" = " in str(item["text"]) and str(item["text"]).startswith("c") for item in output) == 3
 
 
 def test_class_label_visibility_is_consistent_in_training_figures():
@@ -237,9 +289,11 @@ def test_multiclass_figures_hide_semantic_labels_by_default_and_can_reveal_them(
         model, X, y, x_query=[[1.5]], show_class_labels=True
     )
     indexed_result = indexed_prediction.layout.updatemenus[0].buttons[2].args[1]["annotations"][5]["text"]
-    labeled_result = labeled_prediction.layout.updatemenus[0].buttons[2].args[1]["annotations"][5]["text"]
+    labeled_annotations = labeled_prediction.layout.updatemenus[0].buttons[2].args[1]["annotations"]
     assert all(label not in indexed_result for label in model.classes_)
-    assert str(model.predict([[1.5]])[0]) in labeled_result
+    assert str(model.predict([[1.5]])[0]) in next(
+        item["text"] for item in labeled_annotations if "Predicted class:" in item["text"]
+    )
 
 
 def test_logistic_history_uses_fitted_positive_class_for_string_label_f1():
@@ -276,7 +330,7 @@ def test_binary_logistic_2d_equations_have_vertical_separation():
     assert figure.layout.margin.t == 180
 
 
-def test_multiclass_2d_probability_examples_form_a_compact_vertical_block():
+def test_multiclass_2d_probability_examples_match_1d_mathematical_order():
     rng = np.random.default_rng(13)
     X = rng.normal(size=(70, 2))
     scores = np.column_stack([X[:, 0], X[:, 1], -X[:, 0] - X[:, 1]])
@@ -285,20 +339,29 @@ def test_multiclass_2d_probability_examples_form_a_compact_vertical_block():
 
     figure = visualize_logistic(model, X, y, steps=5)
 
-    theta_matrix, bias_vector, score_equation = figure.layout.annotations[1:4]
-    first_probability = figure.layout.annotations[4]
-    vertical_dots = figure.layout.annotations[5]
-    last_probability = figure.layout.annotations[6]
-    assert theta_matrix.y > bias_vector.y > score_equation.y
-    assert bias_vector.y == pytest.approx((theta_matrix.y + score_equation.y) / 2, abs=0.01)
-    assert first_probability.y == pytest.approx(0.35)
-    assert first_probability.x == vertical_dots.x == last_probability.x
-    assert first_probability.y > vertical_dots.y > last_probability.y
-    assert r"\\[10pt]" in first_probability.text
+    parameters, score_equation = figure.layout.annotations[1:3]
+    score_examples, first_probability, vertical_dots, last_probability = figure.layout.annotations[3:7]
+    assert r"\Theta&=" in parameters.text
+    assert r"\boldsymbol{\theta}_0&=" in parameters.text
+    assert parameters.y > score_equation.y
+    ordered_rows = (
+        score_equation,
+        score_examples,
+        first_probability,
+        vertical_dots,
+        last_probability,
+    )
+    assert [item.y for item in ordered_rows] == pytest.approx([0.62, 0.44, 0.35, 0.22, 0.14])
+    aligned_rows = (score_equation, score_examples, first_probability, last_probability)
+    assert len({item.x for item in aligned_rows}) == 1
+    assert {item.xanchor for item in aligned_rows} == {"center"}
+    assert r"z_0(\mathbf{x})=" in score_examples.text
+    assert r"\;\cdots\; z_{2}(\mathbf{x})=" in score_examples.text
+    assert not any(r"\hat p_{0}=" in str(item.text) for item in figure.layout.annotations)
 
 
-@pytest.mark.parametrize(("feature_count", "stack_start"), [(1, 3), (2, 4), (4, 4)])
-def test_multiclass_probability_stack_style_and_position_are_stable_across_frames(feature_count, stack_start):
+@pytest.mark.parametrize("feature_count", [1, 2, 4])
+def test_multiclass_probability_stack_style_and_position_are_stable_across_frames(feature_count):
     rng = np.random.default_rng(23 + feature_count)
     X = rng.normal(size=(72, feature_count))
     if feature_count == 1:
@@ -310,19 +373,38 @@ def test_multiclass_probability_stack_style_and_position_are_stable_across_frame
 
     figure = visualize_logistic(model, X, y, steps=5)
 
+    stack_start = 3 if feature_count in (1, 2) else 4
+    stack_length = 4 if feature_count in (1, 2) else 2
+
     def stack_signature(annotations):
         return tuple(
             (annotation.x, annotation.y, annotation.xanchor, annotation.yanchor, annotation.font.size)
-            for annotation in annotations[stack_start : stack_start + 3]
+            for annotation in annotations[stack_start : stack_start + stack_length]
         )
 
-    probability_stack = figure.layout.annotations[stack_start : stack_start + 3]
-    first_probability, vertical_dots, last_probability = probability_stack
-    assert r"\\[10pt]" in first_probability.text
-    assert first_probability.font.size == last_probability.font.size == 13
-    assert vertical_dots.font.size == 22
+    probability_stack = figure.layout.annotations[stack_start : stack_start + stack_length]
+    if feature_count == 1:
+        score_examples, first_probability, vertical_dots, last_probability = probability_stack
+        assert r"\quad\cdots\quad " in score_examples.text
+        assert first_probability.font.size == last_probability.font.size == 13
+        assert vertical_dots.font.size == 22
+    elif feature_count == 2:
+        score_examples, first_probability, omitted, last_probability = probability_stack
+        assert score_examples.font.size == 13
+        assert first_probability.font.size == last_probability.font.size == 13
+        assert omitted.font.size == 22
+    else:
+        score_1, probability_stack_row = probability_stack
+        assert score_1.font.size == 14
+        assert probability_stack_row.font.size == 16
+        assert r"\begin{array}{r@{\,}c@{\,}l}" in probability_stack_row.text
+        assert r"&&\smash{\overset{\hphantom{" in probability_stack_row.text
+        assert r"}{\vdots}" in probability_stack_row.text
 
     expected_signature = stack_signature(figure.layout.annotations)
+    for annotations in [figure.layout.annotations, *(frame.layout.annotations for frame in figure.frames)]:
+        if feature_count in (1, 2):
+            assert r"\\[5pt]\boldsymbol{\theta}_0&=" in annotations[1].text
     for frame in figure.frames:
         assert stack_signature(frame.layout.annotations) == expected_signature
 
@@ -333,22 +415,26 @@ def test_multiclass_1d_and_nd_ellipses_are_centered_for_their_layouts():
     X_1d = rng.normal(size=(72, 1))
     y_1d = np.where(X_1d[:, 0] < -0.4, "left", np.where(X_1d[:, 0] > 0.4, "right", "center"))
     figure_1d = visualize_logistic(LogisticRegression(max_iter=1000).fit(X_1d, y_1d), X_1d, y_1d, steps=5)
-    first_1d, dots_1d, last_1d = figure_1d.layout.annotations[3:6]
-    assert first_1d.x == dots_1d.x == last_1d.x
-    assert dots_1d.y == pytest.approx(0.19)
+    score_1d, first_1d, dots_1d, last_1d = figure_1d.layout.annotations[3:7]
+    assert score_1d.x == first_1d.x == last_1d.x == pytest.approx(0.27)
+    assert dots_1d.x == pytest.approx(0.328)
+    assert dots_1d.y == pytest.approx(0.22)
 
     X_nd = rng.normal(size=(72, 4))
     scores = np.column_stack([X_nd[:, 0], X_nd[:, 1], -X_nd[:, 0] - X_nd[:, 1]])
     y_nd = np.array(["red", "green", "blue"])[np.argmax(scores, axis=1)]
     figure_nd = visualize_logistic(LogisticRegression(max_iter=1000).fit(X_nd, y_nd), X_nd, y_nd, steps=5)
     input_vector = figure_nd.layout.annotations[1]
-    dots_nd = figure_nd.layout.annotations[5]
-    assert r" \\ " not in input_vector.text
-    assert dots_nd.x == pytest.approx(0.31)
-    assert dots_nd.y == pytest.approx(0.08)
+    probability_stack_nd = figure_nd.layout.annotations[5]
+    assert input_vector.text.count(r" \\ ") == 3
+    assert " & " not in input_vector.text
+    assert probability_stack_nd.x == pytest.approx(0.025)
+    assert probability_stack_nd.y == pytest.approx(0.22)
+    assert r"&&\smash{\overset{\hphantom{" in probability_stack_nd.text
+    assert r"}{\vdots}" in probability_stack_nd.text
 
 
-def test_multiclass_replay_uses_exact_compact_probability_fractions_when_loss_is_visible():
+def test_three_class_2d_ovr_replay_uses_exact_compact_probability_fractions():
     rng = np.random.default_rng(41)
     X = rng.normal(size=(90, 2))
     scores = np.column_stack([X[:, 0], X[:, 1], -X[:, 0] - X[:, 1]])
@@ -359,11 +445,17 @@ def test_multiclass_replay_uses_exact_compact_probability_fractions_when_loss_is
 
     first_probability = figure.layout.annotations[4].text
     last_probability = figure.layout.annotations[6].text
-    assert r"\sum_{j=1}^{3}q_j" in first_probability
-    assert r"q_j=\sigma(z_j)" in first_probability
-    assert r"\sum_{j=1}^{3}q_j" in last_probability
-    assert len(first_probability) < 500
-    assert len(last_probability) < 250
+    assert r"\frac{q_{0}}{\sum_{\ell=0}^{K-1}q_\ell}" in first_probability
+    assert r"\frac{q_{2}}{\sum_{\ell=0}^{K-1}q_\ell}" in last_probability
+    assert r"q_\ell=\sigma(z_\ell)" in first_probability
+    assert r"q_\ell=\sigma(z_\ell)" in last_probability
+    assert figure.layout.annotations[4].font.size == 13
+    assert figure.layout.annotations[6].font.size == 13
+    assert figure.layout.annotations[2].x == pytest.approx(0.275)
+    assert figure.layout.annotations[3].x == pytest.approx(0.30)
+    assert figure.layout.annotations[5].x == pytest.approx(0.308)
+    assert r"\;\cdots\; " in figure.layout.annotations[3].text
+    assert r"\quad\cdots\quad " not in figure.layout.annotations[3].text
 
     def geometry_signature(annotations):
         return tuple(
@@ -397,7 +489,7 @@ def test_dense_multiclass_replay_honors_theta_column_cap_and_uses_taller_layout(
     theta_matrix = figure.layout.annotations[2].text
     assert r"\begin{array}{ccccc}" in theta_matrix
     assert figure.layout.height == 720
-    assert r"\sum_{j=1}^{8}q_j" in figure.layout.annotations[4].text
+    assert r"\sum_{\ell=0}^{K-1}q_\ell" in figure.layout.annotations[5].text
 
 
 def test_nd_figures_do_not_keep_an_empty_loss_subplot_when_loss_is_hidden():

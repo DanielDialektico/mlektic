@@ -59,6 +59,13 @@ class IterativeCapture(HistoryCaptureStrategy):
         w_hist = np.zeros((steps, d), dtype=float)
         b_hist = np.zeros(steps, dtype=float)
 
+        equation_w0, equation_b0 = replay_adapter.extract_linear_theta()
+        equation_w_hist = equation_b_hist = None
+        if equation_w0 is not None and equation_b0 is not None:
+            equation_w0 = np.asarray(equation_w0, dtype=float).ravel()
+            equation_w_hist = np.zeros((steps, equation_w0.size), dtype=float)
+            equation_b_hist = np.zeros(steps, dtype=float)
+
         # Step 0
         y_pred0 = replay_adapter.predict(X)
         loss_hist[0] = float(mean_squared_error(y, y_pred0))
@@ -73,6 +80,9 @@ class IterativeCapture(HistoryCaptureStrategy):
         if w0 is not None:
             w_hist[0] = w0
             b_hist[0] = b0
+        if equation_w_hist is not None:
+            equation_w_hist[0] = equation_w0
+            equation_b_hist[0] = float(equation_b0)
 
         Xt = replay_adapter.transform_X(X) if replay_adapter.is_pipeline else X
 
@@ -98,6 +108,10 @@ class IterativeCapture(HistoryCaptureStrategy):
             if wt is not None:
                 w_hist[t] = wt
                 b_hist[t] = bt
+            equation_wt, equation_bt = replay_adapter.extract_linear_theta()
+            if equation_w_hist is not None and equation_wt is not None:
+                equation_w_hist[t] = np.asarray(equation_wt, dtype=float).ravel()
+                equation_b_hist[t] = float(equation_bt)
 
         # The replay is an explanatory reconstruction, not the estimator's
         # original fit trajectory. Reserve the last state for the exact model
@@ -114,6 +128,10 @@ class IterativeCapture(HistoryCaptureStrategy):
         if w_final is not None:
             w_hist[-1] = w_final
             b_hist[-1] = b_final
+        equation_w_final, equation_b_final = adapter.extract_linear_theta()
+        if equation_w_hist is not None and equation_w_final is not None:
+            equation_w_hist[-1] = np.asarray(equation_w_final, dtype=float).ravel()
+            equation_b_hist[-1] = float(equation_b_final)
 
         scaler_params = replay_adapter.get_scaler_params()
         coefficient_space = config.display_space
@@ -133,6 +151,8 @@ class IterativeCapture(HistoryCaptureStrategy):
             "z_plane_hist": z_plane_hist,
             "w_hist_learned": w_hist if np.any(w_hist) else None,
             "b_hist_learned": b_hist if np.any(b_hist) else None,
+            "equation_w_hist": equation_w_hist,
+            "equation_b_hist": equation_b_hist,
             "scaler_params": scaler_params,
             "coefficient_space": coefficient_space,
         }

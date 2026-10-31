@@ -36,7 +36,7 @@ Size and responsiveness are independent from those three axes.
        X,
        y,
        theme="academic",
-       format="lesson",
+       format="dashboard",
        density="academic",
        size="notebook",
        responsive=True,
@@ -81,12 +81,6 @@ Formats and motion
    The established combined geometry, formula, metrics, objective, controls,
    and slider view.
 
-``lesson``
-   Adds four semantic stage buttons: Data, Model, Objective, and Complete. It
-   initially isolates observations, but every trace remains in the figure and
-   the full composition can be restored. The original Play/Pause controls and
-   every retained frame remain available.
-
 ``compact``
    Reduces canvas height and margins. It does not decimate frames or change
    mathematics.
@@ -97,8 +91,8 @@ Formats and motion
    and motion-sensitive contexts.
 
 ``reduced_motion=True`` is the explicit static alternative when another format
-is otherwise desired. ``dashboard``, ``lesson``, and ``compact`` preserve
-motion by default. Animation speed remains controlled by ``frame_duration``,
+is otherwise desired. ``dashboard`` and ``compact`` preserve motion by
+default. Animation speed remains controlled by ``frame_duration``,
 ``transition_duration``, ``fps``, and ``interpolation_frames``; Phase 3 does
 not silently modify those values.
 
@@ -142,10 +136,10 @@ Scaling is not reflow
 ^^^^^^^^^^^^^^^^^^^^^
 
 Responsive mode scales one resolved Plotly composition. Plotly does not
-automatically rearrange subplots like a CSS grid. Select ``compact``,
-``lesson``, or ``report`` when the information structure itself must change for
-a narrow notebook or static artifact. This limitation is recorded explicitly
-in figure metadata.
+automatically rearrange subplots like a CSS grid. Select ``compact`` or
+``report`` when the information structure itself must change for a narrow
+notebook or static artifact. This limitation is recorded explicitly in figure
+metadata.
 
 Responsive export
 -----------------
@@ -155,7 +149,7 @@ Responsive export
 .. code-block:: python
 
    responsive_figure = visualize_lr(model, X, y, responsive=True)
-   export_figure(responsive_figure, "lesson.html")
+   export_figure(responsive_figure, "dashboard.html")
 
 Pass ``responsive=True`` or ``False`` to ``export_figure`` to override it. A
 figure without Phase 3 metadata remains fixed-size, preserving compatibility.
@@ -188,10 +182,9 @@ surfaces contribute behavior outside Mlektic's control. Important model and
 provenance information therefore remains available as visible text and
 metadata rather than hover alone.
 
-Prediction values use an opaque theme-aware annotation box and contrasting
-border in both planar and three-dimensional explainers. The arrow continues to
-identify the exact plotted point; the box is only a legibility treatment and
-does not alter the reported value.
+Prediction values and mathematical explanations use borderless annotations so
+long numeric values cannot overflow a fixed box. Arrows and plotted markers
+continue to identify the exact point and do not alter the reported value.
 
 Public coverage
 ---------------

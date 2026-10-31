@@ -29,9 +29,9 @@ def _theta_is_big_for_t(w_hist, t, max_digits=5):
 
 def _metric_box(title, val, y_pos, fmt="6f"):
     return dict(
-        x=0.33, y=y_pos, xref="paper", yref="paper",
+        x=0.36, y=y_pos, xref="paper", yref="paper",
         text=f"<b>{title}</b><br>{val:{fmt}}",
-        showarrow=False, xanchor="left", yanchor="top",
+        showarrow=False, xanchor="center", yanchor="top", align="center",
         font=dict(size=16, color="black"), bgcolor="white",
         bordercolor="black", borderwidth=1, borderpad=8,
     )
@@ -40,7 +40,7 @@ def _metric_box_matrix(title, val, y_pos, fmt="6f"):
     return dict(
         x=0.25, y=y_pos, xref="paper", yref="paper",
         text=f"<b>{title}</b><br>{val:{fmt}}",
-        showarrow=False, xanchor="left", yanchor="top",
+        showarrow=False, xanchor="center", yanchor="top", align="center",
         font=dict(size=16, color="black"), bgcolor="white",
         bordercolor="black", borderwidth=1, borderpad=8,
     )
@@ -48,7 +48,8 @@ def _metric_box_matrix(title, val, y_pos, fmt="6f"):
 def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_loss, metrics_hist, loss_hist):
     def model_header_latex():
         return (
-            rf"$$\hat{{p}}(Y=c_1\mid\mathbf{{x}})=\sigma(z),\qquad "
+            rf"$$\hat{{p}}(Y=c_1\mid\mathbf{{x}})=\sigma(z)="
+            rf"\dfrac{{1}}{{1+e^{{-z}}}},\qquad "
             rf"z=\sum_{{j=1}}^{{{d}}}\theta_jx_j+\theta_0$$"
         )
 
@@ -60,9 +61,12 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
         lines = [r"&z = " + " + ".join(chunks[0])]
         for ch in chunks[1:]:
             lines.append(r"&\quad + " + " + ".join(ch))
-        lines[-1] = lines[-1] + rf" + ({b:.{dec}f})"
+        # The intercept gets a dedicated row. Appending it to a full final
+        # coefficient row made the rightmost value depend on the viewport
+        # width and clip in wide, high-dimensional notebook figures.
+        lines.append(rf"&\quad + ({b:.{dec}f})")
         body = r" \\ ".join(lines)
-        return r"$$\begin{aligned}" + body + r"\\[4pt]&\hat{p}(Y=c_1\mid\mathbf{x})=\dfrac{1}{1+e^{-z}}" + r"\end{aligned}$$"
+        return r"$$\begin{aligned}" + body + r"\end{aligned}$$"
 
     math_x = 0.68 if show_loss else 0.5
     ann = [
@@ -97,7 +101,11 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
     th_cols = 1 if force_theta_one_col else 5
 
     def model_formula_latex():
-        return r"$$z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0,\qquad\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z)$$"
+        return (
+            r"$$\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z)="
+            r"\dfrac{1}{1+e^{-z}},\qquad "
+            r"z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0$$"
+        )
 
     def bias_latex(t_idx):
         return rf"$$\theta_0 = {float(b_hist[t_idx]):.{dec}f}$$"
@@ -187,7 +195,7 @@ def _make_matrix_annotations(t, d, w_hist, b_hist, dec, force_theta_one_col, sho
             z_part = r"z = " + rf"({w[0]:.{dec}f})x_1 " + rf"+ \cdots + ({w[last - 1]:.{dec}f})x_{{{last}}} " + rf"+ ({b:.{dec}f})"
         else:
             z_part = r"z = " + rf"({w[0]:.{dec}f})x_1 " + rf"+ ({w[1]:.{dec}f})x_2 " + rf"+ ({w[2]:.{dec}f})x_3 " + rf"+ ({w[3]:.{dec}f})x_4 " + rf"+ \cdots + ({w[last - 1]:.{dec}f})x_{{{last}}} " + rf"+ ({b:.{dec}f})"
-        return r"$$" + z_part + r",\qquad\hat{p}(Y=c_1\mid\mathbf{x})=\dfrac{1}{1+e^{-z}}$$"
+        return r"$$" + z_part + r"$$"
 
     if show_loss:
         positions = dict(model=0.68, x_dim=0.55, theta_dim=0.83, x_vector=0.52, theta_vector=0.80, scalar=0.71)

@@ -37,7 +37,7 @@ The system has three independent axes:
 2. **format:** figure composition and panel arrangement;
 3. **density:** how much mathematical and contextual information is visible.
 
-This prevents a “compact theme” from accidentally changing semantics or a “lesson format” from changing colors.
+This prevents a “compact theme” from accidentally changing semantics or a report format from changing colors.
 
 ## Token model
 
@@ -108,19 +108,6 @@ Plotly and MathJax font availability must be tested in Jupyter, Colab, exported 
 
 Current combined geometry, formulas, controls, metrics, and optional loss layout.
 
-### `lesson`
-
-One concept at a time:
-
-1. data;
-2. model geometry;
-3. parameter state;
-4. substitution;
-5. objective;
-6. temporal interpretation.
-
-The learner advances through semantic stages while motion remains available inside relevant stages.
-
 ### `compact`
 
 Prioritizes geometry and one key equation. Details move into hover, metadata, or a companion report.
@@ -167,7 +154,7 @@ Panels change arrangement at defined breakpoints. Proposed targets:
 - wide desktop: geometry and report side by side;
 - standard notebook: dashboard composition with compact header;
 - narrow notebook: geometry above formulas/metrics;
-- mobile/static: report or lesson format rather than an unusable compressed dashboard.
+- mobile/static: report format rather than an unusable compressed dashboard.
 
 Because Plotly does not provide CSS-style subplot reflow automatically, formats may need separate layout builders sharing the same semantic view model.
 
@@ -217,7 +204,7 @@ Build deterministic HTML and screenshot fixtures for:
 
 - every family and dimensionality;
 - classic plus each new preset;
-- dashboard, lesson, compact, and report formats;
+- dashboard, compact, and report formats;
 - loss shown/hidden;
 - long titles, string class labels, many features, many classes;
 - original/scaled spaces;

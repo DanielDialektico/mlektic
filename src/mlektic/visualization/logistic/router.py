@@ -48,6 +48,7 @@ def build_logistic_figure(
     dec=4,
     frame_duration=80,
     max_theta_cols=8,
+    size="default",
     probability_link="softmax",
     theme=None,
 ):
@@ -247,6 +248,7 @@ def build_logistic_figure(
         dec=min(dec, 4),
         frame_duration=frame_duration,
         max_theta_cols=max_theta_cols,
+        size=size,
         probability_link=probability_link,
         theme=theme,
     )

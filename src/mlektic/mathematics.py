@@ -8,6 +8,7 @@ private optimization rule.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from numbers import Integral, Real
 from typing import Any
@@ -98,6 +99,7 @@ def build_linear_math_contract(
         preprocessing,
         history.get("display_space", "original"),
     )
+    symbolic_names = _equation_feature_names(preprocessing, equation_space)
     contributions = values * coefficients
     reconstructed = float(intercept + np.sum(contributions))
     model_prediction = float(np.asarray(adapter.predict(X_array[sample : sample + 1])).ravel()[0])
@@ -119,6 +121,7 @@ def build_linear_math_contract(
         "requested_display_space": history.get("display_space", "original"),
         "feature_space": _public_preprocessing(preprocessing),
         "feature_names": names,
+        "symbolic_feature_names": symbolic_names,
         "dimensions": {"samples": int(X_array.shape[0]), "features": int(coefficients.size)},
         "parameters": {
             "coefficients": coefficients.tolist(),
@@ -153,7 +156,7 @@ def build_linear_math_contract(
             values,
             contributions,
             reconstructed,
-            names,
+            symbolic_names,
             equation_space,
             mse,
             mae,
@@ -229,6 +232,7 @@ def build_logistic_math_contract(
     values = parameter_view["values"]
     names = parameter_view["feature_names"]
     equation_space = parameter_view["equation_space"]
+    symbolic_names = _equation_feature_names(preprocessing, equation_space)
     if is_multiclass:
         scores = values @ weights + intercepts
         reconstructed_probabilities = multiclass_probabilities(
@@ -257,6 +261,7 @@ def build_logistic_math_contract(
         "requested_display_space": history.get("display_space", "original"),
         "feature_space": _public_preprocessing(preprocessing),
         "feature_names": names,
+        "symbolic_feature_names": symbolic_names,
         "dimensions": {
             "samples": int(X_array.shape[0]),
             "features": int(values.size),
@@ -319,12 +324,11 @@ def build_logistic_math_contract(
             values,
             contributions,
             scores,
-            reconstructed_probabilities,
             decision_index,
             focus_index,
             threshold,
             probability_link,
-            names,
+            symbolic_names,
             equation_space,
             log_loss,
             regularization,
@@ -352,50 +356,81 @@ def attach_math_contract(fig: Any, contract: dict[str, Any], *, theme: str | Non
     margin_top = int(current_margin.get("t", 150))
     margin_bottom = int(current_margin.get("b", 70))
     plot_height = max(240, current_height - margin_top - margin_bottom)
-    minimum_margin_bottom = 440 if contract["detail"] == "complete" else 350
-    first_line_offset = 160
-    panel_gap = 28
+    # Borderless text needs substantially less vertical reserve than the old
+    # stack of fixed cards.  Keep one calm mathematical band below the slider
+    # while preserving enough room for multiline N-D derivations.
+    minimum_margin_bottom = 300 if contract["detail"] == "complete" else 220
+    # Plotly places the current value, rail, and tick labels below the plot
+    # domain.  Reserve that complete control region before the first line of
+    # mathematics.  Deriving the offset from the configured slider padding
+    # keeps custom builders safe instead of relying on one screenshot size.
+    slider_top_padding = max(
+        [float(slider.pad.t or 0) for slider in fig.layout.sliders or ()],
+        default=0.0,
+    )
+    first_line_offset = slider_top_padding + 110.0 if fig.layout.sliders else 70.0
+    panel_gap = 10
     previous_height = 0.0
     center_offset = float(first_line_offset)
+    panel_annotations = []
     for line_index, line in enumerate(panel_lines):
         if isinstance(line, dict):
             text = str(line["text"])
             visual_lines = max(1, int(line.get("visual_lines", 1)))
+            gap_before = max(0.0, float(line.get("gap_before", 0.0)))
         else:
             text = str(line)
             visual_lines = 1
+            gap_before = 0.0
+        # Keep the fitted-model heading clear of the first equation, including
+        # tall multiline expansions. Preserve all subsequent inter-row gaps.
+        if line_index == 1:
+            gap_before += 12.0
         # Underbraces and feature labels make mathematical rows taller than
         # ordinary text. Reserve enough vertical space before placing the next
         # annotation so multiline derivations never collide with metric cards.
-        estimated_height = 34.0 + 32.0 * (visual_lines - 1)
+        # MathJax underbraces extend well below the equation baseline because
+        # their labels are rendered as an additional row.  Treat those lines
+        # as tall content so the next equation cannot enter that descender.
+        base_height = 52.0 if r"\underbrace" in text else 32.0
+        estimated_height = base_height + 24.0 * (visual_lines - 1)
         if line_index:
-            center_offset += previous_height / 2.0 + panel_gap + estimated_height / 2.0
-        annotations.append(
-            {
-                "x": 0.5,
-                "y": -center_offset / plot_height,
-                "xref": "paper",
-                "yref": "paper",
-                "text": text,
-                "showarrow": False,
-                "xanchor": "center",
-                "yanchor": "middle",
-                "align": "center",
-                "font": {"size": 13, "color": "white"},
-                "bgcolor": "rgba(28,30,35,0.97)",
-                "bordercolor": "rgba(184,193,204,0.55)",
-                "borderwidth": 1,
-                "borderpad": 7,
-            }
-        )
+            center_offset += (
+                previous_height / 2.0
+                + panel_gap
+                + gap_before
+                + estimated_height / 2.0
+            )
+        annotation = {
+            "x": 0.5,
+            "y": -center_offset / plot_height,
+            "xref": "paper",
+            "yref": "paper",
+            "text": text,
+            "showarrow": False,
+            "xanchor": "center",
+            "yanchor": "middle",
+            "align": "center",
+            "font": {"size": 13, "color": "white"},
+            "borderwidth": 0,
+            "borderpad": 0,
+        }
+        annotations.append(annotation)
+        panel_annotations.append(annotation)
         previous_height = estimated_height
-    required_margin_bottom = int(center_offset + previous_height / 2.0 + 60.0)
+    required_margin_bottom = int(center_offset + previous_height / 2.0 + 38.0)
     current_margin["b"] = max(minimum_margin_bottom, required_margin_bottom)
     fig.update_layout(
         annotations=annotations,
         height=plot_height + margin_top + current_margin["b"],
         margin=current_margin,
     )
+    if contract["family"] == "multiclass_logistic_regression":
+        for frame in fig.frames or ():
+            if frame.layout is None:
+                frame.layout = {"annotations": panel_annotations}
+            else:
+                frame.layout.annotations = [*(frame.layout.annotations or ()), *panel_annotations]
     return fig
 
 
@@ -422,7 +457,7 @@ def apply_logistic_focus_and_threshold(
                 if target_index in class_trace_indices and local_index < len(frame.data):
                     frame.data[local_index].visible = target_index == selected_trace
         title = fig.layout.title.text or ""
-        fig.update_layout(title_text=f"{title} · class focus c_{class_focus_index} (1/{classes})")
+        fig.update_layout(title_text=f"{title} · class focus c_{class_focus_index} ({class_focus_index + 1}/{classes})")
 
     if classes != 2:
         return fig
@@ -441,6 +476,7 @@ def apply_logistic_focus_and_threshold(
             y1=threshold,
             line={"color": "rgba(255,255,255,0.75)", "width": 1.5, "dash": "dash"},
         )
+        _add_threshold_geometry_label(fig, dimensions=dimensions, threshold=threshold)
     elif dimensions == 2:
         for trace in fig.data:
             if getattr(trace, "type", "") == "surface":
@@ -467,19 +503,64 @@ def apply_logistic_focus_and_threshold(
                         usecolormap=False,
                         highlight=False,
                     )
+        _add_threshold_geometry_label(fig, dimensions=dimensions, threshold=threshold)
     return fig
 
 
 def _replace_threshold_tick(fig: Any, *, dimensions: int, threshold: float) -> None:
-    """Keep probability axes consistent with the configured binary threshold."""
+    """Keep the threshold tick numeric so it cannot collide with the axis title."""
     axis = fig.layout.yaxis if dimensions == 1 else fig.layout.scene.zaxis if dimensions == 2 else None
     if axis is None:
         return
     previous = list(axis.ticktext or ("0", "0.5", "1"))
     while len(previous) < 3:
         previous.append(str(len(previous)))
-    middle = f"{threshold:g} threshold"
+    middle = f"{threshold:g}"
     axis.update(tickvals=[0.0, threshold, 1.0], ticktext=[previous[0], middle, previous[-1]])
+
+
+def _add_threshold_geometry_label(fig: Any, *, dimensions: int, threshold: float) -> None:
+    """Place a short threshold label inside the geometry, away from axis titles."""
+    text = rf"$\tau={threshold:g}$"
+    color = getattr(getattr(fig.layout, "font", None), "color", None) or "white"
+    if dimensions == 1:
+        x_range = list(fig.layout.xaxis.range or (0.0, 1.0))
+        annotation = {
+            "x": float(x_range[1]),
+            "y": threshold,
+            "xref": "x",
+            "yref": "y",
+            "text": text,
+            "showarrow": False,
+            "xanchor": "right",
+            "yanchor": "bottom",
+            "yshift": 6,
+            "font": {"size": 11, "color": color},
+        }
+        fig.layout.annotations = [*(fig.layout.annotations or ()), annotation]
+        for frame in fig.frames or ():
+            frame.layout.annotations = [*(frame.layout.annotations or ()), annotation]
+        return
+    if dimensions == 2:
+        scene = fig.layout.scene
+        x_range = list(scene.xaxis.range or (0.0, 1.0))
+        y_range = list(scene.yaxis.range or (0.0, 1.0))
+        annotation = {
+            "x": float(x_range[1]),
+            "y": float(y_range[1]),
+            "z": threshold,
+            "text": text,
+            "showarrow": False,
+            "xanchor": "right",
+            "yanchor": "bottom",
+            "font": {"size": 11, "color": color},
+        }
+        scene.annotations = [*(scene.annotations or ()), annotation]
+        for frame in fig.frames or ():
+            frame.layout.scene.annotations = [
+                *(frame.layout.scene.annotations or ()),
+                annotation,
+            ]
 
 
 def _resolve_input_feature_names(X: Any, feature_names: Sequence[str] | None, dimensions: int) -> list[str]:
@@ -502,6 +583,12 @@ def _preprocessing_contract(adapter: SklearnAdapter, X: np.ndarray, input_names:
     if transformed.ndim == 1:
         transformed = transformed.reshape(-1, 1)
     transformed_names = _transformed_feature_names(adapter, input_names, transformed.shape[1])
+    symbolic_input_names = [f"x_{index + 1}" for index in range(X.shape[1])]
+    transformed_symbolic_names = _transformed_feature_names(
+        adapter,
+        symbolic_input_names,
+        transformed.shape[1],
+    )
     steps = []
     if adapter.is_pipeline:
         steps = [
@@ -516,6 +603,8 @@ def _preprocessing_contract(adapter: SklearnAdapter, X: np.ndarray, input_names:
         "transformed_dimension": int(transformed.shape[1]),
         "input_feature_names": input_names,
         "transformed_feature_names": transformed_names,
+        "input_symbolic_feature_names": symbolic_input_names,
+        "transformed_symbolic_feature_names": transformed_symbolic_names,
         "is_affine": affine,
         "affine_matrix": None if matrix is None else matrix.tolist(),
         "affine_offset": None if offset is None else offset.tolist(),
@@ -546,6 +635,16 @@ def _transformed_feature_names(adapter: SklearnAdapter, input_names: list[str], 
         except (TypeError, ValueError, AttributeError):
             pass
     return [f"u_{index + 1}" for index in range(dimensions)]
+
+
+def _equation_feature_names(preprocessing: dict[str, Any], equation_space: str) -> list[str]:
+    """Return algebraic symbols independently from descriptive axis labels."""
+    key = (
+        "input_symbolic_feature_names"
+        if equation_space == "original"
+        else "transformed_symbolic_feature_names"
+    )
+    return list(preprocessing[key])
 
 
 def _infer_affine_transform(
@@ -751,7 +850,13 @@ def _linear_panel(
     detail: str,
     dec: int,
 ) -> list[str | dict[str, Any]]:
-    term_rows, visible_count = _contribution_rows(coefficients, values, names, dec)
+    term_rows, visible_count = _contribution_rows(
+        coefficients,
+        values,
+        names,
+        dec,
+        compact_labels=coefficients.size <= 2,
+    )
     hidden = visible_count < coefficients.size
     state = (
         f"<b>Fitted-model derivation</b> · {equation_space} feature space · "
@@ -779,8 +884,15 @@ def _linear_panel(
     lines = [state, calculation]
     if hidden:
         lines.append(
-            f"Showing {visible_count} of {coefficients.size} contributions, selected by "
-            "absolute contribution magnitude; every value remains available in figure metadata."
+            {
+                "text": (
+                    f"Showing {visible_count} of {coefficients.size} contributions, selected by "
+                    "absolute contribution magnitude; every value remains available in figure metadata."
+                ),
+                # The preceding multiline expansion ends in the fitted value.
+                # Give that result its own visual row before the disclosure.
+                "gap_before": 18,
+            }
         )
     if objective_visible:
         lines.append(
@@ -788,10 +900,7 @@ def _linear_panel(
             rf"_{{\mathrm{{empirical\ evaluation}}}},\quad\mathrm{{MAE}}={mae:.{dec}f},\quad R^2={r2:.{dec}f}$"
         )
     if regularization_visible:
-        lines.append(
-            f"Regularization: {_regularization_panel_text(regularization)} · intercept penalty: "
-            f"{regularization['intercept_penalty']}"
-        )
+        lines.append(_regularization_panel_line(regularization))
     if detail == "complete":
         lines.append(
             "Canonical gradient updates are references unless the estimator-specific rule is fully introspected."
@@ -806,7 +915,6 @@ def _logistic_panel(
     values: np.ndarray,
     contributions: np.ndarray,
     scores: np.ndarray,
-    probabilities: np.ndarray,
     winner: int,
     class_focus_index: int | None,
     threshold: float,
@@ -833,14 +941,29 @@ def _logistic_panel(
     )
     if is_multiclass:
         focus = winner if class_focus_index is None else class_focus_index
-        term_rows, visible_count = _contribution_rows(weights[:, focus], values, names, dec)
+        term_rows, visible_count = _contribution_rows(
+            weights[:, focus],
+            values,
+            names,
+            dec,
+            compact_labels=weights.shape[0] <= 2,
+        )
         dimensions = int(weights.shape[0])
         hidden = visible_count < dimensions
         score = float(np.asarray(scores)[focus])
         intercept = float(np.asarray(intercepts)[focus])
-        definition = rf"z_{{{focus}}}&=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
+        definition = (
+            rf"\text{{For }}c_{{{focus}}}:\quad "
+            rf"z_{{{focus}}}&=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
+        )
     else:
-        term_rows, visible_count = _contribution_rows(np.asarray(weights), values, names, dec)
+        term_rows, visible_count = _contribution_rows(
+            np.asarray(weights),
+            values,
+            names,
+            dec,
+            compact_labels=np.asarray(weights).size <= 2,
+        )
         dimensions = int(np.asarray(weights).size)
         hidden = visible_count < dimensions
         score = float(np.asarray(scores).ravel()[0])
@@ -849,9 +972,9 @@ def _logistic_panel(
     if dimensions <= 2 and is_multiclass:
         calculation = {
             "text": (
-                rf"$z_{{{focus}}}=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
-                rf"={intercept:.{dec}f}+{term_rows[0]}={score:.{dec}f},\quad"
-                rf"p_{{{focus}}}={float(probabilities[focus]):.{dec}f},\quad\hat{{y}}=c_{{{winner}}}$"
+                rf"$\text{{For }}c_{{{focus}}}:\quad "
+                rf"z_{{{focus}}}=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
+                rf"={intercept:.{dec}f}+{term_rows[0]}={score:.{dec}f}$"
             ),
             "visual_lines": 1,
         }
@@ -859,8 +982,7 @@ def _logistic_panel(
         calculation = {
             "text": (
                 rf"$z={intercept:.{dec}f}+{term_rows[0]}={score:.{dec}f},\;"
-                rf"p(Y=c_1\mid\mathbf{{x}})=\sigma(z)={float(probabilities[1]):.{dec}f},\;"
-                rf"\tau={threshold:.{dec}f}\Rightarrow\hat{{y}}=c_{{{winner}}}$"
+                rf"p(Y=c_1\mid\mathbf{{x}})=\sigma(z),\;\tau={threshold:.{dec}f}$"
             ),
             "visual_lines": 1,
         }
@@ -868,15 +990,11 @@ def _logistic_panel(
         expansion = [definition, rf"&={intercept:.{dec}f}+{term_rows[0]}"]
         expansion.extend(rf"&\quad+{row}" for row in term_rows[1:])
         expansion.append(rf"&={score:.{dec}f}")
-        if is_multiclass:
-            expansion.append(
-                rf"p_{{{focus}}}&={float(probabilities[focus]):.{dec}f},\qquad\hat{{y}}=c_{{{winner}}}"
-            )
-        else:
+        if not is_multiclass:
             expansion.extend(
                 [
-                    rf"p(Y=c_1\mid\mathbf{{x}})&=\sigma(z)={float(probabilities[1]):.{dec}f}",
-                    rf"\tau&={threshold:.{dec}f}\Rightarrow\hat{{y}}=c_{{{winner}}}",
+                    r"p(Y=c_1\mid\mathbf{x})&=\sigma(z)",
+                    rf"\tau&={threshold:.{dec}f}",
                 ]
             )
         calculation = {
@@ -887,8 +1005,13 @@ def _logistic_panel(
     if hidden:
         total = int(weights.shape[0] if is_multiclass else np.asarray(weights).size)
         lines.append(
-            f"Showing {visible_count} of {total} contributions, selected by absolute contribution magnitude; "
-            "every value remains available in figure metadata."
+            {
+                "text": (
+                    f"Showing {visible_count} of {total} contributions, selected by absolute contribution "
+                    "magnitude; every value remains available in figure metadata."
+                ),
+                "gap_before": 18,
+            }
         )
     if objective_visible:
         loss_name = "Cross-entropy" if is_multiclass else "Log-loss"
@@ -898,11 +1021,38 @@ def _logistic_panel(
             r"\text{private penalty scaling is not claimed}$"
         )
     if regularization_visible:
-        lines.append(
-            f"Regularization: {_regularization_panel_text(regularization)} · intercept penalty: "
-            f"{regularization['intercept_penalty']}"
-        )
+        lines.append(_regularization_panel_line(regularization))
     if detail == "complete":
+        if is_multiclass:
+            lines.extend(
+                [
+                    {"text": "<b>Model notation</b>", "gap_before": 14},
+                    (
+                        r"$d\ \text{(number of features)},\quad K\ \text{(number of classes)},"
+                        r"\quad c_k\ \text{(label of class }k\text{)}$"
+                    ),
+                    (
+                        r"$\Theta=[\mathbf w_0,\ldots,\mathbf w_{K-1}]\in\mathbb R^{d\times K}"
+                        r"\ \text{(coefficients per class)};\quad "
+                        r"\boldsymbol\theta_0=(b_0,\ldots,b_{K-1})\in\mathbb R^K"
+                        r"\ \text{(intercepts)}$"
+                    ),
+                    (
+                        r"$\mathbf x\in\mathbb R^d\ \text{(features of one observation)};\quad "
+                        r"z_k(\mathbf x)=b_k+\mathbf x^\top\mathbf w_k"
+                        r"\ \text{(score for class }c_k\text{)}$"
+                    ),
+                    (
+                        r"$\hat p_k(\mathbf x)=\widehat P(Y=c_k\mid\mathbf x)"
+                        r"\ \text{(estimated probability)};\quad k=0,\ldots,K-1$"
+                    ),
+                ]
+            )
+            if probability_link == "ovr":
+                lines.append(
+                    r"$q_k=\sigma(z_k)\ \text{(valor previo a la normalización)};\quad "
+                    r"\hat p_k=q_k/\sum_{\ell=0}^{K-1}q_\ell$"
+                )
         lines.append(
             "Canonical gradient updates are references unless the estimator-specific rule is fully introspected."
         )
@@ -916,6 +1066,7 @@ def _contribution_rows(
     dec: int,
     limit: int = 9,
     terms_per_row: int = 3,
+    compact_labels: bool = False,
 ) -> tuple[list[str], int]:
     """Format bounded, width-safe rows of coefficient-value products."""
     coefficients = np.asarray(coefficients, dtype=float).ravel()
@@ -926,11 +1077,12 @@ def _contribution_rows(
     else:
         order = np.argsort(np.abs(coefficients * values))[::-1]
         indices = sorted(order[:limit].tolist())
-    terms = [
-        rf"\underbrace{{({coefficients[index]:.{dec}f})({values[index]:.{dec}f})}}"
-        rf"_{{\mathrm{{{_latex_label(names[index])}}}}}"
-        for index in indices
-    ]
+    terms = []
+    for index in indices:
+        label = rf"x_{{{index + 1}}}" if compact_labels else _latex_symbol(names[index])
+        terms.append(
+            rf"\underbrace{{({coefficients[index]:.{dec}f})({values[index]:.{dec}f})}}_{{{label}}}"
+        )
     rows = [
         "+".join(terms[start : start + terms_per_row])
         for start in range(0, len(terms), terms_per_row)
@@ -941,21 +1093,61 @@ def _contribution_rows(
 
 
 def _regularization_panel_text(regularization: dict[str, Any]) -> str:
-    """Format only estimator-backed public regularization settings."""
+    """Format estimator-backed settings as the body of one math expression."""
+    penalty = regularization.get("type")
+    formula = {
+        "none": r"R(\boldsymbol{\theta})=0",
+        "l2": r"R(\boldsymbol{\theta})=\lambda\lVert\boldsymbol{\theta}\rVert_2^2",
+        "l1": r"R(\boldsymbol{\theta})=\lambda\lVert\boldsymbol{\theta}\rVert_1",
+        "elasticnet": (
+            r"R(\boldsymbol{\theta})=\lambda[\rho\lVert\boldsymbol{\theta}\rVert_1"
+            r"+(1-\rho)\lVert\boldsymbol{\theta}\rVert_2^2]"
+        ),
+    }.get(penalty)
+    if formula is None:
+        return r"\text{Estimator-specific penalty; formula not introspected}"
+    rendered = formula
     strength = regularization.get("strength_parameter")
     if not strength:
-        return str(regularization["formula"])
-    detail = f"{strength['name']}={strength['value']}"
+        return rendered
+    name = {"alpha": r"\alpha", "C": "C"}.get(strength["name"])
+    detail = f"{name}={strength['value']}" if name else rf"\text{{{_latex_label(str(strength['name']))}}}"
     if strength.get("meaning"):
-        detail += f" ({strength['meaning']})"
+        detail += rf"\ \text{{({_latex_label(str(strength['meaning']))})}}"
     if regularization.get("l1_ratio") is not None:
-        detail += f", l1_ratio={regularization['l1_ratio']}"
-    return f"{regularization['formula']} · {detail}"
+        detail += rf",\quad \mathrm{{l1\_ratio}}={regularization['l1_ratio']}"
+    return rf"{rendered},\quad {detail}"
+
+
+def _regularization_panel_line(regularization: dict[str, Any]) -> str:
+    """Keep prose and equations in a single MathJax span for Plotly."""
+    intercept = _latex_label(str(regularization["intercept_penalty"]))
+    return (
+        r"$\text{Regularization:}\quad "
+        + _regularization_panel_text(regularization)
+        + rf"\quad\text{{intercept penalty: {intercept}}}$"
+    )
 
 
 def _latex_label(value: str) -> str:
     """Escape the small subset of characters used in feature-name subscripts."""
     return str(value).replace("\\", "").replace("_", r"\_").replace("%", r"\%")
+
+
+def _latex_symbol(value: str) -> str:
+    """Render canonical polynomial variables as mathematics, not prose."""
+    parts = str(value).strip().split()
+    matches = [re.fullmatch(r"([xu])_(\d+)(?:\^(\d+))?", part) for part in parts]
+    if matches and all(matches):
+        terms = []
+        for match in matches:
+            symbol, index, power = match.groups()
+            term = rf"{symbol}_{{{index}}}"
+            if power is not None:
+                term += rf"^{{{power}}}"
+            terms.append(term)
+        return "".join(terms)
+    return rf"\mathrm{{{_latex_label(value)}}}"
 
 
 def _python_scalar(value: Any) -> Any:

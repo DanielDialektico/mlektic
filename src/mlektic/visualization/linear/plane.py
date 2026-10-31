@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ..design import get_theme_tokens
 from ..theme import (
     create_annotation,
     data_3d_marker_style,
@@ -182,25 +183,34 @@ def build_plane_lr_figure(
         margin_t = 150
 
     def theta_formula_annotation():
-        return create_annotation(theta_formula_text(), y=theta_y)
+        return create_annotation(theta_formula_text(), y=theta_y, theme=theme)
 
     def eq_annotation(t):
-        return create_annotation(eq_text(t), y=eq_y)
+        return create_annotation(eq_text(t), y=eq_y, theme=theme)
 
-    def metrics_annotations(t):
-        ann = []
-        if metrics_hist is not None:
-            for i, (name, hist) in enumerate(metrics_hist.items()):
-                val = hist[t]
-                y_pos = 0.95 - (i * 0.18)
-                fmt = ".6f" if name.lower() == "loss" else ".4f"
-                ann.append(dict(
-                    x=0.98, y=y_pos, xref="paper", yref="paper",
-                    text=f"<b>{name}</b><br>{val:{fmt}}", showarrow=False,
-                    xanchor="right", yanchor="top", font=dict(size=13, color="black"),
-                    bgcolor="white", bordercolor="black", borderwidth=1, borderpad=5
-                ))
-        return ann
+    metric_items = list((metrics_hist or {}).items())
+    metric_y = np.linspace(0.88, 0.12, len(metric_items)) if metric_items else np.asarray([])
+    tokens = get_theme_tokens(theme)
+
+    def metric_trace(t):
+        texts = []
+        for name, hist in metric_items:
+            value = float(hist[t])
+            label = str(name).upper().replace("R2", "R²")
+            precision = 6 if str(name).lower() == "loss" else 4
+            texts.append(f"<b>{label}</b><br>= {value:.{precision}f}")
+        return go.Scatter(
+            x=np.full(len(texts), 0.5),
+            y=metric_y,
+            mode="text",
+            text=texts,
+            textposition="middle center",
+            textfont=dict(family=tokens.font_family, size=min(tokens.metric_size, 13), color=tokens.text),
+            cliponaxis=False,
+            hoverinfo="skip",
+            showlegend=False,
+            uid="METRIC_VALUES",
+        )
 
     # -------------------------
     # Stable scene ranges (use data + plane endpoints)
@@ -230,10 +240,10 @@ def build_plane_lr_figure(
     if show_loss:
         fig = make_subplots(
             rows=1,
-            cols=2,
-            column_widths=[0.60, 0.30],
-            horizontal_spacing=0.06,
-            specs=[[{"type": "scene"}, {"type": "xy"}]],
+            cols=3,
+            column_widths=[0.57, 0.29, 0.14],
+            horizontal_spacing=0.045,
+            specs=[[{"type": "scene"}, {"type": "xy"}, {"type": "xy"}]],
         )
 
         fig.add_trace(
@@ -285,6 +295,7 @@ def build_plane_lr_figure(
             row=1,
             col=2,
         )
+        fig.add_trace(metric_trace(0), row=1, col=3)
 
         frames = []
         for t in range(steps_n):
@@ -307,10 +318,11 @@ def build_plane_lr_figure(
                             line=loss_line_style(theme=theme),
                             uid="LOSS_LINE",
                         ),
+                        metric_trace(t),
                     ],
-                    traces=[1, 2],
+                    traces=[1, 2, 3],
                     layout=go.Layout(
-                        annotations=[theta_formula_annotation(), eq_annotation(t)] + metrics_annotations(t),
+                        annotations=[theta_formula_annotation(), eq_annotation(t)],
                     ),
                 )
             )
@@ -318,9 +330,9 @@ def build_plane_lr_figure(
 
         fig.update_layout(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
-            annotations=[theta_formula_annotation(), eq_annotation(0)] + metrics_annotations(0),
+            annotations=[theta_formula_annotation(), eq_annotation(0)],
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.995, y=0.05, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.84, y=0.05, theme=theme)),
             scene=dict(
                 xaxis=dict(title="x₁", range=x1_range),
                 yaxis=dict(title="x₂", range=x2_range),
@@ -337,6 +349,8 @@ def build_plane_lr_figure(
 
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], row=1, col=2)
         fig.update_yaxes(title="Loss", range=[lmin - lpad, lmax + lpad], row=1, col=2)
+        fig.update_xaxes(visible=False, fixedrange=True, row=1, col=3)
+        fig.update_yaxes(visible=False, fixedrange=True, row=1, col=3)
 
         return fig
 

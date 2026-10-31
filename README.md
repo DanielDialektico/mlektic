@@ -132,7 +132,7 @@ contract["objective"]
 contract["regularization"]
 ```
 
-For affine preprocessing, Mlektic verifies the transformation and can express coefficients in original units. For a non-affine transformation such as polynomial expansion, it shows transformed-feature mathematics and uses `get_feature_names_out` when available; it does not invent a raw-space coefficient vector.
+For affine preprocessing, Mlektic verifies the transformation and can express coefficients in original units. For a non-affine transformation such as polynomial expansion, it shows transformed-feature mathematics and uses `get_feature_names_out` for auditable metadata when available; displayed equations retain canonical symbols such as `x_1`, `x_1^2`, and `x_1*x_2`, while `feature_names` labels only the input axes. It does not invent a raw-space coefficient vector.
 
 Linear refers to linearity in the fitted coefficients, not necessarily in the original input. A pipeline with `PolynomialFeatures(2)` fits `theta_0 + theta_1*x + theta_2*x^2`, which is linear in theta but correctly appears as a parabola against the original `x`. Its separate `Interpolation MSE` is empirical evaluation along a declared baseline-to-model parameter path, not gradient-descent history.
 
@@ -378,12 +378,12 @@ Current classic width, height, styling, and motion remain the defaults. Phase 3
 adds independent, opt-in visual axes:
 
 ```python
-academic_lesson = visualize_lr(
+academic_dashboard = visualize_lr(
     model,
     X,
     y,
     theme="academic",
-    format="lesson",
+    format="dashboard",
     density="academic",
     size="notebook",
     responsive=True,
@@ -391,22 +391,29 @@ academic_lesson = visualize_lr(
 ```
 
 - `theme` controls color, typography, and line/marker styling: `classic`,
-  `academic`, `classroom`, `compact`, or `accessible`.
-- `format` controls composition: the existing `dashboard`, staged `lesson`,
-  space-conscious `compact`, or static final-state `report`.
+  `academic`, `classroom`, `compact`, or `accessible`. `classroom` remains a
+  backward-compatible alias of `academic`; use a canvas `size` instead of
+  enlarging axes and annotations.
+- `format` controls composition: interactive `dashboard`, space-conscious
+  `compact`, or static final-state `report`.
 - `density` is a compatible alias for tabular mathematical `detail`.
 - `size` accepts `default`, `compact`, `notebook`, `wide`, or `classroom`;
-  explicit `width` and `height` override the preset.
+  `classroom` is a compatibility alias of `wide`, and explicit `width` and
+  `height` override the preset.
 - `responsive=True` scales the selected composition. Choose another `format`
   when structural reflow is needed.
 - `reduced_motion=True` provides the exact final displayed state without
   playback controls.
 
-`dashboard`, `compact`, and `lesson` retain every selected animation frame.
-The lesson stages only change trace visibility; Play/Pause and fluid motion
-remain available. Only `report` and `reduced_motion` intentionally create a
-static view. The `accessible` theme uses marker symbols and line dashes in
-addition to color.
+`dashboard` and `compact` retain every selected animation frame, Play/Pause,
+and fluid motion. Prediction explanations keep their distinct Input,
+Substitution, Output, and Reset controls. Only `report` and `reduced_motion`
+intentionally create a static view. The `accessible` theme uses marker symbols
+and line dashes in addition to color.
+
+Equations, metric readouts, and prediction annotations are intentionally
+borderless. Fixed annotation rectangles do not resize reliably around MathJax
+or long numeric values; controls and legends retain their own backgrounds.
 
 Every resolved choice and token is inspectable in
 `figure.layout.meta["mlektic_visual"]`. `export_figure()` inherits responsive

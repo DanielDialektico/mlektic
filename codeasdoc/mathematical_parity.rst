@@ -97,8 +97,10 @@ The binary chain is
 
 ``classes_[1]`` is the positive class associated with the public binary
 coefficient vector. ``threshold`` must be strictly between zero and one. A
-custom threshold updates the indexed probability tick and the academic
-threshold geometry. Semantic class labels remain hidden unless
+custom threshold updates the numeric probability tick and the academic
+threshold geometry. Its short :math:`\tau` label is placed inside the plot or
+scene rather than appended to an axis tick, so it cannot collide with the
+probability-axis title. Semantic class labels remain hidden unless
 ``show_class_labels=True``; fitted label order is always stored in metadata.
 
 The binary log-loss maps targets through
@@ -145,7 +147,10 @@ The reconstructed raw-space prediction must equal the pipeline prediction.
 This covers recognized standard scaling and other numerically verified affine
 maps. If preprocessing is non-affine, such as polynomial feature expansion,
 Mlektic uses transformed-feature names from ``get_feature_names_out`` when
-available and explicitly refuses to claim a raw-space coefficient vector.
+available for auditable metadata and explicitly refuses to claim a raw-space
+coefficient vector. Descriptive ``feature_names`` label input axes only;
+equations retain canonical algebraic symbols such as :math:`x_1`,
+:math:`x_1^2`, and :math:`x_1x_2`.
 
 A polynomial pipeline is therefore still linear in its fitted coefficients
 and transformed features, but it need not be a straight line in the original

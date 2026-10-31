@@ -137,11 +137,10 @@ readouts across two fixed rows and places the omitted-layer count in a separate
 lower caption. The complete and displayed counts, row policy, and scope remain
 auditable through ``layout.meta`` in every frame.
 
-``visualize_nn_training`` always keeps its four metric plots visible. Even
-under ``format="lesson"`` it exposes only Play/Pause and the checkpoint slider;
-the generic Data/Model/Objective/Complete stage filter is intentionally not
-applied because hiding an individual training curve changes the comparison the
-figure is meant to teach.
+``visualize_nn_training`` always keeps its four metric plots visible and
+exposes only Play/Pause and the checkpoint slider. No generic trace filter is
+added because hiding an individual trace changes the comparison the figure is
+meant to teach.
 
 Use ``explain_nn_prediction`` when the lesson asks how one query is actually
 used. With the default ``parameter_state="final"``, Input, Substitution, and
