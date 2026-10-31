@@ -8,6 +8,10 @@ Unreleased — neural execution-graph foundation
 Added
 -----
 
+- fluid playback for animated figures: stepping and playing replay already
+  rendered equations instead of redrawing the figure and re-typesetting every
+  equation, with pixel-identical output (``fluid_playback`` on
+  ``show_optimized`` and ``export_figure``);
 - ``visualize_nn_hyperparameters`` and ``view="hyperparameters"`` now expose
   every detected effective module, optimizer-group, objective, and scheduler
   setting with its value, mathematical role, and PyTorch-aligned definition;

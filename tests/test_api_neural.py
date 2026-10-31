@@ -660,6 +660,16 @@ def test_neural_dashboard_exposes_only_training_controls(trained_small_network):
     assert not {"1 Data", "2 Model", "3 Objective", "4 Complete"}.intersection(labels)
 
 
+def test_neural_animation_mounts_fluid_playback(trained_small_network, monkeypatch):
+    import plotly.io as pio
+
+    _model, _X, history = trained_small_network
+    figure = visualize_nn_training(history, max_frames=3)
+    monkeypatch.setattr(pio.renderers, "default", "colab")
+
+    assert "window.__mlekticFluid.mount(" in figure._repr_mimebundle_()["text/html"]
+
+
 def test_training_keeps_four_panels_when_metrics_are_missing():
     history = {"steps": np.arange(3), "loss": np.asarray([1.0, 0.8, 0.6]), "metrics": {}}
     figure = visualize_nn_training(history)

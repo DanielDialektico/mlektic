@@ -12,12 +12,17 @@ Export and publishing
        include_mathjax="cdn",
        responsive=False,
        auto_play=False,
+       fluid_playback=True,
    )
 
 Inlining Plotly makes the interaction runtime offline-capable. The default
 MathJax CDN still needs network access to render equations; setting
 ``include_mathjax=False`` preserves LaTeX source but cannot promise rendered
 mathematics. Fully self-contained MathJax is not currently guaranteed.
+
+``fluid_playback`` (default ``True``) embeds the controller described in
+:doc:`animation_performance`, which steps and plays animated figures without
+re-typesetting their equations. The exported picture is identical either way.
 
 For static publication use ``format="report"`` or ``reduced_motion=True`` to
 select the exact final displayed state, then use Plotly's supported image export

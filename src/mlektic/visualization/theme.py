@@ -10,6 +10,7 @@ import re
 from typing import Any, Dict, List
 
 from .design import available_themes, theme_palette
+from .playback import attach_fluid_playback
 
 # ── colour palettes ─────────────────────────────────────────────
 
@@ -353,8 +354,12 @@ def attach_highlight(fig, *, theme: str | None = None):
     * ``fig`` as the last expression in a cell → ``_repr_html_()``
     * ``fig.show()`` → original show + ``IPython.display.HTML(script)``
 
+    Animated figures also get fluid playback (see
+    :func:`mlektic.visualization.playback.attach_fluid_playback`).
+
     Returns the same *fig* (mutated in-place) for convenience.
     """
+    attach_fluid_playback(fig)
     _script = get_button_highlight_script(theme=theme)
 
     # 1) Patch _repr_html_ (used when `fig` is the cell's last expression)

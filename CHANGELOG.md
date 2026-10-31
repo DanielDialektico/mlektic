@@ -16,6 +16,12 @@ All notable changes to this project will be documented in this file.
   the 1D/2D geometry, preventing it from colliding with probability-axis titles.
 
 ### Added
+- Added fluid playback for animated figures. Stepping the slider or playing no
+  longer redraws the whole figure and re-typesets every equation: equations
+  Plotly already rendered are replayed pixel-identically, remaining frames are
+  pre-rendered while the page is idle, and Play keeps its configured
+  ``frame_duration``. It is active in Colab, classic Jupyter, ``show_optimized``,
+  and ``export_figure``; both helpers accept ``fluid_playback=False``.
 - Added `visualize_nn_hyperparameters()` and `view="hyperparameters"`, an
   instance-based PyTorch contract that lists every detected effective module,
   optimizer-group, objective, and scheduler setting without row truncation,
