@@ -39,10 +39,9 @@ is drawn:
   equation nodes are kept;
 * later visits move the traces without a full redraw and put back those exact
   nodes, so equations, positions, and fonts are pixel-identical;
-* a hidden copy of the figure pre-renders the remaining frames while the page is
-  idle and pauses whenever the student interacts;
-* repeated MathJax output is cached, so equations shared across frames are
-  typeset once.
+* MathJax output is cached, and the equations of frames not shown yet are
+  typeset one at a time while the page is idle, pausing whenever the student
+  interacts, so a first visit only waits for Plotly's redraw.
 
 The slider and Play/Pause stay Plotly's own controls. Plotly's ``execute: false``
 attribute hands their commands to the controller while Plotly keeps drawing

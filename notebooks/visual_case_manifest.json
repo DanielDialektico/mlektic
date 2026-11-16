@@ -286,25 +286,53 @@
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
       "cell_index": 17
     },
+    "MOTION-FLUID-LINEAR-HYBRID": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 21
+    },
+    "MOTION-FLUID-LOGISTIC-MULTICLASS": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 23
+    },
+    "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 25
+    },
+    "MOTION-FLUID-LOGISTIC-5D": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 27
+    },
+    "MOTION-FLUID-LOGISTIC-3D": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 29
+    },
+    "MOTION-FLUID-NN-ACTIVATIONS": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 31
+    },
+    "MOTION-FLUID-EXPORT": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 33
+    },
     "MOTION-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 20
+      "cell_index": 36
     },
     "MOTION-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 22
+      "cell_index": 38
     },
     "MOTION-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 24
+      "cell_index": 40
     },
     "MOTION-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 26
+      "cell_index": 42
     },
     "MOTION-SIZE-CLASSROOM": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 28
+      "cell_index": 44
     },
     "STYLE-THEME-CLASSIC": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
@@ -1008,7 +1036,10 @@
     ],
     "codeasdoc/animation_performance.rst": [
       "MOTION-FRAME-STEP",
-      "MOTION-NATIVE-SLOW"
+      "MOTION-NATIVE-SLOW",
+      "MOTION-FLUID-LOGISTIC-MULTICLASS",
+      "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY",
+      "MOTION-FLUID-LOGISTIC-3D"
     ],
     "codeasdoc/visual_design.rst": [
       "STYLE-THEME-ACADEMIC",
@@ -1025,7 +1056,8 @@
     ],
     "codeasdoc/export.rst": [
       "STYLE-RESPONSIVE",
-      "NN-REPORT"
+      "NN-REPORT",
+      "MOTION-FLUID-EXPORT"
     ],
     "codeasdoc/gallery.rst": [
       "SMOKE-LR-2D",

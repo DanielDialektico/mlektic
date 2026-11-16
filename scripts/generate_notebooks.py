@@ -1230,9 +1230,9 @@ display(visualize_nn_architecture(large_model,large_input[:1],history=large_hist
 
 def build_motion() -> None:
     imports = """\
-from IPython.display import display
-from mlektic import visualize_lr, visualize_logistic
-from notebooks._support import case_heading, binary_case, linear_case
+from IPython.display import HTML, display
+from mlektic import export_figure, show_optimized, visualize_logistic, visualize_lr, visualize_nn
+from notebooks._support import case_heading, binary_case, linear_case, multiclass_case, torch_xor_case
 linear = linear_case(1,estimator='sgd')
 logistic = binary_case(1,estimator='sgd')
 """
@@ -1285,6 +1285,88 @@ complete composition and its temporal controls.
     ]
     for item in cases:
         cells.extend(case(*item))
+    cells.append(
+        markdown("""
+## Fluid playback
+
+These figures use the settings that give the smoothest playback: `steps=60`,
+`max_frames=60`, and `frame_duration=80` (the library defaults; the transition
+is derived from the duration), plus hybrid interpolation at `fps=35` where it
+exists (1D linear). Drag the slider and press Play. Steps should follow the
+pointer, Play should keep its configured pace, and every equation must look
+exactly like the Plotly-playback cell, only faster. The first visit to a step
+still redraws the figure (equations are typeset ahead while the figure is
+idle); every later visit replays it.
+
+`show_optimized` is used on purpose: JupyterLab and VS Code display plain
+figures through Plotly's mimetype extension, which keeps Plotly's own playback.
+Colab, classic Jupyter, `show_optimized`, and exported HTML run the fluid
+controller. The exported files opened in Chrome are the reference check.
+""")
+    )
+    cells.append(
+        code("""
+fluid_linear = visualize_lr(linear.model,linear.X,linear.y,steps=60,max_frames=60,animation_mode='hybrid',interpolation_frames=3,fps=35)
+multiclass = multiclass_case(1)
+fluid_multiclass = visualize_logistic(multiclass.model,multiclass.X,multiclass.y,steps=60,max_frames=60,frame_duration=80)
+multiclass_5d = multiclass_case(5)
+fluid_multiclass_5d = visualize_logistic(multiclass_5d.model,multiclass_5d.X,multiclass_5d.y,steps=60,max_frames=60,frame_duration=80)
+multiclass_3d = multiclass_case(2)
+fluid_multiclass_3d = visualize_logistic(multiclass_3d.model,multiclass_3d.X,multiclass_3d.y,steps=60,max_frames=60,frame_duration=80)
+""")
+    )
+    fluid_cases = [
+        (
+            "MOTION-FLUID-LINEAR-HYBRID",
+            "hybrid 1D linear playback at 35 fps with fluid stepping",
+            "display(show_optimized(fluid_linear))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-MULTICLASS",
+            "multiclass equations change on every step without re-typesetting delay",
+            "display(show_optimized(fluid_multiclass))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY",
+            "the same figure with Plotly playback: identical picture, slower steps",
+            "display(show_optimized(fluid_multiclass,fluid_playback=False))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-5D",
+            "five-feature multiclass equations stepping fluidly",
+            "display(show_optimized(fluid_multiclass_5d))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-3D",
+            "3D surface steps: equations are instant, the WebGL surface still rebuilds",
+            "display(show_optimized(fluid_multiclass_3d))",
+        ),
+        (
+            "MOTION-FLUID-NN-ACTIVATIONS",
+            "neural activation equations stepping fluidly across 20 checkpoints",
+            """\
+xor_model,xor_X,xor_history = torch_xor_case(steps=40)
+display(show_optimized(visualize_nn(xor_model,xor_X[:1],history=xor_history,view='activations',max_frames=20)))""",
+        ),
+        (
+            "MOTION-FLUID-EXPORT",
+            "exported HTML pairs to open in Chrome: fluid controller versus Plotly playback",
+            """\
+out = ROOT/'build'/'qa-fluid'
+exported = [
+    export_figure(fluid_multiclass,out/'multiclass-fluid.html'),
+    export_figure(fluid_multiclass,out/'multiclass-plotly.html',fluid_playback=False),
+    export_figure(fluid_multiclass_3d,out/'multiclass-3d-fluid.html'),
+    export_figure(fluid_multiclass_3d,out/'multiclass-3d-plotly.html',fluid_playback=False),
+]
+for path in exported:
+    print(path)
+links = ''.join(f'<li><a href="{path.as_uri()}" target="_blank">{path.name}</a></li>' for path in exported)
+display(HTML(f'<ul>{links}</ul>'))""",
+        ),
+    ]
+    for item in fluid_cases:
+        cells.extend(case(*item))
     add_size_coverage(
         cells,
         "MOTION",
@@ -1292,7 +1374,7 @@ complete composition and its temporal controls.
     )
     notebook(
         "QA 04 — motion and temporal semantics",
-        "Playback controls, decimation, smoothing, complete dashboard composition, and static accessibility modes.",
+        "Playback controls, decimation, smoothing, fluid playback, complete dashboard composition, and static accessibility modes.",
         cells,
         "qa/qa_04_motion.ipynb",
     )
@@ -2601,7 +2683,13 @@ def build_manifest() -> None:
         "codeasdoc/history_semantics.rst": ["MOTION-NATIVE-SLOW", "MOTION-HYBRID-FLUID"],
         "codeasdoc/mathematical_parity.rst": ["LR-PIPE-ORIGINAL", "LOG-BINARY-THRESHOLD"],
         "codeasdoc/mathematical_conventions.rst": ["LR-POLYNOMIAL", "LOG-MULTI-FOCUS"],
-        "codeasdoc/animation_performance.rst": ["MOTION-FRAME-STEP", "MOTION-NATIVE-SLOW"],
+        "codeasdoc/animation_performance.rst": [
+            "MOTION-FRAME-STEP",
+            "MOTION-NATIVE-SLOW",
+            "MOTION-FLUID-LOGISTIC-MULTICLASS",
+            "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY",
+            "MOTION-FLUID-LOGISTIC-3D",
+        ],
         "codeasdoc/visual_design.rst": ["STYLE-THEME-ACADEMIC", "STYLE-FORMAT-DASHBOARD"],
         "codeasdoc/themes_formats_sizes.rst": ["STYLE-THEME-ACCESSIBLE", "STYLE-SIZE-CLASSROOM"],
         "codeasdoc/prediction_explanations.rst": [
@@ -2609,7 +2697,7 @@ def build_manifest() -> None:
             "LR-PRED-10D-STAGES",
             "LOG-PRED-BINARY",
         ],
-        "codeasdoc/export.rst": ["STYLE-RESPONSIVE", "NN-REPORT"],
+        "codeasdoc/export.rst": ["STYLE-RESPONSIVE", "NN-REPORT", "MOTION-FLUID-EXPORT"],
         "codeasdoc/gallery.rst": [
             "SMOKE-LR-2D",
             "SMOKE-LOG-MULTI-2D",

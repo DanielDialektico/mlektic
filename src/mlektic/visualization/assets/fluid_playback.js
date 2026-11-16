@@ -8,9 +8,9 @@
  *    and the rendered <g class="annotation"> nodes are kept.
  * 2. Later visits move trace data with a redraw-free animate and put those exact
  *    nodes back, so equations are pixel-identical and MathJax does not run.
- * 3. A hidden twin plot pre-renders the remaining frames while the page is idle.
- * 4. MathJax output is memoised, so equations that repeat across frames are
- *    typeset once.
+ * 3. MathJax output is memoised, and the equations of frames not shown yet are
+ *    typeset one at a time while the page is idle, so a first visit replays
+ *    MathJax's own output instead of waiting for it.
  *
  * The slider and Play/Pause stay Plotly's own controls: `execute: false` (a
  * documented Plotly attribute) hands their commands to this controller while
@@ -24,6 +24,11 @@
 
   var GL = { surface: 1, scatter3d: 1, mesh3d: 1, volume: 1, isosurface: 1, scattergl: 1, cone: 1, streamtube: 1 };
   var CAMERA_ONLY = /^(scene\d*(\.|$)|dragmode$|hovermode$)/;
+  // Typesetting ahead waits until the student has left the figure alone for
+  // this long, so it never queues MathJax work in front of a visible step.
+  var QUIET_MS = 1000;
+  var INLINE_MATH = [["$", "$"], ["\\(", "\\)"]];
+  var FIND_TEX = /([^$]*)([$]+[^$]*[$]+)([^$]*)/;
   function idle(cb) {
     return window.requestIdleCallback ? window.requestIdleCallback(cb, { timeout: 1000 }) : setTimeout(cb, 1);
   }
@@ -74,6 +79,45 @@
     }, 25);
   }
 
+  // The key Plotly's initiate step produces: integer font size and the TeX
+  // source with angle brackets escaped (svg_text_utils texToSVG).
+  function texJob(text, size) {
+    var m = typeof text === "string" && text.match(FIND_TEX);
+    if (!m || !size) return null;
+    var tex = m[2].replace(/(<|&lt;|&#60;)/g, "\\lt ").replace(/(>|&gt;|&#62;)/g, "\\gt ");
+    var px = parseInt(size, 10);
+    return { size: px, tex: tex, key: px + "px|" + tex };
+  }
+  // Typeset one equation through MathJax's queue with Plotly's settings and
+  // keep the output under Plotly's key.
+  var aheadCount = 0;
+  function typesetAhead(job, done) {
+    var MJ = window.MathJax, H = MJ.Hub, cache = MJ.__mlekticCache;
+    if (cache.has(job.key)) { done(); return; }
+    var div = document.createElement("div"), saved;
+    div.id = "mlektic-math-ahead-" + (++aheadCount);
+    div.style.visibility = "hidden";
+    div.style.position = "absolute";
+    div.style.fontSize = job.size + "px";
+    div.textContent = job.tex;
+    document.body.appendChild(div);
+    H.Queue(function () {
+      saved = { delay: H.processSectionDelay, config: {
+        messageStyle: H.config.messageStyle,
+        tex2jax: { inlineMath: H.config.tex2jax && H.config.tex2jax.inlineMath },
+        displayAlign: H.config.displayAlign,
+      } };
+      if (H.processSectionDelay !== undefined) H.processSectionDelay = 0;
+      return H.Config({ messageStyle: "none", tex2jax: { inlineMath: INLINE_MATH }, displayAlign: "left" });
+    }, ["Typeset", H, div], function () {
+      if (div.querySelector(".MathJax_SVG") && !cache.has(job.key)) cache.set(job.key, div.innerHTML);
+      div.remove();
+    }, function () {
+      if (saved.delay !== undefined) H.processSectionDelay = saved.delay;
+      return H.Config(saved.config);
+    }, done);
+  }
+
   // ── frame helpers ───────────────────────────────────────────────────────
   function opts(redraw, ms) {
     return { mode: "immediate", frame: { duration: 0, redraw: redraw }, transition: { duration: ms || 0, easing: "linear" } };
@@ -104,16 +148,6 @@
       else out[path] = x;
     });
     return out;
-  }
-  function clone(x) {
-    if (Array.isArray(x)) return x.map(clone);
-    if (ArrayBuffer.isView(x)) return x.slice();
-    if (x && typeof x === "object") {
-      var out = {};
-      Object.keys(x).forEach(function (k) { out[k] = clone(x[k]); });
-      return out;
-    }
-    return x;
   }
   // WebGL traces cannot move without a replot. Replot once with MathJax off so
   // the equations are not re-typeset; the cached nodes are swapped in after.
@@ -221,8 +255,15 @@
     var names = frames.map(function (f) { return String(f.name); });
     var play = playSettings(gd);
     var token = 0, busy = false, pendingName = null, playing = false;
-    var generation = 0, warmTimer = null, warming = false;
+    var generation = 0;
     var size = sizeKey();
+    var lastInput = -Infinity;
+    function touched(e) {
+      if (e.type !== "pointermove" || e.buttons) lastInput = performance.now();
+    }
+    ["pointerdown", "pointermove", "wheel", "keydown", "touchstart"].forEach(function (type) {
+      gd.addEventListener(type, touched, { capture: true, passive: true });
+    });
 
     function sizeKey() { return gd._fullLayout.width + "x" + gd._fullLayout.height; }
     // Cached nodes hold pixel positions, so anything that can move an
@@ -230,9 +271,6 @@
     function invalidate() {
       cache.clear();
       generation++;
-      if (options.prewarm === false) return;
-      clearTimeout(warmTimer);
-      warmTimer = setTimeout(function () { idle(prewarm); }, 400);
     }
     function checkSize() {
       var k = sizeKey();
@@ -330,58 +368,36 @@
     });
     gd.on("plotly_restyle", invalidate);
 
-    function prewarm() {
-      if (warming) { clearTimeout(warmTimer); warmTimer = setTimeout(function () { idle(prewarm); }, 400); return; }
-      var gen = generation;
-      var todo = frames.filter(function (f) { return hasAnnotations(f) && eligible(gd, f) && !cache.has(String(f.name)); });
-      if (!todo.length || !document.body.contains(gd)) return;
-      warming = true;
-      var twin = document.createElement("div");
-      twin.setAttribute("aria-hidden", "true");
-      twin.style.cssText = "position:absolute;left:-20000px;top:0;visibility:hidden;pointer-events:none;width:" +
-        gd._fullLayout.width + "px;height:" + gd._fullLayout.height + "px";
-      document.body.appendChild(twin);
-      var mainUid = gd._fullLayout._uid;
-      function finish() {
-        try { Plotly.purge(twin); } catch (err) { /* already gone */ }
-        twin.remove();
-        warming = false;
-      }
-      // The twin keeps every trace so legend and margins, and therefore
-      // annotation positions, match the main plot. Its frames carry the
-      // annotations plus 2D trace data (which can move axis-referenced
-      // annotations); WebGL data does not affect them and is skipped.
-      function twinFrame(f) {
-        var out = { name: f.name, layout: { annotations: f.layout.annotations } };
-        var data = [], traces = [];
-        (f.data || []).forEach(function (d, j) {
-          if (!isGL(gd, f, j)) { data.push(d); traces.push(traceIndex(f, j)); }
+    // Every distinct equation in the frames, in frame order, under the font
+    // size Plotly will use for it.
+    function texJobs() {
+      var fl = gd._fullLayout, base = fl.annotations || [], seen = {}, jobs = [];
+      frames.forEach(function (f) {
+        if (!hasAnnotations(f)) return;
+        f.layout.annotations.forEach(function (a, i) {
+          var size = (a.font && a.font.size) || (base[i] && base[i].font && base[i].font.size) || fl.font.size;
+          var job = texJob(a.text, size);
+          if (job && !seen[job.key]) { seen[job.key] = 1; jobs.push(job); }
         });
-        if (data.length) { out.data = data; out.traces = traces; }
-        return out;
-      }
-      var context = Object.assign({}, gd._context, { responsive: false });
-      Plotly.newPlot(twin, clone(gd.data), clone(gd.layout), context)
-        .then(function () { return Plotly.addFrames(twin, todo.map(twinFrame)); })
-        .then(function () {
-          var twinUid = twin._fullLayout._uid, i = 0;
-          (function next() {
-            if (gen !== generation || i >= todo.length || !document.body.contains(gd)) { finish(); return; }
-            // Never compete with the student for the main thread.
-            if (playing || busy || stockAnimating()) { setTimeout(next, 120); return; }
-            var f = todo[i++], name = String(f.name);
-            if (cache.has(name)) { idle(next); return; }
-            Plotly.animate(twin, [f.name], opts(true, 0)).then(function () {
-              if (gen === generation && !cache.has(name)) {
-                var snap = harvest(twin, f);
-                Object.keys(snap).forEach(function (k) { snap[k] = snap[k].split(twinUid).join(mainUid); });
-                cache.set(name, snap);
-              }
-              idle(next);
-            }, finish);
-          })();
-        })
-        .catch(finish);
+      });
+      return jobs;
+    }
+    function prewarm() {
+      if (gd._context.typesetMath === false || !window.MathJax) return;
+      var jobs = texJobs(), i = 0, waits = 0;
+      (function next() {
+        if (i >= jobs.length || !document.body.contains(gd)) return;
+        if (!window.MathJax.__mlekticCache) {
+          if (++waits < 50) setTimeout(next, 200);
+          return;
+        }
+        // Never queue MathJax work in front of something the student sees.
+        if (playing || busy || stockAnimating() || performance.now() - lastInput < QUIET_MS) {
+          setTimeout(next, 200);
+          return;
+        }
+        typesetAhead(jobs[i++], function () { idle(next); });
+      })();
     }
 
     var api = { apply: apply, request: request, prewarm: prewarm, cache: cache, play: startPlayback, stop: stop };

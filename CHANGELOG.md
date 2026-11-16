@@ -18,8 +18,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Added fluid playback for animated figures. Stepping the slider or playing no
   longer redraws the whole figure and re-typesets every equation: equations
-  Plotly already rendered are replayed pixel-identically, remaining frames are
-  pre-rendered while the page is idle, and Play keeps its configured
+  Plotly already rendered are replayed pixel-identically, equations of frames
+  not shown yet are typeset while the page is idle, and Play keeps its configured
   ``frame_duration``. It is active in Colab, classic Jupyter, ``show_optimized``,
   and ``export_figure``; both helpers accept ``fluid_playback=False``.
 - Added `visualize_nn_hyperparameters()` and `view="hyperparameters"`, an
