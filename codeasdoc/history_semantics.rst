@@ -52,11 +52,12 @@ Timeline quantities
 ``T``
    Training updates reported or captured by the training process, when known.
 
-``K``
+``H``
    Semantic checkpoints constructed or recorded before display sampling.
+   (``K`` is reserved for the number of classes.)
 
 ``N``
-   Checkpoints retained for display after sampling, with ``N <= K``.
+   Checkpoints retained for display after sampling, with ``N <= H``.
 
 ``q``
    Perceptual intervals inserted between displayed checkpoints.
@@ -65,7 +66,7 @@ Timeline quantities
    Rendered frames. In a simple hybrid animation,
    ``F = (N - 1) q + 1``.
 
-Only K and N describe semantic model states. Perceptual frames improve visual
+Only H and N describe semantic model states. Perceptual frames improve visual
 continuity but are not additional training events.
 
 Payload contract
@@ -95,7 +96,7 @@ Payload contract
    #   "warnings": [...],
    # }
 
-``step_indices`` in metadata describes all K source coordinates.
+``step_indices`` in metadata describes all H source coordinates.
 ``displayed_step_indices`` describes the retained N coordinates. The slider
 uses retained source coordinates rather than renumbering them ``0..N-1``.
 ``state_origins`` prevents the exact fitted endpoint from being described as a

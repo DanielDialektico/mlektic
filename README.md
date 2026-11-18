@@ -479,6 +479,10 @@ sphinx-build -W -b html codeasdoc codeasdoc/_build/html
 
 Canonical new documentation, docstrings, error messages, tests, and planning records are English-first.
 
+The course notation reference, in Spanish, is `course/notacion_matematica.html`:
+a standalone page that defines every symbol the figures use and where each one
+appears. Open it in any browser.
+
 ## Contributing
 
 Before adding a visual feature:

@@ -838,7 +838,7 @@ def _linear_objective_relation(estimator: Any) -> str:
 def _update_rule_contract(estimator: Any, history_source: str | None) -> dict[str, Any]:
     incremental = hasattr(estimator, "partial_fit")
     return {
-        "canonical": "theta^(t+1) = theta^t - eta_t grad J(theta^t)",
+        "canonical": "theta_t = theta_{t-1} - eta_t grad J(theta_{t-1})",
         "shown_as_exact_estimator_rule": False,
         "reason": (
             "The canonical gradient update is a teaching reference; estimator-private scheduling, batching, "

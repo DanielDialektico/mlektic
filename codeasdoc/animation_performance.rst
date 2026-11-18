@@ -5,12 +5,12 @@ Animation and performance semantics
 Five quantities must remain distinct:
 
 * ``T`` — actual or estimator-reported training updates, when known;
-* ``K`` — semantic checkpoints recorded or constructed;
+* ``H`` — semantic checkpoints recorded or constructed (``K`` is the number of classes);
 * ``N`` — checkpoints retained for display;
 * ``q`` — perceptual intervals inserted between retained checkpoints;
 * ``F`` — Plotly frames, which are not additional optimizer updates.
 
-``steps`` controls K. ``max_frames`` bounds N by uniform endpoint-preserving
+``steps`` controls H. ``max_frames`` bounds N by uniform endpoint-preserving
 sampling. When ``max_frames=None``, ``frame_step`` applies a source-position
 stride. Hybrid one-dimensional linear animation uses ``interpolation_frames``
 or ``fps`` to improve motion between semantic checkpoints.

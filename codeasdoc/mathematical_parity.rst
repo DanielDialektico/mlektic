@@ -92,13 +92,14 @@ The binary chain is
 .. math::
 
    z_i=\theta_0+\mathbf{x}_i^\top\boldsymbol{\theta},\qquad
-   p_i=\sigma(z_i),\qquad
-   \hat y_i=\begin{cases}c_1,&p_i\ge\tau\\c_0,&p_i<\tau.\end{cases}
+   \hat p_i=\sigma(z_i),\qquad
+   \hat y_i=\begin{cases}c_1,&\hat p_i\ge\tau\\c_0,&\hat p_i<\tau.\end{cases}
 
 ``classes_[1]`` is the positive class associated with the public binary
 coefficient vector. ``threshold`` must be strictly between zero and one. A
-custom threshold updates the numeric probability tick and the academic
-threshold geometry. Its short :math:`\tau` label is placed inside the plot or
+custom threshold updates the numeric probability tick, the academic threshold
+geometry, and the Accuracy and F1 cards, which always describe the displayed
+decision. Its short :math:`\tau` label is placed inside the plot or
 scene rather than appended to an axis tick, so it cannot collide with the
 probability-axis title. Semantic class labels remain hidden unless
 ``show_class_labels=True``; fitted label order is always stored in metadata.
@@ -115,7 +116,7 @@ For class column :math:`k`,
 
 .. math::
 
-   z_k(\mathbf{x})=b_k+\mathbf{x}^\top\mathbf{w}_k.
+   z_k(\mathbf{x})=\theta_{0,k}+\sum_{j=1}^{d}\theta_{j,k}x_j.
 
 The resolved link is either Softmax or normalized one-vs-rest sigmoid. Every
 reconstructed probability vector is checked against ``predict_proba``. The
@@ -140,12 +141,15 @@ and converts final coefficients back to original units:
 
 .. math::
 
-   \mathbf{w}_{o}=A^\top\mathbf{w}_{m},\qquad
-   b_o=b_m+\mathbf{c}^\top\mathbf{w}_{m}.
+   \boldsymbol{\theta}_{o}=A^\top\boldsymbol{\theta}_{m},\qquad
+   \theta_{0,o}=\theta_{0,m}+\mathbf{c}^\top\boldsymbol{\theta}_{m}.
 
 The reconstructed raw-space prediction must equal the pipeline prediction.
 This covers recognized standard scaling and other numerically verified affine
-maps. If preprocessing is non-affine, such as polynomial feature expansion,
+maps. Prediction explainers apply the same verified per-feature map
+(StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler, or a chain of them)
+and refuse, with an explicit message, pipelines whose preprocessing mixes
+features or is nonlinear. If preprocessing is non-affine, such as polynomial feature expansion,
 Mlektic uses transformed-feature names from ``get_feature_names_out`` when
 available for auditable metadata and explicitly refuses to claim a raw-space
 coefficient vector. Descriptive ``feature_names`` label input axes only;

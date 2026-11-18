@@ -111,10 +111,10 @@ def _latex_value(value: Any) -> str:
 def _reduction_formula(value: Any) -> str:
     normalized = str(value).lower()
     if normalized == "sum":
-        return r"\mathcal{L}=\sum_{n=1}^{N}\ell_n"
+        return r"\mathcal{L}=\sum_{n=1}^{N}l_n"
     if normalized == "none":
-        return r"\mathcal{L}=(\ell_1,\ldots,\ell_N)"
-    return r"\mathcal{L}=\frac{1}{N}\sum_{n=1}^{N}\ell_n"
+        return r"\mathcal{L}=(l_1,\ldots,l_N)"
+    return r"\mathcal{L}=\frac{1}{N}\sum_{n=1}^{N}l_n"
 
 
 def _definition(scope: str, type_name: str, name: str, value: Any) -> HyperparameterItem:
@@ -267,10 +267,10 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
     }
     loss_definitions = {
         "reduction": (_reduction_formula(value), "Reduction applied to unreduced sample losses."),
-        "weight": (r"\ell_n\leftarrow w_{y_n}\ell_n", "Optional sample/class rescaling tensor."),
-        "pos_weight": (r"\ell^+\leftarrow p_c\ell^+", "Positive-class term rescaling for binary logits."),
+        "weight": (r"l_n\leftarrow w_{y_n}l_n", "Optional sample/class rescaling tensor."),
+        "pos_weight": (r"l^+\leftarrow p_c\,l^+", "Positive-class term rescaling for binary logits."),
         "ignore_index": (
-            r"\ell_n=0\quad\text{when }y_n=i_{ignore}",
+            r"l_n=0\quad\text{when }y_n=i_{ignore}",
             "Target index omitted from loss and mean denominator.",
         ),
         "label_smoothing": (
@@ -278,10 +278,10 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
             "Mixes the target with a uniform class distribution.",
         ),
         "beta": (
-            r"\ell(r)=\frac{r^2}{2\beta}\;\text{if }|r|<\beta,\;|r|-\frac{\beta}{2}\;\text{otherwise}",
+            r"l(r)=\frac{r^2}{2\beta}\;\text{if }|r|<\beta,\;|r|-\frac{\beta}{2}\;\text{otherwise}",
             "Smooth-L1 quadratic-to-linear transition.",
         ),
-        "margin": (r"\ell=\max(0,m-y\,s)", "Required separation margin."),
+        "margin": (r"l=\max(0,m-y\,s)", "Required separation margin."),
     }
     scheduler_definitions = {
         "step_size": (r"\eta_t=\eta_0\gamma^{\lfloor t/s\rfloor}", "Number of epochs between StepLR decays."),
@@ -414,15 +414,15 @@ def _loss_operation(name: str, configuration: Mapping[str, Any] | None = None) -
     weighted = configuration.get("weight") is not None
     class_weight = r"w_{y_n}" if weighted else ""
     formulas = {
-        "MSELoss": r"\ell_n=(y_n-\widehat y_n)^2",
-        "L1Loss": r"\ell_n=|y_n-\widehat y_n|",
-        "BCELoss": r"\ell_n=-[y_n\ln\hat{p}_n+(1-y_n)\ln(1-\hat{p}_n)]",
-        "BCEWithLogitsLoss": r"\ell_n=-[y_n\ln\sigma(z_n)+(1-y_n)\ln(1-\sigma(z_n))]",
+        "MSELoss": r"l_n=(y_n-\widehat y_n)^2",
+        "L1Loss": r"l_n=|y_n-\widehat y_n|",
+        "BCELoss": r"l_n=-[y_n\ln\hat{p}_n+(1-y_n)\ln(1-\hat{p}_n)]",
+        "BCEWithLogitsLoss": r"l_n=-[y_n\ln\sigma(z_n)+(1-y_n)\ln(1-\sigma(z_n))]",
         "CrossEntropyLoss": (
-            rf"\ell_n=-{class_weight}\ln\frac{{e^{{z_{{n,y_n}}}}}}{{\sum_{{r=0}}^{{K-1}}e^{{z_{{n,r}}}}}}"
+            rf"l_n=-{class_weight}\ln\frac{{e^{{z_{{n,y_n}}}}}}{{\sum_{{r=0}}^{{K-1}}e^{{z_{{n,r}}}}}}"
         ),
-        "NLLLoss": rf"\ell_n=-{class_weight}\,x_{{n,y_n}}",
-        "SmoothL1Loss": r"\ell_n=\operatorname{smooth}_{\beta}(y_n-\widehat y_n)",
+        "NLLLoss": rf"l_n=-{class_weight}\,x_{{n,y_n}}",
+        "SmoothL1Loss": r"l_n=\operatorname{smooth}_{\beta}(y_n-\widehat y_n)",
     }
     return formulas.get(name, r"\mathcal{L}=\operatorname{objective}(\widehat y,y;\mathcal{H})")
 
@@ -445,7 +445,7 @@ def _weighted_reduction(
     """With class weights, PyTorch's mean divides by the summed target weights, not by N."""
     if configuration.get("weight") is None or str(configuration.get("reduction", "mean")).lower() != "mean":
         return items
-    weighted_mean = r"\mathcal{L}=\frac{\sum_{n}\ell_n}{\sum_{n}w_{y_n}}"
+    weighted_mean = r"\mathcal{L}=\frac{\sum_{n}l_n}{\sum_{n}w_{y_n}}"
     return [
         replace(item, mathematics=weighted_mean) if item.name == "reduction" else item
         for item in items
