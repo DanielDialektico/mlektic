@@ -225,7 +225,7 @@ def build_nn_architecture_figure(
             f"{name}:{shape_tex(shape, drop_batch=False)}" for name, shape in layer["parameter_shapes"].items()
         )
         symbol = {
-            "learnable": r"$W,b$",
+            "learnable": r"$\Theta,\boldsymbol{\theta}_0$",
             "activation": r"$\phi$",
             "regularization": r"$m$",
             "reshape": r"$\operatorname{shape}$",

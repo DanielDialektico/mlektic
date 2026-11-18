@@ -94,7 +94,7 @@ def _binary_result_tex(p_hat, y_hat, classes, dec):
         r"$\begin{aligned}"
         rf"\hat{{\mathbf{{p}}}} &=(\hat{{p}}_0,\hat{{p}}_1)="
         rf"({_fmt(1.0 - p_hat, dec)},\,{_fmt(p_hat, dec)})\\"
-        rf"\hat{{y}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}"
+        rf"\hat{{k}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}"
         r"\end{aligned}$"
     )
 

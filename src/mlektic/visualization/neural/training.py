@@ -81,6 +81,24 @@ def _stable_range(values: Sequence[np.ndarray], padding: float = 0.08) -> list[f
     return [low - padding * span, high + padding * span]
 
 
+
+_METRIC_LABELS = {
+    "mse": "MSE",
+    "mae": "MAE",
+    "r2": "R²",
+    "accuracy": "Accuracy",
+    "precision": "Precision",
+    "recall": "Recall",
+    "f1": "F1",
+}
+
+
+def _metric_label(name: str) -> str:
+    """Display name of a recorded metric: acronyms upper-case, R² with its square."""
+    key = str(name).lower()
+    return _METRIC_LABELS.get(key, str(name).replace("_", " ").capitalize())
+
+
 def _metric_annotation(step: int, loss: float, metrics: Sequence[tuple[str, float]]) -> Dict[str, Any]:
     parts = [rf"t={step}", rf"\mathcal{{L}}={loss:.5f}"]
     parts.extend(rf"\mathrm{{{name}}}={value:.4f}" for name, value in metrics if np.isfinite(value))
@@ -114,9 +132,9 @@ def build_nn_training_figure(
     ][:max_metrics]
     if not np.isfinite(loss).any() and not metrics:
         raise ValueError("History needs a loss or at least one performance metric.")
-    metric_titles = [name.replace("_", " ").title() for name, _ in metrics]
+    metric_titles = [_metric_label(name) for name, _ in metrics]
     metric_titles.extend(["Metric not recorded"] * (3 - len(metric_titles)))
-    subplot_titles = [r"Recorded loss: $\mathcal{L}_t$", *metric_titles]
+    subplot_titles = [r"$\text{Recorded loss: }\mathcal{L}_t$", *metric_titles]
     figure = make_subplots(
         rows=2,
         cols=2,
@@ -278,7 +296,7 @@ def build_nn_training_figure(
         figure.update_yaxes(range=loss_range, row=1, col=1)
     for (name, values), (metric_row, metric_column) in zip(metrics, metric_positions):
         figure.update_yaxes(
-            title_text=name.replace("_", " "),
+            title_text=_metric_label(name),
             gridcolor=NEURAL_COLORS["grid"],
             row=metric_row,
             col=metric_column,
@@ -290,11 +308,18 @@ def build_nn_training_figure(
 
 
 def _parameter_symbol(name: str, array: np.ndarray, index: int) -> str:
+    """Course notation: Theta for weight matrices, bold theta_0 for biases.
+
+    A one-dimensional ``weight`` belongs to a normalization layer: it scales
+    each channel (gamma), so it is not written as a weight matrix.
+    """
     if name.endswith(".weight"):
-        base = "W" if array.ndim <= 2 else "K"
+        if array.ndim == 1:
+            return rf"\boldsymbol{{\gamma}}^{{({index})}}_t"
+        base = r"\Theta" if array.ndim == 2 else "K"
         return rf"{base}^{{({index})}}_t"
     if name.endswith(".bias"):
-        return rf"\mathbf{{b}}^{{({index})}}_t"
+        return rf"\boldsymbol{{\theta}}^{{({index})}}_{{0,t}}"
     return rf"\theta^{{({index})}}_{{\mathrm{{{name.replace('.', '_')}}},t}}"
 
 
@@ -431,6 +456,8 @@ def _weight_annotations(
         role = (
             r"\text{rows }\leftrightarrow\text{ output units; columns }\leftrightarrow\text{ input coordinates}"
             if array.ndim >= 2
+            else r"\text{one multiplicative scale per channel}"
+            if name.endswith(".weight")
             else r"\text{one additive offset per output unit}"
         )
         annotations.append(

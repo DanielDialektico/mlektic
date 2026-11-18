@@ -263,7 +263,7 @@ def build_binary_simple_logistic_figure(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
             annotations=[formula_annotation(), eq_annotation(0)] + metrics_annotations(0),
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.985, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.985, y=0.30, yanchor="middle", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, theme=theme),
         )

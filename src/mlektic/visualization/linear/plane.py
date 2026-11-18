@@ -332,7 +332,7 @@ def build_plane_lr_figure(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
             annotations=[theta_formula_annotation(), eq_annotation(0)],
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.84, y=0.05, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.84, y=0.97, yanchor="top", theme=theme)),
             scene=dict(
                 xaxis=dict(title="x₁", range=x1_range),
                 yaxis=dict(title="x₂", range=x2_range),

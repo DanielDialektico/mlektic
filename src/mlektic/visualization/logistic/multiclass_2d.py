@@ -408,7 +408,19 @@ def build_multiclass_2d_logistic_figure(
         fig.data[-1].update(legend="legend2")
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], domain=[0.70, 1.0], row=2, col=2)
         fig.update_yaxes(range=[lmin - lpad, lmax + lpad], domain=[0.0, 0.30], row=2, col=2)
-        fig.update_layout(scene=dict(domain=dict(x=[0.64, 1.0], y=[0.42, 1.0])))
+        # The short scene is limited by its height, so narrowing it costs little
+        # and frees the right edge for the class legend, which otherwise
+        # covered the surfaces. Smaller axis type keeps long feature names apart.
+        small = dict(font=dict(size=10))
+        fig.update_layout(
+            scene=dict(
+                domain=dict(x=[0.62, 0.86], y=[0.40, 1.0]),
+                xaxis=dict(title=small, tickfont=dict(size=9)),
+                yaxis=dict(title=small, tickfont=dict(size=9)),
+                zaxis=dict(title=small, tickfont=dict(size=9)),
+            ),
+            legend=dict(font=dict(size=10)),
+        )
 
     return _with_fixed_height(fig)
 

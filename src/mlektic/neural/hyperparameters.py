@@ -122,7 +122,7 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
     value_tex = _latex_value(value)
     module_definitions = {
         "in_features": (r"\Theta\in\mathbb{R}^{d_{out}\times d_{in}}", "Input-vector dimension."),
-        "out_features": (r"z\in\mathbb{R}^{d_{out}}", "Number of produced coordinates."),
+        "out_features": (r"\mathbf{z}\in\mathbb{R}^{d_{out}}", "Number of produced coordinates."),
         "in_channels": (r"x\in\mathbb{R}^{N\times C_{in}\times\cdots}", "Input channel count."),
         "out_channels": (r"y\in\mathbb{R}^{N\times C_{out}\times\cdots}", "Produced channel count."),
         "kernel_size": (r"k=(k_1,\ldots,k_D)", "Spatial extent of each convolution or pooling window."),
@@ -133,7 +133,9 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
         "output_padding": (r"o\mapsto o+p_{out}", "Resolves transposed-convolution output-shape ambiguity."),
         "padding_mode": (r"x\mapsto\operatorname{pad}_{mode}(x)", "Rule used to construct padded boundary values."),
         "output_size": (r"y\in\mathbb{R}^{\mathrm{output\_size}}", "Requested adaptive output extent."),
-        "bias": (r"z=Wx+b\;\text{if enabled, else }z=Wx", "Whether an additive learnable offset is present."),
+        "bias": (
+            r"\mathbf{z}=\Theta\mathbf{x}+\boldsymbol{\theta}_0\;\text{if enabled, else }\mathbf{z}=\Theta\mathbf{x}",
+            "Whether an additive learnable offset is present."),
         "num_features": (r"\gamma,\beta\in\mathbb{R}^{C}", "Feature or channel count normalized independently."),
         "normalized_shape": (
             r"\mu,\sigma^2\;\text{over the final normalized dimensions}",

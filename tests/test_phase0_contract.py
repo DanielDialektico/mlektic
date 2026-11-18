@@ -190,7 +190,7 @@ def test_binary_2d_prediction_maps_string_classes_and_shows_model_geometry():
     output_annotations = figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
     result_text = output_annotations[-1]["text"]
     assert r"\hat{\mathbf{p}}" in result_text
-    assert r"\hat{y} &= \arg\max" in result_text
+    assert r"\hat{k} &= \arg\max" in result_text
     assert r"=0" in result_text
     assert "accepted" not in result_text
     assert "rejected" not in result_text
@@ -207,7 +207,7 @@ def test_binary_2d_prediction_maps_string_classes_and_shows_model_geometry():
     )
     assert labeled_figure.data[1].name == "Model: p1"
     labeled_output = labeled_figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
-    assert r"\hat{y} &= \arg\max" in labeled_output[-1]["text"]
+    assert r"\hat{k} &= \arg\max" in labeled_output[-1]["text"]
     assert "accepted" in next(item["text"] for item in labeled_output if "Predicted class:" in item["text"])
     assert tuple(labeled_figure.layout.scene.zaxis.ticktext) == ("0", "0.5", "1")
 

@@ -1134,8 +1134,9 @@ def _regularization_panel_text(regularization: dict[str, Any]) -> str:
     detail = f"{name}={strength['value']}" if name else rf"\text{{{_latex_label(str(strength['name']))}}}"
     if strength.get("meaning"):
         detail += rf"\ \text{{({_latex_label(str(strength['meaning']))})}}"
-    if regularization.get("l1_ratio") is not None:
-        detail += rf",\quad \mathrm{{l1\_ratio}}={regularization['l1_ratio']}"
+    # l1_ratio is the elastic-net mix rho; for a pure L1 or L2 penalty it has no effect.
+    if regularization.get("l1_ratio") is not None and penalty == "elasticnet":
+        detail += rf",\quad \rho=\mathrm{{l1\_ratio}}={regularization['l1_ratio']}"
     return rf"{rendered},\quad {detail}"
 
 
