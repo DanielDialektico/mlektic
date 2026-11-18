@@ -94,37 +94,41 @@
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 20
     },
-    "LR-PRED-EXTRAP": {
+    "LR-PRED-MINMAX": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 22
     },
-    "LR-PRED-10D-STAGES": {
+    "LR-PRED-EXTRAP": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 24
     },
-    "LR-PRED-COUNTERFACTUAL": {
+    "LR-PRED-10D-STAGES": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 26
     },
-    "LR-SIZE-DEFAULT": {
+    "LR-PRED-COUNTERFACTUAL": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
-      "cell_index": 29
+      "cell_index": 28
     },
-    "LR-SIZE-COMPACT": {
+    "LR-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 31
     },
-    "LR-SIZE-NOTEBOOK": {
+    "LR-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 33
     },
-    "LR-SIZE-WIDE": {
+    "LR-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 35
     },
-    "LR-SIZE-CLASSROOM": {
+    "LR-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 37
+    },
+    "LR-SIZE-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 39
     },
     "LOG-BINARY-INDEXED": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
@@ -138,69 +142,73 @@
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 8
     },
-    "LOG-BINARY-IMBALANCED": {
+    "LOG-THRESHOLD-METRICS": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 10
     },
-    "LOG-BINARY-30D-WRAP": {
+    "LOG-BINARY-IMBALANCED": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 12
     },
-    "LOG-SGD-REPLAY": {
+    "LOG-BINARY-30D-WRAP": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 14
     },
-    "LOG-PIPE-ORIGINAL": {
+    "LOG-SGD-REPLAY": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 16
     },
-    "LOG-PIPE-SCALED": {
+    "LOG-PIPE-ORIGINAL": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 18
     },
-    "LOG-MULTI-FOCUS": {
+    "LOG-PIPE-SCALED": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 20
     },
-    "LOG-MULTI-OVR": {
+    "LOG-MULTI-FOCUS": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 22
     },
-    "LOG-MULTI-MANY-CLASSES": {
+    "LOG-MULTI-OVR": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 24
     },
-    "LOG-PRED-BINARY": {
+    "LOG-MULTI-MANY-CLASSES": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 26
     },
-    "LOG-PRED-LABELS": {
+    "LOG-PRED-BINARY": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 28
     },
-    "LOG-PRED-MULTI": {
+    "LOG-PRED-LABELS": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 30
     },
-    "LOG-ND-SIZE-DEFAULT": {
+    "LOG-PRED-MULTI": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
-      "cell_index": 34
+      "cell_index": 32
     },
-    "LOG-ND-SIZE-COMPACT": {
+    "LOG-ND-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 36
     },
-    "LOG-ND-SIZE-NOTEBOOK": {
+    "LOG-ND-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 38
     },
-    "LOG-ND-SIZE-WIDE": {
+    "LOG-ND-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 40
     },
-    "LOG-ND-SIZE-CLASSROOM": {
+    "LOG-ND-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 42
+    },
+    "LOG-ND-SIZE-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 44
     },
     "NN-ARCHITECTURE": {
       "notebook": "notebooks/qa/qa_03_neural.ipynb",
@@ -1064,7 +1072,9 @@
     ],
     "codeasdoc/mathematical_parity.rst": [
       "LR-PIPE-ORIGINAL",
-      "LOG-BINARY-THRESHOLD"
+      "LOG-BINARY-THRESHOLD",
+      "LOG-THRESHOLD-METRICS",
+      "LR-PRED-MINMAX"
     ],
     "codeasdoc/mathematical_conventions.rst": [
       "LR-POLYNOMIAL",
