@@ -12,6 +12,8 @@ from dataclasses import asdict, dataclass
 from numbers import Real
 from typing import Any
 
+from .skins import apply_skin, available_skins, get_skin, is_skin
+
 
 @dataclass(frozen=True)
 class VisualTokens:
@@ -217,23 +219,31 @@ _SIZE_PRESETS: dict[str, tuple[int | None, float]] = {
 
 
 def available_themes() -> tuple[str, ...]:
-    """Return registered visual theme names."""
-    return tuple(_THEMES)
+    """Return registered visual theme names: layout themes, then skins."""
+    return (*_THEMES, *available_skins())
 
 
 def get_theme_tokens(theme: str | None = None) -> VisualTokens:
-    """Resolve a theme name to immutable visual tokens."""
+    """Resolve a theme name to immutable visual tokens.
+
+    Skins are presentation-only, so they resolve to the classic tokens: the
+    builders then lay a skinned figure out exactly like the classic one.
+    """
     if theme is not None and not isinstance(theme, str):
         raise TypeError("theme must be a registered theme name or None.")
+    if is_skin(theme):
+        return _CLASSIC
     key = (theme or "classic").lower()
     if key not in _THEMES:
-        choices = ", ".join(_THEMES)
+        choices = ", ".join(available_themes())
         raise ValueError(f"Unknown theme {theme!r}. Available themes: {choices}.")
     return _THEMES[key]
 
 
 def theme_palette(theme: str | None = None) -> dict[str, Any]:
     """Return legacy builder keys derived from the resolved token set."""
+    if is_skin(theme):
+        theme = None
     tokens = get_theme_tokens(theme)
     return {
         "bg": tokens.background,
@@ -324,7 +334,8 @@ def resolve_visual_spec(
 
 def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     """Apply an already resolved visual specification to a Plotly figure."""
-    if spec.theme != "classic":
+    skinned = is_skin(spec.theme)
+    if spec.theme != "classic" and not skinned:
         _apply_tokens(fig, spec.tokens)
     if spec.theme == "accessible":
         _apply_accessibility_redundancy(fig, spec.tokens)
@@ -345,6 +356,8 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
         fig.layout.autosize = True
         if spec.width is None:
             fig.layout.width = None
+    # Skins paint last, over the final composition, and never change its geometry.
+    skin = apply_skin(fig, get_skin(spec.theme), family=family) if skinned else None
 
     metadata = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
     visual = spec.metadata()
@@ -358,6 +371,7 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
             "responsive_config": {"responsive": spec.responsive},
             "narrow_layout_fit": tabular_fit,
             "annotation_boxes": annotation_fit,
+            "skin": skin,
             "reflow_strategy": (
                 "select a dedicated format for structural reflow; responsive scales the resolved composition"
             ),

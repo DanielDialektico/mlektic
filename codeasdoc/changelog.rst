@@ -8,6 +8,10 @@ Unreleased — neural execution-graph foundation
 Added
 -----
 
+- the ``aurora``, ``editorial``, and ``blueprint`` skins: themes that repaint a
+  figure while keeping the classic geometry, with ``aurora`` adding a trail of
+  earlier model states, a loss-progress marker, and direction-coloured equation
+  numbers (see :doc:`themes_formats_sizes`);
 - fluid playback for animated figures: stepping and playing replay already
   rendered equations instead of redrawing the figure and re-typesetting every
   equation, with pixel-identical output (``fluid_playback`` on

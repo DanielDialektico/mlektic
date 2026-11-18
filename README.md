@@ -393,7 +393,10 @@ academic_dashboard = visualize_lr(
 - `theme` controls color, typography, and line/marker styling: `classic`,
   `academic`, `classroom`, `compact`, or `accessible`. `classroom` remains a
   backward-compatible alias of `academic`; use a canvas `size` instead of
-  enlarging axes and annotations.
+  enlarging axes and annotations. The skins `aurora`, `editorial`, and
+  `blueprint` only repaint: every element keeps its classic position. `aurora`
+  adds motion cues (a trail of earlier model states, a loss-progress marker,
+  and equation numbers coloured by their direction of change).
 - `format` controls composition: interactive `dashboard`, space-conscious
   `compact`, or static final-state `report`.
 - `density` is a compatible alias for tabular mathematical `detail`.

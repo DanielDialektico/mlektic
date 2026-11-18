@@ -11,6 +11,7 @@ from typing import Any, Dict, List
 
 from .design import available_themes, theme_palette
 from .playback import attach_fluid_playback
+from .skins import button_colors, is_skin
 
 # ── colour palettes ─────────────────────────────────────────────
 
@@ -51,18 +52,24 @@ _THEMES: Dict[str, Dict[str, Any]] = {
     **{
         name: theme_palette(name)
         for name in available_themes()
-        if name != "classic"
+        if name != "classic" and not is_skin(name)
     },
 }
 
 
 def _resolve(theme: str | None = None) -> Dict[str, Any]:
-    """Return a registered palette, rejecting misspelled theme names."""
+    """Return a registered palette, rejecting misspelled theme names.
+
+    Skins are painted after the figure is built, so builders lay them out with
+    the classic palette.
+    """
     if theme is not None and not isinstance(theme, str):
         raise TypeError("theme must be a registered theme name or None.")
+    if is_skin(theme):
+        return _CLASSIC
     key = (theme or "classic").lower()
     if key not in _THEMES:
-        raise ValueError(f"Unknown theme {theme!r}. Available themes: {', '.join(sorted(_THEMES))}.")
+        raise ValueError(f"Unknown theme {theme!r}. Available themes: {', '.join(sorted(available_themes()))}.")
     return _THEMES[key]
 
 
@@ -227,7 +234,7 @@ def create_annotation(
 ) -> Dict[str, Any]:
     """Create a standard centered top annotation for formulas."""
     p = _resolve(theme)
-    sz = size if theme is None else min(size, p["annotation_size"] + 4)
+    sz = size if theme is None or is_skin(theme) else min(size, p["annotation_size"] + 4)
     return dict(
         x=x,
         y=y,
@@ -325,8 +332,7 @@ def get_button_highlight_script(*, theme: str | None = None) -> str:
     active node in JavaScript.
     """
     p = _resolve(theme)
-    button_bg = p.get("btn_bg", "white")
-    text_color = p.get("btn_font_color", "black")
+    button_bg, text_color = button_colors(theme) or (p.get("btn_bg", "white"), p.get("btn_font_color", "black"))
 
     return (
         "<script>\n"

@@ -16,6 +16,11 @@ All notable changes to this project will be documented in this file.
   the 1D/2D geometry, preventing it from colliding with probability-axis titles.
 
 ### Added
+- Added the `aurora`, `editorial`, and `blueprint` themes. They are skins: they
+  repaint a figure and keep the classic geometry, so no element moves. `aurora`
+  adds a fading trail of earlier model states, a glow under the model line, a
+  loss-progress marker, and equation numbers coloured by direction of change.
+  Skins are defined as data in `mlektic/visualization/skins/definitions.py`.
 - Added fluid playback for animated figures. Stepping the slider or playing no
   longer redraws the whole figure and re-typesets every equation: equations
   Plotly already rendered are replayed pixel-identically, equations of frames

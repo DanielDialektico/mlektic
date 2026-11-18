@@ -1383,12 +1383,12 @@ display(HTML(f'<ul>{links}</ul>'))""",
 def build_visual_system() -> None:
     imports = """\
 from IPython.display import display
-from mlektic import visualize_lr
-from notebooks._support import case_heading, linear_case
+from mlektic import visualize_logistic, visualize_lr, visualize_nn
+from notebooks._support import case_heading, linear_case, multiclass_case, torch_xor_case
 c=linear_case(1)
 """
     cells = setup(imports)
-    for theme in ["classic", "academic", "classroom", "compact", "accessible"]:
+    for theme in ["classic", "academic", "classroom", "compact", "accessible", "aurora", "editorial", "blueprint"]:
         cells.extend(
             case(
                 f"STYLE-THEME-{theme.upper()}",
@@ -1446,9 +1446,63 @@ c=linear_case(1)
     ]
     for item in cases:
         cells.extend(case(*item))
+    cells.append(
+        markdown(
+            """\
+## Skins: aurora, editorial, blueprint
+
+Skins repaint a figure and keep the classic geometry: every title, equation,
+control, and panel sits exactly where `classic` puts it. Compare each case with
+the classic figure of the same model. `aurora` also adds motion cues: a fading
+trail of earlier model states and a glow under the model line, the loss curve's
+future dotted with a marker on the current step, and equation numbers coloured
+green when they rose and coral when they fell since their last change.
+"""
+        )
+    )
+    skin_cases = [
+        (
+            "STYLE-SKIN-AURORA-MOTION",
+            "SGD trail, glow, loss progress, and equation colours on a 60-state replay",
+            "sgd=linear_case(1,estimator='sgd')\n"
+            "display(visualize_lr(sgd.model,sgd.X,sgd.y,steps=60,max_frames=60,theme='aurora'))",
+        ),
+        (
+            "STYLE-SKIN-AURORA-CLASSIC-TWIN",
+            "the same SGD replay in classic, for a position-by-position comparison",
+            "sgd=linear_case(1,estimator='sgd')\n"
+            "display(visualize_lr(sgd.model,sgd.X,sgd.y,steps=60,max_frames=60))",
+        ),
+        (
+            "STYLE-SKIN-AURORA-EQUATIONS",
+            "multiclass matrices whose numbers are coloured by direction of change",
+            "mc=multiclass_case(1)\n"
+            "display(visualize_logistic(mc.model,mc.X,mc.y,steps=60,max_frames=60,frame_duration=80,theme='aurora'))",
+        ),
+        (
+            "STYLE-SKIN-EDITORIAL-LOGISTIC",
+            "light paper skin on multiclass equations and probability curves",
+            "mc=multiclass_case(1)\n"
+            "display(visualize_logistic(mc.model,mc.X,mc.y,steps=12,max_frames=12,theme='editorial'))",
+        ),
+        (
+            "STYLE-SKIN-BLUEPRINT-3D",
+            "scene walls, grid backdrop, and class surfaces in a 3D probability view",
+            "mc2=multiclass_case(2)\n"
+            "display(visualize_logistic(mc2.model,mc2.X,mc2.y,steps=12,max_frames=12,theme='blueprint'))",
+        ),
+        (
+            "STYLE-SKIN-EDITORIAL-NEURAL",
+            "neural encodings kept while text, colour bars, and controls follow the light skin",
+            "xm,xX,xh=torch_xor_case(steps=6)\n"
+            "display(visualize_nn(xm,xX[1],history=xh,view='graph',max_frames=5,theme='editorial'))",
+        ),
+    ]
+    for item in skin_cases:
+        cells.extend(case(*item))
     notebook(
         "QA 05 — themes, formats, density, and sizes",
-        "Every supported visual-system preset plus overrides and responsive metadata.",
+        "Every supported visual-system preset, the aurora, editorial, and blueprint skins, overrides, and responsive metadata.",
         cells,
         "qa/qa_05_visual_system.ipynb",
     )
@@ -2691,7 +2745,14 @@ def build_manifest() -> None:
             "MOTION-FLUID-LOGISTIC-3D",
         ],
         "codeasdoc/visual_design.rst": ["STYLE-THEME-ACADEMIC", "STYLE-FORMAT-DASHBOARD"],
-        "codeasdoc/themes_formats_sizes.rst": ["STYLE-THEME-ACCESSIBLE", "STYLE-SIZE-CLASSROOM"],
+        "codeasdoc/themes_formats_sizes.rst": [
+            "STYLE-THEME-ACCESSIBLE",
+            "STYLE-SIZE-CLASSROOM",
+            "STYLE-SKIN-AURORA-MOTION",
+            "STYLE-SKIN-AURORA-CLASSIC-TWIN",
+            "STYLE-SKIN-BLUEPRINT-3D",
+            "STYLE-SKIN-EDITORIAL-NEURAL",
+        ],
         "codeasdoc/prediction_explanations.rst": [
             "LR-PRED-EXTRAP",
             "LR-PRED-10D-STAGES",
