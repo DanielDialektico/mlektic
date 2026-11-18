@@ -227,7 +227,7 @@ def build_multiclass_1d_logistic_figure(
                 x=[step if i == 0 else None for i, step in enumerate(ep_list)],
                 y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
-                name="Cross-entropy",
+                name="Log-loss",
                 line=dict(width=3),
                 legendgroup="loss",
                 showlegend=True,
@@ -270,7 +270,7 @@ def build_multiclass_1d_logistic_figure(
 
         if show_loss:
             base_ann.append(
-                dict(x=0.5, y=0.98, xref="x4 domain", yref="y4 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
+                dict(x=0.5, y=0.98, xref="x4 domain", yref="y4 domain", text="<b>Log-loss</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
             )
 
         return base_ann + metrics_annotations(t)

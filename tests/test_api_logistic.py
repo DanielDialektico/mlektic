@@ -109,7 +109,7 @@ def test_complete_multiclass_glossary_explains_displayed_symbols(dimensions):
     )
     for symbol in (
         "Model notation",
-        r"\Theta=[\mathbf w_0",
+        r"\Theta=[\theta_{j,k}]",
         r"\boldsymbol\theta_0=",
         r"z_k(\mathbf x)=",
         r"\hat p_k(\mathbf x)=",
@@ -238,7 +238,7 @@ class TestVisualizeLogistic:
         assert r"K=3" in annotations
         assert r"\text{clases}" not in annotations
         assert r"k=0,\ldots,2" in annotations
-        assert r"\sum_{\ell=0}^{K-1}q_\ell" in annotations
+        assert r"\sum_{r=0}^{K-1}q_r" in annotations
         assert r"\Theta_t" not in annotations
         assert r"\boldsymbol{\theta}_{0,t}" not in annotations
 
@@ -297,7 +297,7 @@ class TestVisualizeLogistic:
             assert generic.text.index(r"\hat{p}_k") < generic.text.index(r"z_k(\mathbf{x})") < generic.text.index("k=0")
             assert all(
                 r"\frac{q_{" in item.text
-                and r"\sum_{\ell=0}^{K-1}q_\ell" in item.text
+                and r"\sum_{r=0}^{K-1}q_r" in item.text
                 and item.font.size == 13
                 for item in probability_rows
             )
@@ -323,7 +323,7 @@ class TestVisualizeLogistic:
             assert r"\\[5pt]\boldsymbol{\theta}_0&=" in texts[2]
             assert r"\Theta_t" not in texts[2]
             assert texts[3].index(r"\hat{p}_k") < texts[3].index(r"z_k(\mathbf{x})=")
-            assert r"\frac{q_k}{\sum_{\ell=0}^{K-1}q_\ell}" in texts[3]
+            assert r"\frac{q_k}{\sum_{r=0}^{K-1}q_r}" in texts[3]
             assert r"\sigma(z_k)" in texts[3]
             assert r"k=0,\ldots,2" in texts[3]
             assert r"z_{0}(\mathbf{x})=" in texts[4]

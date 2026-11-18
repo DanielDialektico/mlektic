@@ -192,6 +192,7 @@ def visualize_logistic(
         max_frames=max_frames,
         frame_step=frame_step,
         multiclass_link=multiclass_link,
+        threshold=threshold,
     )
 
     math_contract = build_logistic_math_contract(

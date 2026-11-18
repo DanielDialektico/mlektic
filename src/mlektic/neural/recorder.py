@@ -9,7 +9,7 @@ import numpy as np
 
 from .hyperparameters import scheduler_configuration
 from .introspection import _leaf_modules, _require_torch
-from .metrics import infer_performance_metrics
+from .metrics import infer_performance_metrics, output_kind
 
 
 class TorchTrainingRecorder:
@@ -156,7 +156,11 @@ class TorchTrainingRecorder:
                 "gradient_phase": "post_backward" if capture_phase == "post_step" else capture_phase,
             }
         )
-        provided = infer_performance_metrics(predictions, targets, task=task) if predictions is not None else {}
+        provided = (
+            infer_performance_metrics(predictions, targets, task=task, output=output_kind(self.loss_fn))
+            if predictions is not None
+            else {}
+        )
         provided.update(metrics or {})
         metric_names = list(self.metrics)
         metric_names.extend(name for name in provided if name not in self.metrics)

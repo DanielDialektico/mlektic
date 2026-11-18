@@ -116,7 +116,7 @@ def build_nn_training_figure(
         raise ValueError("History needs a loss or at least one performance metric.")
     metric_titles = [name.replace("_", " ").title() for name, _ in metrics]
     metric_titles.extend(["Metric not recorded"] * (3 - len(metric_titles)))
-    subplot_titles = [r"Training objective: $\mathcal{L}(\theta_t)$", *metric_titles]
+    subplot_titles = [r"Recorded loss: $\mathcal{L}_t$", *metric_titles]
     figure = make_subplots(
         rows=2,
         cols=2,
@@ -571,8 +571,14 @@ def _activation_annotations(
             std = float(stats["std"][frame_index])
             minimum = float(stats["min"][frame_index])
             maximum = float(stats["max"][frame_index])
-            dimension = shape_tex(layer.get("output_shape"))
             vector_values = history.get("activation_vectors", {}).get(layer["name"], [])
+            # The recorded vector is the mean over the batch and spatial axes, so its
+            # dimension is the channel/unit count, not the full output shape.
+            dimension = (
+                str(np.asarray(vector_values[frame_index]).size)
+                if frame_index < len(vector_values)
+                else shape_tex(layer.get("output_shape"))
+            )
             vector = (
                 vector_latex(vector_values[frame_index], dec=3, limit=6)
                 if frame_index < len(vector_values)
@@ -580,7 +586,7 @@ def _activation_annotations(
             )
             text = (
                 rf"$\text{{{layer['name']} ({layer['type']})}}:\quad {layer['formula']}"
-                rf"\quad\mathbf{{a}}_t={vector}\in\mathbb{{R}}^{{{dimension}}}"
+                rf"\quad\bar{{\mathbf{{a}}}}_t={vector}\in\mathbb{{R}}^{{{dimension}}}"
                 rf"\quad\mu={mean:.3f},\;\sigma={std:.3f},\;[\min,\max]=[{minimum:.3f},{maximum:.3f}]$"
             )
         annotations.append(

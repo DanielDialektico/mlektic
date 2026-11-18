@@ -83,14 +83,14 @@ def build_binary_simple_logistic_figure(
                 b_disp = b_arr
 
         def formula_text():
-            return r"$\hat{p}(Y=c_1\mid x)=\sigma(z),\;\; z=\theta_1x+\theta_0$"
+            return r"$\hat{p}(Y=c_1\mid x_1)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
 
         def eq_text(t):
             if w_disp is None:
-                return r"$\sigma(z)=\dfrac{1}{1+e^{-z}},\;\;\hat{p}(Y=c_1\mid x)=f(x)$"
+                return r"$\sigma(z)=\dfrac{1}{1+e^{-z}},\;\;\hat{p}(Y=c_1\mid x_1)=f(x_1)$"
             return (
                 r"$\sigma(z)=\dfrac{1}{1+e^{-z}}"
-                + rf"=\dfrac{{1}}{{1+e^{{-\left(({w_disp[t]:.{dec}f})x+({b_disp[t]:.{dec}f})\right)}}}},\;\; z=({w_disp[t]:.{dec}f})x+({b_disp[t]:.{dec}f})$"
+                + rf"=\dfrac{{1}}{{1+e^{{-\left(({w_disp[t]:.{dec}f})x_1+({b_disp[t]:.{dec}f})\right)}}}},\;\; z=({w_disp[t]:.{dec}f})x_1+({b_disp[t]:.{dec}f})$"
             )
 
         x_min, x_max = float(x1_grid.min()), float(x1_grid.max())
@@ -119,14 +119,14 @@ def build_binary_simple_logistic_figure(
             return _sigmoid(w1 * x1_grid + b)
 
         def formula_text():
-            return r"$\hat{p}(Y=c_1\mid x)=\sigma(z),\;\; z=\theta_1x+\theta_0$"
+            return r"$\hat{p}(Y=c_1\mid x_1)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
 
         def eq_text(t):
             w1 = float(w_hist[t, 0])
             b = float(b_hist[t])
             return (
                 r"$\sigma(z)=\dfrac{1}{1+e^{-z}}"
-                + rf"=\dfrac{{1}}{{1+e^{{-\left(({w1:.{dec}f})x+({b:.{dec}f})\right)}}}},\;\; z=({w1:.{dec}f})x+({b:.{dec}f})$"
+                + rf"=\dfrac{{1}}{{1+e^{{-\left(({w1:.{dec}f})x_1+({b:.{dec}f})\right)}}}},\;\; z=({w1:.{dec}f})x_1+({b:.{dec}f})$"
             )
 
     if steps_n < 1:

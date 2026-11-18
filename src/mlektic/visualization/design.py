@@ -8,6 +8,7 @@ independent from history capture and model semantics.
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass
 from numbers import Real
 from typing import Any
@@ -352,6 +353,7 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     _apply_size(fig, spec)
     tabular_fit = _apply_tabular_narrow_layout(fig, spec, family=family)
     annotation_fit = _remove_annotation_boxes(fig, spec.tokens)
+    _drop_negative_zero(fig)
     if spec.responsive:
         fig.layout.autosize = True
         if spec.width is None:
@@ -384,6 +386,69 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     metadata["mlektic_visual"] = visual
     fig.update_layout(meta=metadata, uirevision=f"mlektic-{spec.theme}-{spec.format}")
     return fig
+
+
+# A value that rounds to zero is shown as 0, never as "-0.0000".
+_ZERO_WITH_SIGN = re.compile(r"-(0(?:\.0+)?)(?![\d.])")
+_STARTS_NUMBER = set(" \t\n([{&=,;:>|")
+
+
+def _sign_starts_number(text: str, position: int) -> bool:
+    """Whether the "-" at ``position`` is a sign rather than a subtraction."""
+    if position == 0 or text[position - 1] in _STARTS_NUMBER:
+        return True
+    if text[position - 1] != "}":
+        return False
+    depth = 0
+    for index in range(position - 1, -1, -1):
+        depth += {"}": 1, "{": -1}.get(text[index], 0)
+        if depth == 0:
+            # "x_{1}-0" and "e^{2}-0" subtract; "\begin{bmatrix}-0" starts a cell.
+            return index == 0 or text[index - 1] not in "_^"
+    return False
+
+
+def _strip_negative_zero(text: str) -> str:
+    """Remove the sign from numbers that round to zero, e.g. ``-0.0000``."""
+    return _ZERO_WITH_SIGN.sub(
+        lambda match: match.group(1) if _sign_starts_number(text, match.start()) else match.group(0),
+        text,
+    )
+
+
+def _drop_negative_zero(fig: Any) -> None:
+    """Remove the sign from rounded zeros in every displayed text of the figure."""
+
+    def clean(value: Any) -> Any:
+        if isinstance(value, str):
+            return _strip_negative_zero(value) if "-0" in value else value
+        if isinstance(value, (list, tuple)) and any(isinstance(item, str) for item in value):
+            return type(value)(clean(item) for item in value)
+        return value
+
+    def fix_annotations(annotations: Any) -> None:
+        for annotation in annotations or ():
+            if isinstance(annotation, dict):
+                annotation["text"] = clean(annotation.get("text"))
+            elif annotation.text:
+                annotation.text = clean(annotation.text)
+
+    def fix_traces(traces: Any) -> None:
+        for trace in traces or ():
+            if getattr(trace, "text", None) is not None:
+                trace.text = clean(trace.text)
+
+    fix_annotations(fig.layout.annotations)
+    fix_traces(fig.data)
+    for frame in fig.frames or ():
+        fix_traces(frame.data)
+        if frame.layout is not None:
+            fix_annotations(frame.layout.annotations)
+    for menu in fig.layout.updatemenus or ():
+        for button in menu.buttons or ():
+            for argument in button.args or ():
+                if isinstance(argument, dict):
+                    fix_annotations(argument.get("annotations"))
 
 
 def _remove_annotation_boxes(fig: Any, tokens: VisualTokens) -> dict[str, Any]:

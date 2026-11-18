@@ -274,7 +274,7 @@ def build_multiclass_2d_logistic_figure(
 
         if show_loss:
             base_ann.append(
-                dict(x=-0.05, y=0.0, xref="x2 domain", yref="y2 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=12, color="white"))
+                dict(x=-0.05, y=0.0, xref="x2 domain", yref="y2 domain", text="<b>Log-loss</b>", showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=12, color="white"))
             )
 
         return base_ann + metrics_annotations(t)

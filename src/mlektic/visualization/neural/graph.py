@@ -441,7 +441,7 @@ def _graph_annotations(
         model_formula = (
             rf"\hat{{\mathbf{{y}}}}=\mathbf{{a}}^{{({depth})}},\quad "
             rf"\mathbf{{z}}^{{(\ell)}}=\Theta^{{(\ell)}}\mathbf{{a}}^{{(\ell-1)}}+"
-            rf"\theta_0^{{(\ell)}},\quad "
+            rf"\boldsymbol{{\theta}}_0^{{(\ell)}},\quad "
             rf"\mathbf{{a}}^{{(\ell)}}=\phi_\ell(\mathbf{{z}}^{{(\ell)}}),\;"
             rf"\ell=1,\ldots,{depth}"
         )

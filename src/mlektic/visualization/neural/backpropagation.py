@@ -211,6 +211,8 @@ def _backprop_data(
             textfont={"size": 12, "color": NEURAL_COLORS["text"]},
             hoverinfo="skip",
             showlegend=False,
+            # The staggered lower row reaches the axis edge; clipping cut its last line.
+            cliponaxis=False,
             name="layerwise gradient and update values",
         )
     )
@@ -333,7 +335,7 @@ def build_nn_backpropagation_figure(
             "yref": "paper",
             "text": (
                 r"$\text{Forward: }\mathbf{z}^{(\ell)}=\Theta^{(\ell)}\mathbf{a}^{(\ell-1)}+"
-                r"\mathbf{b}^{(\ell)},\quad\mathbf{a}^{(\ell)}=\phi_\ell(\mathbf{z}^{(\ell)})$"
+                r"\boldsymbol{\theta}_0^{(\ell)},\quad\mathbf{a}^{(\ell)}=\phi_\ell(\mathbf{z}^{(\ell)})$"
             ),
             "showarrow": False,
             "font": {"size": 17, "color": NEURAL_COLORS["text"]},
@@ -362,7 +364,7 @@ def build_nn_backpropagation_figure(
             "xref": "paper",
             "yref": "paper",
             "text": (
-                r"$\text{Backward: }\boldsymbol{\delta}^{(\ell)}="
+                r"$\text{Backward (per sample): }\boldsymbol{\delta}^{(\ell)}="
                 r"\left((\Theta^{(\ell+1)})^\top\boldsymbol{\delta}^{(\ell+1)}\right)\odot"
                 r"\phi_\ell'(\mathbf{z}^{(\ell)}),\quad"
                 r"\nabla_{\Theta^{(\ell)}}\mathcal{L}=\boldsymbol{\delta}^{(\ell)}"

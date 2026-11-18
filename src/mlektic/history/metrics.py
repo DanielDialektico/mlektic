@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score, mean_absolute_error
 
-from ..utils.math import _sigmoid
+from ..utils.math import _sigmoid, r2_finite
 
 MetricFn = Callable[[np.ndarray, np.ndarray], float]
 
@@ -24,12 +24,9 @@ def build_linear_metrics(
     """Build metric histories for linear regression frames."""
     y = np.asarray(y).ravel()
     mse_hist = np.mean((y.reshape(-1, 1) - y_pred_hist) ** 2, axis=0)
-    ss_tot = np.sum((y - np.mean(y)) ** 2)
-    if ss_tot > 1e-12:
-        ss_res = np.sum((y.reshape(-1, 1) - y_pred_hist) ** 2, axis=0)
-        r2_hist = 1.0 - (ss_res / ss_tot)
-    else:
-        r2_hist = np.zeros_like(mse_hist)
+    ss_tot = float(np.sum((y - np.mean(y)) ** 2))
+    ss_res = np.sum((y.reshape(-1, 1) - y_pred_hist) ** 2, axis=0)
+    r2_hist = np.asarray(r2_finite(ss_res, ss_tot), dtype=float)
 
     builtins = {
         "loss": ("Loss", np.asarray(loss_hist, dtype=float)),
@@ -51,16 +48,23 @@ def build_logistic_metrics(
     *,
     is_multiclass: bool,
     max_metrics: int = 5,
+    threshold: float = 0.5,
 ) -> dict[str, np.ndarray]:
-    """Build metric histories for logistic regression frames."""
+    """Build metric histories for logistic regression frames.
+
+    Binary labels use the same decision threshold ``threshold`` that the figure
+    draws, so Accuracy and F1 always describe the displayed decision.
+    """
     y = np.asarray(y).ravel()
-    y_pred_hist = _predict_logistic_labels(X_eval, w_hist, b_hist, classes, is_multiclass=is_multiclass)
+    y_pred_hist = _predict_logistic_labels(
+        X_eval, w_hist, b_hist, classes, is_multiclass=is_multiclass, threshold=threshold
+    )
     builtins = {
         "loss": ("Log-loss", np.asarray(loss_hist, dtype=float)),
         "log_loss": ("Log-loss", np.asarray(loss_hist, dtype=float)),
         "accuracy": ("Accuracy", _metric_by_frame(y, y_pred_hist, accuracy_score)),
         "f1": (
-            "F1 Score",
+            "Macro F1" if is_multiclass else "F1 Score",
             _f1_by_frame(y, y_pred_hist, classes=classes, is_multiclass=is_multiclass),
         ),
     }
@@ -74,6 +78,7 @@ def _predict_logistic_labels(
     classes: np.ndarray,
     *,
     is_multiclass: bool,
+    threshold: float = 0.5,
 ) -> np.ndarray:
     """Predict class labels for each frame using the captured parameters."""
     classes = np.asarray(classes)
@@ -84,7 +89,7 @@ def _predict_logistic_labels(
 
     weights = w_hist.reshape(w_hist.shape[0], -1)
     scores = X_eval @ weights.T + np.asarray(b_hist).reshape(1, -1)
-    positive = _sigmoid(scores) >= 0.5
+    positive = _sigmoid(scores) >= threshold
     return np.where(positive, classes[1], classes[0])
 
 

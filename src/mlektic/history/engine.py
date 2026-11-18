@@ -72,6 +72,7 @@ class HistoryEngine:
                 data["classes"],
                 config.metrics,
                 is_multiclass=data.get("is_multiclass", False),
+                threshold=float(config.threshold),
             )
 
         self._attach_metadata(data, config, task="logistic")

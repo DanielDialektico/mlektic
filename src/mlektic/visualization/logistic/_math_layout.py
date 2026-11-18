@@ -13,8 +13,8 @@ def compact_probability_fraction_latex(class_index: int, classes: int, probabili
     would cross into an adjacent plot.
     """
     if probability_link == "ovr":
-        return rf"\frac{{q_{{{class_index}}}}}{{\sum_{{\ell=0}}^{{K-1}}q_\ell}},\quad q_\ell=\sigma(z_\ell)"
-    return rf"\frac{{e^{{z_{{{class_index}}}}}}}{{\sum_{{\ell=0}}^{{K-1}}e^{{z_\ell}}}}"
+        return rf"\frac{{q_{{{class_index}}}}}{{\sum_{{r=0}}^{{K-1}}q_r}},\quad q_r=\sigma(z_r)"
+    return rf"\frac{{e^{{z_{{{class_index}}}}}}}{{\sum_{{r=0}}^{{K-1}}e^{{z_r}}}}"
 
 
 __all__ = [

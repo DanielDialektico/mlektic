@@ -273,7 +273,7 @@ def build_multiclass_multivar_logistic_figure(
             x=[step if i == 0 else None for i, step in enumerate(ep_list)] if show_loss else [],
             y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)] if show_loss else [],
             mode="lines",
-            name="Cross-entropy",
+            name="Log-loss",
             line=dict(width=3)
         ),
         row=1, col=2 if show_loss else 1
@@ -375,7 +375,7 @@ def build_multiclass_multivar_logistic_figure(
                 for i, (name, hist) in enumerate(metrics_hist.items()):
                     val = hist[t]
                     y_pos = 0.83 - (i * 0.14)
-                    fmt = ".6f" if name.lower() == "cross-entropy" or name.lower() == "loss" else ".4f"
+                    fmt = ".6f" if name.lower() in ("log-loss", "cross-entropy", "loss") else ".4f"
                     ann.append(
                         dict(
                             x=0.98,
@@ -400,7 +400,7 @@ def build_multiclass_multivar_logistic_figure(
                         y=0.95,
                         xref="paper",
                         yref="paper",
-                        text=f"<b>Cross-entropy</b><br>{loss_hist[t]:.6f}",
+                        text=f"<b>Log-loss</b><br>{loss_hist[t]:.6f}",
                         showarrow=False,
                         xanchor="right",
                         yanchor="top",
@@ -417,7 +417,7 @@ def build_multiclass_multivar_logistic_figure(
                     y=0.88,
                     xref="paper",
                     yref="paper",
-                    text="Cross-entropy",
+                    text="Log-loss",
                     showarrow=False,
                     xanchor="center",
                     yanchor="bottom",

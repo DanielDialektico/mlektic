@@ -62,6 +62,7 @@ def fit_history_logistic(
     max_frames=60,
     frame_step=10,
     multiclass_link="auto",
+    threshold=0.5,
 ) -> dict:
     """Construct an auditable binary or multiclass logistic history payload.
 
@@ -81,6 +82,7 @@ def fit_history_logistic(
         max_frames=max_frames,
         frame_step=frame_step,
         multiclass_link=multiclass_link,
+        threshold=threshold,
     )
     engine = HistoryEngine(trained_estimator)
     return engine.capture_logistic(X, y, config)
