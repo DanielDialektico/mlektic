@@ -974,7 +974,7 @@ def _logistic_panel(
         intercept = float(np.asarray(intercepts)[focus])
         definition = (
             rf"\text{{For }}c_{{{focus}}}:\quad "
-            rf"z_{{{focus}}}&=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
+            rf"z_{{{focus}}}&=\theta_{{0,{focus}}}+\textstyle\sum_j\theta_{{j,{focus}}}x_j"
         )
     else:
         term_rows, visible_count = _contribution_rows(
@@ -1036,7 +1036,7 @@ def _logistic_panel(
     if objective_visible:
         loss_name = "Log-loss"
         lines.append(
-            rf"$\underbrace{{\mathrm{{{loss_name}}}= -\frac{{1}}{{n}}\sum_i \ln\hat{{p}}_{{i,y_i}}={loss:.{dec}f}}}"
+            rf"$\underbrace{{\text{{{loss_name}}}= -\frac{{1}}{{n}}\sum_i \ln\hat{{p}}_{{i,y_i}}={loss:.{dec}f}}}"
             r"_{\mathrm{empirical\ data\ term}}\quad"
             r"\text{private penalty scaling is not claimed}$"
         )

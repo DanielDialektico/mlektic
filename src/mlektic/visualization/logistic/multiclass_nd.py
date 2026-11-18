@@ -13,6 +13,7 @@ from ..theme import (
     get_updatemenus,
 )
 from ._math_layout import (
+    MULTICLASS_MENU_Y,
     MULTICLASS_PROBABILITY_FONT_SIZE,
     compact_probability_fraction_latex,
 )
@@ -218,7 +219,10 @@ def build_multiclass_multivar_logistic_figure(
         k = max(0, min(k, K - 1))
         if probability_link == "ovr":
             probability = compact_probability_fraction_latex(k, K, probability_link)
-        elif expanded_canvas:
+        elif expanded_canvas and not (show_loss and d <= 12):
+            # With the loss panel a non-dense layout has a narrower math column: the numeric
+            # exponents would run into it, and the scores row above already
+            # shows each z_k, so the symbolic fraction below is used instead.
             numerator = linked_term(exponent_score(t, k))
             if K <= 3:
                 denominator = " + ".join(linked_term(exponent_score(t, j)) for j in range(K))
@@ -291,6 +295,13 @@ def build_multiclass_multivar_logistic_figure(
         # entire math block together to free the space above the timeline.
         block_shift = 0.04 if show_loss and narrow_canvas else 0.03
         matrix_y += block_shift
+        tall_matrices = expanded_canvas and not dense_layout and d >= 5
+        # Five or more rows make the matrices tall enough to reach the model
+        # formula above and the softmax row below; centre them a little lower
+        # and set them one point smaller.
+        matrix_font_size = 15 if tall_matrices else 16
+        if tall_matrices:
+            matrix_y -= 0.025
         x_vector_y = matrix_y + (0.05 if show_loss and narrow_canvas else 0.0)
         equation_x = 0.015 if show_loss else 0.025
         if dense_layout:
@@ -322,7 +333,7 @@ def build_multiclass_multivar_logistic_figure(
                 showarrow=False,
                 xanchor="left",
                 yanchor="middle",
-                font=dict(size=16, color="white"),
+                font=dict(size=matrix_font_size, color="white"),
             ),
             dict(
                 x=theta_x,
@@ -333,7 +344,7 @@ def build_multiclass_multivar_logistic_figure(
                 showarrow=False,
                 xanchor="left",
                 yanchor="middle",
-                font=dict(size=16, color="white"),
+                font=dict(size=matrix_font_size, color="white"),
             ),
             dict(
                 x=equation_x,
@@ -449,7 +460,7 @@ def build_multiclass_multivar_logistic_figure(
         **get_base_layout(title=title, margin_t=110, height=720 if d > 12 else 600, theme=theme),
         showlegend=False,
         sliders=get_sliders(steps_n, theme=theme),
-        updatemenus=get_updatemenus(frame_duration, theme=theme),
+        updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
         annotations=make_annotations(0),
     )
 

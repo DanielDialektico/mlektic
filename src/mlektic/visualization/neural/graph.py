@@ -570,7 +570,9 @@ def _graph_annotations(
                 },
                 {
                     "x": 0.99,
-                    "y": legend_y,
+                    # With the update panel, the per-frame colour-bar title sits at
+                    # y=0.77 on the same right edge; this key goes below it.
+                    "y": legend_y - 0.06 if shows_updates and show_update_panel else legend_y,
                     "xref": "paper",
                     "yref": "paper",
                     "text": "<span style='color:#8f2942'>- -</span> recorded backpropagation gradient",

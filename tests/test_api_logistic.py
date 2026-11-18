@@ -150,7 +150,7 @@ class TestVisualizeLogistic:
         )
         assert fig_1d.layout.xaxis.title.text == "Ingreso mensual"
         assert fig_1d.layout.xaxis2.title.text == "Replay / fitted state"
-        assert fig_1d.layout.yaxis2.title.text == "log-loss"
+        assert fig_1d.layout.yaxis2.title.text == "Log-loss"
 
         model_2d, X_2d, y_2d = trained_binary_2d
         fig_2d = visualize_logistic(
@@ -217,7 +217,9 @@ class TestVisualizeLogistic:
         metric_annotations = [
             annotation
             for annotation in fig.layout.annotations
-            if any(label in str(annotation.text) for label in ("log-loss", "Accuracy", "F1 Score"))
+            # Metric cards are bold labels; the derivation panel also names Log-loss.
+            if str(annotation.text).startswith("<b>")
+            and any(label in str(annotation.text) for label in ("Log-loss", "Accuracy", "F1 Score"))
         ]
         assert len(metric_annotations) == 3
         assert len({float(annotation.x) for annotation in metric_annotations}) == 1
@@ -337,9 +339,10 @@ class TestVisualizeLogistic:
                 [0.50, 0.345, 0.22]
             )
             assert float(items[0].x) == pytest.approx(0.46)
-            assert float(items[1].y) == pytest.approx(0.77)
+            # Five feature rows: the matrices sit lower so they clear the model formula.
+            assert float(items[1].y) == pytest.approx(0.745)
             assert float(items[2].x) == pytest.approx(0.10)
-            assert float(items[2].y) == pytest.approx(0.77)
+            assert float(items[2].y) == pytest.approx(0.745)
             assert len({float(item.x) for item in items[3:6]}) == 1
             assert float(items[3].x) == pytest.approx(0.015)
             assert {item.xanchor for item in items[3:6]} == {"left"}

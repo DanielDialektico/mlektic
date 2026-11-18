@@ -506,9 +506,9 @@ def test_logistic_interpolation_can_show_empirical_path_without_optimizer_claims
     semantics = figure.layout.meta["mlektic_history"]["loss_display_semantics"]
 
     assert loss_trace.name == "Interpolation log-loss"
-    assert figure.layout.yaxis.title.text == "log-loss"
+    assert figure.layout.yaxis.title.text == "Log-loss"
     assert semantics["axis_label"] == "Empirical log-loss along interpolation"
-    assert semantics["visible_axis_label"] == "log-loss"
+    assert semantics["visible_axis_label"] == "Log-loss"
     assert semantics["optimizer_loss"] is False
     assert semantics["smoothing"] is None
 

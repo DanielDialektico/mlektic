@@ -886,7 +886,11 @@ def _apply_size(fig: Any, spec: VisualSpec) -> None:
         # moves their centers past the canvas edge.  Their builder has already
         # computed an exact content-aware height, so size presets change width
         # only for these compositions.
-        safe_height_scale = 1.0 if has_below_plot else height_scale
+        # Builders whose equations are stacked at fixed paper positions ask for
+        # the same treatment: a shorter canvas would pack those rows together.
+        layout_meta = fig.layout.meta.get("mlektic_layout", {}) if isinstance(fig.layout.meta, dict) else {}
+        fixed_height = bool(layout_meta.get("fixed_height"))
+        safe_height_scale = 1.0 if has_below_plot or fixed_height else height_scale
         fig.layout.height = max(320, round(current_height * safe_height_scale))
     if spec.width is not None:
         fig.layout.width = int(spec.width)

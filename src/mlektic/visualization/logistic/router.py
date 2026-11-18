@@ -227,6 +227,7 @@ def build_logistic_figure(
             max_theta_cols=max_theta_cols,
             probability_link=probability_link,
             theme=theme,
+            size=size,
         )
         return _attach_class_display_metadata(fig, classes, show_class_labels)
 

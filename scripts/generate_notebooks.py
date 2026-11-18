@@ -241,6 +241,11 @@ from notebooks._support import case_heading, linear_case, polynomial_linear_case
             "c=linear_case(1)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=[[0.65]],theme='academic'))",
         ),
         (
+            "LR-PRED-MINMAX",
+            "MinMaxScaler pipeline written back in original units; substitution reproduces the model output",
+            "from sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import MinMaxScaler\nfrom sklearn.linear_model import LinearRegression\nc=linear_case(2)\nm=make_pipeline(MinMaxScaler(),LinearRegression()).fit(c.X,c.y)\ndisplay(explain_lr_prediction(m,c.X,c.y,x_query=c.X[:1]))",
+        ),
+        (
             "LR-PRED-EXTRAP",
             "extrapolation notice and visible query outside the training range",
             "c=linear_case(2)\nquery=(c.X.max(axis=0)+1.5).reshape(1,-1)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=query,size='wide'))",
@@ -450,6 +455,11 @@ from notebooks._support import case_heading, binary_case, multiclass_case, scale
             "LOG-BINARY-THRESHOLD",
             "non-default binary threshold with numeric tick and separate τ label inside the geometry",
             "c=binary_case(2)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,threshold=0.7,detail='academic'))",
+        ),
+        (
+            "LOG-THRESHOLD-METRICS",
+            "Accuracy and F1 cards use the drawn threshold tau=0.8, not 0.5",
+            "c=binary_case(1)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,threshold=0.8,show_loss=True))",
         ),
         (
             "LOG-BINARY-IMBALANCED",
@@ -2735,7 +2745,12 @@ def build_manifest() -> None:
             "NN-LARGE-LOSS-LANDSCAPE",
         ],
         "codeasdoc/history_semantics.rst": ["MOTION-NATIVE-SLOW", "MOTION-HYBRID-FLUID"],
-        "codeasdoc/mathematical_parity.rst": ["LR-PIPE-ORIGINAL", "LOG-BINARY-THRESHOLD"],
+        "codeasdoc/mathematical_parity.rst": [
+            "LR-PIPE-ORIGINAL",
+            "LOG-BINARY-THRESHOLD",
+            "LOG-THRESHOLD-METRICS",
+            "LR-PRED-MINMAX",
+        ],
         "codeasdoc/mathematical_conventions.rst": ["LR-POLYNOMIAL", "LOG-MULTI-FOCUS"],
         "codeasdoc/animation_performance.rst": [
             "MOTION-FRAME-STEP",

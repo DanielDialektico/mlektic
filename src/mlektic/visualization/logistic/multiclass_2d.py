@@ -16,7 +16,9 @@ from ..theme import (
 )
 from ._math_layout import (
     MULTICLASS_ELLIPSIS_FONT_SIZE,
+    MULTICLASS_MENU_Y,
     MULTICLASS_PROBABILITY_FONT_SIZE,
+    _with_fixed_height,
     compact_probability_fraction_latex,
 )
 
@@ -149,8 +151,12 @@ def build_multiclass_2d_logistic_figure(
     max_theta_cols=8,
     probability_link="softmax",
     theme=None,
+    size="default",
 ):
     """Build the 2D multiclass logistic-regression probability surfaces."""
+    # On the 820 px compact canvas the one-line score row would reach the 3D
+    # scene; a slightly smaller type keeps it inside the math column.
+    score_font_size = 11 if size == "compact" else MULTICLASS_PROBABILITY_FONT_SIZE
     x1 = np.asarray(x1).ravel()
     x2 = np.asarray(x2).ravel()
     y = np.asarray(y).ravel()
@@ -262,7 +268,7 @@ def build_multiclass_2d_logistic_figure(
             dict(x=0.31, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=parameters, showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
             dict(x=generic_equation_x, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex_2d(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=equation_x, y=0.44, xref="paper", yref="paper", text=_score_examples_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=equation_x, y=0.44, xref="paper", yref="paper", text=_score_examples_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=score_font_size, color="white")),
             dict(x=equation_x, y=0.35, xref="paper", yref="paper", text=_probability_latex_2d(w_hist, b_hist, t, 0, dec, probability_link, compact=compact_fractions), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
             dict(x=dots_x, y=0.22, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
             dict(x=equation_x, y=0.14, xref="paper", yref="paper", text=_probability_latex_2d(w_hist, b_hist, t, K - 1, dec, probability_link, compact=compact_fractions), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
@@ -388,7 +394,7 @@ def build_multiclass_2d_logistic_figure(
             camera=CAMERA,
         ),
         sliders=get_sliders(steps_n, theme=theme),
-        updatemenus=get_updatemenus(frame_duration, theme=theme),
+        updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
     )
 
     # Hide the first subplot axes so the mathematical panel uses the full area.
@@ -404,6 +410,6 @@ def build_multiclass_2d_logistic_figure(
         fig.update_yaxes(range=[lmin - lpad, lmax + lpad], domain=[0.0, 0.30], row=2, col=2)
         fig.update_layout(scene=dict(domain=dict(x=[0.64, 1.0], y=[0.42, 1.0])))
 
-    return fig
+    return _with_fixed_height(fig)
 
 __all__ = ["build_multiclass_2d_logistic_figure"]

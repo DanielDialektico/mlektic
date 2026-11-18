@@ -575,6 +575,9 @@ def annotate_loss_semantics(fig, history: dict):
     smoothing_method = smoothing.get("method")
     quantity = "mean_squared_error" if task == "linear" else "log_loss"
     quantity_label = "MSE" if task == "linear" else "log-loss"
+    # Inside a phrase the name stays lower-case ("EMA log-loss"); on its own,
+    # as a card or axis title, it is capitalized like every other label.
+    standalone_label = quantity_label[:1].upper() + quantity_label[1:]
     source_label = "Synthetic interpolation" if source == "interpolated" else "Replay"
     if smoothing_method == "ema":
         metric_label = f"EMA {quantity_label}"
@@ -594,7 +597,7 @@ def annotate_loss_semantics(fig, history: dict):
         # Logistic interpolation is already identified in the title and
         # timeline. Keep its metric card short beside long model equations.
         card_label = (
-            quantity_label if task == "logistic" and source == "interpolated"
+            standalone_label if task == "logistic" and source == "interpolated"
             else f"INTERP. {quantity_label}" if source == "interpolated"
             else metric_label
         )
@@ -610,7 +613,7 @@ def annotate_loss_semantics(fig, history: dict):
         "smoothing": smoothing_method,
         "metric_label": metric_label,
         "axis_label": axis_label,
-        "visible_axis_label": quantity_label,
+        "visible_axis_label": standalone_label,
     }
     metadata["loss_display_semantics"] = semantics
     layout_meta = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
@@ -650,7 +653,7 @@ def annotate_loss_semantics(fig, history: dict):
         if title_text in {"Loss", "Log-loss"}:
             # Full provenance remains in the legend and layout metadata. The
             # short visible label stays legible in every multi-panel width.
-            getattr(fig.layout, axis_name).update(title_text=quantity_label)
+            getattr(fig.layout, axis_name).update(title_text=standalone_label)
     return fig
 
 
