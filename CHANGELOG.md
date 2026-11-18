@@ -15,7 +15,19 @@ All notable changes to this project will be documented in this file.
 - Kept binary threshold ticks numeric and moved the short ``tau`` label inside
   the 1D/2D geometry, preventing it from colliding with probability-axis titles.
 
+### Fixed
+- Binary Accuracy and F1 now use the displayed threshold; R² follows sklearn's
+  constant-target convention; log-loss clipping matches sklearn in every view.
+- Ridge, Lasso, and ElasticNet penalties are reported (elastic-net with
+  `(1-rho)/2`); prediction explainers back-transform any verified per-feature
+  scaler and refuse preprocessing they cannot write in original units.
+- Neural binary metrics read logits vs probabilities from the criterion; the
+  hyperparameter panel shows the update rule of the actual optimizer setup.
+- Notation unified across figures (zero-based classes, Theta/theta_0, eta,
+  ln, hats, one loss name "Log-loss"); overlapping and clipped labels fixed.
+
 ### Added
+- Added `course/notacion_matematica.html`, the Spanish course notation reference.
 - Added the `aurora`, `editorial`, and `blueprint` themes. They are skins: they
   repaint a figure and keep the classic geometry, so no element moves. `aurora`
   adds a fading trail of earlier model states, a glow under the model line, a

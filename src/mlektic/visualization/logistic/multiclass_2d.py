@@ -415,9 +415,13 @@ def build_multiclass_2d_logistic_figure(
         fig.update_layout(
             scene=dict(
                 domain=dict(x=[0.62, 0.86], y=[0.40, 1.0]),
-                xaxis=dict(title=small, tickfont=dict(size=9)),
-                yaxis=dict(title=small, tickfont=dict(size=9)),
+                # In this small scene the x1/x2 tick numbers collided with long
+                # feature names; the probability surfaces carry the meaning.
+                xaxis=dict(title=small, showticklabels=False),
+                yaxis=dict(title=small, showticklabels=False),
                 zaxis=dict(title=small, tickfont=dict(size=9)),
+                # A slightly farther camera keeps long axis titles inside the scene.
+                camera=dict(eye=dict(x=1.9, y=1.9, z=1.4)),
             ),
             legend=dict(font=dict(size=10)),
         )

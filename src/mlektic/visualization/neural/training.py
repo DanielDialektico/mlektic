@@ -290,6 +290,9 @@ def build_nn_training_figure(
     figure.update_xaxes(title_text="Training step", row=2, col=2)
     if steps.size > 1:
         figure.update_xaxes(range=[float(steps[0]), float(steps[-1])])
+        if steps[-1] - steps[0] <= 12:
+            # Few recorded steps: integer ticks only (no "1.5" training steps).
+            figure.update_xaxes(dtick=1)
     figure.update_yaxes(title_text=r"$\mathcal{L}$", gridcolor=NEURAL_COLORS["grid"], row=1, col=1)
     loss_range = _stable_range([loss])
     if loss_range:
@@ -454,8 +457,12 @@ def _weight_annotations(
         dimensions = shape_tex(array.shape, drop_batch=False)
         matrix = matrix_latex(array, dec=dec, max_rows=max_rows, max_cols=max_cols)
         role = (
-            r"\text{rows }\leftrightarrow\text{ output units; columns }\leftrightarrow\text{ input coordinates}"
-            if array.ndim >= 2
+            # A kernel tensor is shown flattened to one row per output channel.
+            r"\text{rows }\leftrightarrow\text{ output channels; columns }\leftrightarrow"
+            r"\text{ flattened kernel entries}"
+            if array.ndim > 2
+            else r"\text{rows }\leftrightarrow\text{ output units; columns }\leftrightarrow\text{ input coordinates}"
+            if array.ndim == 2
             else r"\text{one multiplicative scale per channel}"
             if name.endswith(".weight")
             else r"\text{one additive offset per output unit}"
