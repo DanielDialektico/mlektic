@@ -7,8 +7,15 @@ import plotly.graph_objects as go
 import pytest
 from sklearn.linear_model import LinearRegression, LogisticRegression, SGDRegressor
 
-from mlektic import available_themes, export_figure, get_theme_tokens, visualize_logistic, visualize_lr
-from mlektic.visualization.controls import button_style, button_style_script
+from mlektic import (
+    available_themes,
+    explain_lr_prediction,
+    export_figure,
+    get_theme_tokens,
+    visualize_logistic,
+    visualize_lr,
+)
+from mlektic.visualization.controls import button_style, button_style_script, figure_style_script
 from mlektic.visualization.design import _CLASSIC as CLASSIC_TOKENS
 from mlektic.visualization.skins import (
     SkinEffects,
@@ -24,13 +31,15 @@ from mlektic.visualization.skins.roles import EFFECT_UID_PREFIX
 from mlektic.visualization.theme import _CLASSIC as CLASSIC_PALETTE
 from mlektic.visualization.theme import _resolve, get_button_highlight_script
 
-SKIN_NAMES = ("aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember")
+SKIN_NAMES = ("aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember", "lumen")
 
 # Keys that only paint.  Everything else (sizes, positions, anchors, margins,
 # ranges, domains, fonts, text) must be identical to the classic figure.
 PAINT_KEYS = {
     "color", "bgcolor", "bordercolor", "gridcolor", "zerolinecolor", "linecolor", "tickcolor",
     "activebgcolor", "paper_bgcolor", "plot_bgcolor", "backgroundcolor", "symbol", "dash",
+    # A skin's typeface: same font sizes and positions, a different face.
+    "family",
 }
 _COLOR_MACRO = re.compile(r"\\color\{[^}]*\}\{([^}]*)\}")
 _SPAN_COLOR = re.compile(r"color:\s*[^;\"']+")
@@ -226,7 +235,7 @@ def test_buttons_keep_readable_colours_on_hover(sgd_linear, name):
     assert style["hover"] == palette.control_hover
     script = button_style_script(figure)
     # Scoped to the figure, so several themes can share one notebook page.
-    assert "{plot_id}" in script and ":hover rect" in script and "mlektic-buttons-" in script
+    assert "{plot_id}" in script and ":hover rect" in script and "mlektic-style-" in script
 
 
 def test_layout_themes_derive_a_hover_colour(sgd_linear):
@@ -238,7 +247,7 @@ def test_layout_themes_derive_a_hover_colour(sgd_linear):
 def test_exported_html_carries_the_button_stylesheet(sgd_linear, tmp_path):
     model, X, y = sgd_linear
     path = export_figure(visualize_lr(model, X, y, steps=4, max_frames=4, theme="aurora"), tmp_path / "a.html")
-    assert "mlektic-buttons-" in path.read_text(encoding="utf-8")
+    assert "mlektic-style-" in path.read_text(encoding="utf-8")
 
 
 def test_ember_draws_residuals_that_shrink(sgd_linear):
@@ -257,17 +266,6 @@ def test_ember_draws_residuals_that_shrink(sgd_linear):
     assert total_length(figure.frames[-1]) < total_length(figure.frames[0])
 
 
-@pytest.mark.parametrize("name", ["chalkboard", "davinci"])
-def test_hand_drawn_skins_sketch_model_and_class_curves(sgd_linear, multiclass, name):
-    model, X, y = sgd_linear
-    linear = visualize_lr(model, X, y, steps=6, max_frames=6, theme=name)
-    sketches = [t for t in linear.data if str(t.uid).startswith(f"{EFFECT_UID_PREFIX}SKETCH")]
-    assert len(sketches) == get_skin(name).effects.sketch
-    model, X, y = multiclass
-    curves = visualize_logistic(model, X, y, steps=6, max_frames=6, theme=name)
-    assert "sketch" in curves.layout.meta["mlektic_visual"]["skin"]["effects"]["applied"]
-
-
 def test_class_surfaces_and_points_use_the_skin_palette():
     rng = np.random.default_rng(4)
     X = rng.normal(size=(90, 2))
@@ -279,3 +277,44 @@ def test_class_surfaces_and_points_use_the_skin_palette():
     assert [tuple(map(tuple, s.colorscale))[-1][1] for s in surfaces] == list(palette.classes[:3])
     points = next(t for t in figure.data if t.type == "scatter3d")
     assert points.marker.colorscale[0][1] == palette.classes[0]
+
+
+@pytest.mark.parametrize("name", ["chalkboard", "davinci", "blueprint", "editorial"])
+def test_skin_typeface_is_loaded_and_never_reaches_mathjax(sgd_linear, name):
+    model, X, y = sgd_linear
+    skin = get_skin(name)
+    figure = visualize_lr(model, X, y, steps=4, max_frames=4, theme=name)
+    assert figure.layout.font.family == skin.font_family
+    script = figure_style_script(figure)
+    assert skin.font_url in script and "font-synthesis:none" in script
+    # Equations are LaTeX strings typeset by MathJax; their text is never restyled.
+    assert all("$" not in str(a.font.family or "") for a in figure.layout.annotations)
+
+
+def test_chalkboard_frame_ignores_the_pointer(sgd_linear):
+    model, X, y = sgd_linear
+    script = figure_style_script(visualize_lr(model, X, y, steps=4, max_frames=4, theme="chalkboard"))
+    assert "::after" in script and "pointer-events:none" in script
+
+
+def test_explainer_button_annotations_follow_the_skin(sgd_linear):
+    model, X, y = sgd_linear
+    figure = explain_lr_prediction(model, X, y, x_query=X[:1], theme="davinci")
+    text = get_skin("davinci").palette.text
+    colors = {
+        annotation.get("font", {}).get("color")
+        for menu in figure.layout.updatemenus
+        for button in menu.buttons
+        for argument in button.args
+        if isinstance(argument, dict)
+        for annotation in argument.get("annotations", [])
+    }
+    assert text in colors and not colors & {"white", "#ffffff", "#fff"}
+
+
+def test_lumen_keeps_classic_colours_with_ember_effects(sgd_linear):
+    model, X, y = sgd_linear
+    figure = visualize_lr(model, X, y, steps=8, max_frames=8, theme="lumen")
+    applied = figure.layout.meta["mlektic_visual"]["skin"]["effects"]["applied"]
+    assert {"trail", "glow", "residuals", "loss_progress"} <= set(applied)
+    assert get_skin("lumen").palette.model == "#ef553b"

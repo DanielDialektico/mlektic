@@ -57,6 +57,9 @@ def restyle(fig: Any, skin: Skin, *, family: str) -> None:
     """Recolour layout chrome and, outside neural figures, the semantic traces."""
     palette = skin.palette
     _style_layout(fig, palette, transparent_plot=skin.backdrop is not None)
+    if skin.font_family:
+        # Text that names a family explicitly keeps it; MathJax equations are unaffected.
+        fig.layout.font.family = skin.font_family
     _style_annotations(fig, palette)
     if family.startswith("neural"):
         # Neural figures encode values in their colours; only recolour plain text.
@@ -187,10 +190,29 @@ def _style_annotations(fig: Any, palette: SkinPalette) -> None:
             if annotation.text:
                 annotation.text = _recolor_muted(annotation.text, palette)
 
+    def recolor_dicts(annotations: Any) -> None:
+        for annotation in annotations or ():
+            if not isinstance(annotation, dict):
+                continue
+            font = annotation.setdefault("font", {})
+            color = _text_color(font.get("color"), palette)
+            if color is not None:
+                font["color"] = color
+            if isinstance(annotation.get("text"), str):
+                annotation["text"] = _recolor_muted(annotation["text"], palette)
+
     recolor(fig.layout.annotations)
     for frame in fig.frames or ():
         if frame.layout is not None:
             recolor(frame.layout.annotations)
+    # Explainer buttons (Input, Substitution, Output) carry their own annotation sets.
+    for menu in fig.layout.updatemenus or ():
+        for button in menu.buttons or ():
+            for argument in button.args or ():
+                if isinstance(argument, dict):
+                    for key, value in argument.items():
+                        if key == "annotations" or key.endswith(".annotations"):
+                            recolor_dicts(value)
 
 
 def _style_text_trace(payload: Any, palette: SkinPalette) -> None:

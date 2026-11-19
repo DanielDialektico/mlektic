@@ -390,101 +390,113 @@
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 26
     },
-    "STYLE-FORMAT-DASHBOARD": {
+    "STYLE-THEME-LUMEN": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 28
     },
-    "STYLE-FORMAT-COMPACT": {
+    "STYLE-FORMAT-DASHBOARD": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 30
     },
-    "STYLE-FORMAT-REPORT": {
+    "STYLE-FORMAT-COMPACT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 32
     },
-    "STYLE-SIZE-DEFAULT": {
+    "STYLE-FORMAT-REPORT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 34
     },
-    "STYLE-SIZE-COMPACT": {
+    "STYLE-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 36
     },
-    "STYLE-SIZE-NOTEBOOK": {
+    "STYLE-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 38
     },
-    "STYLE-SIZE-WIDE": {
+    "STYLE-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 40
     },
-    "STYLE-SIZE-CLASSROOM": {
+    "STYLE-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 42
     },
-    "STYLE-RESPONSIVE": {
+    "STYLE-SIZE-CLASSROOM": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 44
     },
-    "STYLE-EXPLICIT-SIZE": {
+    "STYLE-RESPONSIVE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 46
     },
-    "STYLE-DENSITY-ESSENTIAL": {
+    "STYLE-EXPLICIT-SIZE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 48
     },
-    "STYLE-DENSITY-ACADEMIC": {
+    "STYLE-DENSITY-ESSENTIAL": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 50
     },
-    "STYLE-DENSITY-COMPLETE": {
+    "STYLE-DENSITY-ACADEMIC": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 52
     },
-    "STYLE-HISTORY-HIDDEN": {
+    "STYLE-DENSITY-COMPLETE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 54
     },
-    "STYLE-SKIN-AURORA-MOTION": {
+    "STYLE-HISTORY-HIDDEN": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
-      "cell_index": 57
+      "cell_index": 56
     },
-    "STYLE-SKIN-AURORA-CLASSIC-TWIN": {
+    "STYLE-SKIN-AURORA-MOTION": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 59
     },
-    "STYLE-SKIN-AURORA-EQUATIONS": {
+    "STYLE-SKIN-AURORA-CLASSIC-TWIN": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 61
     },
-    "STYLE-SKIN-EDITORIAL-LOGISTIC": {
+    "STYLE-SKIN-AURORA-EQUATIONS": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 63
     },
-    "STYLE-SKIN-BLUEPRINT-3D": {
+    "STYLE-SKIN-EDITORIAL-LOGISTIC": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 65
     },
-    "STYLE-SKIN-EDITORIAL-NEURAL": {
+    "STYLE-SKIN-BLUEPRINT-3D": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 67
     },
-    "STYLE-SKIN-EMBER-RESIDUALS": {
+    "STYLE-SKIN-EDITORIAL-NEURAL": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 69
     },
-    "STYLE-SKIN-CHALKBOARD-CURVES": {
+    "STYLE-SKIN-EMBER-RESIDUALS": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 71
     },
-    "STYLE-SKIN-DAVINCI-3D": {
+    "STYLE-SKIN-CHALKBOARD-CURVES": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 73
     },
-    "STYLE-SKIN-DUSK-BINARY": {
+    "STYLE-SKIN-DAVINCI-3D": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 75
+    },
+    "STYLE-SKIN-DUSK-BINARY": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 77
+    },
+    "STYLE-SKIN-LUMEN-RESIDUALS": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 79
+    },
+    "STYLE-SKIN-DAVINCI-EXPLAINER": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 81
     },
     "DATA-LR-NOISELESS": {
       "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
@@ -1133,7 +1145,9 @@
       "STYLE-SKIN-EMBER-RESIDUALS",
       "STYLE-SKIN-CHALKBOARD-CURVES",
       "STYLE-SKIN-DAVINCI-3D",
-      "STYLE-SKIN-DUSK-BINARY"
+      "STYLE-SKIN-DUSK-BINARY",
+      "STYLE-SKIN-LUMEN-RESIDUALS",
+      "STYLE-SKIN-DAVINCI-EXPLAINER"
     ],
     "codeasdoc/prediction_explanations.rst": [
       "LR-PRED-EXTRAP",

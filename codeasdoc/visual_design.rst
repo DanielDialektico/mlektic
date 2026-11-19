@@ -62,7 +62,7 @@ Themes
    objective paths are dotted, decision boundaries are dashed, and multiclass
    marker symbols differ.
 
-``aurora``, ``editorial``, ``blueprint``, ``dusk``, ``chalkboard``, ``davinci``, ``ember``
+``aurora``, ``editorial``, ``blueprint``, ``dusk``, ``chalkboard``, ``davinci``, ``ember``, ``lumen``
    Skins: presentation-only themes that keep the classic geometry. See
    :doc:`themes_formats_sizes` for what each one paints and how to edit them.
 

@@ -31,6 +31,20 @@ class Backdrop:
     grain: float = 0.0
     grain_color: str = "#ffffff"
     vignette: float = 0.0
+    vignette_color: str = "#000000"
+    # Uneven tone: large soft blotches of ``mottle_color`` at that opacity.
+    mottle: float = 0.0
+    mottle_color: str = "#000000"
+    # Broad blurred swipes, like a half-erased blackboard.
+    smudges: int = 0
+    smudge_color: str = "#ffffff"
+    smudge_opacity: float = 0.06
+    # Small age spots (foxing) on old paper.
+    spots: int = 0
+    spot_color: str = "#7a5a32"
+    # Laid-paper texture: faint chain lines and denser laid lines.
+    laid_lines: float = 0.0
+    laid_color: str = "#6e5638"
 
 
 @dataclass(frozen=True)
@@ -77,9 +91,6 @@ class SkinEffects:
     trail_opacity: tuple[float, float] = (0.08, 0.36)
     loss_progress: bool = False
     equation_delta: bool = False
-    # Extra strokes beside the model line, slightly offset, as if drawn by hand.
-    sketch: int = 0
-    sketch_opacity: float = 0.35
     # Vertical segments from each data point to the model: the errors it still makes.
     residuals: bool = False
 
@@ -93,6 +104,12 @@ class Skin:
     palette: SkinPalette
     backdrop: Backdrop | None = None
     effects: SkinEffects = field(default_factory=SkinEffects)
+    # CSS for a border drawn over the figure's edge (HTML output only), e.g. a frame.
+    frame: str | None = None
+    # Typeface for titles, axes, legends, and buttons (equations keep MathJax's).
+    # The stylesheet URL is loaded with the figure; the family ends in fallbacks.
+    font_family: str | None = None
+    font_url: str | None = None
 
 
 AURORA = Skin(
@@ -156,6 +173,8 @@ EDITORIAL = Skin(
         legend_text="#1f2328",
         control_hover="#efe6d3",
     ),
+    font_family="Lora, Georgia, 'Times New Roman', serif",
+    font_url="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&display=swap",
 )
 
 BLUEPRINT = Skin(
@@ -189,6 +208,8 @@ BLUEPRINT = Skin(
         control_hover="rgba(255,255,255,0.18)",
     ),
     backdrop=Backdrop(kind="grid", colors=("#0d3866", "rgba(255,255,255,0.06)"), cell=20),
+    font_family="'Architects Daughter', 'Segoe Print', 'Comic Sans MS', cursive",
+    font_url="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap",
 )
 
 DUSK = Skin(
@@ -258,9 +279,17 @@ CHALKBOARD = Skin(
     ),
     backdrop=Backdrop(
         kind="radial", colors=("#2e4a3c", "#24392f", "#1a2a22"), center=(0.45, 0.35),
-        grain=0.10, grain_color="#f1f1ea", vignette=0.25,
+        grain=0.10, grain_color="#f1f1ea", vignette=0.35,
+        mottle=0.06, mottle_color="#f1f1ea", smudges=6, smudge_color="#f1f1ea", smudge_opacity=0.07,
     ),
-    effects=SkinEffects(sketch=2, sketch_opacity=0.45),
+    frame=(
+        "border:6px solid #7a5232;border-radius:3px;"
+        "box-shadow:inset 0 0 0 1px rgba(0,0,0,0.55),inset 0 0 22px rgba(0,0,0,0.45),"
+        "0 0 0 1px #4a3020;"
+        "border-image:linear-gradient(135deg,#8a5c36,#5e3d22 40%,#8f6440 60%,#5a3a20) 1"
+    ),
+    font_family="Gaegu, 'Segoe Print', 'Comic Sans MS', cursive",
+    font_url="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap",
 )
 
 DAVINCI = Skin(
@@ -294,10 +323,12 @@ DAVINCI = Skin(
         control_hover="#e2cfa3",
     ),
     backdrop=Backdrop(
-        kind="radial", colors=("#f2e6c6", "#e6d4ab", "#c9ae7c"), center=(0.5, 0.45),
-        grain=0.12, grain_color="#6e5638", vignette=0.30,
+        kind="radial", colors=("#f1e3c0", "#e4cf9f", "#c7a86f"), center=(0.5, 0.45),
+        grain=0.14, grain_color="#6e5638", vignette=0.55, vignette_color="#5a3714",
+        mottle=0.16, mottle_color="#8a6232", spots=11, spot_color="#7a4f22", laid_lines=0.07,
     ),
-    effects=SkinEffects(sketch=2, sketch_opacity=0.50),
+    font_family="Kalam, 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive",
+    font_url="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap",
 )
 
 EMBER = Skin(
@@ -339,6 +370,45 @@ EMBER = Skin(
     ),
 )
 
+LUMEN = Skin(
+    name="lumen",
+    description="Classic colours on soft charcoal light, with ember's glow, trail, and residuals.",
+    palette=SkinPalette(
+        background="#121314",
+        scene_wall="#1b1c1f",
+        text="#f1f2f4",
+        muted="#b8c1cc",
+        grid="rgba(255,255,255,0.08)",
+        axis="rgba(255,255,255,0.28)",
+        data="#7dd3fc",
+        data_border="#0ea5e9",
+        model="#ef553b",
+        loss="#00cc96",
+        accent="#f4c26b",
+        increase="#5fd3a4",
+        decrease="#f2836b",
+        classes=("#7dd3fc", "#ef553b", "#00cc96", "#f4c26b", "#ab63fa", "#ff97c3"),
+        control_background="rgba(255,255,255,0.07)",
+        control_border="rgba(255,255,255,0.55)",
+        control_text="#f1f2f4",
+        slider_track="rgba(255,255,255,0.18)",
+        slider_active="#ef553b",
+        legend_background="rgba(255,255,255,0.06)",
+        legend_border="rgba(255,255,255,0.35)",
+        legend_text="#f1f2f4",
+        control_hover="rgba(255,255,255,0.20)",
+        control_hover_text="#ffffff",
+    ),
+    backdrop=Backdrop(
+        kind="radial", colors=("#2c2925", "#1a1a1b", "#0e0e0f"), center=(0.5, 1.05),
+        grain=0.03, grain_color="#f4c26b", vignette=0.30,
+    ),
+    effects=SkinEffects(
+        glow=True, glow_width=14.0, glow_opacity=0.16, trail=5, trail_opacity=(0.06, 0.30),
+        loss_progress=True, equation_delta=True, residuals=True,
+    ),
+)
+
 SKINS: dict[str, Skin] = {
-    skin.name: skin for skin in (AURORA, EDITORIAL, BLUEPRINT, DUSK, CHALKBOARD, DAVINCI, EMBER)
+    skin.name: skin for skin in (AURORA, EDITORIAL, BLUEPRINT, DUSK, CHALKBOARD, DAVINCI, EMBER, LUMEN)
 }

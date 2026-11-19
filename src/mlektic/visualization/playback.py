@@ -60,9 +60,9 @@ def _with_post_script(kwargs: dict, *scripts: str) -> dict:
 
 def figure_scripts(fig, *, fluid: bool = True, autoplay: bool = False) -> list[str]:
     """Every ``post_script`` the figure needs: its button stylesheet and, if animated, playback."""
-    from .controls import button_style_script
+    from .controls import figure_style_script
 
-    scripts = [button_style_script(fig)]
+    scripts = [figure_style_script(fig)]
     if fluid and has_frames(fig):
         scripts.append(fluid_playback_script(autoplay=autoplay))
     return [script for script in scripts if script]

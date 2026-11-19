@@ -77,7 +77,10 @@ def _stable_range(values: Sequence[np.ndarray], padding: float = 0.08) -> list[f
     if not combined.size:
         return None
     low, high = float(combined.min()), float(combined.max())
-    span = max(high - low, 1e-9)
+    span = high - low
+    if span <= 1e-9 * max(abs(low), abs(high), 1e-12):
+        # A constant metric: a readable band around it instead of ticks like 0.5000000005.
+        span = 0.1 * max(abs(low), abs(high)) or 1.0
     return [low - padding * span, high + padding * span]
 
 

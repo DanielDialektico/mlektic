@@ -29,7 +29,7 @@ def apply_effects(fig: Any, skin: Skin) -> dict[str, Any]:
     effects = skin.effects
     report: dict[str, Any] = {"applied": [], "skipped": {}}
     if not any((
-        effects.glow, effects.trail, effects.loss_progress, effects.equation_delta, effects.sketch, effects.residuals,
+        effects.glow, effects.trail, effects.loss_progress, effects.equation_delta, effects.residuals,
     )):
         return report
     if _has_index_bound_controls(fig):
@@ -68,24 +68,6 @@ def apply_effects(fig: Any, skin: Skin) -> dict[str, Any]:
         else:
             _residuals(fig, model, data, palette.accent)
             report["applied"].append("residuals")
-    if effects.sketch and _find(fig, roles.MODEL) is None:
-        # Multiclass 1D draws one probability curve per class: sketch each of them.
-        curves = [
-            index for index, trace in enumerate(fig.data)
-            # Sketch strokes reuse the curve's x values, so only y needs a fixed range.
-            if roles.trace_role(trace) == roles.CLASS_CURVE and roles.is_flat(trace)
-            and _fixed_axes(fig, trace, ("y",))
-        ]
-        # Last first: inserting before an index never shifts the ones still to do.
-        for index in reversed(curves):
-            _sketch(fig, index, fig.data[index].line.color or palette.model, effects)
-        if curves:
-            report["applied"].append("sketch")
-        else:
-            report["skipped"]["sketch"] = "no matching mark"
-    else:
-        run("sketch", effects.sketch, roles.MODEL, lambda i: _sketch(fig, i, palette.model, effects),
-            needs_frames=False)
     if effects.equation_delta:
         if animated and _equation_delta(fig, palette.increase, palette.decrease):
             report["applied"].append("equation_delta")
@@ -279,37 +261,6 @@ def _residuals(fig: Any, model_index: int, data_index: int, color: str) -> None:
     per_frame = [[go.Scatter(x=x, y=y)] for x, y in map(path, states)]
     # Under the data points, so every point stays visible on top of its segment.
     _insert(fig, data_index, base, per_frame)
-
-
-def _sketch(fig: Any, index: int, color: str, effects: Any) -> None:
-    """Thin strokes beside the model line with a smooth, fixed wobble, like pencil or chalk."""
-    import math
-
-    model = fig.data[index]
-    y_axis = getattr(fig.layout, f"yaxis{str(model.yaxis or 'y')[1:]}")
-    amplitude = 0.022 * abs(float(y_axis.range[1]) - float(y_axis.range[0]))
-    count = int(effects.sketch)
-
-    def wobble(state, stroke):
-        xs, ys = _thin(state)
-        phase = 1.7 * (stroke + 1)
-        side = 1 if stroke % 2 == 0 else -1
-        return xs, [
-            None if y is None else float(f"{y + side * amplitude * (0.6 + 0.4 * math.sin(0.45 * i + phase)):.5g}")
-            for i, y in enumerate(ys)
-        ]
-
-    base = []
-    for stroke in range(count):
-        x, y = wobble((model.x, model.y), stroke)
-        base.append(_quiet(model, f"sketch_{stroke}", x=x, y=y, mode="lines",
-                           line={"color": color, "width": 1.5}, opacity=effects.sketch_opacity))
-    per_frame = (
-        [[go.Scatter(x=x, y=y) for x, y in (wobble(state, stroke) for stroke in range(count))]
-         for state in _states(fig, index)]
-        if fig.frames else []
-    )
-    _insert(fig, index, base, per_frame)
 
 
 def _finite(value: Any) -> bool:

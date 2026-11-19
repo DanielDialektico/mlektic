@@ -31,9 +31,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Added `course/notacion_matematica.html`, the Spanish course notation reference.
-- Added the `dusk` (muted aurora), `chalkboard` (slate and chalk, hand-drawn),
-  `davinci` (parchment, sepia ink, red chalk), and `ember` (fire, with residual
-  segments that shrink as the model learns) skins. Skins now shade 3D class
+- Added the `dusk` (muted aurora), `chalkboard` (framed slate with smudges and
+  a chalk typeface), `davinci` (old laid paper with foxing, sepia ink, red
+  chalk, handwritten typeface), `ember` (fire, with residual segments that
+  shrink as the model learns), and `lumen` (classic colours with ember's light
+  and effects) skins. Skins may set a typeface; equations keep MathJax's font. Skins now shade 3D class
   surfaces and class-coloured points with their own palette.
 - Added the `aurora`, `editorial`, and `blueprint` themes. They are skins: they
   repaint a figure and keep the classic geometry, so no element moves. `aurora`

@@ -48,7 +48,7 @@ def _annotation_payloads(value):
 def test_visual_tokens_are_public_immutable_and_complete():
     assert available_themes() == (
         "classic", "academic", "classroom", "compact", "accessible",
-        "aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember",
+        "aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember", "lumen",
     )
     academic = get_theme_tokens("academic")
     classroom = get_theme_tokens("classroom")

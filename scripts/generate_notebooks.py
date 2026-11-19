@@ -1393,14 +1393,14 @@ display(HTML(f'<ul>{links}</ul>'))""",
 def build_visual_system() -> None:
     imports = """\
 from IPython.display import display
-from mlektic import visualize_logistic, visualize_lr, visualize_nn
+from mlektic import explain_lr_prediction, visualize_logistic, visualize_lr, visualize_nn
 from notebooks._support import case_heading, linear_case, multiclass_case, torch_xor_case
 c=linear_case(1)
 """
     cells = setup(imports)
     for theme in [
         "classic", "academic", "classroom", "compact", "accessible",
-        "aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember",
+        "aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember", "lumen",
     ]:
         cells.extend(
             case(
@@ -1462,7 +1462,7 @@ c=linear_case(1)
     cells.append(
         markdown(
             """\
-## Skins: aurora, editorial, blueprint, dusk, chalkboard, davinci, ember
+## Skins: aurora, editorial, blueprint, dusk, chalkboard, davinci, ember, lumen
 
 Skins repaint a figure and keep the classic geometry: every title, equation,
 control, and panel sits exactly where `classic` puts it. Compare each case with
@@ -1470,8 +1470,9 @@ the classic figure of the same model. `aurora` also adds motion cues: a fading
 trail of earlier model states and a glow under the model line, the loss curve's
 future dotted with a marker on the current step, and equation numbers coloured
 green when they rose and coral when they fell since their last change. `dusk`
-keeps those cues in muted colours; `chalkboard` and `davinci` add hand-drawn
-strokes; `ember` adds residual segments that shrink as the model learns. Hover
+keeps those cues in muted colours; `chalkboard` and `davinci` add textured
+backdrops and handwritten typefaces (equations keep MathJax's font); `ember`
+and `lumen` add residual segments that shrink as the model learns. Hover
 over Play/Pause in each: the label must stay readable.
 """
         )
@@ -1521,7 +1522,7 @@ over Play/Pause in each: the label must stay readable.
         ),
         (
             "STYLE-SKIN-CHALKBOARD-CURVES",
-            "hand-drawn chalk strokes on every class probability curve over a dusty slate",
+            "framed, smudged slate with chalk colours and a chalk typeface on class probability curves",
             "mc=multiclass_case(1)\n"
             "display(visualize_logistic(mc.model,mc.X,mc.y,steps=20,max_frames=20,theme='chalkboard'))",
         ),
@@ -1536,6 +1537,18 @@ over Play/Pause in each: the label must stay readable.
             "muted trail, glow, loss progress, and equation colours on a binary sigmoid",
             "from notebooks._support import binary_case\nb1=binary_case(1)\n"
             "display(visualize_logistic(b1.model,b1.X,b1.y,steps=20,max_frames=20,show_loss=True,theme='dusk'))",
+        ),
+        (
+            "STYLE-SKIN-LUMEN-RESIDUALS",
+            "classic colours with warm light, glow, trail, and residual segments on a binary sigmoid",
+            "from notebooks._support import binary_case\nb1=binary_case(1)\n"
+            "display(visualize_logistic(b1.model,b1.X,b1.y,steps=20,max_frames=20,show_loss=True,theme='lumen'))",
+        ),
+        (
+            "STYLE-SKIN-DAVINCI-EXPLAINER",
+            "old-paper explainer whose Input, Substitution, and Output text stays legible ink",
+            "lin2=linear_case(2)\n"
+            "display(explain_lr_prediction(lin2.model,lin2.X,lin2.y,x_query=lin2.X[:1],theme='davinci'))",
         ),
     ]
     for item in skin_cases:
@@ -2801,6 +2814,8 @@ def build_manifest() -> None:
             "STYLE-SKIN-CHALKBOARD-CURVES",
             "STYLE-SKIN-DAVINCI-3D",
             "STYLE-SKIN-DUSK-BINARY",
+            "STYLE-SKIN-LUMEN-RESIDUALS",
+            "STYLE-SKIN-DAVINCI-EXPLAINER",
         ],
         "codeasdoc/prediction_explanations.rst": [
             "LR-PRED-EXTRAP",

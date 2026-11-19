@@ -12,7 +12,7 @@ axes control presentation without changing estimator mathematics:
      - Meaning
    * - ``theme``
      - classic, academic, classroom, compact, accessible, aurora, editorial,
-       blueprint, dusk, chalkboard, davinci, ember
+       blueprint, dusk, chalkboard, davinci, ember, lumen
      - Color, typography, line, marker, and contrast tokens; skins repaint
        only
    * - ``format``
@@ -37,7 +37,7 @@ Skins
 =====
 
 ``aurora``, ``editorial``, ``blueprint``, ``dusk``, ``chalkboard``, ``davinci``,
-and ``ember`` are *skins*: themes that change
+``ember``, and ``lumen`` are *skins*: themes that change
 only how a figure is painted. The figure is laid out exactly as ``classic`` lays
 it out, so every title, equation, control, legend, and panel keeps its position,
 size, and font. Pass them like any other theme, for example
@@ -61,18 +61,29 @@ size, and font. Pass them like any other theme, for example
    glow, loss progress, and equation colours, with less saturation.
 
 ``chalkboard``
-   School slate green with chalk dust, white and pastel chalk lines, and open
-   markers. Model lines and class curves get two faint offset strokes, as if
-   drawn by hand.
+   A framed school slate: green with chalk dust, half-erased smudges, a wooden
+   border, white and pastel chalk lines, open markers, and a chalk-style
+   handwritten typeface.
 
 ``davinci``
-   Leonardo's notebook: aged parchment with a vignette, sepia ink, red-chalk
-   model lines with hand-drawn strokes, and a dashed loss.
+   Leonardo's notebook: aged laid paper with uneven tone, foxing spots, and
+   darkened edges; sepia ink, red-chalk model lines, a dashed loss, and a
+   handwritten typeface.
 
 ``ember``
    Volcanic dark with fire colours, a strong glow, a long trail, and residual
    sparks: a segment from every data point to the model, which visibly shrinks
    as training reduces the error.
+
+``lumen``
+   Classic's colours on a charcoal backdrop with a warm light from below, with
+   ember's glow, trail, loss progress, residual segments, and equation colours.
+
+Some skins set a typeface for titles, axes, legends, and buttons (Lora for
+``editorial``, Architects Daughter for ``blueprint``, Gaegu for
+``chalkboard``, Kalam for ``davinci``). Equations are always typeset by MathJax
+in its own mathematical font. Fonts load from Google Fonts with the figure;
+without a connection, the listed system fallbacks are used.
 
 In every skin the figure's buttons keep their colours on hover; the stylesheet
 is scoped to each figure, so different themes can share one notebook page.

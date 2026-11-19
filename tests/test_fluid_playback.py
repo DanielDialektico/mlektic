@@ -104,7 +104,7 @@ def test_notebook_display_paths_mount_controller(animated_figure, colab_renderer
     animated_figure._ipython_display_()
     scripts = shown[0]["post_script"]
     assert scripts[-1] == fluid_playback_script()
-    assert all("mlektic-buttons-" in script for script in scripts[:-1])
+    assert all("mlektic-style-" in script for script in scripts[:-1])
 
 
 def test_show_keeps_a_caller_post_script(animated_figure, colab_renderer, monkeypatch):

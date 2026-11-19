@@ -394,12 +394,14 @@ academic_dashboard = visualize_lr(
   `academic`, `classroom`, `compact`, or `accessible`. `classroom` remains a
   backward-compatible alias of `academic`; use a canvas `size` instead of
   enlarging axes and annotations. The skins `aurora`, `editorial`,
-  `blueprint`, `dusk`, `chalkboard`, `davinci`, and `ember` only repaint:
+  `blueprint`, `dusk`, `chalkboard`, `davinci`, `ember`, and `lumen` only repaint:
   every element keeps its classic position. `aurora` and its muted sibling
   `dusk` add motion cues (a trail of earlier model states, a loss-progress
   marker, and equation numbers coloured by their direction of change);
-  `chalkboard` and `davinci` draw lines as if by hand; `ember` also shows each
-  point's residual shrinking as the model learns.
+  `chalkboard` (framed slate) and `davinci` (old paper) use handwritten
+  typefaces; `ember` and its classic-coloured sibling `lumen` also show each
+  point's residual shrinking as the model learns. Equations always keep
+  MathJax's font.
 - `format` controls composition: interactive `dashboard`, space-conscious
   `compact`, or static final-state `report`.
 - `density` is a compatible alias for tabular mathematical `detail`.
