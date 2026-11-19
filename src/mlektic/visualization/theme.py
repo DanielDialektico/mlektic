@@ -353,44 +353,18 @@ def get_button_highlight_script(*, theme: str | None = None) -> str:
 
 
 def attach_highlight(fig, *, theme: str | None = None):
-    """Patch *fig* so stable button CSS is injected in Jupyter.
+    """Patch *fig* so every notebook display path styles its buttons and playback.
 
-    Two display paths are patched:
-
-    * ``fig`` as the last expression in a cell → ``_repr_html_()``
-    * ``fig.show()`` → original show + ``IPython.display.HTML(script)``
-
-    Animated figures also get fluid playback (see
-    :func:`mlektic.visualization.playback.attach_fluid_playback`).
+    The button colours, including the hover state, are installed by a
+    stylesheet scoped to this figure (see :mod:`mlektic.visualization.controls`),
+    which travels with the figure's HTML. Animated figures also get fluid
+    playback (see :func:`mlektic.visualization.playback.attach_fluid_playback`).
+    ``theme`` is accepted for backward compatibility; the colours are read from
+    the figure itself.
 
     Returns the same *fig* (mutated in-place) for convenience.
     """
-    attach_fluid_playback(fig)
-    _script = get_button_highlight_script(theme=theme)
-
-    # 1) Patch _repr_html_ (used when `fig` is the cell's last expression)
-    _original_repr = getattr(fig, "_repr_html_", None)
-
-    def _patched_repr():
-        base_html = _original_repr() if _original_repr else ""
-        return base_html + _script
-
-    fig._repr_html_ = _patched_repr
-
-    # 2) Patch show() (used when user calls fig.show() explicitly)
-    _original_show = fig.show
-
-    def _patched_show(*args, **kwargs):
-        _original_show(*args, **kwargs)
-        try:
-            from IPython.display import HTML, display
-
-            display(HTML(_script))
-        except Exception:
-            pass  # not in a notebook — ignore silently
-
-    fig.show = _patched_show
-    return fig
+    return attach_fluid_playback(fig)
 
 
 def configure_animation(fig, frame_duration: int, transition_duration: int | None = None):

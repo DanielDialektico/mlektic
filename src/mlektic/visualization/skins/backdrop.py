@@ -50,6 +50,30 @@ def backdrop_image(backdrop: Backdrop, fig: Any) -> dict[str, Any] | None:
     }
 
 
+def _texture(backdrop: Backdrop, width: int, height: int, *, origin: tuple[int, int], canvas: tuple[int, int]) -> str:
+    """Optional grain (chalk dust, paper fibre) and an edge vignette."""
+    layers = ""
+    if backdrop.grain > 0:
+        red, green, blue = (int(backdrop.grain_color.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+        layers += (
+            '<filter id="n" x="0" y="0" width="100%" height="100%">'
+            '<feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>'
+            f'<feColorMatrix type="matrix" values="0 0 0 0 {red:.3f} 0 0 0 0 {green:.3f} 0 0 0 0 {blue:.3f} '
+            '0 0 0 1.4 -0.5"/></filter>'
+            f'<rect width="{width}" height="{height}" filter="url(#n)" opacity="{backdrop.grain:.3f}"/>'
+        )
+    if backdrop.vignette > 0:
+        cx = origin[0] + canvas[0] / 2
+        cy = origin[1] + canvas[1] / 2
+        layers += (
+            f'<defs><radialGradient id="v" gradientUnits="userSpaceOnUse" cx="{cx:.1f}" cy="{cy:.1f}" '
+            f'r="{0.75 * max(canvas):.1f}"><stop offset="0.55" stop-color="#000" stop-opacity="0"/>'
+            f'<stop offset="1" stop-color="#000" stop-opacity="{backdrop.vignette:.3f}"/></radialGradient></defs>'
+            f'<rect width="{width}" height="{height}" fill="url(#v)"/>'
+        )
+    return layers
+
+
 def _svg(backdrop: Backdrop, width: int, height: int, *, origin: tuple[int, int], canvas: tuple[int, int]) -> str:
     if backdrop.kind == "radial":
         cx = origin[0] + backdrop.center[0] * canvas[0]
@@ -74,6 +98,7 @@ def _svg(backdrop: Backdrop, width: int, height: int, *, origin: tuple[int, int]
         )
     else:
         raise ValueError(f"Unknown backdrop kind {backdrop.kind!r}; use 'radial' or 'grid'.")
+    paint += _texture(backdrop, width, height, origin=origin, canvas=canvas)
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
         f'viewBox="0 0 {width} {height}" preserveAspectRatio="none">{paint}</svg>'

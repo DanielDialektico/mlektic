@@ -7,7 +7,8 @@ import plotly.graph_objects as go
 import pytest
 from sklearn.linear_model import LinearRegression, LogisticRegression, SGDRegressor
 
-from mlektic import available_themes, get_theme_tokens, visualize_logistic, visualize_lr
+from mlektic import available_themes, export_figure, get_theme_tokens, visualize_logistic, visualize_lr
+from mlektic.visualization.controls import button_style, button_style_script
 from mlektic.visualization.design import _CLASSIC as CLASSIC_TOKENS
 from mlektic.visualization.skins import (
     SkinEffects,
@@ -23,7 +24,7 @@ from mlektic.visualization.skins.roles import EFFECT_UID_PREFIX
 from mlektic.visualization.theme import _CLASSIC as CLASSIC_PALETTE
 from mlektic.visualization.theme import _resolve, get_button_highlight_script
 
-SKIN_NAMES = ("aurora", "editorial", "blueprint")
+SKIN_NAMES = ("aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember")
 
 # Keys that only paint.  Everything else (sizes, positions, anchors, margins,
 # ranges, domains, fonts, text) must be identical to the classic figure.
@@ -95,7 +96,7 @@ def _assert_same_geometry(classic, skinned):
 
 def test_skins_are_registered_as_themes():
     assert available_skins() == SKIN_NAMES
-    assert available_themes()[-3:] == SKIN_NAMES
+    assert available_themes()[-len(SKIN_NAMES):] == SKIN_NAMES
     assert all(is_skin(name) and is_skin(name.upper()) for name in SKIN_NAMES)
     assert not is_skin("classic") and not is_skin(None)
     with pytest.raises(ValueError, match="aurora"):
@@ -213,3 +214,68 @@ def test_button_stylesheet_uses_skin_colours():
     script = get_button_highlight_script(theme="editorial")
     palette = get_skin("editorial").palette
     assert palette.control_background in script and palette.control_text in script
+
+
+@pytest.mark.parametrize("name", SKIN_NAMES)
+def test_buttons_keep_readable_colours_on_hover(sgd_linear, name):
+    model, X, y = sgd_linear
+    figure = visualize_lr(model, X, y, steps=4, max_frames=4, theme=name)
+    palette = get_skin(name).palette
+    style = button_style(figure)
+    assert style["text"] == palette.control_text
+    assert style["hover"] == palette.control_hover
+    script = button_style_script(figure)
+    # Scoped to the figure, so several themes can share one notebook page.
+    assert "{plot_id}" in script and ":hover rect" in script and "mlektic-buttons-" in script
+
+
+def test_layout_themes_derive_a_hover_colour(sgd_linear):
+    model, X, y = sgd_linear
+    style = button_style(visualize_lr(model, X, y, steps=4, max_frames=4))
+    assert style["hover"].startswith("color-mix(") and style["hover_text"] == style["text"]
+
+
+def test_exported_html_carries_the_button_stylesheet(sgd_linear, tmp_path):
+    model, X, y = sgd_linear
+    path = export_figure(visualize_lr(model, X, y, steps=4, max_frames=4, theme="aurora"), tmp_path / "a.html")
+    assert "mlektic-buttons-" in path.read_text(encoding="utf-8")
+
+
+def test_ember_draws_residuals_that_shrink(sgd_linear):
+    model, X, y = sgd_linear
+    figure = visualize_lr(model, X, y, steps=12, max_frames=12, theme="ember")
+    assert "residuals" in figure.layout.meta["mlektic_visual"]["skin"]["effects"]["applied"]
+    index = next(i for i, t in enumerate(figure.data) if t.uid == f"{EFFECT_UID_PREFIX}RESIDUALS")
+    data_index = next(i for i, t in enumerate(figure.data) if t.name == "Data")
+    assert index < data_index  # segments sit under the points
+
+    def total_length(frame):
+        update = frame.data[list(frame.traces).index(index)]
+        ys = [v for v in update.y]
+        return sum(abs(ys[k + 1] - ys[k]) for k in range(0, len(ys), 3))
+
+    assert total_length(figure.frames[-1]) < total_length(figure.frames[0])
+
+
+@pytest.mark.parametrize("name", ["chalkboard", "davinci"])
+def test_hand_drawn_skins_sketch_model_and_class_curves(sgd_linear, multiclass, name):
+    model, X, y = sgd_linear
+    linear = visualize_lr(model, X, y, steps=6, max_frames=6, theme=name)
+    sketches = [t for t in linear.data if str(t.uid).startswith(f"{EFFECT_UID_PREFIX}SKETCH")]
+    assert len(sketches) == get_skin(name).effects.sketch
+    model, X, y = multiclass
+    curves = visualize_logistic(model, X, y, steps=6, max_frames=6, theme=name)
+    assert "sketch" in curves.layout.meta["mlektic_visual"]["skin"]["effects"]["applied"]
+
+
+def test_class_surfaces_and_points_use_the_skin_palette():
+    rng = np.random.default_rng(4)
+    X = rng.normal(size=(90, 2))
+    y = np.digitize(X[:, 0], [-0.5, 0.5])
+    model = LogisticRegression(max_iter=300).fit(X, y)
+    figure = visualize_logistic(model, X, y, steps=4, max_frames=4, theme="davinci")
+    palette = get_skin("davinci").palette
+    surfaces = [t for t in figure.data if t.type == "surface"]
+    assert [tuple(map(tuple, s.colorscale))[-1][1] for s in surfaces] == list(palette.classes[:3])
+    points = next(t for t in figure.data if t.type == "scatter3d")
+    assert points.marker.colorscale[0][1] == palette.classes[0]

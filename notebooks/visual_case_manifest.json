@@ -374,85 +374,117 @@
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 18
     },
-    "STYLE-FORMAT-DASHBOARD": {
+    "STYLE-THEME-DUSK": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 20
     },
-    "STYLE-FORMAT-COMPACT": {
+    "STYLE-THEME-CHALKBOARD": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 22
     },
-    "STYLE-FORMAT-REPORT": {
+    "STYLE-THEME-DAVINCI": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 24
     },
-    "STYLE-SIZE-DEFAULT": {
+    "STYLE-THEME-EMBER": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 26
     },
-    "STYLE-SIZE-COMPACT": {
+    "STYLE-FORMAT-DASHBOARD": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 28
     },
-    "STYLE-SIZE-NOTEBOOK": {
+    "STYLE-FORMAT-COMPACT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 30
     },
-    "STYLE-SIZE-WIDE": {
+    "STYLE-FORMAT-REPORT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 32
     },
-    "STYLE-SIZE-CLASSROOM": {
+    "STYLE-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 34
     },
-    "STYLE-RESPONSIVE": {
+    "STYLE-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 36
     },
-    "STYLE-EXPLICIT-SIZE": {
+    "STYLE-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 38
     },
-    "STYLE-DENSITY-ESSENTIAL": {
+    "STYLE-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 40
     },
-    "STYLE-DENSITY-ACADEMIC": {
+    "STYLE-SIZE-CLASSROOM": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 42
     },
-    "STYLE-DENSITY-COMPLETE": {
+    "STYLE-RESPONSIVE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 44
     },
-    "STYLE-HISTORY-HIDDEN": {
+    "STYLE-EXPLICIT-SIZE": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 46
     },
+    "STYLE-DENSITY-ESSENTIAL": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 48
+    },
+    "STYLE-DENSITY-ACADEMIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 50
+    },
+    "STYLE-DENSITY-COMPLETE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 52
+    },
+    "STYLE-HISTORY-HIDDEN": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 54
+    },
     "STYLE-SKIN-AURORA-MOTION": {
-      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
-      "cell_index": 49
-    },
-    "STYLE-SKIN-AURORA-CLASSIC-TWIN": {
-      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
-      "cell_index": 51
-    },
-    "STYLE-SKIN-AURORA-EQUATIONS": {
-      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
-      "cell_index": 53
-    },
-    "STYLE-SKIN-EDITORIAL-LOGISTIC": {
-      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
-      "cell_index": 55
-    },
-    "STYLE-SKIN-BLUEPRINT-3D": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 57
     },
-    "STYLE-SKIN-EDITORIAL-NEURAL": {
+    "STYLE-SKIN-AURORA-CLASSIC-TWIN": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 59
+    },
+    "STYLE-SKIN-AURORA-EQUATIONS": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 61
+    },
+    "STYLE-SKIN-EDITORIAL-LOGISTIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 63
+    },
+    "STYLE-SKIN-BLUEPRINT-3D": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 65
+    },
+    "STYLE-SKIN-EDITORIAL-NEURAL": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 67
+    },
+    "STYLE-SKIN-EMBER-RESIDUALS": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 69
+    },
+    "STYLE-SKIN-CHALKBOARD-CURVES": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 71
+    },
+    "STYLE-SKIN-DAVINCI-3D": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 73
+    },
+    "STYLE-SKIN-DUSK-BINARY": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 75
     },
     "DATA-LR-NOISELESS": {
       "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
@@ -1097,7 +1129,11 @@
       "STYLE-SKIN-AURORA-MOTION",
       "STYLE-SKIN-AURORA-CLASSIC-TWIN",
       "STYLE-SKIN-BLUEPRINT-3D",
-      "STYLE-SKIN-EDITORIAL-NEURAL"
+      "STYLE-SKIN-EDITORIAL-NEURAL",
+      "STYLE-SKIN-EMBER-RESIDUALS",
+      "STYLE-SKIN-CHALKBOARD-CURVES",
+      "STYLE-SKIN-DAVINCI-3D",
+      "STYLE-SKIN-DUSK-BINARY"
     ],
     "codeasdoc/prediction_explanations.rst": [
       "LR-PRED-EXTRAP",

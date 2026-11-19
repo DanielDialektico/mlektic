@@ -44,15 +44,28 @@ def has_frames(fig) -> bool:
     return bool(getattr(fig, "frames", None))
 
 
-def _with_post_script(kwargs: dict, script: str) -> dict:
+def _with_post_script(kwargs: dict, *scripts: str) -> dict:
+    scripts = [script for script in scripts if script]
+    if not scripts:
+        return kwargs
     existing = kwargs.get("post_script")
     if existing is None:
-        scripts = [script]
+        combined = list(scripts)
     elif isinstance(existing, (list, tuple)):
-        scripts = [*existing, script]
+        combined = [*existing, *scripts]
     else:
-        scripts = [existing, script]
-    return {**kwargs, "post_script": scripts}
+        combined = [existing, *scripts]
+    return {**kwargs, "post_script": combined}
+
+
+def figure_scripts(fig, *, fluid: bool = True, autoplay: bool = False) -> list[str]:
+    """Every ``post_script`` the figure needs: its button stylesheet and, if animated, playback."""
+    from .controls import button_style_script
+
+    scripts = [button_style_script(fig)]
+    if fluid and has_frames(fig):
+        scripts.append(fluid_playback_script(autoplay=autoplay))
+    return [script for script in scripts if script]
 
 
 def attach_fluid_playback(fig):
@@ -70,21 +83,18 @@ def attach_fluid_playback(fig):
     _original_bundle = fig._repr_mimebundle_
 
     def _patched_bundle(include=None, exclude=None, validate=True, **kwargs):
-        if has_frames(fig):
-            kwargs = _with_post_script(kwargs, fluid_playback_script())
+        kwargs = _with_post_script(kwargs, *figure_scripts(fig))
         return _original_bundle(include, exclude, validate, **kwargs)
 
     def _patched_show(*args, **kwargs):
-        if has_frames(fig):
-            kwargs = _with_post_script(kwargs, fluid_playback_script())
+        kwargs = _with_post_script(kwargs, *figure_scripts(fig))
         return _original_show(*args, **kwargs)
 
     def _patched_ipython_display():
         import plotly.io as pio
 
         if pio.renderers.render_on_display and pio.renderers.default:
-            kwargs = _with_post_script({}, fluid_playback_script()) if has_frames(fig) else {}
-            pio.show(fig, **kwargs)
+            pio.show(fig, **_with_post_script({}, *figure_scripts(fig)))
         else:
             print(repr(fig))
 
@@ -94,4 +104,4 @@ def attach_fluid_playback(fig):
     return fig
 
 
-__all__ = ["attach_fluid_playback", "fluid_playback_script", "has_frames"]
+__all__ = ["attach_fluid_playback", "figure_scripts", "fluid_playback_script", "has_frames"]

@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
   the 1D/2D geometry, preventing it from colliding with probability-axis titles.
 
 ### Fixed
+- Figure buttons keep a readable label on hover in every theme. Their colours
+  now come from a stylesheet scoped to each figure, carried with its HTML, so
+  several themes can share a notebook page and exported files match notebooks.
 - Binary Accuracy and F1 now use the displayed threshold; R² follows sklearn's
   constant-target convention; log-loss clipping matches sklearn in every view.
 - Ridge, Lasso, and ElasticNet penalties are reported (elastic-net with
@@ -28,6 +31,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Added `course/notacion_matematica.html`, the Spanish course notation reference.
+- Added the `dusk` (muted aurora), `chalkboard` (slate and chalk, hand-drawn),
+  `davinci` (parchment, sepia ink, red chalk), and `ember` (fire, with residual
+  segments that shrink as the model learns) skins. Skins now shade 3D class
+  surfaces and class-coloured points with their own palette.
 - Added the `aurora`, `editorial`, and `blueprint` themes. They are skins: they
   repaint a figure and keep the classic geometry, so no element moves. `aurora`
   adds a fading trail of earlier model states, a glow under the model line, a

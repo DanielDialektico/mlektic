@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..visualization.playback import fluid_playback_script, has_frames
+from ..visualization.playback import figure_scripts, has_frames
 
 
 def _resolved_responsive(fig, responsive):
@@ -22,10 +22,14 @@ def _fluid_kwargs(fig, fluid_playback, auto_play):
     """Plotly HTML options that let the fluid controller drive animation."""
     if not isinstance(fluid_playback, bool):
         raise TypeError("fluid_playback must be a boolean value.")
-    if not (fluid_playback and has_frames(fig)):
-        return {"auto_play": auto_play}
-    # The controller starts playback itself so Plotly's own loop never competes.
-    return {"auto_play": False, "post_script": fluid_playback_script(autoplay=auto_play)}
+    scripts = figure_scripts(fig, fluid=fluid_playback, autoplay=auto_play)
+    fluid = fluid_playback and has_frames(fig)
+    # With fluid playback the controller starts playback itself, so Plotly's own
+    # loop never competes; the button stylesheet travels with every figure.
+    options = {"auto_play": False if fluid else auto_play}
+    if scripts:
+        options["post_script"] = scripts
+    return options
 
 
 def show_optimized(fig, *, fluid_playback=True):

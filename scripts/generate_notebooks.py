@@ -1398,7 +1398,10 @@ from notebooks._support import case_heading, linear_case, multiclass_case, torch
 c=linear_case(1)
 """
     cells = setup(imports)
-    for theme in ["classic", "academic", "classroom", "compact", "accessible", "aurora", "editorial", "blueprint"]:
+    for theme in [
+        "classic", "academic", "classroom", "compact", "accessible",
+        "aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember",
+    ]:
         cells.extend(
             case(
                 f"STYLE-THEME-{theme.upper()}",
@@ -1459,14 +1462,17 @@ c=linear_case(1)
     cells.append(
         markdown(
             """\
-## Skins: aurora, editorial, blueprint
+## Skins: aurora, editorial, blueprint, dusk, chalkboard, davinci, ember
 
 Skins repaint a figure and keep the classic geometry: every title, equation,
 control, and panel sits exactly where `classic` puts it. Compare each case with
 the classic figure of the same model. `aurora` also adds motion cues: a fading
 trail of earlier model states and a glow under the model line, the loss curve's
 future dotted with a marker on the current step, and equation numbers coloured
-green when they rose and coral when they fell since their last change.
+green when they rose and coral when they fell since their last change. `dusk`
+keeps those cues in muted colours; `chalkboard` and `davinci` add hand-drawn
+strokes; `ember` adds residual segments that shrink as the model learns. Hover
+over Play/Pause in each: the label must stay readable.
 """
         )
     )
@@ -1507,12 +1513,36 @@ green when they rose and coral when they fell since their last change.
             "xm,xX,xh=torch_xor_case(steps=6)\n"
             "display(visualize_nn(xm,xX[1],history=xh,view='graph',max_frames=5,theme='editorial'))",
         ),
+        (
+            "STYLE-SKIN-EMBER-RESIDUALS",
+            "residual segments from each point to the line shrink while trail and glow follow the fit",
+            "sgd=linear_case(1,estimator='sgd')\n"
+            "display(visualize_lr(sgd.model,sgd.X,sgd.y,steps=60,max_frames=60,theme='ember'))",
+        ),
+        (
+            "STYLE-SKIN-CHALKBOARD-CURVES",
+            "hand-drawn chalk strokes on every class probability curve over a dusty slate",
+            "mc=multiclass_case(1)\n"
+            "display(visualize_logistic(mc.model,mc.X,mc.y,steps=20,max_frames=20,theme='chalkboard'))",
+        ),
+        (
+            "STYLE-SKIN-DAVINCI-3D",
+            "parchment backdrop with sepia text and class surfaces shaded in the skin palette",
+            "mc2=multiclass_case(2)\n"
+            "display(visualize_logistic(mc2.model,mc2.X,mc2.y,steps=12,max_frames=12,theme='davinci'))",
+        ),
+        (
+            "STYLE-SKIN-DUSK-BINARY",
+            "muted trail, glow, loss progress, and equation colours on a binary sigmoid",
+            "from notebooks._support import binary_case\nb1=binary_case(1)\n"
+            "display(visualize_logistic(b1.model,b1.X,b1.y,steps=20,max_frames=20,show_loss=True,theme='dusk'))",
+        ),
     ]
     for item in skin_cases:
         cells.extend(case(*item))
     notebook(
         "QA 05 — themes, formats, density, and sizes",
-        "Every supported visual-system preset, the aurora, editorial, and blueprint skins, overrides, and responsive metadata.",
+        "Every supported visual-system preset, the seven presentation skins, overrides, and responsive metadata.",
         cells,
         "qa/qa_05_visual_system.ipynb",
     )
@@ -2767,6 +2797,10 @@ def build_manifest() -> None:
             "STYLE-SKIN-AURORA-CLASSIC-TWIN",
             "STYLE-SKIN-BLUEPRINT-3D",
             "STYLE-SKIN-EDITORIAL-NEURAL",
+            "STYLE-SKIN-EMBER-RESIDUALS",
+            "STYLE-SKIN-CHALKBOARD-CURVES",
+            "STYLE-SKIN-DAVINCI-3D",
+            "STYLE-SKIN-DUSK-BINARY",
         ],
         "codeasdoc/prediction_explanations.rst": [
             "LR-PRED-EXTRAP",

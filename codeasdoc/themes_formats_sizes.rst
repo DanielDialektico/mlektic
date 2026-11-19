@@ -12,7 +12,7 @@ axes control presentation without changing estimator mathematics:
      - Meaning
    * - ``theme``
      - classic, academic, classroom, compact, accessible, aurora, editorial,
-       blueprint
+       blueprint, dusk, chalkboard, davinci, ember
      - Color, typography, line, marker, and contrast tokens; skins repaint
        only
    * - ``format``
@@ -36,7 +36,8 @@ Inspect every preset independently in ``qa_05_visual_system.ipynb``, especially
 Skins
 =====
 
-``aurora``, ``editorial``, and ``blueprint`` are *skins*: themes that change
+``aurora``, ``editorial``, ``blueprint``, ``dusk``, ``chalkboard``, ``davinci``,
+and ``ember`` are *skins*: themes that change
 only how a figure is painted. The figure is laid out exactly as ``classic`` lays
 it out, so every title, equation, control, legend, and panel keeps its position,
 size, and font. Pass them like any other theme, for example
@@ -54,6 +55,29 @@ size, and font. Pass them like any other theme, for example
 
 ``blueprint``
    Drafting-table blue with a fine grid, open data markers, and a dotted loss.
+
+``dusk``
+   Aurora's motion cues in muted slate, dusty rose, and sand: the same trail,
+   glow, loss progress, and equation colours, with less saturation.
+
+``chalkboard``
+   School slate green with chalk dust, white and pastel chalk lines, and open
+   markers. Model lines and class curves get two faint offset strokes, as if
+   drawn by hand.
+
+``davinci``
+   Leonardo's notebook: aged parchment with a vignette, sepia ink, red-chalk
+   model lines with hand-drawn strokes, and a dashed loss.
+
+``ember``
+   Volcanic dark with fire colours, a strong glow, a long trail, and residual
+   sparks: a segment from every data point to the model, which visibly shrinks
+   as training reduces the error.
+
+In every skin the figure's buttons keep their colours on hover; the stylesheet
+is scoped to each figure, so different themes can share one notebook page.
+Three-dimensional class surfaces and class-coloured points use the skin's
+class palette.
 
 Effects only add marks or recolour numbers. They are skipped on any axis that
 computes its own range, so they cannot change a range, and neural figures keep

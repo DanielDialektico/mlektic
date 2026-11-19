@@ -67,6 +67,7 @@ def restyle(fig: Any, skin: Skin, *, family: str) -> None:
                     _style_text_trace(payload, palette)
         return
     class_index = 0
+    surface_index = 0
     for trace, payloads in _trace_payloads(fig):
         role = roles.trace_role(trace)
         _style_colorbar(trace, palette)
@@ -74,8 +75,45 @@ def restyle(fig: Any, skin: Skin, *, family: str) -> None:
         if role == roles.CLASS_CURVE:
             class_color = palette.classes[class_index % len(palette.classes)]
             class_index += 1
+        elif role == roles.SURFACE and str(trace.name or "").startswith("Class "):
+            # One surface per class, shaded from the scene wall to that class's colour.
+            color = palette.classes[surface_index % len(palette.classes)]
+            surface_index += 1
+            trace.colorscale = [[0.0, palette.scene_wall], [1.0, color]]
+            continue
+        elif _is_class_coded_scatter(trace):
+            _recolor_class_codes(trace, palette)
+            continue
         for payload in payloads:
             _style_trace(payload, role, palette, class_color)
+
+
+def _is_class_coded_scatter(trace: Any) -> bool:
+    """3D data points coloured by class index through a colour scale."""
+    marker = getattr(trace, "marker", None)
+    return (
+        str(getattr(trace, "type", "")) == "scatter3d"
+        and str(getattr(trace, "name", "") or "").lower() == "data"
+        and marker is not None
+        and roles.is_array(marker.color)
+        and marker.colorscale is not None
+    )
+
+
+def _recolor_class_codes(trace: Any, palette: SkinPalette) -> None:
+    """Map class indices 0..K-1 onto the skin's class colours, in steps."""
+    import numpy as np
+
+    codes = np.asarray(trace.marker.color, dtype=float)
+    count = int(np.nanmax(codes)) + 1 if codes.size else 1
+    colors = [palette.classes[k % len(palette.classes)] for k in range(count)]
+    if count == 1:
+        trace.marker.colorscale = [[0.0, colors[0]], [1.0, colors[0]]]
+        return
+    scale = []
+    for k, color in enumerate(colors):
+        scale += [[k / count, color], [(k + 1) / count, color]]
+    trace.marker.update(colorscale=scale, cmin=-0.5, cmax=count - 0.5)
 
 
 def _trace_payloads(fig: Any):

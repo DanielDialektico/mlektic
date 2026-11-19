@@ -28,7 +28,9 @@ def apply_effects(fig: Any, skin: Skin) -> dict[str, Any]:
     """Apply the skin's enabled effects and report which ones ran or why they did not."""
     effects = skin.effects
     report: dict[str, Any] = {"applied": [], "skipped": {}}
-    if not any((effects.glow, effects.trail, effects.loss_progress, effects.equation_delta)):
+    if not any((
+        effects.glow, effects.trail, effects.loss_progress, effects.equation_delta, effects.sketch, effects.residuals,
+    )):
         return report
     if _has_index_bound_controls(fig):
         report["skipped"]["all"] = "controls address traces by index"
@@ -56,6 +58,34 @@ def apply_effects(fig: Any, skin: Skin) -> dict[str, Any]:
     run("glow", effects.glow, roles.MODEL, lambda i: _glow(fig, i, palette.model, effects), needs_frames=False)
     run("loss_progress", effects.loss_progress, roles.LOSS, lambda i: _loss_progress(fig, i, palette),
         needs_frames=True)
+    if effects.residuals:
+        model = _find(fig, roles.MODEL)
+        data = _find_data(fig, fig.data[model]) if model is not None else None
+        if model is None or data is None:
+            report["skipped"]["residuals"] = "no data points on the model's axes"
+        elif not _fixed_axes(fig, fig.data[model]):
+            report["skipped"]["residuals"] = "axis autoranges"
+        else:
+            _residuals(fig, model, data, palette.accent)
+            report["applied"].append("residuals")
+    if effects.sketch and _find(fig, roles.MODEL) is None:
+        # Multiclass 1D draws one probability curve per class: sketch each of them.
+        curves = [
+            index for index, trace in enumerate(fig.data)
+            # Sketch strokes reuse the curve's x values, so only y needs a fixed range.
+            if roles.trace_role(trace) == roles.CLASS_CURVE and roles.is_flat(trace)
+            and _fixed_axes(fig, trace, ("y",))
+        ]
+        # Last first: inserting before an index never shifts the ones still to do.
+        for index in reversed(curves):
+            _sketch(fig, index, fig.data[index].line.color or palette.model, effects)
+        if curves:
+            report["applied"].append("sketch")
+        else:
+            report["skipped"]["sketch"] = "no matching mark"
+    else:
+        run("sketch", effects.sketch, roles.MODEL, lambda i: _sketch(fig, i, palette.model, effects),
+            needs_frames=False)
     if effects.equation_delta:
         if animated and _equation_delta(fig, palette.increase, palette.decrease):
             report["applied"].append("equation_delta")
@@ -88,8 +118,8 @@ def _has_index_bound_controls(fig: Any) -> bool:
     return False
 
 
-def _fixed_axes(fig: Any, trace: Any) -> bool:
-    for letter in ("x", "y"):
+def _fixed_axes(fig: Any, trace: Any, letters: tuple[str, ...] = ("x", "y")) -> bool:
+    for letter in letters:
         ref = str(getattr(trace, f"{letter}axis", None) or letter)
         axis = getattr(fig.layout, f"{letter}axis{ref[1:]}", None)
         if axis is None or axis.range is None or axis.autorange not in {None, False}:
@@ -196,6 +226,90 @@ def _thin(state: tuple[Any, Any]) -> tuple[list[Any], list[Any]]:
         return float(f"{value:.5g}") if isinstance(value, (int, float)) and _finite(value) else value
 
     return [short(v) for v in xs], [short(v) for v in ys]
+
+
+def _find_data(fig: Any, model: Any) -> int | None:
+    """The observed points drawn on the same axes as the model line."""
+    for index, trace in enumerate(fig.data):
+        if (
+            roles.trace_role(trace) == roles.DATA
+            and roles.is_flat(trace)
+            and trace.xaxis == model.xaxis
+            and trace.yaxis == model.yaxis
+            and trace.x is not None
+            and trace.y is not None
+        ):
+            return index
+    return None
+
+
+_MAX_RESIDUALS = 600  # beyond this the segments become a solid block
+
+
+def _residual_path(data_x: Any, data_y: Any, state: tuple[Any, Any]) -> tuple[list[Any], list[Any]]:
+    """Segments from each point to the model's value at the same x, separated by gaps."""
+    import numpy as np
+
+    line_x = np.asarray(state[0], dtype=float)
+    line_y = np.asarray(state[1], dtype=float)
+    order = np.argsort(line_x)
+    fitted = np.interp(data_x, line_x[order], line_y[order])
+    xs: list[Any] = []
+    ys: list[Any] = []
+    for x, y, f in zip(data_x, data_y, fitted):
+        xs.extend((float(x), float(x), None))
+        ys.extend((float(f"{y:.5g}"), float(f"{f:.5g}"), None))
+    return xs, ys
+
+
+def _residuals(fig: Any, model_index: int, data_index: int, color: str) -> None:
+    import numpy as np
+
+    data = fig.data[data_index]
+    data_x = np.asarray(data.x, dtype=float)[:_MAX_RESIDUALS]
+    data_y = np.asarray(data.y, dtype=float)[:_MAX_RESIDUALS]
+    model = fig.data[model_index]
+    states = _states(fig, model_index) if fig.frames else []
+
+    def path(state):
+        return _residual_path(data_x, data_y, state)
+
+    x0, y0 = path((model.x, model.y))
+    base = [_quiet(model, "residuals", x=x0, y=y0, mode="lines", line={"color": color, "width": 1.4}, opacity=0.55)]
+    per_frame = [[go.Scatter(x=x, y=y)] for x, y in map(path, states)]
+    # Under the data points, so every point stays visible on top of its segment.
+    _insert(fig, data_index, base, per_frame)
+
+
+def _sketch(fig: Any, index: int, color: str, effects: Any) -> None:
+    """Thin strokes beside the model line with a smooth, fixed wobble, like pencil or chalk."""
+    import math
+
+    model = fig.data[index]
+    y_axis = getattr(fig.layout, f"yaxis{str(model.yaxis or 'y')[1:]}")
+    amplitude = 0.022 * abs(float(y_axis.range[1]) - float(y_axis.range[0]))
+    count = int(effects.sketch)
+
+    def wobble(state, stroke):
+        xs, ys = _thin(state)
+        phase = 1.7 * (stroke + 1)
+        side = 1 if stroke % 2 == 0 else -1
+        return xs, [
+            None if y is None else float(f"{y + side * amplitude * (0.6 + 0.4 * math.sin(0.45 * i + phase)):.5g}")
+            for i, y in enumerate(ys)
+        ]
+
+    base = []
+    for stroke in range(count):
+        x, y = wobble((model.x, model.y), stroke)
+        base.append(_quiet(model, f"sketch_{stroke}", x=x, y=y, mode="lines",
+                           line={"color": color, "width": 1.5}, opacity=effects.sketch_opacity))
+    per_frame = (
+        [[go.Scatter(x=x, y=y) for x, y in (wobble(state, stroke) for stroke in range(count))]
+         for state in _states(fig, index)]
+        if fig.frames else []
+    )
+    _insert(fig, index, base, per_frame)
 
 
 def _finite(value: Any) -> bool:

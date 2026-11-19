@@ -102,7 +102,9 @@ def test_notebook_display_paths_mount_controller(animated_figure, colab_renderer
     shown = []
     monkeypatch.setattr(pio, "show", lambda fig, *args, **kwargs: shown.append(kwargs))
     animated_figure._ipython_display_()
-    assert shown[0]["post_script"] == [fluid_playback_script()]
+    scripts = shown[0]["post_script"]
+    assert scripts[-1] == fluid_playback_script()
+    assert all("mlektic-buttons-" in script for script in scripts[:-1])
 
 
 def test_show_keeps_a_caller_post_script(animated_figure, colab_renderer, monkeypatch):
@@ -110,7 +112,9 @@ def test_show_keeps_a_caller_post_script(animated_figure, colab_renderer, monkey
     monkeypatch.setattr(pio, "show", lambda fig, *args, **kwargs: shown.append(kwargs))
     animated_figure.show(post_script="console.log('mine')")
 
-    assert shown[0]["post_script"] == ["console.log('mine')", fluid_playback_script()]
+    scripts = shown[0]["post_script"]
+    assert scripts[0] == "console.log('mine')"
+    assert scripts[-1] == fluid_playback_script()
 
 
 def test_display_patch_leaves_figure_data_untouched(animated_figure, colab_renderer):
