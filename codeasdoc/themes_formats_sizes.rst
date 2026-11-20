@@ -91,9 +91,12 @@ Three-dimensional class surfaces and class-coloured points use the skin's
 class palette.
 
 Effects only add marks or recolour numbers. They are skipped on any axis that
-computes its own range, so they cannot change a range, and neural figures keep
-their own colour encodings: a skin recolours only their background, text, and
-controls. ``figure.layout.meta["mlektic_visual"]["skin"]`` reports which
+computes its own range, so they cannot change a range, and they never run on
+neural figures. Neural figures still follow the skin: their encodings, drawn
+for a dark canvas, are translated to the skin background first (neutral greys
+keep their place between background and text, and on light skins saturated
+hues are darkened to a readable lightness without changing their meaning),
+then chrome and text are recoloured as in any other figure. ``figure.layout.meta["mlektic_visual"]["skin"]`` reports which
 effects ran and why any were skipped.
 
 The backdrop is a layout image inside the figure, so it shows in every renderer.

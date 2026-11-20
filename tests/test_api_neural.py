@@ -1087,17 +1087,35 @@ def test_loss_landscape_is_disclosed_exact_two_direction_slice(trained_small_net
     assert metadata["trajectory_is_projected"] is True
     assert metadata["surface_is_global_loss_landscape"] is False
     assert metadata["convergence_claimed"] is False
-    final_path, final_marker = figure.frames[-1].data
+    final_path, final_marker, top_path, top_marker = figure.frames[-1].data
+    assert list(figure.frames[-1].traces) == [1, 2, 4, 5]
     assert metadata["last_recorded_loss"] == pytest.approx(float(final_path.z[-1]))
     assert float(final_marker.z[0]) > metadata["last_recorded_loss"]
     assert metadata["checkpoint_marker_z_offset_is_visual_only"] is True
     assert metadata["loss"] == "BCELoss"
-    assert len(figure.data) == 3
+    # 3-D surface, path, and marker, then the synchronized top view of the same slice.
+    assert [trace.type for trace in figure.data] == [
+        "surface",
+        "scatter3d",
+        "scatter3d",
+        "contour",
+        "scatter",
+        "scatter",
+        "scatter",
+    ]
     assert len(figure.data[1].x) == 1
+    assert list(top_path.x) == pytest.approx(list(final_path.x))
+    assert list(top_path.y) == pytest.approx(list(final_path.y))
+    assert float(top_marker.customdata[0]) == pytest.approx(metadata["last_recorded_loss"])
+    assert metadata["top_view"]["shown"] is True
+    without_top_view = visualize_nn_loss_landscape(
+        model, X, y, torch.nn.BCELoss(), history, grid_size=9, max_frames=3, show_contour=False
+    )
+    assert len(without_top_view.data) == 3
     assert not any("checkpoint" in str(annotation.text).lower() for annotation in figure.layout.annotations)
     previous_path_length = 0
     for frame_index, frame in enumerate(figure.frames):
-        path, checkpoint = frame.data
+        path, checkpoint, *_top_view = frame.data
         checkpoint_annotations = [
             annotation for annotation in frame.layout.annotations if "checkpoint" in str(annotation.text).lower()
         ]

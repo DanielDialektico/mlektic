@@ -1225,6 +1225,87 @@ display(visualize_nn_architecture(large_model,large_input[:1],history=large_hist
     ]
     for item in large_cases:
         cells.extend(case(*item))
+    cells.append(
+        markdown(
+            """
+## Geometric lessons and every style
+
+Decision surface, representation, training step, gradient flow, Hinton weights,
+and the loss slice's top view. Inspect each in light skins (`editorial`,
+`davinci`), textured skins (`chalkboard`, `blueprint`), and `accessible`: node
+values, captions, cards, curves, and colour bars must stay readable.
+"""
+        )
+    )
+    cells.append(
+        code(
+            "from mlektic import visualize_nn_decision, visualize_nn_gradient_flow, visualize_nn_representation, visualize_nn_training_step\n"
+            "from notebooks._support import torch_depth_case, torch_xor_blobs_case\n"
+            "blob_model,blob_X,blob_y,blob_history,blob_loss=torch_xor_blobs_case(steps=180)\n"
+            "STYLES=('classic','academic','accessible','editorial','davinci','chalkboard','blueprint','aurora','ember')"
+        )
+    )
+    geometry_cases = [
+        (
+            "NN-ROUTER-DECISION",
+            "router view='decision' with targets",
+            "display(visualize_nn(blob_model,blob_X,history=blob_history,targets=blob_y,view='decision'))",
+        ),
+        (
+            "NN-ROUTER-REPRESENTATION",
+            "router view='representation' with targets",
+            "display(visualize_nn(blob_model,blob_X,history=blob_history,targets=blob_y,view='representation'))",
+        ),
+        (
+            "NN-ROUTER-TRAINING-STEP",
+            "router view='training_step' with one example and its loss",
+            "display(visualize_nn(blob_model,blob_X[3],history=blob_history,targets=blob_y[3],loss_fn=blob_loss,view='training_step'))",
+        ),
+        (
+            "NN-ROUTER-GRADIENT-FLOW",
+            "router view='gradient_flow' for one recorded run",
+            "display(visualize_nn(blob_model,history=blob_history,view='gradient_flow'))",
+        ),
+        (
+            "NN-GEOMETRY-THEMES",
+            "decision surface in every style: field, folds, unit panels, bars, and colour bars stay readable",
+            "for style in STYLES:\n    print(style)\n    display(visualize_nn_decision(blob_model,blob_X,blob_history,targets=blob_y,max_frames=6,theme=style))",
+        ),
+        (
+            "NN-REPRESENTATION-THEMES",
+            "representation stages in every style",
+            "for style in STYLES:\n    print(style)\n    display(visualize_nn_representation(blob_model,blob_X,blob_history,targets=blob_y,theme=style))",
+        ),
+        (
+            "NN-TRAINING-STEP-THEMES",
+            "node values, loss box, and equations in every style",
+            "for style in STYLES:\n    print(style)\n    display(visualize_nn_training_step(blob_model,blob_X[5],blob_y[5],blob_loss,blob_history,checkpoint=1,theme=style))",
+        ),
+        (
+            "NN-TRAINING-STEP-DEEP-LOGITS",
+            "a deeper ReLU network with logits and BCEWithLogitsLoss; omitted units are shown with an ellipsis",
+            "import torch\ndeep=torch.nn.Sequential(torch.nn.Linear(2,10),torch.nn.ReLU(),torch.nn.Linear(10,10),torch.nn.ReLU(),torch.nn.Linear(10,1))\n"
+            "display(visualize_nn_training_step(deep,blob_X[0],blob_y[0],torch.nn.BCEWithLogitsLoss(),learning_rate=0.1,theme='academic'))",
+        ),
+        (
+            "NN-GRADIENT-FLOW-DEPTH",
+            "vanishing gradients in a deep sigmoid network against ReLU and tanh",
+            "_,sigmoid_history=torch_depth_case('sigmoid')\n_,relu_history=torch_depth_case('relu')\n_,tanh_history=torch_depth_case('tanh')\n"
+            "display(visualize_nn_gradient_flow({'Sigmoid':sigmoid_history,'tanh':tanh_history,'ReLU':relu_history},theme='davinci'))",
+        ),
+        (
+            "NN-HINTON-LARGE",
+            "Hinton diagrams of the large model, with first and last rows/columns of oversized matrices",
+            "display(visualize_nn_weights(large_history,style='hinton',max_frames=6,theme='editorial',size='wide'))",
+        ),
+        (
+            "NN-LOSS-LANDSCAPE-TOPVIEW",
+            "3-D slice and synchronized top view of the same projected path",
+            "display(visualize_nn_loss_landscape(blob_model,blob_X,blob_y,blob_loss,blob_history,grid_size=31,theme='chalkboard'))",
+        ),
+    ]
+    for item in geometry_cases:
+        cells.extend(case(*item))
     add_size_coverage(
         cells,
         "NN-GALLERY",
@@ -1844,6 +1925,40 @@ logit and a sigmoid for its positive class.
                 "LEARN-NN-PREDICTION",
                 "final fitted-model input, substitution, and output stages",
                 "display(explain_nn_prediction(model,X[1],history=history,max_frames=8))",
+            ),
+            markdown(
+                "## What, why, and how the network learns\n\n"
+                "Four noisy XOR clouds need a curved boundary. The next four views use the same recorded run."
+            ),
+            code(
+                "from mlektic import visualize_nn_decision, visualize_nn_gradient_flow, visualize_nn_representation, visualize_nn_training_step\n"
+                "from notebooks._support import torch_depth_case, torch_xor_blobs_case\n"
+                "blob_model,blob_X,blob_y,blob_history,blob_loss=torch_xor_blobs_case()"
+            ),
+            *case(
+                "LEARN-NN-DECISION",
+                "each hidden unit folds the plane along z_j=0 and the readout weights combine the folds into the boundary",
+                "display(visualize_nn_decision(blob_model,blob_X,blob_history,targets=blob_y,theme='classroom'))",
+            ),
+            *case(
+                "LEARN-NN-REPRESENTATION",
+                "the affine map keeps lines straight, tanh bends the plane, and the boundary becomes a vertical line",
+                "display(visualize_nn_representation(blob_model,blob_X,blob_history,targets=blob_y))",
+            ),
+            *case(
+                "LEARN-NN-TRAINING-STEP",
+                "forward pulses, per-sample loss, deltas travelling back, edge gradients, and one update",
+                "display(visualize_nn_training_step(blob_model,blob_X[5],blob_y[5],blob_loss,blob_history,checkpoint=1))",
+            ),
+            *case(
+                "LEARN-NN-GRADIENT-FLOW",
+                "the first sigmoid layer receives orders of magnitude less gradient than the ReLU one",
+                "_,sigmoid_history=torch_depth_case('sigmoid')\n_,relu_history=torch_depth_case('relu')\n"
+                "display(visualize_nn_gradient_flow({'Sigmoid':sigmoid_history,'ReLU':relu_history}))",
+            ),
+            markdown(
+                "## Reflection\n\nWhich panel tells you *what* the network computes, which one *why* a hidden layer is needed, "
+                "and which one *how* one example changes the weights? Why is the training-step update not the recorded Adam step?"
             ),
         ],
         "learn_03_neural_networks.ipynb",
@@ -2741,6 +2856,11 @@ def build_manifest() -> None:
         "codeasdoc/neural_lesson.rst": [
             "LEARN-NN-ARCHITECTURE",
             "LEARN-NN-TRAINING",
+            "LEARN-NN-DECISION",
+            "LEARN-NN-REPRESENTATION",
+            "LEARN-NN-TRAINING-STEP",
+            "LEARN-NN-GRADIENT-FLOW",
+            "NN-GEOMETRY-THEMES",
             "NN-ROUTER-HYPERPARAMETERS",
             "NN-GALLERY-FORWARD-SUBSTITUTION",
             "LEARN-NN-BRANCHES",

@@ -171,3 +171,76 @@ parameter and signal evolution. That figure has Play/Pause and a checkpoint
 slider, but deliberately has no Input, Substitution, or Output controls, no
 prediction summary cards, and no duplicated final prediction. The two modes
 never combine prediction stages with a training animation.
+
+What, why, and how the network learns
+=====================================
+
+Four geometric views answer the questions a first lesson usually leaves open.
+Every value they draw is an exact forward pass or autograd computation with the
+recorded parameters, and they use the course notation
+(``course/notacion_matematica.html``): :math:`\Theta^{(\ell)}` with rows as
+outputs, :math:`\boldsymbol\theta_0^{(\ell)}`, :math:`\mathbf z^{(\ell)}`,
+:math:`\mathbf a^{(\ell)}`, :math:`\phi_\ell`, per-sample :math:`l`, and the
+reduced :math:`\mathcal L`. They accept any dense chain of ``Linear`` layers and
+elementwise activations; other modules raise an error that points to the block
+view.
+
+.. code-block:: python
+
+   decision = visualize_nn_decision(model, X, history, targets=y)
+   representation = visualize_nn_representation(model, X, history, targets=y)
+   step = visualize_nn_training_step(model, X[0], y[0], criterion, history, checkpoint=0)
+   flow = visualize_nn_gradient_flow({"sigmoid": history_sigmoid, "relu": history_relu})
+
+**What it learns.** ``visualize_nn_decision`` evaluates
+:math:`\hat y=f_\theta(\mathbf x)` on the plane of two input features (others
+held at their median or at ``reference``) at every retained checkpoint. Up to
+four units of the last hidden layer, :math:`a^{(L-1)}_j(\mathbf x)`, sit beside
+it with the readout weights :math:`\Theta^{(L)}` that combine them. With one
+hidden layer each unit folds the plane along the exact line
+:math:`z^{(1)}_j(\mathbf x)=0`, drawn in the unit's colour on the main panel. A
+sigmoid output shows the boundary :math:`\hat y=0.5`; a logit output shows
+:math:`z^{(L)}` and its zero set; several outputs show the arg-max class.
+
+**Why it works.** ``visualize_nn_representation`` pushes a grid, the data, and
+the exact boundary through :math:`\mathbf x\to\mathbf z^{(1)}\to\mathbf a^{(1)}\to\cdots`.
+The affine image of the plane is shown isometrically; the last hidden layer is
+read along the readout direction of :math:`\Theta^{(L)}`, where a one-output
+classifier's boundary is exactly a vertical line; any other stage uses its
+principal axes, with the retained variance disclosed. Motion between stages is
+a Plotly transition between exact stages, not a network state.
+
+**How it learns.** ``visualize_nn_training_step`` follows one example: pulses
+of :math:`s^{(\ell)}_{ji}=\theta^{(\ell)}_{ji}a^{(\ell-1)}_i`, the per-sample loss,
+:math:`\boldsymbol\delta^{(\ell)}` travelling back, each edge gradient
+:math:`\delta_j a_i`, and one step :math:`\Theta\leftarrow\Theta-\eta\nabla_\Theta l`
+on that example. The step illustrates the rule; it is not a replay of the
+recorded optimizer, and ``layout.meta`` says so. It complements
+``visualize_nn_backpropagation``, which reports the recorded layerwise norms
+over the whole run.
+
+**Does the signal reach every layer?** ``visualize_nn_gradient_flow`` is a
+static map of the recorded :math:`\log_{10}\|\nabla_{\Theta^{(\ell)}}\mathcal L\|`
+per layer and checkpoint. Up to four runs share one colour scale, so a sigmoid
+network whose first layer receives orders of magnitude less gradient than its
+last stands out against a ReLU one.
+
+Large matrices and the loss slice
+=================================
+
+``visualize_nn_weights(history, style="hinton")`` draws each recorded
+:math:`\Theta^{(\ell)}` as a Hinton diagram: square area proportional to
+:math:`|\theta^{(\ell)}_{ji}|` on one global scale, colour for the sign, and
+:math:`\boldsymbol\theta_0^{(\ell)}` as a separate column. Matrices larger than
+32 rows or columns keep their first and last entries, disclosed below the
+matrix.
+
+``visualize_nn_loss_landscape`` now adds a synchronized top view
+(``show_contour=True``): the level sets of
+:math:`\log_{10}\mathcal L_{slice}(u,v)` with the projected path and the slice
+centre :math:`\theta_*`.
+
+Inspect ``LEARN-NN-DECISION``, ``LEARN-NN-REPRESENTATION``,
+``LEARN-NN-TRAINING-STEP``, and ``LEARN-NN-GRADIENT-FLOW`` in
+``notebooks/learn/learn_03_neural_networks.ipynb``, and the theme matrix
+``NN-GEOMETRY-THEMES`` in ``notebooks/qa/qa_08_neural_structures.ipynb``.

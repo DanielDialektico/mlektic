@@ -269,9 +269,13 @@ from mlektic import (
     explain_nn_prediction,
     visualize_nn_architecture,
     visualize_nn_backpropagation,
+    visualize_nn_decision,
+    visualize_nn_gradient_flow,
     visualize_nn_graph,
     visualize_nn_hyperparameters,
+    visualize_nn_representation,
     visualize_nn_training,
+    visualize_nn_training_step,
     visualize_nn_weights,
 )
 
@@ -324,6 +328,12 @@ hyperparameters = visualize_nn_hyperparameters(
     optimizer=optimizer,
     loss_fn=criterion,
 )
+hinton = visualize_nn_weights(history, style="hinton")
+gradient_flow = visualize_nn_gradient_flow(history)
+step = visualize_nn_training_step(network, inputs[0], targets[0], criterion, history)
+# With two input features (or any two of them, the others held at their median):
+decision = visualize_nn_decision(network, inputs, history, targets=targets, features=(0, 1))
+representation = visualize_nn_representation(network, inputs, history, targets=targets)
 ```
 
 Call ``record`` at one consistent point in the loop. The recommended placement
@@ -342,6 +352,17 @@ canvas:
   complementary parts of optimization;
 - ``explain_nn_prediction`` uses the fitted model through distinct Input,
   Substitution, and Output stages, without mixing prediction with training;
+- ``visualize_nn_decision`` shows *what* the network learns: its output on a
+  plane of two input features, built from the hidden units and their readout
+  weights, at every retained checkpoint;
+- ``visualize_nn_representation`` shows *why* it works: the input plane pushed
+  through every affine map and activation until a line separates the classes;
+- ``visualize_nn_training_step`` shows *how* it learns: one example through
+  forward, per-sample loss, backpropagated deltas, edge gradients, and update;
+- ``visualize_nn_gradient_flow`` compares recorded gradient norms per layer,
+  showing vanishing or exploding gradients at a glance;
+- ``visualize_nn_weights(style="hinton")`` draws large weight matrices as
+  Hinton diagrams instead of truncated LaTeX;
 - ``visualize_nn_hyperparameters`` lists the effective module, optimizer,
   objective, and scheduler settings with their mathematical roles.
 

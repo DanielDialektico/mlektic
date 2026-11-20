@@ -846,25 +846,69 @@
       "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
       "cell_index": 133
     },
+    "NN-ROUTER-DECISION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 137
+    },
+    "NN-ROUTER-REPRESENTATION": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 139
+    },
+    "NN-ROUTER-TRAINING-STEP": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 141
+    },
+    "NN-ROUTER-GRADIENT-FLOW": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 143
+    },
+    "NN-GEOMETRY-THEMES": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 145
+    },
+    "NN-REPRESENTATION-THEMES": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 147
+    },
+    "NN-TRAINING-STEP-THEMES": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 149
+    },
+    "NN-TRAINING-STEP-DEEP-LOGITS": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 151
+    },
+    "NN-GRADIENT-FLOW-DEPTH": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 153
+    },
+    "NN-HINTON-LARGE": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 155
+    },
+    "NN-LOSS-LANDSCAPE-TOPVIEW": {
+      "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
+      "cell_index": 157
+    },
     "NN-GALLERY-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
-      "cell_index": 136
+      "cell_index": 160
     },
     "NN-GALLERY-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
-      "cell_index": 138
+      "cell_index": 162
     },
     "NN-GALLERY-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
-      "cell_index": 140
+      "cell_index": 164
     },
     "NN-GALLERY-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
-      "cell_index": 142
+      "cell_index": 166
     },
     "NN-GALLERY-SIZE-CLASSROOM": {
       "notebook": "notebooks/qa/qa_08_neural_structures.ipynb",
-      "cell_index": 144
+      "cell_index": 168
     },
     "POLY-QUADRATIC-POWERS": {
       "notebook": "notebooks/qa/qa_09_polynomial.ipynb",
@@ -945,6 +989,22 @@
     "LEARN-NN-PREDICTION": {
       "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
       "cell_index": 13
+    },
+    "LEARN-NN-DECISION": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 17
+    },
+    "LEARN-NN-REPRESENTATION": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 19
+    },
+    "LEARN-NN-TRAINING-STEP": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 21
+    },
+    "LEARN-NN-GRADIENT-FLOW": {
+      "notebook": "notebooks/learn/learn_03_neural_networks.ipynb",
+      "cell_index": 23
     },
     "LEARN-NN-BRANCHES": {
       "notebook": "notebooks/learn/learn_04_neural_architectures.ipynb",
@@ -1064,6 +1124,11 @@
     "codeasdoc/neural_lesson.rst": [
       "LEARN-NN-ARCHITECTURE",
       "LEARN-NN-TRAINING",
+      "LEARN-NN-DECISION",
+      "LEARN-NN-REPRESENTATION",
+      "LEARN-NN-TRAINING-STEP",
+      "LEARN-NN-GRADIENT-FLOW",
+      "NN-GEOMETRY-THEMES",
       "NN-ROUTER-HYPERPARAMETERS",
       "NN-GALLERY-FORWARD-SUBSTITUTION",
       "LEARN-NN-BRANCHES",

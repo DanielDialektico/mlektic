@@ -21,6 +21,7 @@ from typing import Any
 from .backdrop import backdrop_image
 from .definitions import SKINS, Backdrop, Skin, SkinEffects, SkinPalette
 from .effects import apply_effects
+from .neural import adapt_neural_colors
 from .styling import restyle
 
 
@@ -43,6 +44,10 @@ def get_skin(theme: str) -> Skin:
 
 def apply_skin(fig: Any, skin: Skin, *, family: str) -> dict[str, Any]:
     """Paint ``fig`` with ``skin`` and return a JSON-serializable report."""
+    if family.startswith("neural"):
+        # Neural encodings were drawn for a dark canvas: translate them first,
+        # then let the shared pass recolour chrome and plain text.
+        adapt_neural_colors(fig, skin.palette)
     restyle(fig, skin, family=family)
     backdrop = None
     if skin.backdrop is not None:

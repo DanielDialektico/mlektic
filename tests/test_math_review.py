@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-import torch
 from sklearn.decomposition import PCA
 from sklearn.linear_model import ElasticNet, Lasso, LinearRegression, LogisticRegression, Ridge
 from sklearn.metrics import log_loss, r2_score
@@ -119,6 +118,7 @@ def test_multiclass_affine_preprocessing_and_unsupported_pipelines():
 
 
 def test_neural_binary_metrics_use_the_declared_output_kind():
+    torch = pytest.importorskip("torch")
     logits = np.array([0.1, 0.2])
     targets = np.array([1.0, 1.0])
     assert output_kind(torch.nn.BCEWithLogitsLoss()) == "logits"

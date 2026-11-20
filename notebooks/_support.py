@@ -152,6 +152,69 @@ def torch_xor_case(*, activation: str = "tanh", optimizer_name: str = "sgd", ste
     return model, X, recorder.to_history()
 
 
+def torch_xor_blobs_case(*, hidden: int = 4, steps: int = 360, record_every: int = 9, samples: int = 220):
+    """Noisy XOR clouds and a 2-hidden-unit-layer network trained with Adam.
+
+    Returns ``model, X, y, history, criterion``. Four Gaussian clouds make the
+    decision surface and the representation views meaningful (four points
+    would leave the plane almost empty).
+    """
+    import torch
+
+    from mlektic import TorchTrainingRecorder
+
+    rng = np.random.default_rng(SEED)
+    centers = np.array([[-1, -1], [1, 1], [-1, 1], [1, -1]], dtype=np.float32)
+    index = rng.integers(0, 4, samples)
+    X = torch.tensor((centers[index] + rng.normal(0, 0.38, (samples, 2))).astype(np.float32))
+    y = torch.tensor(np.array([0, 0, 1, 1])[index].astype(np.float32)[:, None])
+    torch.manual_seed(11)
+    model = torch.nn.Sequential(
+        torch.nn.Linear(2, hidden), torch.nn.Tanh(), torch.nn.Linear(hidden, 1), torch.nn.Sigmoid()
+    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.03)
+    criterion = torch.nn.BCELoss()
+    recorder = TorchTrainingRecorder(model, optimizer=optimizer, loss_fn=criterion)
+    for step in range(steps):
+        optimizer.zero_grad()
+        prediction = model(X)
+        loss = criterion(prediction, y)
+        loss.backward()
+        optimizer.step()
+        if step == 0 or (step + 1) % record_every == 0:
+            recorder.record(step + 1, loss=loss, predictions=prediction, targets=y, task="classification")
+    recorder.close()
+    return model, X, y, recorder.to_history(), criterion
+
+
+def torch_depth_case(activation: str, *, depth: int = 8, width: int = 16, steps: int = 300, record_every: int = 6):
+    """The same deep network with ``"sigmoid"`` or ``"relu"`` for the gradient-flow lesson."""
+    import torch
+
+    from mlektic import TorchTrainingRecorder
+
+    _, X, y, _, _ = torch_xor_blobs_case(steps=1)
+    layer = {"sigmoid": torch.nn.Sigmoid, "relu": torch.nn.ReLU, "tanh": torch.nn.Tanh}[activation]
+    torch.manual_seed(5)
+    modules = []
+    for position in range(depth - 1):
+        modules += [torch.nn.Linear(2 if position == 0 else width, width), layer()]
+    model = torch.nn.Sequential(*modules, torch.nn.Linear(width, 1), torch.nn.Sigmoid())
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.3)
+    criterion = torch.nn.BCELoss()
+    recorder = TorchTrainingRecorder(model, optimizer=optimizer, loss_fn=criterion, capture_activations=False)
+    for step in range(steps):
+        optimizer.zero_grad()
+        prediction = model(X)
+        loss = criterion(prediction, y)
+        loss.backward()
+        optimizer.step()
+        if step == 0 or (step + 1) % record_every == 0:
+            recorder.record(step + 1, loss=loss, predictions=prediction, targets=y, task="classification")
+    recorder.close()
+    return model, recorder.to_history()
+
+
 def case_heading(case_id: str, purpose: str) -> None:
     """Print a compact human-QA marker above a displayed figure."""
     print(f"CASE {case_id} | {purpose}")

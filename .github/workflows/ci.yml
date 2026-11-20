@@ -57,4 +57,4 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev,torch]"
-      - run: python -m pytest tests/test_api_neural.py tests/test_phase3_visual_design.py
+      - run: python -m pytest tests/test_api_neural.py tests/test_phase3_visual_design.py tests/test_neural_geometry_figures.py tests/test_math_review.py

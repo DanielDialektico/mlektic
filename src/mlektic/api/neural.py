@@ -13,15 +13,20 @@ from ..visualization.design import apply_visual_system, resolve_visual_spec
 from ..visualization.neural.architecture import build_nn_architecture_figure
 from ..visualization.neural.backpropagation import build_nn_backpropagation_figure
 from ..visualization.neural.blocks import build_nn_block_figure
+from ..visualization.neural.decision import build_nn_decision_figure
+from ..visualization.neural.gradient_flow import build_nn_gradient_flow_figure
 from ..visualization.neural.graph import build_nn_graph_figure
+from ..visualization.neural.hinton import build_nn_hinton_figure
 from ..visualization.neural.hyperparameters import build_nn_hyperparameter_figure
 from ..visualization.neural.landscape import build_nn_loss_landscape_figure
 from ..visualization.neural.math_view import build_nn_prediction_figure
+from ..visualization.neural.representation import build_nn_representation_figure
 from ..visualization.neural.training import (
     build_nn_activation_figure,
     build_nn_training_figure,
     build_nn_weight_figure,
 )
+from ..visualization.neural.training_step import build_nn_training_step_figure
 from ..visualization.playback import attach_fluid_playback
 
 _DENSE_REPLAY_MODULE_TYPES = {
@@ -212,6 +217,7 @@ def visualize_nn(
     loss_fn: Any | None = None,
     scheduler: Any | None = None,
     view: str = "architecture",
+    targets: Any | None = None,
     title: str | None = None,
     max_neurons: int = 10,
     max_frames: int | None = 20,
@@ -248,7 +254,12 @@ def visualize_nn(
         history: Payload returned by :meth:`TorchTrainingRecorder.to_history`.
         view: One of ``"architecture"``, ``"blocks"``, ``"hyperparameters"``,
             ``"graph"``, ``"training"``, ``"weights"``, ``"activations"``,
-            or ``"backpropagation"``.
+            ``"backpropagation"``, ``"gradient_flow"``, ``"decision"``,
+            ``"representation"``, or ``"training_step"``. The last three use
+            ``input_sample`` as the input batch (or the single example) and
+            ``targets`` as its labels; ``"training_step"`` also needs ``loss_fn``.
+        targets: Labels or values for ``"decision"``, ``"representation"``,
+            and ``"training_step"``.
         optimizer: Optional live PyTorch optimizer used by the hyperparameter view.
         loss_fn: Optional live PyTorch objective used by the hyperparameter view.
         scheduler: Optional live PyTorch learning-rate scheduler used by the
@@ -326,8 +337,26 @@ def visualize_nn(
             scheduler=scheduler,
             title=title,
         )
+    elif view == "representation":
+        if input_sample is None:
+            raise ValueError("view='representation' requires input_sample as the input batch.")
+        figure = build_nn_representation_figure(model, input_sample, history, targets=targets, title=title)
+    elif view == "training_step":
+        if input_sample is None or targets is None or loss_fn is None:
+            raise ValueError("view='training_step' requires input_sample, targets, and loss_fn.")
+        figure = build_nn_training_step_figure(
+            model, input_sample, targets, loss_fn, history, max_neurons=max_neurons, title=title
+        )
     elif history is None:
         raise ValueError(f"view='{view}' requires a history from TorchTrainingRecorder.")
+    elif view == "gradient_flow":
+        figure = build_nn_gradient_flow_figure(history, title=title)
+    elif view == "decision":
+        if input_sample is None:
+            raise ValueError("view='decision' requires input_sample as the input batch.")
+        figure = build_nn_decision_figure(
+            model, input_sample, history, targets=targets, max_frames=max_frames, title=title
+        )
     elif view == "graph":
         if input_sample is None:
             raise ValueError("view='graph' requires input_sample for node activations.")
@@ -395,7 +424,8 @@ def visualize_nn(
     else:
         raise ValueError(
             "view must be 'architecture', 'blocks', 'hyperparameters', 'graph', "
-            "'training', 'weights', 'activations', or 'backpropagation'."
+            "'training', 'weights', 'activations', 'backpropagation', 'gradient_flow', "
+            "'decision', 'representation', or 'training_step'."
         )
     return _apply_nn_visual_system(
         figure,
@@ -784,6 +814,7 @@ def visualize_nn_loss_landscape(
     frame_duration: int = 180,
     seed: int = 17,
     title: str | None = None,
+    show_contour: bool = True,
     theme: str | None = None,
     format: str = "dashboard",
     density: str = "essential",
@@ -794,12 +825,14 @@ def visualize_nn_loss_landscape(
     reduced_motion: bool = False,
     math_font_scale: float = 1.0,
 ):
-    """Evaluate and animate an exact two-direction batch-loss slice.
+    r"""Evaluate and animate an exact two-direction batch-loss slice.
 
     The returned surface is an affine 2-D section through the final recorded
     parameter state, not a claim about the full high-dimensional objective.
     History PCA supplies the directions when two independent recorded
     directions exist; otherwise a deterministic orthogonal complement is used.
+    ``show_contour`` adds a synchronized top view of the same slice, with the
+    projected path drawn on the level sets of :math:`\log_{10}\mathcal L_{slice}`.
     """
     figure = build_nn_loss_landscape_figure(
         model,
@@ -813,6 +846,7 @@ def visualize_nn_loss_landscape(
         frame_duration=frame_duration,
         seed=seed,
         title=title,
+        show_contour=show_contour,
     )
     return _apply_nn_visual_system(
         figure,
@@ -890,6 +924,7 @@ def visualize_nn_weights(
     max_cols: int = 5,
     max_parameters: int = 6,
     max_frames: int | None = 30,
+    style: str = "matrix",
     theme: str | None = None,
     format: str = "dashboard",
     density: str = "essential",
@@ -900,7 +935,7 @@ def visualize_nn_weights(
     reduced_motion: bool = False,
     math_font_scale: float = 1.0,
 ):
-    """Animate captured parameter tensors using truncated LaTeX matrices.
+    r"""Animate captured parameter tensors using truncated LaTeX matrices.
 
     ``max_rows``, ``max_cols`` and ``max_parameters`` bound the mathematical
     display without modifying the values stored in the recorder history.
@@ -908,16 +943,315 @@ def visualize_nn_weights(
     matrix-height row with fixed clearance from both adjacent parameter blocks.
     The same row allocation is reused by every animation frame and disclosed
     in ``layout.meta``.
+
+    ``style="hinton"`` draws every recorded weight matrix as a Hinton diagram
+    instead: square area proportional to :math:`|\theta^{(\ell)}_{ji}|` on one
+    global scale, colour for the sign, and the intercepts as a separate column.
+    It keeps matrices too large for LaTeX readable; there ``max_rows`` and
+    ``max_cols`` default to 32 when left at their LaTeX defaults.
     """
-    figure = build_nn_weight_figure(
+    if style == "hinton":
+        figure = build_nn_hinton_figure(
+            history,
+            parameter=parameter,
+            title=title,
+            frame_duration=frame_duration if frame_duration != 120 else 160,
+            max_rows=32 if max_rows == 4 else max_rows,
+            max_cols=32 if max_cols == 5 else max_cols,
+            max_parameters=max_parameters,
+            max_frames=max_frames,
+        )
+    elif style == "matrix":
+        figure = build_nn_weight_figure(
+            history,
+            parameter=parameter,
+            title=title,
+            frame_duration=frame_duration,
+            max_rows=max_rows,
+            max_cols=max_cols,
+            max_parameters=max_parameters,
+            max_frames=max_frames,
+        )
+    else:
+        raise ValueError("style must be 'matrix' or 'hinton'.")
+    return _apply_nn_visual_system(
+        figure,
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+        math_font_scale=math_font_scale,
+    )
+
+
+def visualize_nn_decision(
+    model: Any,
+    inputs: Any,
+    history: Dict[str, Any],
+    *,
+    targets: Any | None = None,
+    features: Any = (0, 1),
+    reference: Any | None = None,
+    grid_size: int = 40,
+    unit_grid_size: int = 20,
+    max_units: int = 4,
+    max_frames: int | None = 20,
+    frame_duration: int = 260,
+    title: str | None = None,
+    theme: str | None = None,
+    format: str = "dashboard",
+    density: str = "essential",
+    size: str = "default",
+    width: int | None = None,
+    height: int | None = None,
+    responsive: bool = False,
+    reduced_motion: bool = False,
+    math_font_scale: float = 1.0,
+):
+    r"""Animate the decision surface and the hidden units that build it.
+
+    The main panel is the exact network output on the plane of two input
+    features at every retained recorded checkpoint. Up to four units of the
+    last hidden layer, :math:`a^{(L-1)}_j(\mathbf x)`, are shown beside it
+    with the readout weights :math:`\Theta^{(L)}` that combine them. With a
+    single hidden layer each unit folds the plane along the exact line
+    :math:`z^{(1)}_j(\mathbf x)=0`, drawn on the main panel as well.
+
+    Args:
+        model: A dense ``torch.nn.Module`` (Linear layers and elementwise activations).
+        inputs: Batch whose two ``features`` span the plane.
+        history: Payload returned by :meth:`TorchTrainingRecorder.to_history`.
+        targets: Optional labels or values used to draw the data.
+        features: The two input columns spanning the plane.
+        reference: Values of the other features; their median by default.
+        grid_size: Resolution of the decision field.
+        unit_grid_size: Resolution of each hidden-unit field.
+        max_units: Number of hidden units shown (0 to 4), chosen by readout norm.
+        max_frames: Maximum recorded checkpoints retained.
+        frame_duration: Milliseconds per checkpoint during playback.
+        title: Optional figure title.
+        theme: Additive visual theme or skin; ``None`` keeps the classic default.
+        format: ``"dashboard"``, ``"compact"``, or ``"report"``.
+        density: Mathematical information density recorded in visual metadata.
+        size: Named canvas size preset.
+        width: Optional explicit canvas width in pixels.
+        height: Optional explicit canvas height in pixels.
+        responsive: Scale the resolved composition with its container.
+        reduced_motion: Show the exact final state without animation controls.
+        math_font_scale: Scale mathematical annotations from 0.75 to 2.0.
+    """
+    figure = build_nn_decision_figure(
+        model,
+        inputs,
         history,
-        parameter=parameter,
-        title=title,
-        frame_duration=frame_duration,
-        max_rows=max_rows,
-        max_cols=max_cols,
-        max_parameters=max_parameters,
+        targets=targets,
+        features=features,
+        reference=reference,
+        grid_size=grid_size,
+        unit_grid_size=unit_grid_size,
+        max_units=max_units,
         max_frames=max_frames,
+        frame_duration=frame_duration,
+        title=title,
+    )
+    return _apply_nn_visual_system(
+        figure,
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+        math_font_scale=math_font_scale,
+    )
+
+
+def visualize_nn_representation(
+    model: Any,
+    inputs: Any,
+    history: Dict[str, Any] | None = None,
+    *,
+    targets: Any | None = None,
+    checkpoint: int = -1,
+    features: Any = (0, 1),
+    reference: Any | None = None,
+    grid_lines: int = 15,
+    max_layers: int = 3,
+    max_points: int = 400,
+    stage_duration: int = 2600,
+    transition: int = 1800,
+    title: str | None = None,
+    theme: str | None = None,
+    format: str = "dashboard",
+    density: str = "essential",
+    size: str = "default",
+    width: int | None = None,
+    height: int | None = None,
+    responsive: bool = False,
+    reduced_motion: bool = False,
+    math_font_scale: float = 1.0,
+):
+    r"""Push the input plane through every affine map and activation.
+
+    Each stage is an exact forward pass of a grid on two input features, the
+    data, and the exact decision boundary. Stages with more than two
+    coordinates use a disclosed linear projection: an isometric view for the
+    affine image of the plane, the readout direction of :math:`\Theta^{(L)}`
+    for the last hidden layer (where a one-output classifier's boundary is a
+    vertical line), and principal axes otherwise. Motion between stages is a
+    visual interpolation, not a network state.
+
+    Args:
+        model: A dense ``torch.nn.Module``.
+        inputs: Batch whose two ``features`` span the plane.
+        history: Optional recorder history; without it the model's current
+            parameters are used.
+        targets: Optional labels or values used to colour the data.
+        checkpoint: Recorded checkpoint index (negative counts from the end).
+        features: The two input columns spanning the plane.
+        reference: Values of the other features; their median by default.
+        grid_lines: Grid lines per direction on the input plane.
+        max_layers: Hidden layers shown before intermediate ones are skipped.
+        max_points: Maximum data points drawn (a fixed random subset).
+        stage_duration: Milliseconds each stage stays on screen during playback.
+        transition: Milliseconds of the visual interpolation between stages.
+        title: Optional figure title.
+        theme: Additive visual theme or skin; ``None`` keeps the classic default.
+        format: ``"dashboard"``, ``"compact"``, or ``"report"``.
+        density: Mathematical information density recorded in visual metadata.
+        size: Named canvas size preset.
+        width: Optional explicit canvas width in pixels.
+        height: Optional explicit canvas height in pixels.
+        responsive: Scale the resolved composition with its container.
+        reduced_motion: Show the exact final state without animation controls.
+        math_font_scale: Scale mathematical annotations from 0.75 to 2.0.
+    """
+    figure = build_nn_representation_figure(
+        model,
+        inputs,
+        history,
+        targets=targets,
+        checkpoint=checkpoint,
+        features=features,
+        reference=reference,
+        grid_lines=grid_lines,
+        max_layers=max_layers,
+        max_points=max_points,
+        stage_duration=stage_duration,
+        transition=transition,
+        title=title,
+    )
+    return _apply_nn_visual_system(
+        figure,
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+        math_font_scale=math_font_scale,
+    )
+
+
+def visualize_nn_training_step(
+    model: Any,
+    input_sample: Any,
+    target: Any,
+    loss_fn: Any,
+    history: Dict[str, Any] | None = None,
+    *,
+    checkpoint: int = 0,
+    learning_rate: float | None = None,
+    max_neurons: int = 6,
+    dec: int = 3,
+    frame_duration: int = 1500,
+    transition: int = 900,
+    title: str | None = None,
+    theme: str | None = None,
+    format: str = "dashboard",
+    density: str = "essential",
+    size: str = "default",
+    width: int | None = None,
+    height: int | None = None,
+    responsive: bool = False,
+    reduced_motion: bool = False,
+    math_font_scale: float = 1.0,
+):
+    r"""Follow one example through forward, loss, backward, and one update.
+
+    Every value is computed with PyTorch autograd on a copy of the model
+    loaded with the recorded ``checkpoint``: activations, the per-sample loss
+    :math:`l`, :math:`\boldsymbol\delta^{(\ell)}=\partial l/\partial\mathbf z^{(\ell)}`,
+    and every edge gradient :math:`\delta_j a_i`. The update is one plain
+    gradient step on that example with ``learning_rate`` (by default the
+    recorded optimizer's), an illustration of the rule rather than a replay of
+    the recorded optimizer. Use :func:`visualize_nn_backpropagation` for the
+    recorded layerwise norms over the whole run.
+    """
+    figure = build_nn_training_step_figure(
+        model,
+        input_sample,
+        target,
+        loss_fn,
+        history,
+        checkpoint=checkpoint,
+        learning_rate=learning_rate,
+        max_neurons=max_neurons,
+        dec=dec,
+        frame_duration=frame_duration,
+        transition=transition,
+        title=title,
+    )
+    return _apply_nn_visual_system(
+        figure,
+        theme=theme,
+        format=format,
+        density=density,
+        size=size,
+        width=width,
+        height=height,
+        responsive=responsive,
+        reduced_motion=reduced_motion,
+        math_font_scale=math_font_scale,
+    )
+
+
+def visualize_nn_gradient_flow(
+    histories: Any,
+    *,
+    labels: Any | None = None,
+    floor_decades: float = 8.0,
+    title: str | None = None,
+    theme: str | None = None,
+    format: str = "dashboard",
+    density: str = "essential",
+    size: str = "default",
+    width: int | None = None,
+    height: int | None = None,
+    responsive: bool = False,
+    reduced_motion: bool = False,
+    math_font_scale: float = 1.0,
+):
+    r"""Compare recorded weight-gradient norms per layer and checkpoint.
+
+    ``histories`` is one recorder history, a list of them, or a mapping from a
+    run name to its history (up to four). Every run shares one colour scale of
+    :math:`\log_{10}\|\nabla_{\Theta^{(\ell)}}\mathcal L\|`, so a vanishing or
+    exploding gradient is visible at a glance. The figure is static.
+    """
+    figure = build_nn_gradient_flow_figure(
+        histories,
+        labels=labels,
+        floor_decades=floor_decades,
+        title=title,
     )
     return _apply_nn_visual_system(
         figure,

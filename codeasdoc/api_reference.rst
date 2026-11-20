@@ -127,6 +127,8 @@ Export
 
 .. autofunction:: mlektic.api.optimize.show_optimized
 
+.. autofunction:: mlektic.api.optimize.compact_html_escapes
+
 Neural networks
 ===============
 
@@ -156,6 +158,14 @@ Neural networks
 .. autofunction:: mlektic.api.neural.visualize_nn_training
 
 .. autofunction:: mlektic.api.neural.visualize_nn_weights
+
+.. autofunction:: mlektic.api.neural.visualize_nn_decision
+
+.. autofunction:: mlektic.api.neural.visualize_nn_representation
+
+.. autofunction:: mlektic.api.neural.visualize_nn_training_step
+
+.. autofunction:: mlektic.api.neural.visualize_nn_gradient_flow
 
 .. autofunction:: mlektic.api.neural.explain_nn_prediction
 
