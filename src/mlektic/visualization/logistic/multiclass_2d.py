@@ -16,7 +16,9 @@ from ..theme import (
 )
 from ._math_layout import (
     MULTICLASS_ELLIPSIS_FONT_SIZE,
+    MULTICLASS_MENU_Y,
     MULTICLASS_PROBABILITY_FONT_SIZE,
+    _with_fixed_height,
     compact_probability_fraction_latex,
 )
 
@@ -149,8 +151,12 @@ def build_multiclass_2d_logistic_figure(
     max_theta_cols=8,
     probability_link="softmax",
     theme=None,
+    size="default",
 ):
     """Build the 2D multiclass logistic-regression probability surfaces."""
+    # On the 820 px compact canvas the one-line score row would reach the 3D
+    # scene; a slightly smaller type keeps it inside the math column.
+    score_font_size = 11 if size == "compact" else MULTICLASS_PROBABILITY_FONT_SIZE
     x1 = np.asarray(x1).ravel()
     x2 = np.asarray(x2).ravel()
     y = np.asarray(y).ravel()
@@ -262,7 +268,7 @@ def build_multiclass_2d_logistic_figure(
             dict(x=0.31, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
             dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=parameters, showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
             dict(x=generic_equation_x, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex_2d(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=equation_x, y=0.44, xref="paper", yref="paper", text=_score_examples_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=equation_x, y=0.44, xref="paper", yref="paper", text=_score_examples_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=score_font_size, color="white")),
             dict(x=equation_x, y=0.35, xref="paper", yref="paper", text=_probability_latex_2d(w_hist, b_hist, t, 0, dec, probability_link, compact=compact_fractions), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
             dict(x=dots_x, y=0.22, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
             dict(x=equation_x, y=0.14, xref="paper", yref="paper", text=_probability_latex_2d(w_hist, b_hist, t, K - 1, dec, probability_link, compact=compact_fractions), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
@@ -274,7 +280,7 @@ def build_multiclass_2d_logistic_figure(
 
         if show_loss:
             base_ann.append(
-                dict(x=-0.05, y=0.0, xref="x2 domain", yref="y2 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=12, color="white"))
+                dict(x=-0.05, y=0.0, xref="x2 domain", yref="y2 domain", text="<b>Log-loss</b>", showarrow=False, xanchor="right", yanchor="bottom", font=dict(size=12, color="white"))
             )
 
         return base_ann + metrics_annotations(t)
@@ -388,7 +394,7 @@ def build_multiclass_2d_logistic_figure(
             camera=CAMERA,
         ),
         sliders=get_sliders(steps_n, theme=theme),
-        updatemenus=get_updatemenus(frame_duration, theme=theme),
+        updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
     )
 
     # Hide the first subplot axes so the mathematical panel uses the full area.
@@ -402,8 +408,24 @@ def build_multiclass_2d_logistic_figure(
         fig.data[-1].update(legend="legend2")
         fig.update_xaxes(title="Step", range=[0, steps_n - 1], domain=[0.70, 1.0], row=2, col=2)
         fig.update_yaxes(range=[lmin - lpad, lmax + lpad], domain=[0.0, 0.30], row=2, col=2)
-        fig.update_layout(scene=dict(domain=dict(x=[0.64, 1.0], y=[0.42, 1.0])))
+        # The short scene is limited by its height, so narrowing it costs little
+        # and frees the right edge for the class legend, which otherwise
+        # covered the surfaces. Smaller axis type keeps long feature names apart.
+        small = dict(font=dict(size=10))
+        fig.update_layout(
+            scene=dict(
+                domain=dict(x=[0.62, 0.86], y=[0.40, 1.0]),
+                # In this small scene the x1/x2 tick numbers collided with long
+                # feature names; the probability surfaces carry the meaning.
+                xaxis=dict(title=small, showticklabels=False),
+                yaxis=dict(title=small, showticklabels=False),
+                zaxis=dict(title=small, tickfont=dict(size=9)),
+                # A slightly farther camera keeps long axis titles inside the scene.
+                camera=dict(eye=dict(x=1.9, y=1.9, z=1.4)),
+            ),
+            legend=dict(font=dict(size=10)),
+        )
 
-    return fig
+    return _with_fixed_height(fig)
 
 __all__ = ["build_multiclass_2d_logistic_figure"]

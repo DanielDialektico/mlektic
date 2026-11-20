@@ -77,8 +77,29 @@ def _stable_range(values: Sequence[np.ndarray], padding: float = 0.08) -> list[f
     if not combined.size:
         return None
     low, high = float(combined.min()), float(combined.max())
-    span = max(high - low, 1e-9)
+    span = high - low
+    if span <= 1e-9 * max(abs(low), abs(high), 1e-12):
+        # A constant metric: a readable band around it instead of ticks like 0.5000000005.
+        span = 0.1 * max(abs(low), abs(high)) or 1.0
     return [low - padding * span, high + padding * span]
+
+
+
+_METRIC_LABELS = {
+    "mse": "MSE",
+    "mae": "MAE",
+    "r2": "R²",
+    "accuracy": "Accuracy",
+    "precision": "Precision",
+    "recall": "Recall",
+    "f1": "F1",
+}
+
+
+def _metric_label(name: str) -> str:
+    """Display name of a recorded metric: acronyms upper-case, R² with its square."""
+    key = str(name).lower()
+    return _METRIC_LABELS.get(key, str(name).replace("_", " ").capitalize())
 
 
 def _metric_annotation(step: int, loss: float, metrics: Sequence[tuple[str, float]]) -> Dict[str, Any]:
@@ -114,9 +135,9 @@ def build_nn_training_figure(
     ][:max_metrics]
     if not np.isfinite(loss).any() and not metrics:
         raise ValueError("History needs a loss or at least one performance metric.")
-    metric_titles = [name.replace("_", " ").title() for name, _ in metrics]
+    metric_titles = [_metric_label(name) for name, _ in metrics]
     metric_titles.extend(["Metric not recorded"] * (3 - len(metric_titles)))
-    subplot_titles = [r"Training objective: $\mathcal{L}(\theta_t)$", *metric_titles]
+    subplot_titles = [r"$\text{Recorded loss: }\mathcal{L}_t$", *metric_titles]
     figure = make_subplots(
         rows=2,
         cols=2,
@@ -272,13 +293,16 @@ def build_nn_training_figure(
     figure.update_xaxes(title_text="Training step", row=2, col=2)
     if steps.size > 1:
         figure.update_xaxes(range=[float(steps[0]), float(steps[-1])])
+        if steps[-1] - steps[0] <= 12:
+            # Few recorded steps: integer ticks only (no "1.5" training steps).
+            figure.update_xaxes(dtick=1)
     figure.update_yaxes(title_text=r"$\mathcal{L}$", gridcolor=NEURAL_COLORS["grid"], row=1, col=1)
     loss_range = _stable_range([loss])
     if loss_range:
         figure.update_yaxes(range=loss_range, row=1, col=1)
     for (name, values), (metric_row, metric_column) in zip(metrics, metric_positions):
         figure.update_yaxes(
-            title_text=name.replace("_", " "),
+            title_text=_metric_label(name),
             gridcolor=NEURAL_COLORS["grid"],
             row=metric_row,
             col=metric_column,
@@ -290,11 +314,18 @@ def build_nn_training_figure(
 
 
 def _parameter_symbol(name: str, array: np.ndarray, index: int) -> str:
+    """Course notation: Theta for weight matrices, bold theta_0 for biases.
+
+    A one-dimensional ``weight`` belongs to a normalization layer: it scales
+    each channel (gamma), so it is not written as a weight matrix.
+    """
     if name.endswith(".weight"):
-        base = "W" if array.ndim <= 2 else "K"
+        if array.ndim == 1:
+            return rf"\boldsymbol{{\gamma}}^{{({index})}}_t"
+        base = r"\Theta" if array.ndim == 2 else "K"
         return rf"{base}^{{({index})}}_t"
     if name.endswith(".bias"):
-        return rf"\mathbf{{b}}^{{({index})}}_t"
+        return rf"\boldsymbol{{\theta}}^{{({index})}}_{{0,t}}"
     return rf"\theta^{{({index})}}_{{\mathrm{{{name.replace('.', '_')}}},t}}"
 
 
@@ -429,8 +460,14 @@ def _weight_annotations(
         dimensions = shape_tex(array.shape, drop_batch=False)
         matrix = matrix_latex(array, dec=dec, max_rows=max_rows, max_cols=max_cols)
         role = (
-            r"\text{rows }\leftrightarrow\text{ output units; columns }\leftrightarrow\text{ input coordinates}"
-            if array.ndim >= 2
+            # A kernel tensor is shown flattened to one row per output channel.
+            r"\text{rows }\leftrightarrow\text{ output channels; columns }\leftrightarrow"
+            r"\text{ flattened kernel entries}"
+            if array.ndim > 2
+            else r"\text{rows }\leftrightarrow\text{ output units; columns }\leftrightarrow\text{ input coordinates}"
+            if array.ndim == 2
+            else r"\text{one multiplicative scale per channel}"
+            if name.endswith(".weight")
             else r"\text{one additive offset per output unit}"
         )
         annotations.append(
@@ -571,8 +608,14 @@ def _activation_annotations(
             std = float(stats["std"][frame_index])
             minimum = float(stats["min"][frame_index])
             maximum = float(stats["max"][frame_index])
-            dimension = shape_tex(layer.get("output_shape"))
             vector_values = history.get("activation_vectors", {}).get(layer["name"], [])
+            # The recorded vector is the mean over the batch and spatial axes, so its
+            # dimension is the channel/unit count, not the full output shape.
+            dimension = (
+                str(np.asarray(vector_values[frame_index]).size)
+                if frame_index < len(vector_values)
+                else shape_tex(layer.get("output_shape"))
+            )
             vector = (
                 vector_latex(vector_values[frame_index], dec=3, limit=6)
                 if frame_index < len(vector_values)
@@ -580,7 +623,7 @@ def _activation_annotations(
             )
             text = (
                 rf"$\text{{{layer['name']} ({layer['type']})}}:\quad {layer['formula']}"
-                rf"\quad\mathbf{{a}}_t={vector}\in\mathbb{{R}}^{{{dimension}}}"
+                rf"\quad\bar{{\mathbf{{a}}}}_t={vector}\in\mathbb{{R}}^{{{dimension}}}"
                 rf"\quad\mu={mean:.3f},\;\sigma={std:.3f},\;[\min,\max]=[{minimum:.3f},{maximum:.3f}]$"
             )
         annotations.append(

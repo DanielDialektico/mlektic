@@ -241,6 +241,11 @@ from notebooks._support import case_heading, linear_case, polynomial_linear_case
             "c=linear_case(1)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=[[0.65]],theme='academic'))",
         ),
         (
+            "LR-PRED-MINMAX",
+            "MinMaxScaler pipeline written back in original units; substitution reproduces the model output",
+            "from sklearn.pipeline import make_pipeline\nfrom sklearn.preprocessing import MinMaxScaler\nfrom sklearn.linear_model import LinearRegression\nc=linear_case(2)\nm=make_pipeline(MinMaxScaler(),LinearRegression()).fit(c.X,c.y)\ndisplay(explain_lr_prediction(m,c.X,c.y,x_query=c.X[:1]))",
+        ),
+        (
             "LR-PRED-EXTRAP",
             "extrapolation notice and visible query outside the training range",
             "c=linear_case(2)\nquery=(c.X.max(axis=0)+1.5).reshape(1,-1)\ndisplay(explain_lr_prediction(c.model,c.X,c.y,x_query=query,size='wide'))",
@@ -450,6 +455,11 @@ from notebooks._support import case_heading, binary_case, multiclass_case, scale
             "LOG-BINARY-THRESHOLD",
             "non-default binary threshold with numeric tick and separate τ label inside the geometry",
             "c=binary_case(2)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,threshold=0.7,detail='academic'))",
+        ),
+        (
+            "LOG-THRESHOLD-METRICS",
+            "Accuracy and F1 cards use the drawn threshold tau=0.8, not 0.5",
+            "c=binary_case(1)\ndisplay(visualize_logistic(c.model,c.X,c.y,steps=10,max_frames=6,threshold=0.8,show_loss=True))",
         ),
         (
             "LOG-BINARY-IMBALANCED",
@@ -1230,9 +1240,9 @@ display(visualize_nn_architecture(large_model,large_input[:1],history=large_hist
 
 def build_motion() -> None:
     imports = """\
-from IPython.display import display
-from mlektic import visualize_lr, visualize_logistic
-from notebooks._support import case_heading, binary_case, linear_case
+from IPython.display import HTML, display
+from mlektic import export_figure, show_optimized, visualize_logistic, visualize_lr, visualize_nn
+from notebooks._support import case_heading, binary_case, linear_case, multiclass_case, torch_xor_case
 linear = linear_case(1,estimator='sgd')
 logistic = binary_case(1,estimator='sgd')
 """
@@ -1285,6 +1295,88 @@ complete composition and its temporal controls.
     ]
     for item in cases:
         cells.extend(case(*item))
+    cells.append(
+        markdown("""
+## Fluid playback
+
+These figures use the settings that give the smoothest playback: `steps=60`,
+`max_frames=60`, and `frame_duration=80` (the library defaults; the transition
+is derived from the duration), plus hybrid interpolation at `fps=35` where it
+exists (1D linear). Drag the slider and press Play. Steps should follow the
+pointer, Play should keep its configured pace, and every equation must look
+exactly like the Plotly-playback cell, only faster. The first visit to a step
+still redraws the figure (equations are typeset ahead while the figure is
+idle); every later visit replays it.
+
+`show_optimized` is used on purpose: JupyterLab and VS Code display plain
+figures through Plotly's mimetype extension, which keeps Plotly's own playback.
+Colab, classic Jupyter, `show_optimized`, and exported HTML run the fluid
+controller. The exported files opened in Chrome are the reference check.
+""")
+    )
+    cells.append(
+        code("""
+fluid_linear = visualize_lr(linear.model,linear.X,linear.y,steps=60,max_frames=60,animation_mode='hybrid',interpolation_frames=3,fps=35)
+multiclass = multiclass_case(1)
+fluid_multiclass = visualize_logistic(multiclass.model,multiclass.X,multiclass.y,steps=60,max_frames=60,frame_duration=80)
+multiclass_5d = multiclass_case(5)
+fluid_multiclass_5d = visualize_logistic(multiclass_5d.model,multiclass_5d.X,multiclass_5d.y,steps=60,max_frames=60,frame_duration=80)
+multiclass_3d = multiclass_case(2)
+fluid_multiclass_3d = visualize_logistic(multiclass_3d.model,multiclass_3d.X,multiclass_3d.y,steps=60,max_frames=60,frame_duration=80)
+""")
+    )
+    fluid_cases = [
+        (
+            "MOTION-FLUID-LINEAR-HYBRID",
+            "hybrid 1D linear playback at 35 fps with fluid stepping",
+            "display(show_optimized(fluid_linear))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-MULTICLASS",
+            "multiclass equations change on every step without re-typesetting delay",
+            "display(show_optimized(fluid_multiclass))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY",
+            "the same figure with Plotly playback: identical picture, slower steps",
+            "display(show_optimized(fluid_multiclass,fluid_playback=False))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-5D",
+            "five-feature multiclass equations stepping fluidly",
+            "display(show_optimized(fluid_multiclass_5d))",
+        ),
+        (
+            "MOTION-FLUID-LOGISTIC-3D",
+            "3D surface steps: equations are instant, the WebGL surface still rebuilds",
+            "display(show_optimized(fluid_multiclass_3d))",
+        ),
+        (
+            "MOTION-FLUID-NN-ACTIVATIONS",
+            "neural activation equations stepping fluidly across 20 checkpoints",
+            """\
+xor_model,xor_X,xor_history = torch_xor_case(steps=40)
+display(show_optimized(visualize_nn(xor_model,xor_X[:1],history=xor_history,view='activations',max_frames=20)))""",
+        ),
+        (
+            "MOTION-FLUID-EXPORT",
+            "exported HTML pairs to open in Chrome: fluid controller versus Plotly playback",
+            """\
+out = ROOT/'build'/'qa-fluid'
+exported = [
+    export_figure(fluid_multiclass,out/'multiclass-fluid.html'),
+    export_figure(fluid_multiclass,out/'multiclass-plotly.html',fluid_playback=False),
+    export_figure(fluid_multiclass_3d,out/'multiclass-3d-fluid.html'),
+    export_figure(fluid_multiclass_3d,out/'multiclass-3d-plotly.html',fluid_playback=False),
+]
+for path in exported:
+    print(path)
+links = ''.join(f'<li><a href="{path.as_uri()}" target="_blank">{path.name}</a></li>' for path in exported)
+display(HTML(f'<ul>{links}</ul>'))""",
+        ),
+    ]
+    for item in fluid_cases:
+        cells.extend(case(*item))
     add_size_coverage(
         cells,
         "MOTION",
@@ -1292,7 +1384,7 @@ complete composition and its temporal controls.
     )
     notebook(
         "QA 04 — motion and temporal semantics",
-        "Playback controls, decimation, smoothing, complete dashboard composition, and static accessibility modes.",
+        "Playback controls, decimation, smoothing, fluid playback, complete dashboard composition, and static accessibility modes.",
         cells,
         "qa/qa_04_motion.ipynb",
     )
@@ -1301,12 +1393,15 @@ complete composition and its temporal controls.
 def build_visual_system() -> None:
     imports = """\
 from IPython.display import display
-from mlektic import visualize_lr
-from notebooks._support import case_heading, linear_case
+from mlektic import explain_lr_prediction, visualize_logistic, visualize_lr, visualize_nn
+from notebooks._support import case_heading, linear_case, multiclass_case, torch_xor_case
 c=linear_case(1)
 """
     cells = setup(imports)
-    for theme in ["classic", "academic", "classroom", "compact", "accessible"]:
+    for theme in [
+        "classic", "academic", "classroom", "compact", "accessible",
+        "aurora", "editorial", "blueprint", "dusk", "chalkboard", "davinci", "ember", "lumen",
+    ]:
         cells.extend(
             case(
                 f"STYLE-THEME-{theme.upper()}",
@@ -1364,9 +1459,103 @@ c=linear_case(1)
     ]
     for item in cases:
         cells.extend(case(*item))
+    cells.append(
+        markdown(
+            """\
+## Skins: aurora, editorial, blueprint, dusk, chalkboard, davinci, ember, lumen
+
+Skins repaint a figure and keep the classic geometry: every title, equation,
+control, and panel sits exactly where `classic` puts it. Compare each case with
+the classic figure of the same model. `aurora` also adds motion cues: a fading
+trail of earlier model states and a glow under the model line, the loss curve's
+future dotted with a marker on the current step, and equation numbers coloured
+green when they rose and coral when they fell since their last change. `dusk`
+keeps those cues in muted colours; `chalkboard` and `davinci` add textured
+backdrops and handwritten typefaces (equations keep MathJax's font); `ember`
+and `lumen` add residual segments that shrink as the model learns. Hover
+over Play/Pause in each: the label must stay readable.
+"""
+        )
+    )
+    skin_cases = [
+        (
+            "STYLE-SKIN-AURORA-MOTION",
+            "SGD trail, glow, loss progress, and equation colours on a 60-state replay",
+            "sgd=linear_case(1,estimator='sgd')\n"
+            "display(visualize_lr(sgd.model,sgd.X,sgd.y,steps=60,max_frames=60,theme='aurora'))",
+        ),
+        (
+            "STYLE-SKIN-AURORA-CLASSIC-TWIN",
+            "the same SGD replay in classic, for a position-by-position comparison",
+            "sgd=linear_case(1,estimator='sgd')\n"
+            "display(visualize_lr(sgd.model,sgd.X,sgd.y,steps=60,max_frames=60))",
+        ),
+        (
+            "STYLE-SKIN-AURORA-EQUATIONS",
+            "multiclass matrices whose numbers are coloured by direction of change",
+            "mc=multiclass_case(1)\n"
+            "display(visualize_logistic(mc.model,mc.X,mc.y,steps=60,max_frames=60,frame_duration=80,theme='aurora'))",
+        ),
+        (
+            "STYLE-SKIN-EDITORIAL-LOGISTIC",
+            "light paper skin on multiclass equations and probability curves",
+            "mc=multiclass_case(1)\n"
+            "display(visualize_logistic(mc.model,mc.X,mc.y,steps=12,max_frames=12,theme='editorial'))",
+        ),
+        (
+            "STYLE-SKIN-BLUEPRINT-3D",
+            "scene walls, grid backdrop, and class surfaces in a 3D probability view",
+            "mc2=multiclass_case(2)\n"
+            "display(visualize_logistic(mc2.model,mc2.X,mc2.y,steps=12,max_frames=12,theme='blueprint'))",
+        ),
+        (
+            "STYLE-SKIN-EDITORIAL-NEURAL",
+            "neural encodings kept while text, colour bars, and controls follow the light skin",
+            "xm,xX,xh=torch_xor_case(steps=6)\n"
+            "display(visualize_nn(xm,xX[1],history=xh,view='graph',max_frames=5,theme='editorial'))",
+        ),
+        (
+            "STYLE-SKIN-EMBER-RESIDUALS",
+            "residual segments from each point to the line shrink while trail and glow follow the fit",
+            "sgd=linear_case(1,estimator='sgd')\n"
+            "display(visualize_lr(sgd.model,sgd.X,sgd.y,steps=60,max_frames=60,theme='ember'))",
+        ),
+        (
+            "STYLE-SKIN-CHALKBOARD-CURVES",
+            "framed, smudged slate with chalk colours and a chalk typeface on class probability curves",
+            "mc=multiclass_case(1)\n"
+            "display(visualize_logistic(mc.model,mc.X,mc.y,steps=20,max_frames=20,theme='chalkboard'))",
+        ),
+        (
+            "STYLE-SKIN-DAVINCI-3D",
+            "parchment backdrop with sepia text and class surfaces shaded in the skin palette",
+            "mc2=multiclass_case(2)\n"
+            "display(visualize_logistic(mc2.model,mc2.X,mc2.y,steps=12,max_frames=12,theme='davinci'))",
+        ),
+        (
+            "STYLE-SKIN-DUSK-BINARY",
+            "muted trail, glow, loss progress, and equation colours on a binary sigmoid",
+            "from notebooks._support import binary_case\nb1=binary_case(1)\n"
+            "display(visualize_logistic(b1.model,b1.X,b1.y,steps=20,max_frames=20,show_loss=True,theme='dusk'))",
+        ),
+        (
+            "STYLE-SKIN-LUMEN-RESIDUALS",
+            "classic colours with warm light, glow, trail, and residual segments on a binary sigmoid",
+            "from notebooks._support import binary_case\nb1=binary_case(1)\n"
+            "display(visualize_logistic(b1.model,b1.X,b1.y,steps=20,max_frames=20,show_loss=True,theme='lumen'))",
+        ),
+        (
+            "STYLE-SKIN-DAVINCI-EXPLAINER",
+            "old-paper explainer whose Input, Substitution, and Output text stays legible ink",
+            "lin2=linear_case(2)\n"
+            "display(explain_lr_prediction(lin2.model,lin2.X,lin2.y,x_query=lin2.X[:1],theme='davinci'))",
+        ),
+    ]
+    for item in skin_cases:
+        cells.extend(case(*item))
     notebook(
         "QA 05 — themes, formats, density, and sizes",
-        "Every supported visual-system preset plus overrides and responsive metadata.",
+        "Every supported visual-system preset, the seven presentation skins, overrides, and responsive metadata.",
         cells,
         "qa/qa_05_visual_system.ipynb",
     )
@@ -2599,17 +2788,41 @@ def build_manifest() -> None:
             "NN-LARGE-LOSS-LANDSCAPE",
         ],
         "codeasdoc/history_semantics.rst": ["MOTION-NATIVE-SLOW", "MOTION-HYBRID-FLUID"],
-        "codeasdoc/mathematical_parity.rst": ["LR-PIPE-ORIGINAL", "LOG-BINARY-THRESHOLD"],
+        "codeasdoc/mathematical_parity.rst": [
+            "LR-PIPE-ORIGINAL",
+            "LOG-BINARY-THRESHOLD",
+            "LOG-THRESHOLD-METRICS",
+            "LR-PRED-MINMAX",
+        ],
         "codeasdoc/mathematical_conventions.rst": ["LR-POLYNOMIAL", "LOG-MULTI-FOCUS"],
-        "codeasdoc/animation_performance.rst": ["MOTION-FRAME-STEP", "MOTION-NATIVE-SLOW"],
+        "codeasdoc/animation_performance.rst": [
+            "MOTION-FRAME-STEP",
+            "MOTION-NATIVE-SLOW",
+            "MOTION-FLUID-LOGISTIC-MULTICLASS",
+            "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY",
+            "MOTION-FLUID-LOGISTIC-3D",
+        ],
         "codeasdoc/visual_design.rst": ["STYLE-THEME-ACADEMIC", "STYLE-FORMAT-DASHBOARD"],
-        "codeasdoc/themes_formats_sizes.rst": ["STYLE-THEME-ACCESSIBLE", "STYLE-SIZE-CLASSROOM"],
+        "codeasdoc/themes_formats_sizes.rst": [
+            "STYLE-THEME-ACCESSIBLE",
+            "STYLE-SIZE-CLASSROOM",
+            "STYLE-SKIN-AURORA-MOTION",
+            "STYLE-SKIN-AURORA-CLASSIC-TWIN",
+            "STYLE-SKIN-BLUEPRINT-3D",
+            "STYLE-SKIN-EDITORIAL-NEURAL",
+            "STYLE-SKIN-EMBER-RESIDUALS",
+            "STYLE-SKIN-CHALKBOARD-CURVES",
+            "STYLE-SKIN-DAVINCI-3D",
+            "STYLE-SKIN-DUSK-BINARY",
+            "STYLE-SKIN-LUMEN-RESIDUALS",
+            "STYLE-SKIN-DAVINCI-EXPLAINER",
+        ],
         "codeasdoc/prediction_explanations.rst": [
             "LR-PRED-EXTRAP",
             "LR-PRED-10D-STAGES",
             "LOG-PRED-BINARY",
         ],
-        "codeasdoc/export.rst": ["STYLE-RESPONSIVE", "NN-REPORT"],
+        "codeasdoc/export.rst": ["STYLE-RESPONSIVE", "NN-REPORT", "MOTION-FLUID-EXPORT"],
         "codeasdoc/gallery.rst": [
             "SMOKE-LR-2D",
             "SMOKE-LOG-MULTI-2D",

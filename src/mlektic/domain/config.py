@@ -131,8 +131,15 @@ class LogisticHistoryConfig:
     max_frames: int | None = 60
     frame_step: int | None = 10
     multiclass_link: str = "auto"
+    threshold: float = 0.5
 
     def __post_init__(self) -> None:
         """Reject ambiguous or unsupported configuration values early."""
         _validate_common(self, baselines=_LOGISTIC_BASELINES, metrics=_LOGISTIC_METRICS)
         _one_of("multiclass_link", self.multiclass_link, _MULTICLASS_LINKS)
+        if (
+            not isinstance(self.threshold, Real)
+            or isinstance(self.threshold, bool)
+            or not 0.0 < float(self.threshold) < 1.0
+        ):
+            raise ValueError("threshold must be a real number strictly between 0 and 1.")

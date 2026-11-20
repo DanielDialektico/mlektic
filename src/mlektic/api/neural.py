@@ -22,6 +22,7 @@ from ..visualization.neural.training import (
     build_nn_training_figure,
     build_nn_weight_figure,
 )
+from ..visualization.playback import attach_fluid_playback
 
 _DENSE_REPLAY_MODULE_TYPES = {
     "Linear",
@@ -199,7 +200,7 @@ def _apply_nn_visual_system(
                 size_value = getattr(getattr(trace, "textfont", None), "size", None)
                 if size_value is not None:
                     trace.textfont.size = max(8, round(float(size_value) * math_font_scale))
-    return figure
+    return attach_fluid_playback(figure)
 
 
 def visualize_nn(

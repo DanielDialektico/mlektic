@@ -1,11 +1,15 @@
 ========================
 Mathematical conventions
 ========================
-“rejected.” Inspect ``LR-POLYNOMIAL`` and ``LOG-MULTI-FOCUS`` in the QA suite.
+
 Mlektic uses :math:`\theta_0` for an intercept, bold lower-case symbols for
 vectors, upper-case symbols for matrices, and fitted class indices in the order
 of ``classes_``. A displayed coordinate belongs to its declared feature space:
 original, affine-scaled, or transformed.
+
+The complete course notation, in Spanish, is ``course/notacion_matematica.html``
+in the repository: every symbol shown in the figures, its dimension, and where it
+appears. Figures and this page use the same symbols.
 
 Exactness labels
 ================
@@ -46,7 +50,7 @@ the same score and probability rules apply:
    z_k(\mathbf{x})=\theta_{0,k}+\sum_{j=1}^{d}\theta_{j,k}x_j,
    \qquad
    \hat p(Y=c_k\mid\mathbf{x})=
-   \frac{e^{z_k(\mathbf{x})}}{\sum_{\ell=0}^{K-1}e^{z_\ell(\mathbf{x})}}.
+   \frac{e^{z_k(\mathbf{x})}}{\sum_{r=0}^{K-1}e^{z_r(\mathbf{x})}}.
 
 For a one-feature view, the score is
 :math:`z_k=\theta_{0,k}+\theta_{1,k}x_1`. With two features it is

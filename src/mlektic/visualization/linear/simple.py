@@ -23,6 +23,20 @@ from ..theme import (
 _MATH_TEXT_FONT = "STIX Two Math, Cambria Math, Times New Roman, serif"
 
 
+def _visible_span(lo: float, hi: float) -> float:
+    """Data span with a floor, so a constant series gets readable axis ticks.
+
+    Without it a constant target or a zero loss produced ranges of about
+    1e-9 and tick labels such as "3.5000000003" or "100p".
+    """
+    span = hi - lo
+    magnitude = max(abs(lo), abs(hi))
+    if span > 1e-9 * max(magnitude, 1e-12):
+        return span
+    # Degenerate (constant) series only: a tenth of its magnitude, or 1 at zero.
+    return 0.1 * magnitude if magnitude > 0 else 1.0
+
+
 def _interpolate_at(values, position):
     """Interpolate an array along its first, semantic-step axis."""
     array = np.asarray(values, dtype=float)
@@ -270,7 +284,7 @@ def _build_hybrid_figure(
     if show_loss:
         loss_hist = np.asarray(loss_hist, dtype=float).ravel()
         lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
-        lspan = lmax - lmin + 1e-9
+        lspan = _visible_span(lmin, lmax)
         lpad = 0.10 * lspan
         metric_count = len(metrics_hist or {})
         if metric_count > 1:
@@ -372,7 +386,7 @@ def _build_hybrid_figure(
             ),
             annotations=[formula_annotation()],
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.85, y=0.05, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.85, y=0.84, yanchor="top", theme=theme)),
             sliders=_hybrid_sliders(checkpoint_names, theme=theme),
             updatemenus=get_updatemenus(frame_duration, theme=theme),
         )
@@ -618,7 +632,7 @@ def build_simple_lr_figure(
         ]
     )
     y_min, y_max = float(y_all.min()), float(y_all.max())
-    y_pad = 0.08 * (y_max - y_min + 1e-9)
+    y_pad = 0.08 * _visible_span(y_min, y_max)
 
     def _pad(lo, hi, frac=0.10):
         span = (hi - lo) + 1e-9
@@ -629,7 +643,7 @@ def build_simple_lr_figure(
 
     if animation_mode == "hybrid":
         line_history = np.vstack([np.asarray(y_line(t), dtype=float).ravel() for t in range(steps_n)])
-        y_span = y_max - y_min + 1e-9
+        y_span = _visible_span(y_min, y_max)
         return _build_hybrid_figure(
             x1,
             y,
@@ -655,7 +669,7 @@ def build_simple_lr_figure(
 
     if show_loss:
         lmin, lmax = float(loss_hist.min()), float(loss_hist.max())
-        lpad = 0.10 * (lmax - lmin + 1e-9)
+        lpad = 0.10 * _visible_span(lmin, lmax)
 
     # =====================================================================
     # CASE A) show_loss=True
@@ -761,7 +775,7 @@ def build_simple_lr_figure(
             **get_base_layout(title=title, margin_t=margin_t, theme=theme),
             annotations=[theta_formula_annotation(), eq_annotation(0)] + metrics_annotations(0),
             legend=dict(orientation="v", **get_legend_props(x=0.49, theme=theme)),
-            legend2=dict(orientation="v", **get_legend_props(x=0.985, y=0.05, theme=theme)),
+            legend2=dict(orientation="v", **get_legend_props(x=0.985, y=0.84, yanchor="top", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, theme=theme),
         )

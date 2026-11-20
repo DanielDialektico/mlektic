@@ -101,7 +101,7 @@ def _architecture_formula(model: Any, layer_count: int) -> str:
             return (
                 rf"\hat{{\mathbf{{y}}}}=\mathbf{{a}}^{{({depth})}},\quad "
                 rf"\mathbf{{z}}^{{(\ell)}}=\Theta^{{(\ell)}}\mathbf{{a}}^{{(\ell-1)}}+"
-                rf"\theta_0^{{(\ell)}},\quad "
+                rf"\boldsymbol{{\theta}}_0^{{(\ell)}},\quad "
                 rf"\mathbf{{a}}^{{(\ell)}}=\phi_\ell(\mathbf{{z}}^{{(\ell)}}),\;"
                 rf"\ell=1,\ldots,{depth}"
             )
@@ -225,7 +225,7 @@ def build_nn_architecture_figure(
             f"{name}:{shape_tex(shape, drop_batch=False)}" for name, shape in layer["parameter_shapes"].items()
         )
         symbol = {
-            "learnable": r"$W,b$",
+            "learnable": r"$\Theta,\boldsymbol{\theta}_0$",
             "activation": r"$\phi$",
             "regularization": r"$m$",
             "reshape": r"$\operatorname{shape}$",

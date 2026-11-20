@@ -8,9 +8,12 @@ independent from history capture and model semantics.
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass
 from numbers import Real
 from typing import Any
+
+from .skins import apply_skin, available_skins, get_skin, is_skin
 
 
 @dataclass(frozen=True)
@@ -217,23 +220,31 @@ _SIZE_PRESETS: dict[str, tuple[int | None, float]] = {
 
 
 def available_themes() -> tuple[str, ...]:
-    """Return registered visual theme names."""
-    return tuple(_THEMES)
+    """Return registered visual theme names: layout themes, then skins."""
+    return (*_THEMES, *available_skins())
 
 
 def get_theme_tokens(theme: str | None = None) -> VisualTokens:
-    """Resolve a theme name to immutable visual tokens."""
+    """Resolve a theme name to immutable visual tokens.
+
+    Skins are presentation-only, so they resolve to the classic tokens: the
+    builders then lay a skinned figure out exactly like the classic one.
+    """
     if theme is not None and not isinstance(theme, str):
         raise TypeError("theme must be a registered theme name or None.")
+    if is_skin(theme):
+        return _CLASSIC
     key = (theme or "classic").lower()
     if key not in _THEMES:
-        choices = ", ".join(_THEMES)
+        choices = ", ".join(available_themes())
         raise ValueError(f"Unknown theme {theme!r}. Available themes: {choices}.")
     return _THEMES[key]
 
 
 def theme_palette(theme: str | None = None) -> dict[str, Any]:
     """Return legacy builder keys derived from the resolved token set."""
+    if is_skin(theme):
+        theme = None
     tokens = get_theme_tokens(theme)
     return {
         "bg": tokens.background,
@@ -324,7 +335,8 @@ def resolve_visual_spec(
 
 def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     """Apply an already resolved visual specification to a Plotly figure."""
-    if spec.theme != "classic":
+    skinned = is_skin(spec.theme)
+    if spec.theme != "classic" and not skinned:
         _apply_tokens(fig, spec.tokens)
     if spec.theme == "accessible":
         _apply_accessibility_redundancy(fig, spec.tokens)
@@ -341,10 +353,13 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     _apply_size(fig, spec)
     tabular_fit = _apply_tabular_narrow_layout(fig, spec, family=family)
     annotation_fit = _remove_annotation_boxes(fig, spec.tokens)
+    _drop_negative_zero(fig)
     if spec.responsive:
         fig.layout.autosize = True
         if spec.width is None:
             fig.layout.width = None
+    # Skins paint last, over the final composition, and never change its geometry.
+    skin = apply_skin(fig, get_skin(spec.theme), family=family) if skinned else None
 
     metadata = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
     visual = spec.metadata()
@@ -358,6 +373,7 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
             "responsive_config": {"responsive": spec.responsive},
             "narrow_layout_fit": tabular_fit,
             "annotation_boxes": annotation_fit,
+            "skin": skin,
             "reflow_strategy": (
                 "select a dedicated format for structural reflow; responsive scales the resolved composition"
             ),
@@ -370,6 +386,69 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     metadata["mlektic_visual"] = visual
     fig.update_layout(meta=metadata, uirevision=f"mlektic-{spec.theme}-{spec.format}")
     return fig
+
+
+# A value that rounds to zero is shown as 0, never as "-0.0000".
+_ZERO_WITH_SIGN = re.compile(r"-(0(?:\.0+)?)(?![\d.])")
+_STARTS_NUMBER = set(" \t\n([{&=,;:>|")
+
+
+def _sign_starts_number(text: str, position: int) -> bool:
+    """Whether the "-" at ``position`` is a sign rather than a subtraction."""
+    if position == 0 or text[position - 1] in _STARTS_NUMBER:
+        return True
+    if text[position - 1] != "}":
+        return False
+    depth = 0
+    for index in range(position - 1, -1, -1):
+        depth += {"}": 1, "{": -1}.get(text[index], 0)
+        if depth == 0:
+            # "x_{1}-0" and "e^{2}-0" subtract; "\begin{bmatrix}-0" starts a cell.
+            return index == 0 or text[index - 1] not in "_^"
+    return False
+
+
+def _strip_negative_zero(text: str) -> str:
+    """Remove the sign from numbers that round to zero, e.g. ``-0.0000``."""
+    return _ZERO_WITH_SIGN.sub(
+        lambda match: match.group(1) if _sign_starts_number(text, match.start()) else match.group(0),
+        text,
+    )
+
+
+def _drop_negative_zero(fig: Any) -> None:
+    """Remove the sign from rounded zeros in every displayed text of the figure."""
+
+    def clean(value: Any) -> Any:
+        if isinstance(value, str):
+            return _strip_negative_zero(value) if "-0" in value else value
+        if isinstance(value, (list, tuple)) and any(isinstance(item, str) for item in value):
+            return type(value)(clean(item) for item in value)
+        return value
+
+    def fix_annotations(annotations: Any) -> None:
+        for annotation in annotations or ():
+            if isinstance(annotation, dict):
+                annotation["text"] = clean(annotation.get("text"))
+            elif annotation.text:
+                annotation.text = clean(annotation.text)
+
+    def fix_traces(traces: Any) -> None:
+        for trace in traces or ():
+            if getattr(trace, "text", None) is not None:
+                trace.text = clean(trace.text)
+
+    fix_annotations(fig.layout.annotations)
+    fix_traces(fig.data)
+    for frame in fig.frames or ():
+        fix_traces(frame.data)
+        if frame.layout is not None:
+            fix_annotations(frame.layout.annotations)
+    for menu in fig.layout.updatemenus or ():
+        for button in menu.buttons or ():
+            for argument in button.args or ():
+                if isinstance(argument, dict):
+                    fix_annotations(argument.get("annotations"))
 
 
 def _remove_annotation_boxes(fig: Any, tokens: VisualTokens) -> dict[str, Any]:
@@ -807,7 +886,11 @@ def _apply_size(fig: Any, spec: VisualSpec) -> None:
         # moves their centers past the canvas edge.  Their builder has already
         # computed an exact content-aware height, so size presets change width
         # only for these compositions.
-        safe_height_scale = 1.0 if has_below_plot else height_scale
+        # Builders whose equations are stacked at fixed paper positions ask for
+        # the same treatment: a shorter canvas would pack those rows together.
+        layout_meta = fig.layout.meta.get("mlektic_layout", {}) if isinstance(fig.layout.meta, dict) else {}
+        fixed_height = bool(layout_meta.get("fixed_height"))
+        safe_height_scale = 1.0 if has_below_plot or fixed_height else height_scale
         fig.layout.height = max(320, round(current_height * safe_height_scale))
     if spec.width is not None:
         fig.layout.width = int(spec.width)

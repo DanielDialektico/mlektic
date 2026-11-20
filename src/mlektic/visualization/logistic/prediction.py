@@ -94,7 +94,7 @@ def _binary_result_tex(p_hat, y_hat, classes, dec):
         r"$\begin{aligned}"
         rf"\hat{{\mathbf{{p}}}} &=(\hat{{p}}_0,\hat{{p}}_1)="
         rf"({_fmt(1.0 - p_hat, dec)},\,{_fmt(p_hat, dec)})\\"
-        rf"\hat{{y}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}"
+        rf"\hat{{k}} &= \arg\max_{{k\in\{{0,1\}}}}\hat{{p}}_k={winner_index}"
         r"\end{aligned}$"
     )
 
@@ -105,7 +105,7 @@ def _multiclass_winner_tex(p_hat, classes, dec):
     return (
         r"$\begin{aligned}"
         rf"&\max(\hat{{\mathbf{{p}}}}) = {_fmt(float(np.max(p_hat)), dec)} \\"
-        rf"&\hat{{y}} = \arg\max_{{k\in\{{0,\ldots,{len(classes) - 1}\}}}}"
+        rf"&\hat{{k}} = \arg\max_{{k\in\{{0,\ldots,{len(classes) - 1}\}}}}"
         rf"\hat{{p}}_k = {winner_index}"
         r"\end{aligned}$"
     )
@@ -595,23 +595,23 @@ def _explain_log_multiclass_1d(
         normalizer_symbol = "Q"
     else:
         components = np.exp(scores - np.max(scores))
-        component_symbol = "r"
-        component_definition = r"r_k=e^{z_k-z_{\max}}"
-        normalizer_symbol = "R"
+        component_symbol = "s"
+        component_definition = r"s_k=e^{z_k-z_{\max}}"
+        normalizer_symbol = "S"
     normalizer = float(np.sum(components))
 
     def p_subst(k):
         return [
-            rf"z_{{{k + 1}}}={exp_tex(k)}",
-            rf"{component_symbol}_{{{k + 1}}}={_fmt(components[k], dec)},\quad"
-            rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid x)="
-            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}",
+            rf"z_{{{k}}}={exp_tex(k)}",
+            rf"{component_symbol}_{{{k}}}={_fmt(components[k], dec)},\quad"
+            rf"\hat{{p}}(Y=c_{{{k}}}\mid x)="
+            rf"\frac{{{component_symbol}_{{{k}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}",
         ]
 
     subst_lines = []
     header1 = (
         component_definition
-        + rf",\quad {normalizer_symbol}=\sum_{{j=1}}^K{component_symbol}_j={_fmt(normalizer, dec)},\quad "
+        + rf",\quad {normalizer_symbol}=\sum_{{r=0}}^{{K-1}}{component_symbol}_r={_fmt(normalizer, dec)},\quad "
     )
     header2 = r"z_k(\mathbf{x}) = \theta_{1,k} x_1 + \theta_{0,k}"
     subst_lines.extend((header1, header2))
@@ -826,23 +826,23 @@ def _explain_log_multiclass_nd(
         normalizer_symbol = "Q"
     else:
         components = np.exp(scores - np.max(scores))
-        component_symbol = "r"
-        component_definition = r"r_k=e^{z_k-z_{\max}}"
-        normalizer_symbol = "R"
+        component_symbol = "s"
+        component_definition = r"s_k=e^{z_k-z_{\max}}"
+        normalizer_symbol = "S"
     normalizer = float(np.sum(components))
 
     def p_subst(k):
         return [
-            rf"z_{{{k + 1}}}={exp_tex(k)}",
-            rf"{component_symbol}_{{{k + 1}}}={_fmt(components[k], dec)},\quad"
-            rf"\hat{{p}}(Y=c_{{{k + 1}}}\mid\mathbf{{x}})="
-            rf"\frac{{{component_symbol}_{{{k + 1}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}",
+            rf"z_{{{k}}}={exp_tex(k)}",
+            rf"{component_symbol}_{{{k}}}={_fmt(components[k], dec)},\quad"
+            rf"\hat{{p}}(Y=c_{{{k}}}\mid\mathbf{{x}})="
+            rf"\frac{{{component_symbol}_{{{k}}}}}{{{normalizer_symbol}}}={_fmt(p_hat[k], dec)}",
         ]
 
     subst_lines = []
     header1 = (
         component_definition
-        + rf",\quad {normalizer_symbol}=\sum_{{j=1}}^K{component_symbol}_j={_fmt(normalizer, dec)},\quad "
+        + rf",\quad {normalizer_symbol}=\sum_{{r=0}}^{{K-1}}{component_symbol}_r={_fmt(normalizer, dec)},\quad "
     )
     header2 = r"z_k(\mathbf{x}) = \sum_{j=1}^{D} \theta_{j,k} x_j + \theta_{0,k}"
     subst_lines.extend((header1, header2))
@@ -1026,28 +1026,11 @@ def explain_logistic_prediction(
         return w, b
 
     def _theta_to_original_multiclass(w_s, b_s, scaler):
-        from ..linear.prediction import _safe_get_scale
         w_s = np.asarray(w_s, dtype=float)
         b_s = np.asarray(b_s, dtype=float).ravel()
         if scaler is None:
             return w_s.copy(), b_s.copy()
-
-        mu, scale, with_mean, with_std = _safe_get_scale(scaler)
-        dloc = w_s.shape[1]
-
-        if (not with_std) or (scale is None):
-            scale = np.ones(dloc, dtype=float)
-        else:
-            scale = np.asarray(scale, dtype=float).ravel()
-
-        if (not with_mean) or (mu is None):
-            mu = np.zeros(dloc, dtype=float)
-        else:
-            mu = np.asarray(mu, dtype=float).ravel()
-
-        w_o = w_s / (scale + 1e-12)
-        b_o = b_s - np.sum(w_s * mu / (scale + 1e-12), axis=1)
-        return w_o, b_o
+        return scaler.to_original(w_s, b_s)
 
     X_train = np.asarray(X_train, dtype=float)
     y_train = np.asarray(y_train)

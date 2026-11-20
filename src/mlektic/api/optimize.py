@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ..visualization.playback import figure_scripts, has_frames
+
 
 def _resolved_responsive(fig, responsive):
     """Resolve an explicit export choice or inherit the figure contract."""
@@ -16,12 +18,32 @@ def _resolved_responsive(fig, responsive):
     return bool(visual.get("responsive", False))
 
 
-def show_optimized(fig):
+def _fluid_kwargs(fig, fluid_playback, auto_play):
+    """Plotly HTML options that let the fluid controller drive animation."""
+    if not isinstance(fluid_playback, bool):
+        raise TypeError("fluid_playback must be a boolean value.")
+    scripts = figure_scripts(fig, fluid=fluid_playback, autoplay=auto_play)
+    fluid = fluid_playback and has_frames(fig)
+    # With fluid playback the controller starts playback itself, so Plotly's own
+    # loop never competes; the button stylesheet travels with every figure.
+    options = {"auto_play": False if fluid else auto_play}
+    if scripts:
+        options["post_script"] = scripts
+    return options
+
+
+def show_optimized(fig, *, fluid_playback=True):
     """Render a Plotly figure as lightweight notebook HTML.
 
     This path is useful in Google Colab and other environments where the widget
     renderer is expensive. MathJax is explicitly loaded so equations are not
     left as raw LaTeX.
+
+    Args:
+        fig: Plotly figure to display.
+        fluid_playback: Replay already-rendered equations when stepping or
+            playing animation frames instead of redrawing them. The figure looks
+            identical either way; ``False`` keeps Plotly's own playback.
     """
     from IPython.display import HTML
 
@@ -31,9 +53,9 @@ def show_optimized(fig):
     html_str = fig.to_html(
         include_plotlyjs="cdn",
         full_html=False,
-        auto_play=False,
         include_mathjax="cdn",
         config={"responsive": responsive},
+        **_fluid_kwargs(fig, fluid_playback, False),
     )
     return HTML(f'<div style="height: {wrapper_height}px; width: 100%; overflow: hidden;">{html_str}</div>')
 
@@ -46,6 +68,7 @@ def export_figure(
     include_mathjax="cdn",
     responsive=None,
     auto_play=False,
+    fluid_playback=True,
 ):
     """Export a complete HTML document with explicit dependency semantics.
 
@@ -61,6 +84,9 @@ def export_figure(
             ``None`` inherits the figure's visual contract; figures without
             that metadata remain fixed-size for backward compatibility.
         auto_play: Whether an animated figure should start automatically.
+        fluid_playback: Replay already-rendered equations when stepping or
+            playing animation frames instead of redrawing them. The figure looks
+            identical either way; ``False`` keeps Plotly's own playback.
 
     Returns:
         The resolved :class:`pathlib.Path` written to disk.
@@ -72,6 +98,7 @@ def export_figure(
     responsive = _resolved_responsive(fig, responsive)
     if not isinstance(auto_play, bool):
         raise TypeError("auto_play must be a boolean value.")
+    fluid = _fluid_kwargs(fig, fluid_playback, auto_play)
 
     if not isinstance(path, (str, Path)):
         raise TypeError("path must be a string or pathlib.Path.")
@@ -86,8 +113,8 @@ def export_figure(
         include_plotlyjs=True if include_plotly == "inline" else "cdn",
         include_mathjax=include_mathjax or False,
         full_html=True,
-        auto_play=auto_play,
         config={"responsive": responsive},
+        **fluid,
     )
     destination.write_text(html, encoding="utf-8")
     return destination.resolve()

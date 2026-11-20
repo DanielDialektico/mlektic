@@ -69,6 +69,10 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
         return r"$$\begin{aligned}" + body + r"\end{aligned}$$"
 
     math_x = 0.68 if show_loss else 0.5
+    if show_loss:
+        # The loss panel and metric column leave a narrower math column;
+        # shorter rows keep the expansion clear of the metric cards.
+        terms_per_line = min(terms_per_line, 4)
     ann = [
         dict(
             x=math_x, y=0.93, xref="paper", yref="paper",
@@ -76,7 +80,8 @@ def _make_expansion_annotations(t, d, w_hist, b_hist, dec, terms_per_line, show_
             xanchor="center", yanchor="top", font=dict(size=22, color="white"),
         ),
         dict(
-            x=math_x, y=0.78, xref="paper", yref="paper",
+            # Below the header's summation limits, which extend under its baseline.
+            x=math_x, y=0.74, xref="paper", yref="paper",
             text=full_scalar_model_multiline_latex(t), showarrow=False,
             xanchor="center", yanchor="top", font=dict(size=17, color="white"),
         ),

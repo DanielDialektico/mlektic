@@ -9,7 +9,7 @@ is active in one training run.
 from __future__ import annotations
 
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 from .introspection import _leaf_modules, describe_torch_model
@@ -111,18 +111,18 @@ def _latex_value(value: Any) -> str:
 def _reduction_formula(value: Any) -> str:
     normalized = str(value).lower()
     if normalized == "sum":
-        return r"\mathcal{L}=\sum_{n=1}^{N}\ell_n"
+        return r"\mathcal{L}=\sum_{n=1}^{N}l_n"
     if normalized == "none":
-        return r"\mathcal{L}=(\ell_1,\ldots,\ell_N)"
-    return r"\mathcal{L}=\frac{1}{N}\sum_{n=1}^{N}\ell_n"
+        return r"\mathcal{L}=(l_1,\ldots,l_N)"
+    return r"\mathcal{L}=\frac{1}{N}\sum_{n=1}^{N}l_n"
 
 
 def _definition(scope: str, type_name: str, name: str, value: Any) -> HyperparameterItem:
     """Resolve a concise PyTorch argument definition used by the figure."""
     value_tex = _latex_value(value)
     module_definitions = {
-        "in_features": (r"W\in\mathbb{R}^{d_{out}\times d_{in}}", "Input-vector dimension."),
-        "out_features": (r"z\in\mathbb{R}^{d_{out}}", "Number of produced coordinates."),
+        "in_features": (r"\Theta\in\mathbb{R}^{d_{out}\times d_{in}}", "Input-vector dimension."),
+        "out_features": (r"\mathbf{z}\in\mathbb{R}^{d_{out}}", "Number of produced coordinates."),
         "in_channels": (r"x\in\mathbb{R}^{N\times C_{in}\times\cdots}", "Input channel count."),
         "out_channels": (r"y\in\mathbb{R}^{N\times C_{out}\times\cdots}", "Produced channel count."),
         "kernel_size": (r"k=(k_1,\ldots,k_D)", "Spatial extent of each convolution or pooling window."),
@@ -133,7 +133,9 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
         "output_padding": (r"o\mapsto o+p_{out}", "Resolves transposed-convolution output-shape ambiguity."),
         "padding_mode": (r"x\mapsto\operatorname{pad}_{mode}(x)", "Rule used to construct padded boundary values."),
         "output_size": (r"y\in\mathbb{R}^{\mathrm{output\_size}}", "Requested adaptive output extent."),
-        "bias": (r"z=Wx+b\;\text{if enabled, else }z=Wx", "Whether an additive learnable offset is present."),
+        "bias": (
+            r"\mathbf{z}=\Theta\mathbf{x}+\boldsymbol{\theta}_0\;\text{if enabled, else }\mathbf{z}=\Theta\mathbf{x}",
+            "Whether an additive learnable offset is present."),
         "num_features": (r"\gamma,\beta\in\mathbb{R}^{C}", "Feature or channel count normalized independently."),
         "normalized_shape": (
             r"\mu,\sigma^2\;\text{over the final normalized dimensions}",
@@ -232,9 +234,9 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
         ),
     }
     optimizer_definitions = {
-        "lr": (r"\theta_t=\theta_{t-1}-\gamma u_t", "Learning-rate step scale."),
-        "momentum": (r"v_t=\mu v_{t-1}+(1-\tau)g_t", "Momentum coefficient."),
-        "dampening": (r"v_t=\mu v_{t-1}+(1-\tau)g_t", "Dampening applied to the current gradient in SGD momentum."),
+        "lr": (r"\theta_t=\theta_{t-1}-\eta u_t", "Learning rate: step scale."),
+        "momentum": (r"v_t=\mu v_{t-1}+(1-d)g_t", "Momentum coefficient."),
+        "dampening": (r"v_t=\mu v_{t-1}+(1-d)g_t", "Dampening applied to the current gradient in SGD momentum."),
         "weight_decay": (
             r"g_t\leftarrow g_t+\lambda\theta_{t-1}",
             "L2 gradient contribution unless the optimizer decouples it.",
@@ -248,7 +250,7 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
         "amsgrad": (r"\widehat v_t^{max}=\max(\widehat v_{t-1}^{max},v_t)", "Uses the AMSGrad maximum second moment."),
         "maximize": (r"g_t\leftarrow-g_t", "Maximizes rather than minimizes the objective."),
         "decoupled_weight_decay": (
-            r"\theta_t\leftarrow(1-\gamma\lambda)\theta_{t-1}-\gamma u_t",
+            r"\theta_t\leftarrow(1-\eta\lambda)\theta_{t-1}-\eta u_t",
             "Applies AdamW-style decoupled weight decay.",
         ),
         "foreach": (r"\Delta\theta\;\text{is mathematically unchanged}", "Selects a tensor-list implementation."),
@@ -267,44 +269,47 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
     }
     loss_definitions = {
         "reduction": (_reduction_formula(value), "Reduction applied to unreduced sample losses."),
-        "weight": (r"\ell_n\leftarrow w_{y_n}\ell_n", "Optional sample/class rescaling tensor."),
-        "pos_weight": (r"\ell^+\leftarrow p_c\ell^+", "Positive-class term rescaling for binary logits."),
+        "weight": (r"l_n\leftarrow w_{y_n}l_n", "Optional sample/class rescaling tensor."),
+        "pos_weight": (r"l^+\leftarrow p_c\,l^+", "Positive-class term rescaling for binary logits."),
         "ignore_index": (
-            r"\ell_n=0\quad\text{when }y_n=i_{ignore}",
+            r"l_n=0\quad\text{when }y_n=i_{ignore}",
             "Target index omitted from loss and mean denominator.",
         ),
         "label_smoothing": (
-            r"q=(1-\varepsilon)e_y+\frac{\varepsilon}{C}\mathbf{1}",
+            r"q=(1-\varepsilon)e_y+\frac{\varepsilon}{K}\mathbf{1}",
             "Mixes the target with a uniform class distribution.",
         ),
         "beta": (
-            r"\ell(r)=\frac{r^2}{2\beta}\;\text{if }|r|<\beta,\;|r|-\frac{\beta}{2}\;\text{otherwise}",
+            r"l(r)=\frac{r^2}{2\beta}\;\text{if }|r|<\beta,\;|r|-\frac{\beta}{2}\;\text{otherwise}",
             "Smooth-L1 quadratic-to-linear transition.",
         ),
-        "margin": (r"\ell=\max(0,m-y\,s)", "Required separation margin."),
+        "margin": (r"l=\max(0,m-y\,s)", "Required separation margin."),
     }
     scheduler_definitions = {
-        "step_size": (r"\gamma_t=\gamma_0\eta^{\lfloor t/s\rfloor}", "Number of epochs between StepLR decays."),
-        "gamma": (r"\gamma_{new}=\eta\gamma_{old}", "Multiplicative learning-rate decay factor."),
+        "step_size": (r"\eta_t=\eta_0\gamma^{\lfloor t/s\rfloor}", "Number of epochs between StepLR decays."),
+        "gamma": (r"\eta_{new}=\gamma\,\eta_{old}", "Multiplicative learning-rate decay factor."),
         "last_epoch": (r"t_{last}\;\text{indexes scheduler state}", "Last processed epoch index."),
-        "factor": (r"\gamma_{new}=f\gamma_{old}", "Plateau-triggered learning-rate multiplier."),
+        "factor": (r"\eta_{new}=f\,\eta_{old}", "Plateau-triggered learning-rate multiplier."),
         "patience": (
-            r"\#\{\text{allowed non-improving epochs}\}=P",
-            "Plateau tolerance before reducing learning rate.",
+            r"\text{reduce when bad epochs}>P",
+            "Non-improving epochs tolerated before the learning rate is reduced.",
         ),
-        "threshold": (r"|\Delta metric|>\delta", "Minimum metric change considered significant."),
+        "threshold": (
+            r"m<m_{best}-\delta\;\text{or}\;m<m_{best}(1-\delta)",
+            "Improvement needed to reset the bad-epoch count (min mode; abs or rel).",
+        ),
         "threshold_mode": (r"\delta\;\text{is relative or absolute}", "Rule used to compare metric improvements."),
         "cooldown": (
             r"t\in[t_{reduce},t_{reduce}+C]\Rightarrow\text{no new reduction}",
             "Cooldown epochs after a reduction.",
         ),
-        "min_lr": (r"\gamma_t\geq\gamma_{min}", "Lower learning-rate bound."),
-        "max_lr": (r"\gamma_t\leq\gamma_{max}", "Upper learning-rate bound."),
+        "min_lr": (r"\eta_t\geq\eta_{min}", "Lower learning-rate bound."),
+        "max_lr": (r"\eta_t\leq\eta_{max}", "Upper learning-rate bound."),
         "total_steps": (r"T=\text{total optimization steps in the schedule}", "Total schedule length."),
         "epochs": (r"T=E\,S\;\text{when total_steps is inferred}", "Epoch count used to infer schedule length."),
         "steps_per_epoch": (r"T=E\,S", "Batch steps per epoch used to infer schedule length."),
         "pct_start": (r"T_{rise}=pT", "Fraction of a one-cycle schedule spent increasing learning rate."),
-        "anneal_strategy": (r"\gamma_t=\operatorname{anneal}(t)", "Linear or cosine interpolation rule."),
+        "anneal_strategy": (r"\eta_t=\operatorname{anneal}(t)", "Linear or cosine interpolation rule."),
     }
 
     if scope == "optimizer":
@@ -331,7 +336,7 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
         if bool(value):
             formulas = dict(formulas)
             formulas[name] = (
-                r"\theta_t\leftarrow(1-\gamma\lambda)\theta_{t-1}-\gamma u_t",
+                r"\theta_t\leftarrow(1-\eta\lambda)\theta_{t-1}-\eta u_t",
                 "Applies AdamW-style decoupled weight decay.",
             )
         else:
@@ -343,7 +348,7 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
     if scope == "optimizer" and name == "initial_lr":
         formulas = dict(formulas)
         formulas[name] = (
-            r"\gamma_0=\mathtt{initial\_lr}",
+            r"\eta_0=\mathtt{initial\_lr}",
             "Base learning rate retained for scheduler evaluation.",
         )
     escaped_name = name.replace("_", r"\_")
@@ -366,43 +371,87 @@ def _definition(scope: str, type_name: str, name: str, value: Any) -> Hyperparam
     )
 
 
-def _optimizer_operation(name: str) -> str:
+def _positive(configuration: Mapping[str, Any], name: str) -> bool:
+    try:
+        return float(configuration.get(name, 0) or 0) > 0.0
+    except (TypeError, ValueError):
+        return False
+
+
+def _optimizer_operation(name: str, configuration: Mapping[str, Any] | None = None) -> str:
+    r"""Return the update rule that matches the optimizer's actual configuration.
+
+    Symbols follow the course notation: learning rate ``\eta``, momentum ``\mu``,
+    dampening ``d``, weight decay ``\lambda``.  Variants without a dedicated rule
+    are named explicitly instead of borrowing another optimizer's formula.
+    """
+    configuration = configuration or {}
+    decay = _positive(configuration, "weight_decay")
+    gradient = (
+        r"g_t=\nabla_\theta\mathcal{L}_t+\lambda\theta_{t-1}" if decay and name != "AdamW"
+        else r"g_t=\nabla_\theta\mathcal{L}_t"
+    )
     if name == "SGD":
-        return (
-            r"g_t=\nabla_\theta\mathcal{L}_t,\quad v_t=\mu v_{t-1}+(1-\tau)g_t,\quad \theta_t=\theta_{t-1}-\gamma v_t"
-        )
-    if name in {"Adam", "AdamW", "NAdam", "RAdam", "SparseAdam"}:
-        return (
+        if not _positive(configuration, "momentum"):
+            return gradient + r",\quad \theta_t=\theta_{t-1}-\eta g_t"
+        velocity = r"v_t=\mu v_{t-1}+(1-d)g_t\;(v_1=g_1)"
+        if bool(configuration.get("nesterov", False)):
+            return gradient + r",\quad " + velocity + r",\quad \theta_t=\theta_{t-1}-\eta(g_t+\mu v_t)"
+        return gradient + r",\quad " + velocity + r",\quad \theta_t=\theta_{t-1}-\eta v_t"
+    if name in {"Adam", "AdamW"} and not bool(configuration.get("amsgrad", False)):
+        moments = (
             r"m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\quad "
             r"v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,\quad "
-            r"\theta_t=\theta_{t-1}-\gamma\frac{\widehat m_t}"
-            r"{\sqrt{\widehat v_t}+\varepsilon}"
         )
-    return r"\theta_t=\operatorname{optimizer}(\theta_{t-1},\nabla_\theta\mathcal{L}_t;\mathcal{H})"
+        step = r"\eta\frac{\widehat m_t}{\sqrt{\widehat v_t}+\varepsilon}"
+        if name == "AdamW" or bool(configuration.get("decoupled_weight_decay", False)):
+            return gradient + r",\quad " + moments + r"\theta_t=(1-\eta\lambda)\theta_{t-1}-" + step
+        return gradient + r",\quad " + moments + r"\theta_t=\theta_{t-1}-" + step
+    label = name.replace("_", r"\_")
+    return rf"\theta_t=\operatorname{{{label}}}(\theta_{{t-1}},\nabla_\theta\mathcal{{L}}_t;\mathcal{{H}})"
 
 
-def _loss_operation(name: str) -> str:
+def _loss_operation(name: str, configuration: Mapping[str, Any] | None = None) -> str:
+    configuration = configuration or {}
+    weighted = configuration.get("weight") is not None
+    class_weight = r"w_{y_n}" if weighted else ""
     formulas = {
-        "MSELoss": r"\ell_n=(y_n-\widehat y_n)^2",
-        "L1Loss": r"\ell_n=|y_n-\widehat y_n|",
-        "BCELoss": r"\ell_n=-[y_n\log p_n+(1-y_n)\log(1-p_n)]",
-        "BCEWithLogitsLoss": r"\ell_n=-[y_n\log\sigma(z_n)+(1-y_n)\log(1-\sigma(z_n))]",
-        "CrossEntropyLoss": r"\ell_n=-w_{y_n}\log\frac{e^{x_{n,y_n}}}{\sum_{c=1}^{C}e^{x_{n,c}}}",
-        "NLLLoss": r"\ell_n=-w_{y_n}x_{n,y_n}",
-        "SmoothL1Loss": r"\ell_n=\operatorname{smooth}_{\beta}(y_n-\widehat y_n)",
+        "MSELoss": r"l_n=(y_n-\widehat y_n)^2",
+        "L1Loss": r"l_n=|y_n-\widehat y_n|",
+        "BCELoss": r"l_n=-[y_n\ln\hat{p}_n+(1-y_n)\ln(1-\hat{p}_n)]",
+        "BCEWithLogitsLoss": r"l_n=-[y_n\ln\sigma(z_n)+(1-y_n)\ln(1-\sigma(z_n))]",
+        "CrossEntropyLoss": (
+            rf"l_n=-{class_weight}\ln\frac{{e^{{z_{{n,y_n}}}}}}{{\sum_{{r=0}}^{{K-1}}e^{{z_{{n,r}}}}}}"
+        ),
+        "NLLLoss": rf"l_n=-{class_weight}\,x_{{n,y_n}}",
+        "SmoothL1Loss": r"l_n=\operatorname{smooth}_{\beta}(y_n-\widehat y_n)",
     }
     return formulas.get(name, r"\mathcal{L}=\operatorname{objective}(\widehat y,y;\mathcal{H})")
 
 
 def _scheduler_operation(name: str) -> str:
+    r"""Learning-rate schedules; ``\eta_t`` is the learning rate and ``\gamma`` PyTorch's decay factor."""
     formulas = {
-        "StepLR": r"\gamma_t=\gamma_0\eta^{\lfloor t/s\rfloor}",
-        "ExponentialLR": r"\gamma_t=\gamma_0\eta^t",
-        "CosineAnnealingLR": r"\gamma_t=\gamma_{min}+\frac{1}{2}(\gamma_{max}-\gamma_{min})(1+\cos(\pi t/T_{max}))",
-        "ReduceLROnPlateau": r"\gamma_{new}=f\gamma_{old}\quad\text{after }P\text{ non-improving epochs}",
-        "OneCycleLR": r"\gamma_t:\gamma_{initial}\nearrow\gamma_{max}\searrow\gamma_{final}",
+        "StepLR": r"\eta_t=\eta_0\gamma^{\lfloor t/s\rfloor}",
+        "ExponentialLR": r"\eta_t=\eta_0\gamma^t",
+        "CosineAnnealingLR": r"\eta_t=\eta_{min}+\frac{1}{2}(\eta_0-\eta_{min})(1+\cos(\pi t/T_{max}))",
+        "ReduceLROnPlateau": r"\eta_{new}=\max(f\,\eta_{old},\eta_{min})\quad\text{when bad epochs}>P",
+        "OneCycleLR": r"\eta_t:\eta_{initial}\nearrow\eta_{max}\searrow\eta_{final}",
     }
-    return formulas.get(name, r"\gamma_t=\operatorname{schedule}(t;\mathcal{H})")
+    return formulas.get(name, r"\eta_t=\operatorname{schedule}(t;\mathcal{H})")
+
+
+def _weighted_reduction(
+    items: List[HyperparameterItem], configuration: Mapping[str, Any]
+) -> List[HyperparameterItem]:
+    """With class weights, PyTorch's mean divides by the summed target weights, not by N."""
+    if configuration.get("weight") is None or str(configuration.get("reduction", "mean")).lower() != "mean":
+        return items
+    weighted_mean = r"\mathcal{L}=\frac{\sum_{n}l_n}{\sum_{n}w_{y_n}}"
+    return [
+        replace(item, mathematics=weighted_mean) if item.name == "reduction" else item
+        for item in items
+    ]
 
 
 def _items(scope: str, type_name: str, configuration: Mapping[str, Any]) -> List[HyperparameterItem]:
@@ -464,7 +513,7 @@ def describe_hyperparameter_contract(
                     "optimizer",
                     f"{optimizer_name} · parameter group {group_index}",
                     str(optimizer_name),
-                    _optimizer_operation(str(optimizer_name)),
+                    _optimizer_operation(str(optimizer_name), configuration),
                     _items("optimizer", str(optimizer_name), configuration),
                     f"https://docs.pytorch.org/docs/stable/generated/torch.optim.{optimizer_name}.html",
                 )
@@ -482,8 +531,8 @@ def describe_hyperparameter_contract(
                 "objective",
                 str(loss_name),
                 str(loss_name),
-                _loss_operation(str(loss_name)),
-                _items("objective", str(loss_name), configuration),
+                _loss_operation(str(loss_name), configuration),
+                _weighted_reduction(_items("objective", str(loss_name), configuration), configuration),
                 f"https://docs.pytorch.org/docs/stable/generated/torch.nn.{loss_name}.html",
             )
         )

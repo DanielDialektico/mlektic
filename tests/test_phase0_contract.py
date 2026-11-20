@@ -190,7 +190,7 @@ def test_binary_2d_prediction_maps_string_classes_and_shows_model_geometry():
     output_annotations = figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
     result_text = output_annotations[-1]["text"]
     assert r"\hat{\mathbf{p}}" in result_text
-    assert r"\hat{y} &= \arg\max" in result_text
+    assert r"\hat{k} &= \arg\max" in result_text
     assert r"=0" in result_text
     assert "accepted" not in result_text
     assert "rejected" not in result_text
@@ -207,7 +207,7 @@ def test_binary_2d_prediction_maps_string_classes_and_shows_model_geometry():
     )
     assert labeled_figure.data[1].name == "Model: p1"
     labeled_output = labeled_figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
-    assert r"\hat{y} &= \arg\max" in labeled_output[-1]["text"]
+    assert r"\hat{k} &= \arg\max" in labeled_output[-1]["text"]
     assert "accepted" in next(item["text"] for item in labeled_output if "Predicted class:" in item["text"])
     assert tuple(labeled_figure.layout.scene.zaxis.ticktext) == ("0", "0.5", "1")
 
@@ -253,7 +253,7 @@ def test_multiclass_prediction_wraps_long_semantic_labels(dimensions):
     figure = explain_logistic_prediction(model, X, y, x_query=X[0], show_class_labels=True)
     output = figure.layout.updatemenus[0].buttons[2].args[1]["annotations"]
 
-    result = next(item["text"] for item in output if r"\hat{y} = \arg\max" in str(item["text"]))
+    result = next(item["text"] for item in output if r"\hat{k} = \arg\max" in str(item["text"]))
     assert all(label not in result for label in labels)
     predicted = next(item["text"] for item in output if "Predicted class:" in str(item["text"]))
     assert str(model.predict(X[:1])[0]) == predicted.replace("<br>", "").replace("Predicted class:", "").strip()
@@ -459,10 +459,10 @@ def test_three_class_2d_ovr_replay_uses_exact_compact_probability_fractions():
 
     first_probability = figure.layout.annotations[4].text
     last_probability = figure.layout.annotations[6].text
-    assert r"\frac{q_{0}}{\sum_{\ell=0}^{K-1}q_\ell}" in first_probability
-    assert r"\frac{q_{2}}{\sum_{\ell=0}^{K-1}q_\ell}" in last_probability
-    assert r"q_\ell=\sigma(z_\ell)" in first_probability
-    assert r"q_\ell=\sigma(z_\ell)" in last_probability
+    assert r"\frac{q_{0}}{\sum_{r=0}^{K-1}q_r}" in first_probability
+    assert r"\frac{q_{2}}{\sum_{r=0}^{K-1}q_r}" in last_probability
+    assert r"q_r=\sigma(z_r)" in first_probability
+    assert r"q_r=\sigma(z_r)" in last_probability
     assert figure.layout.annotations[4].font.size == 13
     assert figure.layout.annotations[6].font.size == 13
     assert figure.layout.annotations[2].x == pytest.approx(0.275)
@@ -503,7 +503,7 @@ def test_dense_multiclass_replay_honors_theta_column_cap_and_uses_taller_layout(
     theta_matrix = figure.layout.annotations[2].text
     assert r"\begin{array}{ccccc}" in theta_matrix
     assert figure.layout.height == 720
-    assert r"\sum_{\ell=0}^{K-1}q_\ell" in figure.layout.annotations[5].text
+    assert r"\sum_{r=0}^{K-1}q_r" in figure.layout.annotations[5].text
 
 
 def test_nd_figures_do_not_keep_an_empty_loss_subplot_when_loss_is_hidden():

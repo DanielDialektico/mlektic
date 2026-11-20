@@ -7,7 +7,7 @@ probability:
 .. math::
 
    z=\theta_0+\mathbf{x}^{\mathsf T}\boldsymbol\theta,
-   \qquad p_1=\sigma(z)=\frac{1}{1+e^{-z}}.
+   \qquad \hat p_1=\sigma(z)=\frac{1}{1+e^{-z}}.
 
 The class decision uses a documented threshold. Class indices follow
 ``estimator.classes_`` exactly. Semantic labels are opt-in presentation through

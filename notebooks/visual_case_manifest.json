@@ -94,37 +94,41 @@
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 20
     },
-    "LR-PRED-EXTRAP": {
+    "LR-PRED-MINMAX": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 22
     },
-    "LR-PRED-10D-STAGES": {
+    "LR-PRED-EXTRAP": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 24
     },
-    "LR-PRED-COUNTERFACTUAL": {
+    "LR-PRED-10D-STAGES": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 26
     },
-    "LR-SIZE-DEFAULT": {
+    "LR-PRED-COUNTERFACTUAL": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
-      "cell_index": 29
+      "cell_index": 28
     },
-    "LR-SIZE-COMPACT": {
+    "LR-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 31
     },
-    "LR-SIZE-NOTEBOOK": {
+    "LR-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 33
     },
-    "LR-SIZE-WIDE": {
+    "LR-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 35
     },
-    "LR-SIZE-CLASSROOM": {
+    "LR-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_01_linear.ipynb",
       "cell_index": 37
+    },
+    "LR-SIZE-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_01_linear.ipynb",
+      "cell_index": 39
     },
     "LOG-BINARY-INDEXED": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
@@ -138,69 +142,73 @@
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 8
     },
-    "LOG-BINARY-IMBALANCED": {
+    "LOG-THRESHOLD-METRICS": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 10
     },
-    "LOG-BINARY-30D-WRAP": {
+    "LOG-BINARY-IMBALANCED": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 12
     },
-    "LOG-SGD-REPLAY": {
+    "LOG-BINARY-30D-WRAP": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 14
     },
-    "LOG-PIPE-ORIGINAL": {
+    "LOG-SGD-REPLAY": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 16
     },
-    "LOG-PIPE-SCALED": {
+    "LOG-PIPE-ORIGINAL": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 18
     },
-    "LOG-MULTI-FOCUS": {
+    "LOG-PIPE-SCALED": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 20
     },
-    "LOG-MULTI-OVR": {
+    "LOG-MULTI-FOCUS": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 22
     },
-    "LOG-MULTI-MANY-CLASSES": {
+    "LOG-MULTI-OVR": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 24
     },
-    "LOG-PRED-BINARY": {
+    "LOG-MULTI-MANY-CLASSES": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 26
     },
-    "LOG-PRED-LABELS": {
+    "LOG-PRED-BINARY": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 28
     },
-    "LOG-PRED-MULTI": {
+    "LOG-PRED-LABELS": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 30
     },
-    "LOG-ND-SIZE-DEFAULT": {
+    "LOG-PRED-MULTI": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
-      "cell_index": 34
+      "cell_index": 32
     },
-    "LOG-ND-SIZE-COMPACT": {
+    "LOG-ND-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 36
     },
-    "LOG-ND-SIZE-NOTEBOOK": {
+    "LOG-ND-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 38
     },
-    "LOG-ND-SIZE-WIDE": {
+    "LOG-ND-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 40
     },
-    "LOG-ND-SIZE-CLASSROOM": {
+    "LOG-ND-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_02_logistic.ipynb",
       "cell_index": 42
+    },
+    "LOG-ND-SIZE-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_02_logistic.ipynb",
+      "cell_index": 44
     },
     "NN-ARCHITECTURE": {
       "notebook": "notebooks/qa/qa_03_neural.ipynb",
@@ -286,25 +294,53 @@
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
       "cell_index": 17
     },
+    "MOTION-FLUID-LINEAR-HYBRID": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 21
+    },
+    "MOTION-FLUID-LOGISTIC-MULTICLASS": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 23
+    },
+    "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 25
+    },
+    "MOTION-FLUID-LOGISTIC-5D": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 27
+    },
+    "MOTION-FLUID-LOGISTIC-3D": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 29
+    },
+    "MOTION-FLUID-NN-ACTIVATIONS": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 31
+    },
+    "MOTION-FLUID-EXPORT": {
+      "notebook": "notebooks/qa/qa_04_motion.ipynb",
+      "cell_index": 33
+    },
     "MOTION-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 20
+      "cell_index": 36
     },
     "MOTION-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 22
+      "cell_index": 38
     },
     "MOTION-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 24
+      "cell_index": 40
     },
     "MOTION-SIZE-WIDE": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 26
+      "cell_index": 42
     },
     "MOTION-SIZE-CLASSROOM": {
       "notebook": "notebooks/qa/qa_04_motion.ipynb",
-      "cell_index": 28
+      "cell_index": 44
     },
     "STYLE-THEME-CLASSIC": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
@@ -326,61 +362,141 @@
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 12
     },
-    "STYLE-FORMAT-DASHBOARD": {
+    "STYLE-THEME-AURORA": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 14
     },
-    "STYLE-FORMAT-COMPACT": {
+    "STYLE-THEME-EDITORIAL": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 16
     },
-    "STYLE-FORMAT-REPORT": {
+    "STYLE-THEME-BLUEPRINT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 18
     },
-    "STYLE-SIZE-DEFAULT": {
+    "STYLE-THEME-DUSK": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 20
     },
-    "STYLE-SIZE-COMPACT": {
+    "STYLE-THEME-CHALKBOARD": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 22
     },
-    "STYLE-SIZE-NOTEBOOK": {
+    "STYLE-THEME-DAVINCI": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 24
     },
-    "STYLE-SIZE-WIDE": {
+    "STYLE-THEME-EMBER": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 26
     },
-    "STYLE-SIZE-CLASSROOM": {
+    "STYLE-THEME-LUMEN": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 28
     },
-    "STYLE-RESPONSIVE": {
+    "STYLE-FORMAT-DASHBOARD": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 30
     },
-    "STYLE-EXPLICIT-SIZE": {
+    "STYLE-FORMAT-COMPACT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 32
     },
-    "STYLE-DENSITY-ESSENTIAL": {
+    "STYLE-FORMAT-REPORT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 34
     },
-    "STYLE-DENSITY-ACADEMIC": {
+    "STYLE-SIZE-DEFAULT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 36
     },
-    "STYLE-DENSITY-COMPLETE": {
+    "STYLE-SIZE-COMPACT": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 38
     },
-    "STYLE-HISTORY-HIDDEN": {
+    "STYLE-SIZE-NOTEBOOK": {
       "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
       "cell_index": 40
+    },
+    "STYLE-SIZE-WIDE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 42
+    },
+    "STYLE-SIZE-CLASSROOM": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 44
+    },
+    "STYLE-RESPONSIVE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 46
+    },
+    "STYLE-EXPLICIT-SIZE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 48
+    },
+    "STYLE-DENSITY-ESSENTIAL": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 50
+    },
+    "STYLE-DENSITY-ACADEMIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 52
+    },
+    "STYLE-DENSITY-COMPLETE": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 54
+    },
+    "STYLE-HISTORY-HIDDEN": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 56
+    },
+    "STYLE-SKIN-AURORA-MOTION": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 59
+    },
+    "STYLE-SKIN-AURORA-CLASSIC-TWIN": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 61
+    },
+    "STYLE-SKIN-AURORA-EQUATIONS": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 63
+    },
+    "STYLE-SKIN-EDITORIAL-LOGISTIC": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 65
+    },
+    "STYLE-SKIN-BLUEPRINT-3D": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 67
+    },
+    "STYLE-SKIN-EDITORIAL-NEURAL": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 69
+    },
+    "STYLE-SKIN-EMBER-RESIDUALS": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 71
+    },
+    "STYLE-SKIN-CHALKBOARD-CURVES": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 73
+    },
+    "STYLE-SKIN-DAVINCI-3D": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 75
+    },
+    "STYLE-SKIN-DUSK-BINARY": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 77
+    },
+    "STYLE-SKIN-LUMEN-RESIDUALS": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 79
+    },
+    "STYLE-SKIN-DAVINCI-EXPLAINER": {
+      "notebook": "notebooks/qa/qa_05_visual_system.ipynb",
+      "cell_index": 81
     },
     "DATA-LR-NOISELESS": {
       "notebook": "notebooks/qa/qa_06_data_edges.ipynb",
@@ -1000,7 +1116,9 @@
     ],
     "codeasdoc/mathematical_parity.rst": [
       "LR-PIPE-ORIGINAL",
-      "LOG-BINARY-THRESHOLD"
+      "LOG-BINARY-THRESHOLD",
+      "LOG-THRESHOLD-METRICS",
+      "LR-PRED-MINMAX"
     ],
     "codeasdoc/mathematical_conventions.rst": [
       "LR-POLYNOMIAL",
@@ -1008,7 +1126,10 @@
     ],
     "codeasdoc/animation_performance.rst": [
       "MOTION-FRAME-STEP",
-      "MOTION-NATIVE-SLOW"
+      "MOTION-NATIVE-SLOW",
+      "MOTION-FLUID-LOGISTIC-MULTICLASS",
+      "MOTION-FLUID-LOGISTIC-MULTICLASS-PLOTLY",
+      "MOTION-FLUID-LOGISTIC-3D"
     ],
     "codeasdoc/visual_design.rst": [
       "STYLE-THEME-ACADEMIC",
@@ -1016,7 +1137,17 @@
     ],
     "codeasdoc/themes_formats_sizes.rst": [
       "STYLE-THEME-ACCESSIBLE",
-      "STYLE-SIZE-CLASSROOM"
+      "STYLE-SIZE-CLASSROOM",
+      "STYLE-SKIN-AURORA-MOTION",
+      "STYLE-SKIN-AURORA-CLASSIC-TWIN",
+      "STYLE-SKIN-BLUEPRINT-3D",
+      "STYLE-SKIN-EDITORIAL-NEURAL",
+      "STYLE-SKIN-EMBER-RESIDUALS",
+      "STYLE-SKIN-CHALKBOARD-CURVES",
+      "STYLE-SKIN-DAVINCI-3D",
+      "STYLE-SKIN-DUSK-BINARY",
+      "STYLE-SKIN-LUMEN-RESIDUALS",
+      "STYLE-SKIN-DAVINCI-EXPLAINER"
     ],
     "codeasdoc/prediction_explanations.rst": [
       "LR-PRED-EXTRAP",
@@ -1025,7 +1156,8 @@
     ],
     "codeasdoc/export.rst": [
       "STYLE-RESPONSIVE",
-      "NN-REPORT"
+      "NN-REPORT",
+      "MOTION-FLUID-EXPORT"
     ],
     "codeasdoc/gallery.rst": [
       "SMOKE-LR-2D",

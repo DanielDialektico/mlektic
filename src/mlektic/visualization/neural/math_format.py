@@ -27,7 +27,9 @@ def vector_latex(values: Any, dec: int = 3, limit: int = 6) -> str:
         cells = [f"{flat[index]:.{dec}f}" for index in indices[:split]]
         cells.append(r"\cdots")
         cells.extend(f"{flat[index]:.{dec}f}" for index in indices[split:])
-    return r"\begin{bmatrix}" + r" & ".join(cells) + r"\end{bmatrix}"
+    # A column vector written on one line is the transpose of a row.
+    transpose = r"^{\top}" if flat.size > 1 else ""
+    return r"\begin{bmatrix}" + r" & ".join(cells) + r"\end{bmatrix}" + transpose
 
 
 def matrix_latex(values: Any, dec: int = 3, max_rows: int = 4, max_cols: int = 5) -> str:
@@ -106,7 +108,7 @@ def compact_parameter_line(
         flat = weights.ravel()
         shown = ",".join(f"{value:.{dec}f}" for value in flat[:values_per_layer])
         suffix = r",\ldots" if flat.size > values_per_layer else ""
-        parts.append(rf"\Theta^{{({stage['index']})}}_t=[{shown}{suffix}]")
+        parts.append(rf"\operatorname{{vec}}(\Theta^{{({stage['index']})}}_t)=[{shown}{suffix}]")
     return r"\quad{}".join(parts)
 
 

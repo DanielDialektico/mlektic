@@ -62,11 +62,14 @@ def fit_history_logistic(
     max_frames=60,
     frame_step=10,
     multiclass_link="auto",
+    threshold=0.5,
 ) -> dict:
     """Construct an auditable binary or multiclass logistic history payload.
 
     See :func:`fit_history` for replay/interpolation semantics. Fitted class
     order and resolved probability-link semantics remain in the payload.
+    ``threshold`` is the binary decision threshold used for the Accuracy and F1
+    histories, so they describe the same decision the figure draws.
     """
     config = LogisticHistoryConfig(
         steps=steps,
@@ -81,6 +84,7 @@ def fit_history_logistic(
         max_frames=max_frames,
         frame_step=frame_step,
         multiclass_link=multiclass_link,
+        threshold=threshold,
     )
     engine = HistoryEngine(trained_estimator)
     return engine.capture_logistic(X, y, config)

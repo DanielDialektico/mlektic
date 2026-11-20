@@ -15,7 +15,9 @@ from ..theme import (
 )
 from ._math_layout import (
     MULTICLASS_ELLIPSIS_FONT_SIZE,
+    MULTICLASS_MENU_Y,
     MULTICLASS_PROBABILITY_FONT_SIZE,
+    _with_fixed_height,
 )
 
 
@@ -227,7 +229,7 @@ def build_multiclass_1d_logistic_figure(
                 x=[step if i == 0 else None for i, step in enumerate(ep_list)],
                 y=[val if i == 0 else None for i, val in enumerate(loss_hist_list)],
                 mode="lines",
-                name="Cross-entropy",
+                name="Log-loss",
                 line=dict(width=3),
                 legendgroup="loss",
                 showlegend=True,
@@ -270,7 +272,7 @@ def build_multiclass_1d_logistic_figure(
 
         if show_loss:
             base_ann.append(
-                dict(x=0.5, y=0.98, xref="x4 domain", yref="y4 domain", text="<b>Cross-entropy</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
+                dict(x=0.5, y=0.98, xref="x4 domain", yref="y4 domain", text="<b>Log-loss</b>", showarrow=False, xanchor="center", yanchor="top", font=dict(size=14, color="white"))
             )
 
         return base_ann + metrics_annotations(t)
@@ -312,7 +314,7 @@ def build_multiclass_1d_logistic_figure(
             legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
             legend2=dict(orientation="v", **get_legend_props(x=1.05, y=0.30, yanchor="top", xanchor="right", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
-            updatemenus=get_updatemenus(frame_duration, theme=theme),
+            updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
             annotations=make_annotations(0),
         )
         fig.data[K].update(legend="legend2")
@@ -321,7 +323,7 @@ def build_multiclass_1d_logistic_figure(
             **layout_kwargs,
             legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
-            updatemenus=get_updatemenus(frame_duration, theme=theme),
+            updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
             annotations=make_annotations(0),
         )
 
@@ -340,6 +342,6 @@ def build_multiclass_1d_logistic_figure(
     else:
         fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
 
-    return fig
+    return _with_fixed_height(fig)
 
 __all__ = ["build_multiclass_1d_logistic_figure"]

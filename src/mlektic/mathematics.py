@@ -16,7 +16,7 @@ from typing import Any
 import numpy as np
 
 from .adapters.sklearn import SklearnAdapter
-from .utils.math import _sigmoid
+from .utils.math import LOG_LOSS_EPS, _sigmoid, r2_finite
 from .utils.probability import multiclass_probabilities
 
 _DETAIL_LEVELS = {"essential", "academic", "complete"}
@@ -108,7 +108,7 @@ def build_linear_math_contract(
     mse = float(np.mean(residuals**2))
     mae = float(np.mean(np.abs(residuals)))
     denominator = float(np.sum((y_array - np.mean(y_array)) ** 2))
-    r2 = 0.0 if denominator <= 1e-12 else float(1.0 - np.sum(residuals**2) / denominator)
+    r2 = float(r2_finite(np.sum(residuals**2), denominator))
     regularization = _regularization_contract(adapter.final_estimator, family="linear")
     history_source = history.get("metadata", {}).get("source", history.get("history_source"))
 
@@ -246,7 +246,7 @@ def build_logistic_math_contract(
         reconstructed_probabilities = np.asarray([1.0 - positive_probability, positive_probability])
         contributions = values * weights
 
-    clipped = np.clip(probabilities, 1e-15, 1.0)
+    clipped = np.clip(probabilities, LOG_LOSS_EPS, 1.0 - LOG_LOSS_EPS)
     class_indices = np.array([int(np.flatnonzero(classes == label)[0]) for label in y_array])
     log_loss = float(-np.mean(np.log(clipped[np.arange(y_array.size), class_indices])))
     regularization = _regularization_contract(adapter.final_estimator, family="logistic")
@@ -752,10 +752,30 @@ def _resolve_class_focus(class_focus: Any, classes: np.ndarray) -> int | None:
     )
 
 
+# Estimators whose penalty is implied by the class rather than a ``penalty`` argument.
+_IMPLIED_PENALTIES = {
+    "Ridge": "l2",
+    "RidgeCV": "l2",
+    "RidgeClassifier": "l2",
+    "RidgeClassifierCV": "l2",
+    "Lasso": "l1",
+    "LassoCV": "l1",
+    "LassoLars": "l1",
+    "LassoLarsCV": "l1",
+    "LassoLarsIC": "l1",
+    "ElasticNet": "elasticnet",
+    "ElasticNetCV": "elasticnet",
+}
+
+
 def _regularization_contract(estimator: Any, *, family: str) -> dict[str, Any]:
     parameters = estimator.get_params(deep=False) if hasattr(estimator, "get_params") else {}
     penalty = parameters.get("penalty")
     parameter_source = "penalty"
+    implied = _IMPLIED_PENALTIES.get(estimator.__class__.__name__)
+    if implied is not None and "penalty" not in parameters:
+        penalty = implied
+        parameter_source = f"estimator class ({estimator.__class__.__name__})"
     if estimator.__class__.__name__ == "LogisticRegression" and penalty == "deprecated":
         ratio = float(parameters.get("l1_ratio", 0.0))
         if np.isinf(float(parameters.get("C", 1.0))):
@@ -767,7 +787,7 @@ def _regularization_contract(estimator: Any, *, family: str) -> dict[str, Any]:
         else:
             penalty = "elasticnet"
         parameter_source = "l1_ratio (Scikit-learn 1.8+ effective convention)"
-    if penalty in {None, "none"} or (family == "linear" and "penalty" not in parameters):
+    if penalty in {None, "none"} or (family == "linear" and implied is None and "penalty" not in parameters):
         return {
             "active": False,
             "type": "none",
@@ -780,7 +800,7 @@ def _regularization_contract(estimator: Any, *, family: str) -> dict[str, Any]:
     formulas = {
         "l2": "R(theta) = lambda ||theta||_2^2",
         "l1": "R(theta) = lambda ||theta||_1",
-        "elasticnet": "R(theta) = lambda [rho ||theta||_1 + (1-rho) ||theta||_2^2]",
+        "elasticnet": "R(theta) = lambda [rho ||theta||_1 + (1-rho)/2 ||theta||_2^2]",
     }
     if "alpha" in parameters:
         strength = {"name": "alpha", "value": _python_scalar(parameters["alpha"])}
@@ -818,7 +838,7 @@ def _linear_objective_relation(estimator: Any) -> str:
 def _update_rule_contract(estimator: Any, history_source: str | None) -> dict[str, Any]:
     incremental = hasattr(estimator, "partial_fit")
     return {
-        "canonical": "theta^(t+1) = theta^t - eta_t grad J(theta^t)",
+        "canonical": "theta_t = theta_{t-1} - eta_t grad J(theta_{t-1})",
         "shown_as_exact_estimator_rule": False,
         "reason": (
             "The canonical gradient update is a teaching reference; estimator-private scheduling, batching, "
@@ -954,7 +974,7 @@ def _logistic_panel(
         intercept = float(np.asarray(intercepts)[focus])
         definition = (
             rf"\text{{For }}c_{{{focus}}}:\quad "
-            rf"z_{{{focus}}}&=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
+            rf"z_{{{focus}}}&=\theta_{{0,{focus}}}+\textstyle\sum_j\theta_{{j,{focus}}}x_j"
         )
     else:
         term_rows, visible_count = _contribution_rows(
@@ -973,7 +993,7 @@ def _logistic_panel(
         calculation = {
             "text": (
                 rf"$\text{{For }}c_{{{focus}}}:\quad "
-                rf"z_{{{focus}}}=b_{{{focus}}}+\mathbf{{x}}^\top\mathbf{{w}}_{{{focus}}}"
+                rf"z_{{{focus}}}=\theta_{{0,{focus}}}+\textstyle\sum_j\theta_{{j,{focus}}}x_j"
                 rf"={intercept:.{dec}f}+{term_rows[0]}={score:.{dec}f}$"
             ),
             "visual_lines": 1,
@@ -982,7 +1002,7 @@ def _logistic_panel(
         calculation = {
             "text": (
                 rf"$z={intercept:.{dec}f}+{term_rows[0]}={score:.{dec}f},\;"
-                rf"p(Y=c_1\mid\mathbf{{x}})=\sigma(z),\;\tau={threshold:.{dec}f}$"
+                rf"\hat{{p}}(Y=c_1\mid\mathbf{{x}})=\sigma(z),\;\tau={threshold:.{dec}f}$"
             ),
             "visual_lines": 1,
         }
@@ -993,7 +1013,7 @@ def _logistic_panel(
         if not is_multiclass:
             expansion.extend(
                 [
-                    r"p(Y=c_1\mid\mathbf{x})&=\sigma(z)",
+                    r"\hat{p}(Y=c_1\mid\mathbf{x})&=\sigma(z)",
                     rf"\tau&={threshold:.{dec}f}",
                 ]
             )
@@ -1014,9 +1034,9 @@ def _logistic_panel(
             }
         )
     if objective_visible:
-        loss_name = "Cross-entropy" if is_multiclass else "Log-loss"
+        loss_name = "Log-loss"
         lines.append(
-            rf"$\underbrace{{\mathrm{{{loss_name}}}= -\frac{{1}}{{n}}\sum_i \log p_{{i,y_i}}={loss:.{dec}f}}}"
+            rf"$\underbrace{{\text{{{loss_name}}}= -\frac{{1}}{{n}}\sum_i \ln\hat{{p}}_{{i,y_i}}={loss:.{dec}f}}}"
             r"_{\mathrm{empirical\ data\ term}}\quad"
             r"\text{private penalty scaling is not claimed}$"
         )
@@ -1032,14 +1052,14 @@ def _logistic_panel(
                         r"\quad c_k\ \text{(label of class }k\text{)}$"
                     ),
                     (
-                        r"$\Theta=[\mathbf w_0,\ldots,\mathbf w_{K-1}]\in\mathbb R^{d\times K}"
+                        r"$\Theta=[\theta_{j,k}]\in\mathbb R^{d\times K}"
                         r"\ \text{(coefficients per class)};\quad "
-                        r"\boldsymbol\theta_0=(b_0,\ldots,b_{K-1})\in\mathbb R^K"
+                        r"\boldsymbol\theta_0=(\theta_{0,0},\ldots,\theta_{0,K-1})^\top\in\mathbb R^K"
                         r"\ \text{(intercepts)}$"
                     ),
                     (
                         r"$\mathbf x\in\mathbb R^d\ \text{(features of one observation)};\quad "
-                        r"z_k(\mathbf x)=b_k+\mathbf x^\top\mathbf w_k"
+                        r"z_k(\mathbf x)=\theta_{0,k}+\textstyle\sum_{j=1}^d\theta_{j,k}x_j"
                         r"\ \text{(score for class }c_k\text{)}$"
                     ),
                     (
@@ -1050,8 +1070,8 @@ def _logistic_panel(
             )
             if probability_link == "ovr":
                 lines.append(
-                    r"$q_k=\sigma(z_k)\ \text{(valor previo a la normalización)};\quad "
-                    r"\hat p_k=q_k/\sum_{\ell=0}^{K-1}q_\ell$"
+                    r"$q_k=\sigma(z_k)\ \text{(value before normalization)};\quad "
+                    r"\hat p_k=q_k/\sum_{r=0}^{K-1}q_r$"
                 )
         lines.append(
             "Canonical gradient updates are references unless the estimator-specific rule is fully introspected."
@@ -1101,7 +1121,7 @@ def _regularization_panel_text(regularization: dict[str, Any]) -> str:
         "l1": r"R(\boldsymbol{\theta})=\lambda\lVert\boldsymbol{\theta}\rVert_1",
         "elasticnet": (
             r"R(\boldsymbol{\theta})=\lambda[\rho\lVert\boldsymbol{\theta}\rVert_1"
-            r"+(1-\rho)\lVert\boldsymbol{\theta}\rVert_2^2]"
+            r"+\tfrac{1-\rho}{2}\lVert\boldsymbol{\theta}\rVert_2^2]"
         ),
     }.get(penalty)
     if formula is None:
@@ -1114,8 +1134,9 @@ def _regularization_panel_text(regularization: dict[str, Any]) -> str:
     detail = f"{name}={strength['value']}" if name else rf"\text{{{_latex_label(str(strength['name']))}}}"
     if strength.get("meaning"):
         detail += rf"\ \text{{({_latex_label(str(strength['meaning']))})}}"
-    if regularization.get("l1_ratio") is not None:
-        detail += rf",\quad \mathrm{{l1\_ratio}}={regularization['l1_ratio']}"
+    # l1_ratio is the elastic-net mix rho; for a pure L1 or L2 penalty it has no effect.
+    if regularization.get("l1_ratio") is not None and penalty == "elasticnet":
+        detail += rf",\quad \rho=\mathrm{{l1\_ratio}}={regularization['l1_ratio']}"
     return rf"{rendered},\quad {detail}"
 
 

@@ -10,6 +10,8 @@ import re
 from typing import Any, Dict, List
 
 from .design import available_themes, theme_palette
+from .playback import attach_fluid_playback
+from .skins import button_colors, is_skin
 
 # ── colour palettes ─────────────────────────────────────────────
 
@@ -50,18 +52,24 @@ _THEMES: Dict[str, Dict[str, Any]] = {
     **{
         name: theme_palette(name)
         for name in available_themes()
-        if name != "classic"
+        if name != "classic" and not is_skin(name)
     },
 }
 
 
 def _resolve(theme: str | None = None) -> Dict[str, Any]:
-    """Return a registered palette, rejecting misspelled theme names."""
+    """Return a registered palette, rejecting misspelled theme names.
+
+    Skins are painted after the figure is built, so builders lay them out with
+    the classic palette.
+    """
     if theme is not None and not isinstance(theme, str):
         raise TypeError("theme must be a registered theme name or None.")
+    if is_skin(theme):
+        return _CLASSIC
     key = (theme or "classic").lower()
     if key not in _THEMES:
-        raise ValueError(f"Unknown theme {theme!r}. Available themes: {', '.join(sorted(_THEMES))}.")
+        raise ValueError(f"Unknown theme {theme!r}. Available themes: {', '.join(sorted(available_themes()))}.")
     return _THEMES[key]
 
 
@@ -226,7 +234,7 @@ def create_annotation(
 ) -> Dict[str, Any]:
     """Create a standard centered top annotation for formulas."""
     p = _resolve(theme)
-    sz = size if theme is None else min(size, p["annotation_size"] + 4)
+    sz = size if theme is None or is_skin(theme) else min(size, p["annotation_size"] + 4)
     return dict(
         x=x,
         y=y,
@@ -324,8 +332,7 @@ def get_button_highlight_script(*, theme: str | None = None) -> str:
     active node in JavaScript.
     """
     p = _resolve(theme)
-    button_bg = p.get("btn_bg", "white")
-    text_color = p.get("btn_font_color", "black")
+    button_bg, text_color = button_colors(theme) or (p.get("btn_bg", "white"), p.get("btn_font_color", "black"))
 
     return (
         "<script>\n"
@@ -346,40 +353,18 @@ def get_button_highlight_script(*, theme: str | None = None) -> str:
 
 
 def attach_highlight(fig, *, theme: str | None = None):
-    """Patch *fig* so stable button CSS is injected in Jupyter.
+    """Patch *fig* so every notebook display path styles its buttons and playback.
 
-    Two display paths are patched:
-
-    * ``fig`` as the last expression in a cell → ``_repr_html_()``
-    * ``fig.show()`` → original show + ``IPython.display.HTML(script)``
+    The button colours, including the hover state, are installed by a
+    stylesheet scoped to this figure (see :mod:`mlektic.visualization.controls`),
+    which travels with the figure's HTML. Animated figures also get fluid
+    playback (see :func:`mlektic.visualization.playback.attach_fluid_playback`).
+    ``theme`` is accepted for backward compatibility; the colours are read from
+    the figure itself.
 
     Returns the same *fig* (mutated in-place) for convenience.
     """
-    _script = get_button_highlight_script(theme=theme)
-
-    # 1) Patch _repr_html_ (used when `fig` is the cell's last expression)
-    _original_repr = getattr(fig, "_repr_html_", None)
-
-    def _patched_repr():
-        base_html = _original_repr() if _original_repr else ""
-        return base_html + _script
-
-    fig._repr_html_ = _patched_repr
-
-    # 2) Patch show() (used when user calls fig.show() explicitly)
-    _original_show = fig.show
-
-    def _patched_show(*args, **kwargs):
-        _original_show(*args, **kwargs)
-        try:
-            from IPython.display import HTML, display
-
-            display(HTML(_script))
-        except Exception:
-            pass  # not in a notebook — ignore silently
-
-    fig.show = _patched_show
-    return fig
+    return attach_fluid_playback(fig)
 
 
 def configure_animation(fig, frame_duration: int, transition_duration: int | None = None):
@@ -564,6 +549,9 @@ def annotate_loss_semantics(fig, history: dict):
     smoothing_method = smoothing.get("method")
     quantity = "mean_squared_error" if task == "linear" else "log_loss"
     quantity_label = "MSE" if task == "linear" else "log-loss"
+    # Inside a phrase the name stays lower-case ("EMA log-loss"); on its own,
+    # as a card or axis title, it is capitalized like every other label.
+    standalone_label = quantity_label[:1].upper() + quantity_label[1:]
     source_label = "Synthetic interpolation" if source == "interpolated" else "Replay"
     if smoothing_method == "ema":
         metric_label = f"EMA {quantity_label}"
@@ -583,7 +571,7 @@ def annotate_loss_semantics(fig, history: dict):
         # Logistic interpolation is already identified in the title and
         # timeline. Keep its metric card short beside long model equations.
         card_label = (
-            quantity_label if task == "logistic" and source == "interpolated"
+            standalone_label if task == "logistic" and source == "interpolated"
             else f"INTERP. {quantity_label}" if source == "interpolated"
             else metric_label
         )
@@ -599,7 +587,7 @@ def annotate_loss_semantics(fig, history: dict):
         "smoothing": smoothing_method,
         "metric_label": metric_label,
         "axis_label": axis_label,
-        "visible_axis_label": quantity_label,
+        "visible_axis_label": standalone_label,
     }
     metadata["loss_display_semantics"] = semantics
     layout_meta = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
@@ -639,7 +627,7 @@ def annotate_loss_semantics(fig, history: dict):
         if title_text in {"Loss", "Log-loss"}:
             # Full provenance remains in the legend and layout metadata. The
             # short visible label stays legible in every multi-panel width.
-            getattr(fig.layout, axis_name).update(title_text=quantity_label)
+            getattr(fig.layout, axis_name).update(title_text=standalone_label)
     return fig
 
 

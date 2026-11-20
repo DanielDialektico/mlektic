@@ -640,9 +640,9 @@ def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_
     assert len(figure.frames) == 3
     assert {"accuracy", "precision", "recall"}.issubset({trace.name for trace in figure.data})
     assert figure.layout.yaxis.title.text == r"$\mathcal{L}$"
-    assert figure.layout.yaxis2.title.text == "accuracy"
-    assert figure.layout.yaxis3.title.text == "precision"
-    assert figure.layout.yaxis4.title.text == "recall"
+    assert figure.layout.yaxis2.title.text == "Accuracy"
+    assert figure.layout.yaxis3.title.text == "Precision"
+    assert figure.layout.yaxis4.title.text == "Recall"
     assert figure.layout.updatemenus[0].font.color == "#15171b"
     assert figure.layout.updatemenus[0].x == 0.0
     assert figure.layout.xaxis.domain != figure.layout.xaxis2.domain
@@ -658,6 +658,16 @@ def test_neural_dashboard_exposes_only_training_controls(trained_small_network):
     labels = [button.label for menu in figure.layout.updatemenus for button in menu.buttons]
     assert labels == ["Play", "Pause"]
     assert not {"1 Data", "2 Model", "3 Objective", "4 Complete"}.intersection(labels)
+
+
+def test_neural_animation_mounts_fluid_playback(trained_small_network, monkeypatch):
+    import plotly.io as pio
+
+    _model, _X, history = trained_small_network
+    figure = visualize_nn_training(history, max_frames=3)
+    monkeypatch.setattr(pio.renderers, "default", "colab")
+
+    assert "window.__mlekticFluid.mount(" in figure._repr_mimebundle_()["text/html"]
 
 
 def test_training_keeps_four_panels_when_metrics_are_missing():
@@ -693,12 +703,12 @@ def test_weights_keep_tall_matrix_clear_of_matching_bias(trained_small_network):
     figure = visualize_nn_weights(history, max_frames=2)
 
     weight = next(
-        annotation for annotation in figure.layout.annotations if str(annotation.text).startswith(r"$W^{(1)}_t=")
+        annotation for annotation in figure.layout.annotations if str(annotation.text).startswith(r"$\Theta^{(1)}_t=")
     )
     bias = next(
         annotation
         for annotation in figure.layout.annotations
-        if str(annotation.text).startswith(r"$\mathbf{b}^{(1)}_t=")
+        if str(annotation.text).startswith(r"$\boldsymbol{\theta}^{(1)}_{0,t}=")
     )
 
     assert float(weight.y) - float(bias.y) >= 0.30
@@ -723,7 +733,7 @@ def test_large_weights_reserve_an_independent_omission_row():
             for annotation in annotations
             if "intermediate parameter tensors" in str(annotation.text)
         )
-        matrices = [annotation for annotation in annotations if str(annotation.text).startswith("$W")]
+        matrices = [annotation for annotation in annotations if str(annotation.text).startswith(r"$\Theta")]
         above = min((matrix for matrix in matrices if matrix.y > notice.y), key=lambda matrix: matrix.y)
         below = max((matrix for matrix in matrices if matrix.y < notice.y), key=lambda matrix: matrix.y)
 

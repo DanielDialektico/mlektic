@@ -42,9 +42,9 @@ def multiclass_link_latex(link: str, classes: int | str = "K") -> str:
     if link == "ovr":
         return (
             r"q_k=\sigma(z_k)=\frac{1}{1+e^{-z_k}},\qquad "
-            r"\hat{p}_k=\frac{q_k}{\sum_{\ell=0}^{K-1}q_\ell}"
+            r"\hat{p}_k=\frac{q_k}{\sum_{r=0}^{K-1}q_r}"
         )
-    return r"\hat{p}_k=\frac{e^{z_k}}{\sum_{\ell=0}^{K-1}e^{z_\ell}}"
+    return r"\hat{p}_k=\frac{e^{z_k}}{\sum_{r=0}^{K-1}e^{z_r}}"
 
 
 def multiclass_link_name(link: str) -> str:

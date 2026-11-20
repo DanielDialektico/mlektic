@@ -4,6 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+from ...utils.preprocessing import affine_preprocessing
 from ..design import apply_visual_system, resolve_visual_spec
 from ..theme import (
     _resolve,
@@ -113,63 +114,24 @@ def _extract_linear_theta(est):
     return w, b0
 
 def _find_standard_scaler(est):
-    if not hasattr(est, "steps"):
-        return None
-    for _, step in est.steps:
-        if hasattr(step, "transform") and hasattr(step, "mean_") and (hasattr(step, "scale_") or hasattr(step, "var_")):
-            return step
-    return None
+    """Return the pipeline's verified per-feature affine preprocessing, or ``None``.
 
-def _safe_get_scale(scaler):
-    if scaler is None:
-        return None, None, True, True
-    mu = getattr(scaler, "mean_", None)
-    scale = getattr(scaler, "scale_", None)
-    if scale is None:
-        var = getattr(scaler, "var_", None)
-        if var is not None:
-            scale = np.sqrt(np.asarray(var, dtype=float))
-        else:
-            scale = None
-    with_mean = bool(getattr(scaler, "with_mean", True))
-    with_std = bool(getattr(scaler, "with_std", True))
-    return mu, scale, with_mean, with_std
+    The historical name is kept for internal callers; any per-feature affine
+    scaler (Standard, MinMax, MaxAbs, Robust) is supported, and anything else
+    raises a clear ``ValueError`` instead of producing a wrong substitution.
+    """
+    return affine_preprocessing(est)
 
 def _to_scaled_x(x, scaler):
-    if scaler is None:
-        return np.asarray(x, dtype=float).ravel()
-    try:
-        return np.asarray(scaler.transform(np.asarray(x, dtype=float).reshape(1, -1)), dtype=float).ravel()
-    except Exception:
-        mu, scale, with_mean, with_std = _safe_get_scale(scaler)
-        xs = np.asarray(x, dtype=float).ravel().copy()
-        if with_mean and mu is not None:
-            xs = xs - np.asarray(mu, dtype=float).ravel()
-        if with_std and scale is not None:
-            sc = np.asarray(scale, dtype=float).ravel()
-            xs = xs / (sc + 1e-12)
-        return xs
+    x = np.asarray(x, dtype=float).ravel()
+    return x.copy() if scaler is None else scaler.transform(x)
 
 def _theta_to_original(w_s, b_s, scaler):
     w_s = np.asarray(w_s, dtype=float).ravel()
-    b_s = float(b_s)
     if scaler is None:
-        return w_s.copy(), b_s
-    mu, scale, with_mean, with_std = _safe_get_scale(scaler)
-    dloc = w_s.size
-
-    if (not with_std) or (scale is None):
-        scale = np.ones(dloc, dtype=float)
-    else:
-        scale = np.asarray(scale, dtype=float).ravel()
-    if (not with_mean) or (mu is None):
-        mu = np.zeros(dloc, dtype=float)
-    else:
-        mu = np.asarray(mu, dtype=float).ravel()
-
-    w_o = w_s / (scale + 1e-12)
-    b_o = float(b_s - np.sum(w_s * mu / (scale + 1e-12)))
-    return w_o, b_o
+        return w_s.copy(), float(b_s)
+    w_o, b_o = scaler.to_original(w_s, float(b_s))
+    return w_o, float(b_o)
 
 def _custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color, x=0.5, y=1.10, xanchor="center"):
     return [dict(
