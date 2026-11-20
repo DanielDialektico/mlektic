@@ -79,6 +79,18 @@ Builders keep animated payloads small without depending on that decoder:
 ``export_figure`` and ``show_optimized`` also write Plotly's slash escape in its
 two-character JSON form, which shortens typed-array payloads by about a third.
 
+Several copies of Plotly.js on one page
+=======================================
+
+Notebook front ends that put every output in one page, such as VS Code and
+classic Jupyter, load a copy of Plotly.js with each figure, and ``window.Plotly``
+is the last one loaded. When that copy redraws a figure that another copy drew,
+which 3-D, heatmap, and contour frames require, it gives the figure new event
+emitters. The controller notices the change after each step and carries every
+listener over: its own, so the slider and Play/Pause keep working, and Plotly's,
+so the slider keeps following the animation. A slider move made while the
+listeners were missing is applied afterwards.
+
 Figure-owned controls
 =====================
 

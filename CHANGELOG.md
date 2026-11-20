@@ -68,6 +68,14 @@ All notable changes to this project will be documented in this file.
   colours travel with each figure (see Fixed).
 
 ### Fixed
+- The slider and Play/Pause no longer freeze on notebook pages that show
+  several figures, such as VS Code or classic Jupyter. Each output loads its own
+  copy of Plotly.js, and the copy that ``window.Plotly`` points to replaced the
+  event emitters of a figure drawn by another copy the first time it redrew it.
+  3-D frames, heatmaps and contours do that. Every listener was dropped, so the
+  slider and Play stopped responding, and the slider no longer followed the
+  animation. The fluid playback controller (version 3) now carries the
+  listeners over to the new emitters and replays a slider move made in between.
 - Figure buttons keep a readable label on hover in every theme. Their colours
   now come from a stylesheet scoped to each figure, carried with its HTML, so
   several themes can share a notebook page and exported files match notebooks.
