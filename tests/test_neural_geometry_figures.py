@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-import torch
 
 from mlektic import (
     TorchTrainingRecorder,
@@ -20,6 +19,8 @@ from mlektic.neural.introspection import run_torch_forward
 from mlektic.visualization.neural.math_format import parameter_snapshot
 from mlektic.visualization.skins import get_skin
 from mlektic.visualization.skins.neural import color_mapper
+
+torch = pytest.importorskip("torch")
 
 
 def _blobs(seed=3, n=80):
