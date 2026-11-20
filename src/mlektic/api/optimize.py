@@ -57,7 +57,27 @@ def show_optimized(fig, *, fluid_playback=True):
         config={"responsive": responsive},
         **_fluid_kwargs(fig, fluid_playback, False),
     )
+    html_str = compact_html_escapes(html_str)
     return HTML(f'<div style="height: {wrapper_height}px; width: 100%; overflow: hidden;">{html_str}</div>')
+
+
+# Plotly writes each "/" of its embedded JSON as a backslash followed by
+# "u002f" (six characters). A backslash followed by "/" is the equivalent
+# two-character JSON escape.
+_SLASH_ESCAPE = chr(92) + "u002f"
+_SHORT_SLASH_ESCAPE = chr(92) + "/"
+
+
+def compact_html_escapes(html: str) -> str:
+    """Shorten Plotly's six-character escape of ``/`` to the two-character one.
+
+    Plotly escapes every slash in the embedded JSON so the payload can never
+    close its ``<script>`` element. The short escape is standard JSON with the
+    same guarantee and a third of the length. Base64 typed arrays are full of
+    slashes, so this matters for figures with numeric arrays: a quantized
+    heatmap animation shrinks by about a third.
+    """
+    return html.replace(_SLASH_ESCAPE, _SHORT_SLASH_ESCAPE)
 
 
 def export_figure(
@@ -116,8 +136,8 @@ def export_figure(
         config={"responsive": responsive},
         **fluid,
     )
-    destination.write_text(html, encoding="utf-8")
+    destination.write_text(compact_html_escapes(html), encoding="utf-8")
     return destination.resolve()
 
 
-__all__ = ["export_figure", "show_optimized"]
+__all__ = ["compact_html_escapes", "export_figure", "show_optimized"]

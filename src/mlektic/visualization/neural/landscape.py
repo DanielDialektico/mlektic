@@ -147,8 +147,13 @@ def build_nn_loss_landscape_figure(
     frame_duration: int = 180,
     seed: int = 17,
     title: str | None = None,
+    show_contour: bool = True,
 ) -> go.Figure:
-    """Evaluate an exact affine 2-D loss slice and animate a projected path."""
+    """Evaluate an exact affine 2-D loss slice and animate a projected path.
+
+    With ``show_contour`` a synchronized top view of the same slice shows the
+    whole projected path on its level sets, where its shape is easiest to read.
+    """
     if grid_size < 9 or grid_size > 61:
         raise ValueError("grid_size must be between 9 and 61.")
     steps = np.asarray(history.get("steps", []), dtype=int)
@@ -248,6 +253,61 @@ def build_nn_loss_landscape_figure(
             ),
         ]
     )
+    if show_contour:
+        level_values = np.log10(np.maximum(surface, 1e-12))
+        figure.add_trace(
+            go.Contour(
+                x=axis,
+                y=axis,
+                z=level_values,
+                colorscale="Viridis",
+                ncontours=22,
+                contours={"coloring": "fill", "showlines": True},
+                line={"width": 0.6, "color": "rgba(0,0,0,0.35)"},
+                showscale=False,
+                customdata=surface,
+                hovertemplate="u=%{x:.4g}<br>v=%{y:.4g}<br>evaluated loss=%{customdata:.6g}<extra></extra>",
+                name="evaluated loss slice levels",
+                xaxis="x",
+                yaxis="y",
+            )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=coordinates_u[: selected[0] + 1],
+                y=coordinates_v[: selected[0] + 1],
+                mode="lines+markers",
+                line={"color": NEURAL_COLORS["output"], "width": 3},
+                marker={"size": 4, "color": NEURAL_COLORS["text"]},
+                hovertemplate="projected path<br>u=%{x:.4g}<br>v=%{y:.4g}<extra></extra>",
+                name="projected training path (top view)",
+            )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=[coordinates_u[selected[0]]],
+                y=[coordinates_v[selected[0]]],
+                mode="markers",
+                marker={
+                    "size": 13,
+                    "color": NEURAL_COLORS["activation"],
+                    "line": {"color": NEURAL_COLORS["text"], "width": 2},
+                },
+                customdata=[projected_loss[selected[0]]],
+                hovertemplate="checkpoint loss=%{customdata:.6g}<extra></extra>",
+                name="current projected checkpoint (top view)",
+            )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=[0.0],
+                y=[0.0],
+                mode="markers",
+                marker={"symbol": "x", "size": 11, "color": NEURAL_COLORS["text"]},
+                hovertemplate="slice centre θ*: final recorded checkpoint<extra></extra>",
+                name="slice centre",
+            )
+        )
     figure.frames = [
         go.Frame(
             name=f"step_{index}",
@@ -286,6 +346,14 @@ def build_nn_loss_landscape_figure(
         )
         for index in selected
     ]
+    if show_contour:
+        for frame, index in zip(figure.frames, selected):
+            frame.data = (
+                *frame.data,
+                go.Scatter(x=coordinates_u[: index + 1], y=coordinates_v[: index + 1]),
+                go.Scatter(x=[coordinates_u[index]], y=[coordinates_v[index]], customdata=[projected_loss[index]]),
+            )
+            frame.traces = [1, 2, 4, 5]
     if title is None:
         title = "Neural loss surface: exact two-direction slice"
     layout = neural_layout(title, height=760)
@@ -370,6 +438,45 @@ def build_nn_loss_landscape_figure(
             "showlegend": False,
         }
     )
+    if show_contour:
+        layout["scene"]["domain"] = {"x": [0.0, 0.56], "y": [0.0, 1.0]}
+        layout["xaxis"] = {
+            "domain": [0.71, 1.0],
+            "range": [-slice_span, slice_span],
+            "constrain": "domain",
+            "title": {"text": r"$u\ \text{(direction }\mathbf d_1)$"},
+            "showgrid": False,
+            "zeroline": False,
+        }
+        layout["yaxis"] = {
+            "domain": [0.08, 0.86],
+            "range": [-slice_span, slice_span],
+            "title": {"text": r"$v\ \text{(direction }\mathbf d_2)$"},
+            "scaleanchor": "x",
+            "constrain": "domain",
+            "title_standoff": 2,
+            "showgrid": False,
+            "zeroline": False,
+        }
+        figure.data[0].colorbar.update(x=0.575, len=0.7)
+        top_view = {
+            "x": 0.855,
+            "y": 0.93,
+            "xref": "paper",
+            "yref": "paper",
+            "text": r"$\text{Top view: }\log_{10}\mathcal L_{slice}(u,v),\quad"
+            r"\mathcal L_{slice}(u,v)=\mathcal L(\theta_*+u\mathbf d_1+v\mathbf d_2)$",
+            "showarrow": False,
+            "font": {"size": 13, "color": NEURAL_COLORS["muted"]},
+        }
+        layout["annotations"] = [*layout["annotations"], top_view]
+        for frame in figure.frames:
+            frame.layout.annotations = [*frame.layout.annotations, top_view]
+        layout["meta"]["mlektic_neural_loss_slice"]["top_view"] = {
+            "shown": True,
+            "levels": "log10 of the same evaluated slice",
+            "centre_marker": "final recorded checkpoint θ*",
+        }
     figure.update_layout(**layout)
     return figure
 

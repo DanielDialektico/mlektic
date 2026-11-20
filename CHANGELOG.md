@@ -4,7 +4,44 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Four geometric neural lessons, every value an exact forward pass or autograd
+  computation with recorded parameters, in the course notation:
+  ``visualize_nn_decision`` (decision surface as a combination of the last
+  hidden units, with exact fold lines z_j = 0 for one hidden layer and the
+  readout weights Theta^(L)); ``visualize_nn_representation`` (the input plane
+  through every affine map and activation, ending where the boundary is a
+  vertical line along the readout direction); ``visualize_nn_training_step``
+  (forward pulses, per-sample loss l, delta^(l) travelling back, edge gradients
+  delta_j a_i, and one gradient step); and ``visualize_nn_gradient_flow``
+  (static per-layer log10 gradient-norm maps that compare up to four runs).
+  ``visualize_nn`` routes them as ``view="decision"``, ``"representation"``,
+  ``"training_step"``, and ``"gradient_flow"`` (new ``targets`` argument).
+- ``visualize_nn_weights(style="hinton")`` draws recorded weight matrices and
+  intercepts as Hinton diagrams on one global scale.
+- ``visualize_nn_loss_landscape(show_contour=True)`` adds a synchronized top
+  view of the same exact slice with the projected path on its level sets.
+- ``compact_html_escapes`` in ``mlektic.api.optimize`` (used by
+  ``export_figure`` and ``show_optimized``).
+- Notebook cases ``LEARN-NN-DECISION``, ``LEARN-NN-REPRESENTATION``,
+  ``LEARN-NN-TRAINING-STEP``, and ``LEARN-NN-GRADIENT-FLOW`` in
+  ``learn_03_neural_networks``, and the theme matrix ``NN-GEOMETRY-THEMES`` in
+  ``qa_08_neural_structures``; the course notation page describes the new views.
+- API reference entries for the new functions, and ``tests/test_neural_geometry_figures.py``
+  covering the exact values, routing, payload size, and skins of the new views.
+
 ### Changed
+- Neural figures now follow every skin: their dark-canvas encodings are
+  translated to the skin background (neutral greys keep their relative place
+  between background and text; on light skins such as ``editorial`` and
+  ``davinci`` saturated hues are darkened to a readable lightness while keeping
+  their meaning). Previously prediction cards, metric curves, and captions
+  could disappear or become unreadable on light skins.
+- Exported and notebook-optimized HTML writes Plotly's slash escape in its
+  two-character form; base64 typed arrays shrink by about a third.
+- The fluid playback controller (version 2) replots heatmap and contour
+  frames, which a redraw-free animate leaves unchanged, and decodes base64
+  typed arrays inside frames, which Plotly.js does not.
 - Removed the unused ``format="lesson"`` prototype before release. The public
   formats are now ``dashboard``, ``compact``, and ``report``. Static linear and
   logistic prediction explanations apply their complete Output stage before

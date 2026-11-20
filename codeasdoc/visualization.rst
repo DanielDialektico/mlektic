@@ -124,15 +124,18 @@ Neural views cover:
 - parameter and weight summaries;
 - layerwise activations;
 - mathematical forward-pass reports;
-- prediction explanations.
+- prediction explanations;
+- decision surfaces, layer-by-layer representations, a single training step,
+  and gradient flow across layers (see :doc:`neural_lesson`);
+- Hinton diagrams of weight matrices and a top view of the loss slice.
 
 For a dense layer:
 
 .. math::
 
-   \mathbf{z}^{(l)}=\mathbf{W}^{(l)}\mathbf{a}^{(l-1)}+\mathbf{b}^{(l)},
+   \mathbf{z}^{(\ell)}=\Theta^{(\ell)}\mathbf{a}^{(\ell-1)}+\boldsymbol{\theta}_0^{(\ell)},
    \qquad
-   \mathbf{a}^{(l)}=\phi^{(l)}(\mathbf{z}^{(l)}).
+   \mathbf{a}^{(\ell)}=\phi_\ell(\mathbf{z}^{(\ell)}).
 
 ``TorchTrainingRecorder`` captures genuine training states when called from the
 training loop. ``record_every`` controls semantic checkpoint capture; later

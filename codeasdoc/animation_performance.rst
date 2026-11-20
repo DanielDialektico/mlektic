@@ -56,6 +56,29 @@ mimetype renderers, keep Plotly's own playback; ``show_optimized(fig)`` gives
 them the fluid path. Pass ``fluid_playback=False`` to ``show_optimized`` or
 ``export_figure`` to opt out.
 
+Raster frames and payload size
+==============================
+
+Heat maps and contours cannot move with a redraw-free animate: their image is
+only rebuilt by a replot. The controller (version 2) replots those frames with
+MathJax switched off and puts the kept equation nodes back, as it already did
+for WebGL traces. It also decodes base64 typed arrays inside frames, which
+Plotly.js only decodes in ``fig.data``.
+
+Builders keep animated payloads small without depending on that decoder:
+
+* a frame lists only the traces it changes (``traces=[...]``);
+* raster fields are quantized to integers in ``[0, 255]`` on one global range
+  and sent as plain lists in frames, while the first state travels as a compact
+  ``uint8`` typed array;
+* positions that move between stages are tweened by Plotly transitions rather
+  than extra frames (the representation view has one frame per stage);
+* edges are grouped into a fixed number of colour/width bins, so the trace
+  count does not grow with the number of edges.
+
+``export_figure`` and ``show_optimized`` also write Plotly's slash escape in its
+two-character JSON form, which shortens typed-array payloads by about a third.
+
 Figure-owned controls
 =====================
 

@@ -19,10 +19,15 @@
  */
 (function () {
   "use strict";
-  var VERSION = 1;
+  var VERSION = 2;
   if (window.__mlekticFluid && window.__mlekticFluid.version >= VERSION) return;
 
-  var GL = { surface: 1, scatter3d: 1, mesh3d: 1, volume: 1, isosurface: 1, scattergl: 1, cone: 1, streamtube: 1 };
+  // Traces a redraw-free animate cannot move: WebGL traces, and raster traces
+  // (heatmap, contour) whose image is only rebuilt by a replot.
+  var GL = {
+    surface: 1, scatter3d: 1, mesh3d: 1, volume: 1, isosurface: 1, scattergl: 1, cone: 1, streamtube: 1,
+    heatmap: 1, contour: 1, histogram2d: 1, histogram2dcontour: 1, image: 1,
+  };
   var CAMERA_ONLY = /^(scene\d*(\.|$)|dragmode$|hovermode$)/;
   // Typesetting ahead waits until the student has left the figure alone for
   // this long, so it never queues MathJax work in front of a visible step.
@@ -406,10 +411,42 @@
     return api;
   }
 
+  // ── typed arrays inside frames ──────────────────────────────────────────
+  // Plotly decodes base64 typed arrays ({dtype, bdata, shape}) in the figure's
+  // data, but not in its frames. Decode them once so every playback path
+  // (animate, update, replot) receives real arrays.
+  var TYPED = { u1: Uint8Array, i1: Int8Array, u2: Uint16Array, i2: Int16Array,
+    u4: Uint32Array, i4: Int32Array, f4: Float32Array, f8: Float64Array };
+  function decodeSpec(v) {
+    if (!v || typeof v !== "object" || ArrayBuffer.isView(v)) return v;
+    if (typeof v.bdata === "string" && TYPED[v.dtype]) {
+      var raw = atob(v.bdata), bytes = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      var flat = new TYPED[v.dtype](bytes.buffer);
+      var shape = v.shape === undefined ? [flat.length] : String(v.shape).split(",").map(Number);
+      if (shape.length !== 2) return flat;
+      var rows = [];
+      for (var r = 0; r < shape[0]; r++) rows.push(Array.prototype.slice.call(flat, r * shape[1], (r + 1) * shape[1]));
+      return rows;
+    }
+    if (Array.isArray(v)) {
+      for (var j = 0; j < v.length; j++) v[j] = decodeSpec(v[j]);
+      return v;
+    }
+    Object.keys(v).forEach(function (k) { v[k] = decodeSpec(v[k]); });
+    return v;
+  }
+  function decodeFrames(gd) {
+    (gd._transitionData._frames || []).forEach(function (f) {
+      if (f && f.data) f.data = f.data.map(decodeSpec);
+    });
+  }
+
   function mount(gd, options) {
     if (!gd || !window.Plotly || gd.__mlekticFluid) return gd && gd.__mlekticFluid;
     var trans = gd._transitionData;
     if (!trans || !trans._frames || !trans._frames.length || !gd._fullLayout) return null;
+    decodeFrames(gd);
     gd.__mlekticFluid = attach(gd, options);
     return gd.__mlekticFluid;
   }

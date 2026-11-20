@@ -8,6 +8,23 @@ Unreleased — neural execution-graph foundation
 Added
 -----
 
+- four geometric neural lessons whose values are exact forward passes or
+  autograd computations with the recorded parameters, in the course notation:
+  ``visualize_nn_decision`` (decision surface built from the last hidden units
+  and the readout weights, with exact fold lines for one hidden layer),
+  ``visualize_nn_representation`` (the input plane through every affine map
+  and activation), ``visualize_nn_training_step`` (one example through
+  forward, loss, backpropagated deltas, edge gradients, and one step), and
+  ``visualize_nn_gradient_flow`` (per-layer gradient-norm maps comparing up to
+  four runs); ``visualize_nn`` routes them as ``view="decision"``,
+  ``"representation"``, ``"training_step"``, and ``"gradient_flow"`` with a new
+  ``targets`` argument (see :doc:`neural_lesson`);
+- ``visualize_nn_weights(style="hinton")`` for Hinton diagrams of recorded
+  weight matrices and intercepts on one global scale;
+- ``visualize_nn_loss_landscape(show_contour=True)``, a synchronized top view of
+  the same exact slice with the projected path;
+- ``compact_html_escapes`` in ``mlektic.api.optimize``, used by
+  ``export_figure`` and ``show_optimized`` to shorten embedded payloads;
 - eight presentation skins that repaint a figure while keeping the classic
   geometry: ``aurora``, ``dusk``, ``ember``, ``lumen``, ``editorial``,
   ``blueprint``, ``chalkboard``, and ``davinci``. Motion skins add a trail of
@@ -82,6 +99,15 @@ Fixed
 Changed
 -------
 
+- neural figures follow every skin: their dark-canvas encodings are translated
+  to the skin background, and on light skins saturated hues are darkened to a
+  readable lightness, so prediction cards, metric curves, and captions no
+  longer disappear on ``editorial`` or ``davinci``;
+- exported and notebook-optimized HTML writes Plotly's slash escape in its
+  two-character JSON form; base64 typed arrays shrink by about a third;
+- the fluid playback controller (version 2) replots heatmap and contour frames
+  and decodes base64 typed arrays inside frames (see
+  :doc:`animation_performance`);
 - one notation across figures, docs, and the course reference: ``Theta`` and
   bold ``theta_0``, ``eta`` for the learning rate, ``ln``, ``k``-hat for the
   arg-max index, "Log-loss" for classification loss, and "Macro F1" in
