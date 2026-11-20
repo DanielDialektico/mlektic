@@ -68,6 +68,8 @@ def fit_history_logistic(
 
     See :func:`fit_history` for replay/interpolation semantics. Fitted class
     order and resolved probability-link semantics remain in the payload.
+    ``threshold`` is the binary decision threshold used for the Accuracy and F1
+    histories, so they describe the same decision the figure draws.
     """
     config = LogisticHistoryConfig(
         steps=steps,

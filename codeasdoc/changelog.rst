@@ -8,10 +8,17 @@ Unreleased — neural execution-graph foundation
 Added
 -----
 
-- the ``aurora``, ``editorial``, and ``blueprint`` skins: themes that repaint a
-  figure while keeping the classic geometry, with ``aurora`` adding a trail of
-  earlier model states, a loss-progress marker, and direction-coloured equation
-  numbers (see :doc:`themes_formats_sizes`);
+- eight presentation skins that repaint a figure while keeping the classic
+  geometry: ``aurora``, ``dusk``, ``ember``, ``lumen``, ``editorial``,
+  ``blueprint``, ``chalkboard``, and ``davinci``. Motion skins add a trail of
+  earlier model states, a glow, a loss-progress marker, and direction-coloured
+  equation numbers; ``ember`` and ``lumen`` also draw residual segments that
+  shrink as the model learns; some skins set a typeface while equations keep
+  MathJax's font (see :doc:`themes_formats_sizes`);
+- ``course/notacion_matematica.html``, the Spanish course notation reference
+  that matches every figure (see :doc:`mathematical_conventions`);
+- ``threshold`` on ``fit_history_logistic`` so metric histories use the drawn
+  decision threshold;
 - fluid playback for animated figures: stepping and playing replay already
   rendered equations instead of redrawing the figure and re-typesetting every
   equation, with pixel-identical output (``fluid_playback`` on
@@ -47,6 +54,17 @@ Added
 Fixed
 -----
 
+- mathematical review: binary Accuracy/F1 follow the displayed threshold; R²
+  uses sklearn's constant-target convention; log-loss clipping matches sklearn;
+  Ridge/Lasso/ElasticNet penalties are reported with the correct elastic-net
+  ``(1-rho)/2``; prediction explainers back-transform verified per-feature
+  scalers and refuse other preprocessing; multiclass explainers use zero-based
+  class indices; neural metrics read logits vs probabilities from the
+  criterion; optimizer and scheduler rules follow the actual configuration;
+- figure buttons keep a readable label on hover in every theme, with colours
+  scoped to each figure;
+- overlapping, clipped, and crowded labels found by a visual review of every
+  QA figure, plus readable ranges for constant targets and metrics;
 - bounded neural-weight omission notices now own a matrix-height row instead
   of floating over the next parameter tensor; crowded backpropagation values
   alternate across two fixed rows and place omitted-layer scope in a separate
@@ -64,6 +82,10 @@ Fixed
 Changed
 -------
 
+- one notation across figures, docs, and the course reference: ``Theta`` and
+  bold ``theta_0``, ``eta`` for the learning rate, ``ln``, ``k``-hat for the
+  arg-max index, "Log-loss" for classification loss, and "Macro F1" in
+  multiclass;
 - the README neural quick start now uses the recorder-v2 history contract and
   current public APIs for structure, replay, training, prediction,
   backpropagation, parameter tensors, and effective hyperparameters; it also

@@ -14,6 +14,21 @@ All notable changes to this project will be documented in this file.
   and ``x_1*x_2`` regardless of the length of ``feature_names``.
 - Kept binary threshold ticks numeric and moved the short ``tau`` label inside
   the 1D/2D geometry, preventing it from colliding with probability-axis titles.
+- Unified the mathematical notation of every figure with the course reference:
+  zero-based class indices (``c_0, ..., c_{K-1}``) in multiclass explainers,
+  ``r`` as the class summation index, ``Theta`` and bold ``theta_0`` for
+  dense weights and biases (no ``W``/``b``), ``eta`` for the learning rate and
+  ``gamma`` for the scheduler factor, ``ln``, hats on estimated probabilities,
+  ``k-hat`` for the arg-max index, transposed row vectors, ``vec(Theta)`` for
+  flattened weights, and no rounded ``-0.0000``.
+- Classification loss is called "Log-loss" in binary and multiclass figures
+  (previously also "Cross-entropy"); the multiclass F1 card and metric-history
+  key is now "Macro F1"; neural metric titles read MSE, MAE, and R².
+- Multiclass Play/Pause sit slightly higher; multiclass 1D/2D keep their height
+  under ``size`` presets; tall multiclass N-D matrices (d >= 5) sit lower and
+  one point smaller; loss legends moved off the end of the curve.
+- ``attach_highlight`` no longer injects a page-wide button stylesheet; button
+  colours travel with each figure (see Fixed).
 
 ### Fixed
 - Figure buttons keep a readable label on hover in every theme. Their colours
@@ -25,18 +40,37 @@ All notable changes to this project will be documented in this file.
   `(1-rho)/2`); prediction explainers back-transform any verified per-feature
   scaler and refuse preprocessing they cannot write in original units.
 - Neural binary metrics read logits vs probabilities from the criterion; the
-  hyperparameter panel shows the update rule of the actual optimizer setup.
-- Notation unified across figures (zero-based classes, Theta/theta_0, eta,
-  ln, hats, one loss name "Log-loss"); overlapping and clipped labels fixed.
+  hyperparameter panel shows the update rule of the actual optimizer setup
+  (SGD with or without momentum/Nesterov, Adam, AdamW; other optimizers are
+  named rather than given Adam's rule), the class-weighted cross-entropy mean,
+  and the ReduceLROnPlateau rule.
+- Multiclass prediction explainers showed one-based class indices
+  (``c_1`` for the first class); they now match ``classes_``.
+- The weights view labels normalization scales as ``gamma`` and kernel tensors
+  as flattened kernel entries; activation vectors are marked as batch means
+  with their real dimension; the training loss is labelled "Recorded loss".
+- Overlapping and clipped labels found by a visual review of all QA figures:
+  multiclass formulas touching Play/Pause, N-D matrices touching the model
+  formula, binary N-D expansions reaching the metric column, clipped
+  backpropagation readouts, the neural graph key over the colour-bar title,
+  and 3D tick numbers colliding with long feature names.
+- Constant targets and constant neural metrics get readable axis ranges;
+  short neural training curves use integer step ticks.
+- Prediction-explainer text follows the skin colour in every stage.
 
 ### Added
-- Added `course/notacion_matematica.html`, the Spanish course notation reference.
+- Added `course/notacion_matematica.html`, the Spanish course notation reference:
+  every symbol the figures use, with its dimension and where it appears.
+- Added ``threshold`` to ``fit_history_logistic`` and ``LogisticHistoryConfig``.
 - Added the `dusk` (muted aurora), `chalkboard` (framed slate with smudges and
   a chalk typeface), `davinci` (old laid paper with foxing, sepia ink, red
   chalk, handwritten typeface), `ember` (fire, with residual segments that
   shrink as the model learns), and `lumen` (classic colours with ember's light
-  and effects) skins. Skins may set a typeface; equations keep MathJax's font. Skins now shade 3D class
-  surfaces and class-coloured points with their own palette.
+  and effects) skins. Skins may set a typeface (loaded with the figure, with
+  system fallbacks); equations keep MathJax's font. Skins now shade 3D class
+  surfaces and class-coloured points with their own palette, and textured
+  backdrops (grain, mottling, smudges, laid lines, foxing, vignette) and an
+  optional frame are available to skin definitions.
 - Added the `aurora`, `editorial`, and `blueprint` themes. They are skins: they
   repaint a figure and keep the classic geometry, so no element moves. `aurora`
   adds a fading trail of earlier model states, a glow under the model line, a

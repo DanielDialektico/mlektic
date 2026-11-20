@@ -7,6 +7,10 @@ vectors, upper-case symbols for matrices, and fitted class indices in the order
 of ``classes_``. A displayed coordinate belongs to its declared feature space:
 original, affine-scaled, or transformed.
 
+The complete course notation, in Spanish, is ``course/notacion_matematica.html``
+in the repository: every symbol shown in the figures, its dimension, and where it
+appears. Figures and this page use the same symbols.
+
 Exactness labels
 ================
 

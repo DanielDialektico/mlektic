@@ -107,8 +107,11 @@ The skins live in ``mlektic/visualization/skins`` and are split so the
 presentation and the figure builders change independently:
 
 ``definitions.py``
-   Pure data: each skin's palette, backdrop, and effect switches. Changing a
-   colour or turning an effect off is a one-value edit here.
+   Pure data: each skin's palette, backdrop (gradient or grid, plus optional
+   grain, mottling, smudges, laid lines, foxing, and vignette), effect switches
+   (glow, trail, loss progress, equation colours, residuals), button hover
+   colours, an optional CSS frame, and an optional typeface. Changing a colour
+   or turning an effect off is a one-value edit here.
 
 ``roles.py``
    The only contract with the builders. It names what each trace is (data,
@@ -116,9 +119,17 @@ presentation and the figure builders change independently:
    gives it. Builders never import the skins.
 
 ``styling.py``, ``backdrop.py``, ``effects.py``
-   How a skin is painted. They assign colours, symbols, and dashes only.
+   How a skin is painted. They assign colours, symbols, dashes, and the font
+   family only.
+
+``mlektic/visualization/controls.py``
+   The per-figure stylesheet sent with the figure's HTML: button colours
+   (including hover), the skin's frame, and its web font.
 
 ``tests/test_skins.py`` compares every skinned figure with its classic twin after
 removing paint, so a change that moved any element fails there. Inspect
 ``STYLE-SKIN-AURORA-MOTION`` next to ``STYLE-SKIN-AURORA-CLASSIC-TWIN``, plus
-``STYLE-SKIN-BLUEPRINT-3D`` and ``STYLE-SKIN-EDITORIAL-NEURAL``.
+``STYLE-SKIN-BLUEPRINT-3D``, ``STYLE-SKIN-EDITORIAL-NEURAL``,
+``STYLE-SKIN-EMBER-RESIDUALS``, ``STYLE-SKIN-LUMEN-RESIDUALS``,
+``STYLE-SKIN-CHALKBOARD-CURVES``, ``STYLE-SKIN-DAVINCI-3D``,
+``STYLE-SKIN-DAVINCI-EXPLAINER``, and ``STYLE-SKIN-DUSK-BINARY``.
