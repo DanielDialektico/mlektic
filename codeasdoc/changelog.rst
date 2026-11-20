@@ -71,6 +71,12 @@ Added
 Fixed
 -----
 
+- the slider and Play/Pause no longer freeze on notebook pages with several
+  figures (VS Code, classic Jupyter): when the last loaded copy of Plotly.js
+  redrew a 3-D, heatmap, or contour frame of a figure drawn by another copy, it
+  replaced the figure's event emitters and dropped every listener; the fluid
+  playback controller (version 3) carries them over (see
+  :doc:`animation_performance`);
 - mathematical review: binary Accuracy/F1 follow the displayed threshold; R²
   uses sklearn's constant-target convention; log-loss clipping matches sklearn;
   Ridge/Lasso/ElasticNet penalties are reported with the correct elastic-net

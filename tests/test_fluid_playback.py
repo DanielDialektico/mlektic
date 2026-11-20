@@ -1,3 +1,4 @@
+import json
 import re
 import shutil
 import subprocess
@@ -38,6 +39,107 @@ def test_controller_asset_is_valid_javascript():
     if node is None:
         pytest.skip("node is not installed")
     subprocess.run([node, "--check", str(_ASSET)], check=True)
+
+
+# A notebook page can hold one copy of Plotly.js per output. The copy that
+# window.Plotly points to gives a figure drawn by another copy fresh event
+# emitters the first time it redraws it. This harness reproduces that: the
+# fake Plotly replaces both emitters on its first call for the figure.
+_FOREIGN_PLOTLY_HARNESS = r"""
+const fs = require("fs");
+const { EventEmitter } = require("events");
+global.window = global;
+global.MathJax = { Hub: { Queue() {}, Typeset() {} } };
+global.document = {
+  body: { contains: () => true },
+  createElementNS: () => ({ innerHTML: "", firstChild: null }),
+};
+const frames = ["0", "1", "2", "3"].map((name) => ({
+  name, data: [{ type: "scatter3d", x: [Number(name)] }], layout: { annotations: [] },
+}));
+const steps = frames.map((f) => ({ method: "animate", args: [[f.name], {}], label: f.name }));
+const buttons = [
+  { method: "animate", args: [null, { frame: { duration: 1 }, transition: { duration: 0 } }] },
+  { method: "animate", args: [[null], {}] },
+];
+const clone = (v) => JSON.parse(JSON.stringify(v));
+const gd = {
+  data: [{ type: "scatter3d" }],
+  layout: { sliders: [{ steps, active: 0 }], updatemenus: [{ buttons }] },
+  _context: {},
+  _transitionData: {
+    _frames: frames, _frameHash: Object.fromEntries(frames.map((f) => [f.name, f])), _frameQueue: [],
+  },
+  addEventListener() {},
+};
+gd._fullLayout = {
+  sliders: clone(gd.layout.sliders), updatemenus: clone(gd.layout.updatemenus), annotations: [],
+  width: 600, height: 400, _infolayer: { node: () => ({ querySelector: () => null }) },
+};
+function emitters() {
+  const ev = new EventEmitter(), internal = new EventEmitter();
+  gd._ev = ev; gd._internalEv = internal;
+  gd.on = ev.on.bind(ev);
+  gd._internalOn = internal.on.bind(internal);
+  gd.emit = (name, data) => { ev.emit(name, data); internal.emit(name, data); };
+}
+emitters();
+// Plotly's own observer that moves the slider with the animation.
+const followed = [];
+gd._internalOn("plotly_animatingframe", (e) => followed.push(e.name));
+let foreign = true;
+function redraw(name) {
+  if (foreign) { emitters(); foreign = false; }
+  if (name) { gd._fullLayout._currentFrame = name; gd.emit("plotly_animatingframe", { name }); }
+  return Promise.resolve();
+}
+global.Plotly = {
+  animate: (_gd, target) => redraw(Array.isArray(target) ? target[0] : null),
+  update: () => redraw(null),
+};
+eval(fs.readFileSync(process.argv[2], "utf8"));
+window.__mlekticFluid.mount(gd, { prewarm: false });
+const settle = () => new Promise((resolve) => setTimeout(resolve, 30));
+function slide(index) {
+  gd._fullLayout.sliders[0].active = index;
+  gd.emit("plotly_sliderchange", { interaction: true, step: gd._fullLayout.sliders[0].steps[index] });
+}
+(async () => {
+  const result = {};
+  slide(1); await settle();
+  result.first = gd._fullLayout._currentFrame;
+  slide(2); await settle();
+  result.afterForeignRedraw = gd._fullLayout._currentFrame;
+  followed.length = 0;
+  gd.emit("plotly_buttonclicked", { button: gd._fullLayout.updatemenus[0].buttons[0] });
+  await settle(); await settle(); await settle();
+  result.played = gd._fullLayout._currentFrame;
+  result.followed = followed.slice();
+  result.listeners = {
+    slider: gd._ev.listenerCount("plotly_sliderchange"),
+    buttons: gd._ev.listenerCount("plotly_buttonclicked"),
+    follower: gd._internalEv.listenerCount("plotly_animatingframe"),
+  };
+  console.log(JSON.stringify(result));
+})();
+"""
+
+
+def test_controls_survive_a_redraw_by_another_plotly_copy(tmp_path):
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not installed")
+    harness = tmp_path / "harness.js"
+    harness.write_text(_FOREIGN_PLOTLY_HARNESS, encoding="utf-8")
+    run = subprocess.run([node, str(harness), str(_ASSET)], check=True, capture_output=True, text=True)
+    result = json.loads(run.stdout.strip().splitlines()[-1])
+    assert result["first"] == "1"
+    # Before the fix the redraw dropped the controller's listeners and the slider stopped here.
+    assert result["afterForeignRedraw"] == "2"
+    assert result["played"] == "3"
+    # Plotly's own slider observer still hears every frame, so the slider follows Play.
+    assert result["followed"] == ["0", "1", "2", "3"]
+    assert result["listeners"] == {"slider": 1, "buttons": 1, "follower": 1}
 
 
 def test_script_mounts_on_the_plot_placeholder():

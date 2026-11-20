@@ -19,7 +19,7 @@
  */
 (function () {
   "use strict";
-  var VERSION = 2;
+  var VERSION = 3;
   if (window.__mlekticFluid && window.__mlekticFluid.version >= VERSION) return;
 
   // Traces a redraw-free animate cannot move: WebGL traces, and raster traces
@@ -325,8 +325,21 @@
       (function drain() {
         var n = pendingName;
         pendingName = null;
-        var next = function () { if (pendingName !== null) drain(); else busy = false; };
-        apply(n, 0, true).then(next, next);
+        var next = function () {
+          // Slider moves made while the listeners were gone were never heard.
+          if (rebind() && pendingName === null) {
+            var target = sliderTarget();
+            if (target !== null && target !== n) pendingName = target;
+          }
+          if (pendingName !== null) drain(); else busy = false;
+        };
+        try {
+          apply(n, 0, true).then(next, next);
+        } catch (err) {
+          // A synchronous failure must not leave the controller busy forever.
+          busy = false;
+          throw err;
+        }
       })();
     }
     function stop() { playing = false; token++; }
@@ -346,32 +359,74 @@
         if (i >= order.length) { playing = false; return; }
         var t0 = performance.now();
         var done = function () {
+          rebind();
           if (my !== token) return;
           setTimeout(tick, Math.max(0, play.frame - (performance.now() - t0)));
         };
-        apply(order[i++], Math.min(play.transition, play.frame), play.redraw).then(done, done);
+        try {
+          apply(order[i++], Math.min(play.transition, play.frame), play.redraw).then(done, done);
+        } catch (err) {
+          playing = false;
+          throw err;
+        }
       })();
     }
 
-    if (handOverControls(gd)) {
-      gd.on("plotly_sliderchange", function (e) {
-        if (!e || !e.interaction || !e.step) return;
-        var name = frameTarget(gd, e.step.args);
-        if (name !== null && e.step.execute === false) { stop(); request(name); }
-      });
-      gd.on("plotly_buttonclicked", function (e) {
-        var b = e && e.button;
-        if (!b || b.method !== "animate" || b.execute !== false) return;
-        if (isPlay(b.args)) startPlayback();
-        else if (isPause(b.args)) stop();
-      });
+    function onSlider(e) {
+      if (!e || !e.interaction || !e.step) return;
+      var name = frameTarget(gd, e.step.args);
+      if (name !== null && e.step.execute === false) { stop(); request(name); }
     }
-    gd.on("plotly_relayout", function (e) {
+    function onButton(e) {
+      var b = e && e.button;
+      if (!b || b.method !== "animate" || b.execute !== false) return;
+      if (isPlay(b.args)) startPlayback();
+      else if (isPause(b.args)) stop();
+    }
+    function onRelayout(e) {
       var keys = Object.keys(e || {});
       if (keys.length && keys.every(function (k) { return CAMERA_ONLY.test(k); })) return;
       invalidate();
-    });
+    }
+    if (handOverControls(gd)) {
+      gd.on("plotly_sliderchange", onSlider);
+      gd.on("plotly_buttonclicked", onButton);
+    }
+    gd.on("plotly_relayout", onRelayout);
     gd.on("plotly_restyle", invalidate);
+    var emitters = { pub: gd._ev, internal: gd._internalEv };
+    // A notebook page can hold several copies of Plotly.js, one per output, and
+    // window.Plotly is the last one loaded. When it redraws a figure that
+    // another copy created (a 3-D frame does), it gives the figure fresh event
+    // emitters and drops every listener: this controller's, so the slider and
+    // Play stop responding, and Plotly's own, so the slider stops following
+    // the animation. Carry them over whenever the emitters have changed.
+    function carry(from, to, skipKnownEvents) {
+      if (!from || !to || from === to || !from._events) return;
+      Object.keys(from._events).forEach(function (name) {
+        // Plotly may already have re-registered its own observers on the new one.
+        if (skipKnownEvents && to.listeners(name).length) return;
+        from.listeners(name).forEach(function (fn) {
+          if (to.listeners(name).indexOf(fn) < 0) to.on(name, fn);
+        });
+      });
+    }
+    function rebind() {
+      if (gd._ev === emitters.pub && gd._internalEv === emitters.internal) return false;
+      carry(emitters.pub, gd._ev, false);
+      carry(emitters.internal, gd._internalEv, true);
+      emitters = { pub: gd._ev, internal: gd._internalEv };
+      return true;
+    }
+    function sliderTarget() {
+      var found = null;
+      (gd._fullLayout.sliders || []).some(function (s) {
+        var step = s.steps && s.steps[s.active];
+        found = step && step.method === "animate" && step.execute === false ? frameTarget(gd, step.args) : null;
+        return found !== null;
+      });
+      return found;
+    }
 
     // Every distinct equation in the frames, in frame order, under the font
     // size Plotly will use for it.
