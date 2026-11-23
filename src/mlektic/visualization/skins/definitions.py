@@ -242,9 +242,8 @@ DUSK = Skin(
         control_hover_text="#ffffff",
     ),
     backdrop=Backdrop(kind="radial", colors=("#283042", "#1a2030", "#10141c"), center=(0.15, 0.0)),
-    effects=SkinEffects(
-        glow=True, glow_opacity=0.10, trail=4, trail_opacity=(0.06, 0.26), loss_progress=True, equation_delta=True,
-    ),
+    # The default theme leaves no trail: only the current model state is drawn.
+    effects=SkinEffects(glow=True, glow_opacity=0.10, loss_progress=True, equation_delta=True),
 )
 
 CHALKBOARD = Skin(

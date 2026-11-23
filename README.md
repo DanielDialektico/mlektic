@@ -416,9 +416,11 @@ academic_dashboard = visualize_lr(
   backward-compatible alias of `academic`; use a canvas `size` instead of
   enlarging axes and annotations. The skins `aurora`, `editorial`,
   `blueprint`, `dusk`, `chalkboard`, `davinci`, `ember`, and `lumen` only repaint:
-  every element keeps its classic position. `aurora` and its muted sibling
-  `dusk` add motion cues (a trail of earlier model states, a loss-progress
-  marker, and equation numbers coloured by their direction of change);
+  every element keeps its classic position. `aurora` adds motion cues (a
+  trail of earlier model states, a loss-progress marker, and equation numbers
+  coloured by their direction of change); its muted sibling `dusk`, the
+  default theme, keeps the marker and the equation colours but draws no
+  trail, only the current state of each curve;
   `chalkboard` (framed slate) and `davinci` (old paper) use handwritten
   typefaces; `ember` and its classic-coloured sibling `lumen` also show each
   point's residual shrinking as the model learns. Equations always keep

@@ -326,6 +326,23 @@ def test_dusk_is_the_default_theme():
     assert DEFAULT_THEME in available_themes()
 
 
+def test_the_default_theme_leaves_no_trail_behind_animated_models(sgd_linear, multiclass):
+    model, X, y = sgd_linear
+    log_model, log_X, log_y = multiclass
+    figures = [
+        visualize_lr(model, X, y, steps=8, max_frames=8),
+        visualize_logistic(log_model, log_X, log_y, steps=8, max_frames=8),
+    ]
+    assert get_skin("dusk").effects.trail == 0
+    for figure in figures:
+        report = figure.layout.meta["mlektic_visual"]["skin"]
+        assert report["name"] == "dusk"
+        assert "trail" not in report["effects"]["applied"]
+        assert not any("TRAIL" in str(trace.uid or "") for trace in figure.data)
+    # Motion skins that ask for a trail keep it.
+    assert get_skin("aurora").effects.trail > 0
+
+
 def test_an_omitted_theme_paints_every_figure_with_dusk(sgd_linear, multiclass):
     model, X, y = sgd_linear
     log_model, log_X, log_y = multiclass

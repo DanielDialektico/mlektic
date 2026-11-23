@@ -1548,8 +1548,8 @@ control, and panel sits exactly where `classic` puts it. Compare each case with
 the classic figure of the same model. `aurora` also adds motion cues: a fading
 trail of earlier model states and a glow under the model line, the loss curve's
 future dotted with a marker on the current step, and equation numbers coloured
-green when they rose and coral when they fell since their last change. `dusk`
-keeps those cues in muted colours; `chalkboard` and `davinci` add textured
+green when they rose and coral when they fell since their last change. `dusk`,
+the default theme, keeps those cues in muted colours without the trail; `chalkboard` and `davinci` add textured
 backdrops and handwritten typefaces (equations keep MathJax's font); `ember`
 and `lumen` add residual segments that shrink as the model learns. Hover
 over Play/Pause in each: the label must stay readable.
@@ -1613,7 +1613,7 @@ over Play/Pause in each: the label must stay readable.
         ),
         (
             "STYLE-SKIN-DUSK-BINARY",
-            "muted trail, glow, loss progress, and equation colours on a binary sigmoid",
+            "default theme: glow, loss progress, and equation colours on a binary sigmoid, no trail",
             "from notebooks._support import binary_case\nb1=binary_case(1)\n"
             "display(visualize_logistic(b1.model,b1.X,b1.y,steps=20,max_frames=20,show_loss=True,theme='dusk'))",
         ),

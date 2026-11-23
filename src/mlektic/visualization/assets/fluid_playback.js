@@ -19,7 +19,7 @@
  */
 (function () {
   "use strict";
-  var VERSION = 4;
+  var VERSION = 5;
   if (window.__mlekticFluid && window.__mlekticFluid.version >= VERSION) return;
 
   // Traces a redraw-free animate cannot move: WebGL traces, and raster traces
@@ -73,7 +73,10 @@
       if (!p.el) return origQueue.call(H, a[0], a[1], a[3], a[4], a[5]);
       var el = p.el, k = key(el);
       return origQueue.call(H, a[0], a[1], ["Typeset", H, el], function () {
-        if (el.querySelector(".MathJax_SVG")) cache.set(k, el.innerHTML);
+        // Must not throw: it would suspend the page's MathJax queue.
+        try {
+          if (el.querySelector(".MathJax_SVG")) cache.set(k, el.innerHTML);
+        } catch (err) { /* keep the queue running */ }
       }, a[3], a[4], a[5]);
     };
     return true;
@@ -93,13 +96,32 @@
     var px = parseInt(size, 10);
     return { size: px, tex: tex, key: px + "px|" + tex };
   }
+  // MathJax 2 runs one queue for the whole page, and Plotly adds a figure's
+  // frames (and runs this controller) only after every equation of its first
+  // draw has left that queue. Typesetting ahead is an optimisation, so it must
+  // never stand in front of a figure that is still drawing: it waits until the
+  // queue is empty, keeps at most one equation in it for the whole page, and
+  // stops for good if MathJax does not answer.
+  function aheadState() {
+    var MJ = window.MathJax;
+    return MJ.__mlekticAhead || (MJ.__mlekticAhead = { busy: false, stalled: false });
+  }
+  function mathQueueIdle() {
+    var q = window.MathJax && window.MathJax.Hub && window.MathJax.Hub.queue;
+    // An unknown MathJax build: do not guess, skip the optimisation.
+    if (!q || !Array.isArray(q.queue)) return false;
+    return !q.pending && !q.running && q.queue.length === 0;
+  }
   // Typeset one equation through MathJax's queue with Plotly's settings and
-  // keep the output under Plotly's key.
+  // keep the output under Plotly's key. `done(true)` lets the caller continue;
+  // `done(false)` tells it to stop typesetting ahead.
   var aheadCount = 0;
   function typesetAhead(job, done) {
-    var MJ = window.MathJax, H = MJ.Hub, cache = MJ.__mlekticCache;
-    if (cache.has(job.key)) { done(); return; }
-    var div = document.createElement("div"), saved, finished = false;
+    var MJ = window.MathJax, H = MJ.Hub, cache = MJ.__mlekticCache, state = aheadState();
+    if (cache.has(job.key)) { done(true); return; }
+    if (state.stalled) { done(false); return; }
+    state.busy = true;
+    var div = document.createElement("div"), saved = null, answered = false;
     div.id = "mlektic-math-ahead-" + (++aheadCount);
     // Off-screen, not merely hidden: MathJax may mark its own output visible,
     // and a page that shares one document (VS Code) would then show it.
@@ -108,29 +130,44 @@
     div.style.fontSize = job.size + "px";
     div.textContent = job.tex;
     document.body.appendChild(div);
-    // Whatever MathJax does, the scratch node leaves and the queue moves on.
-    function finish() {
-      if (finished) return;
-      finished = true;
+    // MathJax did not answer in time: stop typesetting ahead on this page.
+    // The node stays until MathJax reaches it, so it never typesets a node
+    // that has left the document.
+    var timer = setTimeout(function () {
+      if (answered) return;
+      answered = true;
+      state.stalled = true;
+      done(false);
+    }, 8000);
+    function finished() {
+      clearTimeout(timer);
       if (div.parentNode) div.parentNode.removeChild(div);
-      done();
+      state.busy = false;
+      if (answered) return;
+      answered = true;
+      done(true);
     }
-    setTimeout(finish, 8000);
+    // No callback here may throw: an exception inside a MathJax 2 queue
+    // callback suspends the page's queue, and every later equation with it.
     H.Queue(function () {
-      saved = { delay: H.processSectionDelay, config: {
-        messageStyle: H.config.messageStyle,
-        tex2jax: { inlineMath: H.config.tex2jax && H.config.tex2jax.inlineMath },
-        displayAlign: H.config.displayAlign,
-      } };
-      if (H.processSectionDelay !== undefined) H.processSectionDelay = 0;
-      return H.Config({ messageStyle: "none", tex2jax: { inlineMath: INLINE_MATH }, displayAlign: "left" });
+      try {
+        var config = { messageStyle: H.config.messageStyle, displayAlign: H.config.displayAlign };
+        if (H.config.tex2jax && H.config.tex2jax.inlineMath) config.tex2jax = { inlineMath: H.config.tex2jax.inlineMath };
+        saved = { delay: H.processSectionDelay, config: config };
+        if (H.processSectionDelay !== undefined) H.processSectionDelay = 0;
+        return H.Config({ messageStyle: "none", tex2jax: { inlineMath: INLINE_MATH }, displayAlign: "left" });
+      } catch (err) { return undefined; }
     }, ["Typeset", H, div], function () {
-      if (div.querySelector(".MathJax_SVG") && !cache.has(job.key)) cache.set(job.key, div.innerHTML);
-      if (div.parentNode) div.parentNode.removeChild(div);
+      try {
+        if (div.querySelector(".MathJax_SVG") && !cache.has(job.key)) cache.set(job.key, div.innerHTML);
+      } catch (err) { /* keep the queue running */ }
     }, function () {
-      if (saved && saved.delay !== undefined) H.processSectionDelay = saved.delay;
-      return saved ? H.Config(saved.config) : undefined;
-    }, finish);
+      try {
+        if (!saved) return undefined;
+        if (saved.delay !== undefined) H.processSectionDelay = saved.delay;
+        return H.Config(saved.config);
+      } catch (err) { return undefined; }
+    }, finished);
   }
 
   // ── frame helpers ───────────────────────────────────────────────────────
@@ -474,12 +511,18 @@
           if (++waits < 50) setTimeout(next, 200);
           return;
         }
-        // Never queue MathJax work in front of something the student sees.
+        if (aheadState().stalled) return;
+        // Never queue MathJax work in front of something the student sees, or
+        // in front of another figure's first draw.
         if (playing || busy || stockAnimating() || performance.now() - lastInput < QUIET_MS) {
           setTimeout(next, 200);
           return;
         }
-        typesetAhead(jobs[i++], function () { idle(next); });
+        if (aheadState().busy || !mathQueueIdle()) {
+          setTimeout(next, 500);
+          return;
+        }
+        typesetAhead(jobs[i++], function (ok) { if (ok) idle(next); });
       })();
     }
 

@@ -142,6 +142,83 @@ def test_controls_survive_a_redraw_by_another_plotly_copy(tmp_path):
     assert result["listeners"] == {"slider": 1, "buttons": 1, "follower": 1}
 
 
+# Plotly adds a figure's frames, and runs the controller, only after every
+# equation of its first draw has left MathJax's page-wide queue. Typesetting
+# ahead must never stand in that queue in front of another figure. Timers run
+# 100x faster here, so the 8 s stall limit is 80 ms.
+_MATHJAX_QUEUE_HARNESS = r"""
+const fs = require("fs");
+const realTimeout = setTimeout;
+global.setTimeout = (fn, ms) => realTimeout(fn, (ms || 0) / 100);
+global.window = global;
+const queued = [];
+const attached = new Set();
+global.MathJax = { Hub: {
+  queue: { pending: 0, running: 0, queue: ["another figure's equation"] },
+  config: { messageStyle: "normal", displayAlign: "center" },
+  Config() {}, Typeset() {}, Queue(...args) { queued.push(args); },
+} };
+function node() {
+  const el = { style: {}, setAttribute() {}, querySelector: () => null, innerHTML: "" };
+  Object.defineProperty(el, "parentNode", { get: () => (attached.has(el) ? global.document.body : null) });
+  return el;
+}
+global.document = {
+  body: { contains: () => true, appendChild: (el) => attached.add(el), removeChild: (el) => attached.delete(el) },
+  createElement: node,
+};
+const frames = ["0", "1", "2"].map((name) => ({
+  name, data: [{ x: [1] }], layout: { annotations: [{ text: "$a_" + name + "$" }] },
+}));
+const gd = {
+  data: [{ type: "scatter" }], layout: {}, _context: {},
+  _transitionData: { _frames: frames, _frameHash: Object.fromEntries(frames.map((f) => [f.name, f])), _frameQueue: [] },
+  addEventListener() {}, on() {},
+};
+gd._fullLayout = { annotations: [{ font: { size: 14 } }], font: { size: 12 }, width: 600, height: 400 };
+global.Plotly = { animate: () => Promise.resolve() };
+eval(fs.readFileSync(process.argv[2], "utf8"));
+window.__mlekticFluid.mount(gd, {});
+const wait = (ms) => new Promise((resolve) => realTimeout(resolve, ms));
+(async () => {
+  const result = {};
+  await wait(150);
+  result.whileBusy = queued.length;
+  MathJax.Hub.queue.queue = [];
+  await wait(150);
+  result.inFlight = queued.length;
+  result.attachedBeforeAnswer = attached.size;
+  await wait(150);  // past the stall limit with MathJax still silent
+  result.afterStall = queued.length;
+  result.attachedAfterStall = attached.size;
+  const job = queued[0];
+  job[0](); job[2](); job[3](); job[4]();  // MathJax finally reaches the job
+  result.attachedAfterAnswer = attached.size;
+  await wait(150);
+  result.afterAnswer = queued.length;
+  console.log(JSON.stringify(result));
+})();
+"""
+
+
+def test_typesetting_ahead_never_queues_in_front_of_other_figures(tmp_path):
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not installed")
+    harness = tmp_path / "mathjax_queue.js"
+    harness.write_text(_MATHJAX_QUEUE_HARNESS, encoding="utf-8")
+    run = subprocess.run([node, str(harness), str(_ASSET)], check=True, capture_output=True, text=True)
+    result = json.loads(run.stdout.strip().splitlines()[-1])
+    assert result["whileBusy"] == 0  # MathJax was busy with another figure: nothing queued
+    assert result["inFlight"] == 1  # one equation at a time
+    assert result["attachedBeforeAnswer"] == 1
+    # MathJax did not answer: no further job, and its node stays until MathJax reaches it.
+    assert result["afterStall"] == 1
+    assert result["attachedAfterStall"] == 1
+    assert result["attachedAfterAnswer"] == 0
+    assert result["afterAnswer"] == 1  # stalled once: typesetting ahead stays off
+
+
 def test_script_mounts_on_the_plot_placeholder():
     assert fluid_playback_script().endswith(
         "window.__mlekticFluid && window.__mlekticFluid.mount(document.getElementById('{plot_id}'), {autoplay: false});"

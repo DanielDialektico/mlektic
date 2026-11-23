@@ -71,6 +71,8 @@ Added
 Fixed
 -----
 
+- the default theme, ``dusk``, no longer leaves a trail of earlier model states
+  behind animated curves and lines; the other motion skins keep theirs;
 - legends no longer sit on the data or on the labels beside them: each legend
   placed inside a plot is checked against every point and line it draws in
   every frame, the plot's line shapes, and its annotations (metric cards, the
@@ -83,6 +85,14 @@ Fixed
   settles (possible in VS Code, where notebook outputs share one page); Play
   and the slider move on after a bounded wait, equations typeset ahead of time
   render off-screen, and the controller is version 4;
+- a one-input ``visualize_logistic`` with a threshold other than 0.5 no longer
+  stays frozen in notebooks with its threshold label in the top-left corner:
+  the label is plain text (``τ = t``), so the figure's frames and controller no
+  longer wait for MathJax's page-wide queue;
+- typesetting equations ahead of time (controller version 5) only uses
+  MathJax's page-wide queue when it is empty, keeps at most one equation in it,
+  stops if MathJax does not answer, and cannot suspend the queue for the other
+  figures on the page;
 - pipelines that expand features (for example ``PolynomialFeatures``) are
   written in their transformed features :math:`\mathbf u=\phi(\mathbf x)` in
   every linear and logistic view: every transformed term appears, multiclass

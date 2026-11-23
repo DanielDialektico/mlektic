@@ -78,6 +78,9 @@ All notable changes to this project will be documented in this file.
   colours travel with each figure (see Fixed).
 
 ### Fixed
+- The default theme, ``dusk``, no longer leaves a trail of earlier model states
+  behind animated curves and lines: only the current model is drawn. Aurora,
+  ember, lumen, and the other motion skins keep their trails.
 - Legends no longer sit on the data or on the labels they share a plot with.
   Every built figure checks each legend placed inside a plot against every
   point and line it draws in every frame, the line shapes of that plot, and
@@ -96,6 +99,20 @@ All notable changes to this project will be documented in this file.
   page: Play and the slider move on after a bounded wait. Equations typeset
   ahead of time are rendered off-screen, so they can never show up on the page.
   The controller is version 4, so a page with older outputs picks up the fix.
+- ``visualize_logistic(..., threshold=t)`` with one input and ``t`` other than
+  0.5 could stay frozen in a notebook: Play and the slider did nothing and the
+  threshold label sat in the top-left corner. Plotly adds a figure's frames, and
+  runs the fluid controller, only after every MathJax job of its first draw has
+  finished, and the LaTeX label ``$\tau=t$`` was the figure's only equation
+  not already typeset on the page, so it waited in MathJax's page-wide queue.
+  The label is now plain text (``τ = t``) at the right edge of the plot (and
+  beside the 3-D surface), so the threshold adds no MathJax work.
+- Typesetting equations ahead of time (fluid controller version 5) never stands
+  in front of another figure in MathJax's page-wide queue: it waits until the
+  queue is empty, keeps at most one equation in it for the whole page, stops
+  for good if MathJax does not answer within 8 s, never removes a node MathJax
+  has not reached yet, and none of its queue callbacks can throw (an exception
+  there suspends MathJax 2's queue for every figure on the page).
 - Pipelines that expand features (for example ``PolynomialFeatures``) are
   written in their transformed features u = phi(x) in every linear and
   logistic view, as the course notation defines them. Two-input linear,
