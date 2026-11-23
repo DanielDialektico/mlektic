@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ..design import get_theme_tokens
+from ..feature_terms import numeric_sum_latex, symbolic_sum_latex
 from ..theme import (
     create_annotation,
     data_3d_marker_style,
@@ -39,9 +40,17 @@ def build_plane_lr_figure(
     dec=4,
     frame_duration=80,
     theme=None,
+    equation_w_hist=None,
+    equation_b_hist=None,
+    equation_feature_names=None,
 ):
     """
     2D (plane) LR visualization.
+
+    ``equation_*`` describe a model linear in transformed features
+    ``u = φ(x)`` (canonical names such as ``x_1^2``): the surface keeps the
+    estimator's predictions over raw ``(x_1, x_2)`` and the equation is written
+    with every transformed coefficient.
 
     Robust mode (preferred):
       - Provide z_plane_hist + (X1g, X2g) => plot uses predictions, works with ANY sklearn Pipeline/transform.
@@ -86,13 +95,26 @@ def build_plane_lr_figure(
         def z_plane(t: int):
             return z_plane_hist[t]
 
+        transformed_names = None
+        if equation_feature_names is not None and equation_w_hist is not None and equation_b_hist is not None:
+            names = [str(name) for name in equation_feature_names]
+            eq_w = np.asarray(equation_w_hist, dtype=float)
+            eq_b = np.asarray(equation_b_hist, dtype=float).ravel()
+            if names != ["x_1", "x_2"] and eq_w.shape == (steps_n, len(names)) and eq_b.size == steps_n:
+                transformed_names = names
+
         def theta_formula_text():
+            if transformed_names is not None:
+                score = symbolic_sum_latex(transformed_names, lambda j: rf"\theta_{{{j}}}", r"\theta_0")
+                return rf"$\hat{{y}}={score}$"
             return r"$\hat{y}=\theta_0+\theta_1 x_1+\theta_2 x_2$"
 
         # Optional theta display if consistent (accept (T,2) only)
         w_disp = None
         b_disp = None
-        if w_hist is not None and b_hist is not None:
+        if transformed_names is not None:
+            pass
+        elif w_hist is not None and b_hist is not None:
             w_arr = np.asarray(w_hist, dtype=float)
             b_arr = np.asarray(b_hist, dtype=float).ravel()
             if w_arr.ndim == 2 and w_arr.shape == (steps_n, 2) and b_arr.size == steps_n:
@@ -100,6 +122,8 @@ def build_plane_lr_figure(
                 b_disp = b_arr
 
         def eq_text(t: int):
+            if transformed_names is not None:
+                return rf"$\hat{{y}}={numeric_sum_latex(eq_w[t], eq_b[t], transformed_names, dec, maximum=5)}$"
             if w_disp is None:
                 return r"$\hat{y} = f(x_1,x_2)$"
             w1 = float(w_disp[t, 0])

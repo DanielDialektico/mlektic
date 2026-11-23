@@ -49,6 +49,21 @@ def _text_color(color: Any, palette: SkinPalette) -> str | None:
     return palette.text if lightness >= 0.6 or lightness <= 0.15 else palette.muted
 
 
+def skin_hover_colors(palette: SkinPalette) -> tuple[str, str, str]:
+    """Return ``(background, text, border)`` for hover labels.
+
+    The background is the skin background moved 10% toward its text colour and
+    made solid, so the label stands out from the canvas while the skin's text
+    colour keeps full contrast on it: light on dark skins, dark on light ones.
+    """
+    background = _channels(palette.background)
+    text = _channels(palette.text)
+    if background is None or text is None:
+        return palette.background, palette.text, palette.axis
+    mixed = tuple(round(b + (t - b) * 0.10) for b, t in zip(background, text))
+    return "#{:02x}{:02x}{:02x}".format(*mixed), palette.text, palette.axis
+
+
 def _recolor_muted(text: str, palette: SkinPalette) -> str:
     return _CLASSIC_MUTED.sub(lambda m: m.group(1) + palette.muted, text)
 

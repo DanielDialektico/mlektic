@@ -8,7 +8,8 @@ import numpy as np
 
 from ..mathematics import attach_math_contract, build_linear_math_contract
 from ..services.linear_history import fit_history
-from ..visualization.design import apply_visual_system, resolve_visual_spec
+from ..visualization.design import apply_visual_system, default_theme, resolve_visual_spec
+from ..visualization.feature_terms import transformed_feature_space
 from ..visualization.linear.prediction import explain_lr_prediction
 from ..visualization.linear.router import build_lr_figure
 from ..visualization.theme import (
@@ -18,6 +19,7 @@ from ..visualization.theme import (
     attach_highlight,
     configure_animation,
 )
+from ..visualization.titles import linear_title
 
 
 def visualize_lr(
@@ -132,8 +134,9 @@ def visualize_lr(
             columns are used automatically.
         sample_index (int | None, optional): Training observation used for the
             visible contribution calculation. ``None`` selects index 0.
-        theme (str | None, optional): ``"classic"`` (default), ``"academic"``,
-            ``"classroom"``, ``"compact"``, or ``"accessible"``.
+        theme (str | None, optional): Layout theme (``"classic"``, ``"academic"``,
+            ``"classroom"``, ``"compact"``, ``"accessible"``) or skin. ``None``
+            uses the ``"dusk"`` skin; pass ``"classic"`` for the unskinned dashboard.
         format (str, optional): Composition preset: ``"dashboard"`` keeps the
             existing figure, ``"compact"`` reduces unused space, and
             ``"report"`` produces a static final-state composition.
@@ -153,6 +156,7 @@ def visualize_lr(
     Returns:
         plotly.graph_objects.Figure: The animated Plotly figure object.
     """
+    theme = default_theme(theme)
     visual_spec = resolve_visual_spec(
         detail=detail,
         theme=theme,
@@ -228,12 +232,13 @@ def visualize_lr(
         dec=dec,
     )
 
+    transformed = transformed_feature_space(trained_estimator, X, math_contract) if dimensions > 1 else {}
     fig = build_lr_figure(
         X,
         y,
         history=hist,
         show_loss=show_loss,
-        title=title,
+        title=title if title is not None else linear_title(trained_estimator, X),
         strict_loss=strict_loss,
         dec=dec,
         frame_duration=visual_frame_duration,
@@ -243,8 +248,9 @@ def visualize_lr(
         equation_feature_names=(
             math_contract["symbolic_feature_names"]
             if dimensions == 1 and math_contract["dimensions"]["features"] > 1
-            else None
+            else transformed.get("feature_names")
         ),
+        transformed_X=transformed.get("transformed_X"),
         theme=theme,
     )
 

@@ -17,7 +17,9 @@ import plotly.graph_objects as go
 from . import roles
 from .definitions import Skin
 
-_NUMBER = re.compile(r"(?<![\\\w.])[+-]?\d+\.\d+")
+# A number may follow a LaTeX row break ``\\`` (keeping its sign), but not a
+# single backslash, letter, digit, or point that makes it part of another token.
+_NUMBER = re.compile(r"(?<![\w.])(?<!(?<!\\)\\)[+-]?\d+\.\d+")
 _TRAIL_SPAN = 30  # roughly how many trail strides fit in one playback
 # Trail and glow are soft, wide decorations; this many points per line is
 # visually exact for them and keeps every frame's payload small.

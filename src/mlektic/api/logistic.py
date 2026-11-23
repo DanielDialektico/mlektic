@@ -12,7 +12,8 @@ from ..mathematics import (
     build_logistic_math_contract,
 )
 from ..services.logistic_history import fit_history_logistic
-from ..visualization.design import apply_visual_system, resolve_visual_spec
+from ..visualization.design import apply_visual_system, default_theme, resolve_visual_spec
+from ..visualization.feature_terms import transformed_feature_space
 from ..visualization.logistic.prediction import explain_logistic_prediction
 from ..visualization.logistic.router import build_logistic_figure
 from ..visualization.theme import (
@@ -22,6 +23,7 @@ from ..visualization.theme import (
     attach_highlight,
     configure_animation,
 )
+from ..visualization.titles import logistic_title
 
 
 def visualize_logistic(
@@ -132,7 +134,8 @@ def visualize_logistic(
             as ``x_1`` and ``x_1^2``. DataFrame columns are used automatically.
         sample_index: Training observation used for the visible substitution;
             ``None`` selects index 0.
-        theme: Optional visualization theme.
+        theme: Layout theme or skin. ``None`` uses the ``"dusk"`` skin; pass
+            ``"classic"`` for the unskinned dashboard.
         format: ``"dashboard"``, ``"compact"``, or the static final-state
             ``"report"`` composition.
         density: Optional alias for mathematical ``detail``.
@@ -146,6 +149,7 @@ def visualize_logistic(
     Returns:
         An animated Plotly figure with mathematically matched definitions.
     """
+    theme = default_theme(theme)
     visual_spec = resolve_visual_spec(
         detail=detail,
         theme=theme,
@@ -217,13 +221,14 @@ def visualize_logistic(
         history=hist,
         show_loss=show_loss,
         show_class_labels=show_class_labels,
-        title=title,
+        title=title if title is not None else logistic_title(trained_estimator, X),
         strict_loss=strict_loss,
         dec=dec,
         frame_duration=frame_duration,
         max_theta_cols=max_theta_cols,
         size=visual_spec.size,
         theme=theme,
+        **transformed_feature_space(trained_estimator, X, math_contract),
     )
 
     X_array = np.asarray(X)

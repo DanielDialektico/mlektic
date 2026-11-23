@@ -19,7 +19,7 @@
  */
 (function () {
   "use strict";
-  var VERSION = 3;
+  var VERSION = 4;
   if (window.__mlekticFluid && window.__mlekticFluid.version >= VERSION) return;
 
   // Traces a redraw-free animate cannot move: WebGL traces, and raster traces
@@ -99,13 +99,23 @@
   function typesetAhead(job, done) {
     var MJ = window.MathJax, H = MJ.Hub, cache = MJ.__mlekticCache;
     if (cache.has(job.key)) { done(); return; }
-    var div = document.createElement("div"), saved;
+    var div = document.createElement("div"), saved, finished = false;
     div.id = "mlektic-math-ahead-" + (++aheadCount);
-    div.style.visibility = "hidden";
-    div.style.position = "absolute";
+    // Off-screen, not merely hidden: MathJax may mark its own output visible,
+    // and a page that shares one document (VS Code) would then show it.
+    div.setAttribute("aria-hidden", "true");
+    div.style.cssText = "position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none;";
     div.style.fontSize = job.size + "px";
     div.textContent = job.tex;
     document.body.appendChild(div);
+    // Whatever MathJax does, the scratch node leaves and the queue moves on.
+    function finish() {
+      if (finished) return;
+      finished = true;
+      if (div.parentNode) div.parentNode.removeChild(div);
+      done();
+    }
+    setTimeout(finish, 8000);
     H.Queue(function () {
       saved = { delay: H.processSectionDelay, config: {
         messageStyle: H.config.messageStyle,
@@ -116,11 +126,11 @@
       return H.Config({ messageStyle: "none", tex2jax: { inlineMath: INLINE_MATH }, displayAlign: "left" });
     }, ["Typeset", H, div], function () {
       if (div.querySelector(".MathJax_SVG") && !cache.has(job.key)) cache.set(job.key, div.innerHTML);
-      div.remove();
+      if (div.parentNode) div.parentNode.removeChild(div);
     }, function () {
-      if (saved.delay !== undefined) H.processSectionDelay = saved.delay;
-      return H.Config(saved.config);
-    }, done);
+      if (saved && saved.delay !== undefined) H.processSectionDelay = saved.delay;
+      return saved ? H.Config(saved.config) : undefined;
+    }, finish);
   }
 
   // ── frame helpers ───────────────────────────────────────────────────────
@@ -317,6 +327,19 @@
         announce(gd, name, f, frameOpts, transitionOpts);
       });
     }
+    // A frame whose Plotly or MathJax promise never settles (a shared webview
+    // that throttles rendering, a second Plotly.js copy) must not end playback
+    // or lock the slider: past the limit the controller moves on regardless.
+    function bounded(name, ms, redraw, limit) {
+      return new Promise(function (resolve) {
+        var settled = false;
+        function settle() { if (!settled) { settled = true; resolve(); } }
+        setTimeout(settle, limit);
+        var result;
+        try { result = apply(name, ms, redraw); } catch (err) { settle(); throw err; }
+        Promise.resolve(result).then(settle, settle);
+      });
+    }
     // Coalesce slider drags: only the newest requested frame is drawn.
     function request(name) {
       pendingName = name;
@@ -334,7 +357,7 @@
           if (pendingName !== null) drain(); else busy = false;
         };
         try {
-          apply(n, 0, true).then(next, next);
+          bounded(n, 0, true, 4000).then(next);
         } catch (err) {
           // A synchronous failure must not leave the controller busy forever.
           busy = false;
@@ -364,7 +387,7 @@
           setTimeout(tick, Math.max(0, play.frame - (performance.now() - t0)));
         };
         try {
-          apply(order[i++], Math.min(play.transition, play.frame), play.redraw).then(done, done);
+          bounded(order[i++], Math.min(play.transition, play.frame), play.redraw, Math.max(4000, 4 * play.frame)).then(done);
         } catch (err) {
           playing = false;
           throw err;

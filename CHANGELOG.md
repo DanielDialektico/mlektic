@@ -31,6 +31,16 @@ All notable changes to this project will be documented in this file.
   covering the exact values, routing, payload size, and skins of the new views.
 
 ### Changed
+- ``dusk`` is now the default theme of every figure: ``visualize_lr``,
+  ``visualize_logistic``, ``explain_lr_prediction``,
+  ``explain_logistic_prediction``, and every neural figure paint with ``dusk``
+  when ``theme`` is omitted, producing exactly the same figure as
+  ``theme="dusk"``. Skins never change geometry, so every element keeps the
+  classic position and size. Pass ``theme="classic"`` for the previous
+  unskinned colours. The default lives in ``DEFAULT_THEME`` and is resolved by
+  ``default_theme`` in ``mlektic.visualization.design``; tests that check the
+  classic colour contract now request ``theme="classic"`` explicitly, and new
+  tests check that an omitted theme equals ``theme="dusk"``.
 - Neural figures now follow every skin: their dark-canvas encodings are
   translated to the skin background (neutral greys keep their relative place
   between background and text; on light skins such as ``editorial`` and
@@ -68,6 +78,73 @@ All notable changes to this project will be documented in this file.
   colours travel with each figure (see Fixed).
 
 ### Fixed
+- Legends no longer sit on the data or on the labels they share a plot with.
+  Every built figure checks each legend placed inside a plot against every
+  point and line it draws in every frame, the line shapes of that plot, and
+  its annotations (metric cards, the threshold label), and moves the legend to
+  the first free corner or edge midpoint, or else to free space inside the
+  plot. Binary figures whose class 0 lay
+  under the bottom-right legend, and the loss legend that covered the
+  Log-loss/Accuracy/F1 cards of ``visualize_logistic(..., show_loss=True)``,
+  now keep both readable. ``layout.meta["mlektic_visual"]["legend_placement"]``
+  records each decision.
+- The decision-threshold line (``threshold`` other than 0.5) is drawn in the
+  theme's text colour; it was white and disappeared on ``editorial`` and
+  ``davinci``.
+- Fluid playback no longer stops when a frame's Plotly or MathJax promise never
+  settles, which can happen in VS Code, where every notebook output shares one
+  page: Play and the slider move on after a bounded wait. Equations typeset
+  ahead of time are rendered off-screen, so they can never show up on the page.
+  The controller is version 4, so a page with older outputs picks up the fix.
+- Pipelines that expand features (for example ``PolynomialFeatures``) are
+  written in their transformed features u = phi(x) in every linear and
+  logistic view, as the course notation defines them. Two-input linear,
+  binary, and multiclass views wrote ``theta_1 x_1 + theta_2 x_2`` with only
+  the first coefficients (a 2x3 Theta for a five-feature model), and the 3-input
+  linear, binary, and multiclass views and the one-input multiclass view
+  raised errors. Curves and surfaces stay in the raw inputs (they already came
+  from the estimator); equations now list every transformed term
+  (``x_1^2``, ``x_1 x_2``), long sums keep their first and last terms around
+  ``\cdots``, multiclass matrices are ``Theta in R^{D x K}``, and the N-D views
+  run on u with each coordinate named. Incremental logistic replays record
+  their transformed coefficients too.
+- ``explain_lr_prediction`` and ``explain_logistic_prediction`` accept such
+  pipelines. Input shows x and u = phi(x) with the transformed terms,
+  Substitution writes theta_0 + sum theta_j u_j (and sigma or softmax for
+  classification) with the fitted numbers, and the curve, surface, and decision
+  boundaries come from the estimator over the raw inputs (a polynomial boundary
+  can have several pieces). The substituted value is checked against
+  ``predict``/``predict_proba`` before anything is drawn. Wider maps use the
+  coefficient views on u. Previously both explainers raised a dimension error.
+- The binary logistic prediction explainer with three or more inputs used the
+  two-input surface view and silently dropped x_3, x_4, ... from the
+  substitution of z. It now has a coefficient view in which every input enters
+  z exactly.
+- Prediction explainers now carry the figure stylesheet that keeps button
+  colours, so their active stage button is readable in dark themes and skins
+  (Plotly filled it near-white under a light label). Where the stylesheet
+  cannot run, light-label themes drop Plotly's active-button fill.
+- Notebook cases no longer pin ``theme='academic'`` or ``'classroom'`` (93
+  cases written before ``dusk`` became the default), so they show the default
+  theme; theme, skin, and accessibility cases keep their explicit themes.
+- The equation-change colouring of skins kept a negative number's sign outside
+  its colour when the number started a matrix row (after the row break), so the
+  magnitude alone was compared and could be coloured as an increase.
+- Default titles describe the fitted model instead of only counting input
+  columns. A ``PolynomialFeatures(2) -> LinearRegression`` pipeline on one
+  column was titled "Linear Regression (Simple, 1 variable)"; it is now
+  "Polynomial Regression (degree 2, 1 variable → 2 features)". Titles name the
+  polynomial degree, other non-affine preprocessing ("on Transformed
+  Features"), the transformed dimension, the regularized family (Ridge, Lasso,
+  Elastic-Net), and K for multiclass logistic models, in ``visualize_lr``,
+  ``visualize_logistic``, and both prediction explainers. Affine scaling keeps
+  the plain titles. A title longer than its canvas shrinks (to 14 px at
+  least) and clears the Play/Pause buttons.
+- Hover labels are readable in every theme and skin. Plotly filled each box
+  with its trace colour, so a light data marker gave a light box with light
+  text on dark skins, and a dark marker a dark box with dark text on light
+  ones. Every label now uses one solid theme background (the skin background
+  moved 10% toward its text colour) with the theme's text colour on top.
 - The slider and Play/Pause no longer freeze on notebook pages that show
   several figures, such as VS Code or classic Jupyter. Each output loads its own
   copy of Plotly.js, and the copy that ``window.Plotly`` points to replaced the

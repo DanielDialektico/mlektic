@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ...utils.math import _sigmoid
+from ..feature_terms import numeric_sum_latex, symbolic_sum_latex
 from ..theme import (
     create_annotation,
     data_marker_style,
@@ -39,8 +40,15 @@ def build_binary_simple_logistic_figure(
     jitter=0.03,
     frame_duration=80,
     theme=None,
+    feature_names=None,
 ):
-    """Internal method to build build_binary_simple_logistic_figure."""
+    """Internal method to build build_binary_simple_logistic_figure.
+
+    ``feature_names`` are the canonical transformed features (for example
+    ``["x_1", "x_1^2"]``) when the model is linear in ``u = φ(x_1)`` rather than
+    in ``x_1``; the curve stays in raw ``x_1`` and the score is written in ``u``.
+    """
+    transformed_names = list(feature_names) if feature_names is not None and len(feature_names) > 1 else None
     classes = np.asarray([0, 1] if classes is None else classes).ravel()
     if classes.size != 2:
         raise ValueError("classes must contain exactly two fitted labels.")
@@ -76,16 +84,27 @@ def build_binary_simple_logistic_figure(
         if w_hist is not None and b_hist is not None:
             w_arr = np.asarray(w_hist, dtype=float)
             b_arr = np.asarray(b_hist, dtype=float).ravel()
-            if w_arr.ndim == 2 and w_arr.shape[1] == 1:
-                w_arr = w_arr[:, 0]
-            if w_arr.ndim == 1 and w_arr.size == steps_n and b_arr.size == steps_n:
-                w_disp = w_arr
-                b_disp = b_arr
+            if transformed_names is not None:
+                if w_arr.ndim == 2 and w_arr.shape == (steps_n, len(transformed_names)) and b_arr.size == steps_n:
+                    w_disp = w_arr
+                    b_disp = b_arr
+            else:
+                if w_arr.ndim == 2 and w_arr.shape[1] == 1:
+                    w_arr = w_arr[:, 0]
+                if w_arr.ndim == 1 and w_arr.size == steps_n and b_arr.size == steps_n:
+                    w_disp = w_arr
+                    b_disp = b_arr
 
         def formula_text():
+            if transformed_names is not None:
+                score = symbolic_sum_latex(transformed_names, lambda j: rf"\theta_{{{j}}}", r"\theta_0")
+                return rf"$\hat{{p}}(Y=c_1\mid x_1)=\sigma(z),\;\; z={score}$"
             return r"$\hat{p}(Y=c_1\mid x_1)=\sigma(z),\;\; z=\theta_1x_1+\theta_0$"
 
         def eq_text(t):
+            if transformed_names is not None and w_disp is not None:
+                score = numeric_sum_latex(w_disp[t], b_disp[t], transformed_names, dec)
+                return rf"$\sigma(z)=\dfrac{{1}}{{1+e^{{-z}}}},\;\; z={score}$"
             if w_disp is None:
                 return r"$\sigma(z)=\dfrac{1}{1+e^{-z}},\;\;\hat{p}(Y=c_1\mid x_1)=f(x_1)$"
             return (

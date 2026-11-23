@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ...utils.math import _sigmoid
+from ..feature_terms import feature_map_latex, numeric_sum_latex
 from ..theme import (
     create_annotation,
     data_3d_marker_style,
@@ -41,8 +42,19 @@ def build_binary_plane_logistic_figure(
     jitter=0.03,
     frame_duration=80,
     theme=None,
+    feature_names=None,
 ):
-    """Internal method to build build_binary_plane_logistic_figure."""
+    """Internal method to build build_binary_plane_logistic_figure.
+
+    ``feature_names`` are the canonical transformed features when the model is
+    linear in ``u = φ(x)`` (for example a polynomial pipeline); the surface stays
+    in raw ``(x_1, x_2)`` and the score is written in ``u``.
+    """
+    transformed_names = (
+        list(feature_names)
+        if feature_names is not None and [str(n) for n in feature_names] != ["x_1", "x_2"]
+        else None
+    )
     classes = np.asarray([0, 1] if classes is None else classes).ravel()
     if classes.size != 2:
         raise ValueError("classes must contain exactly two fitted labels.")
@@ -83,14 +95,24 @@ def build_binary_plane_logistic_figure(
         if w_hist is not None and b_hist is not None:
             w_arr = np.asarray(w_hist, dtype=float)
             b_arr = np.asarray(b_hist, dtype=float).ravel()
-            if w_arr.ndim == 2 and w_arr.shape == (steps_n, 2) and b_arr.size == steps_n:
+            expected = len(transformed_names) if transformed_names is not None else 2
+            if w_arr.ndim == 2 and w_arr.shape == (steps_n, expected) and b_arr.size == steps_n:
                 w_disp = w_arr
                 b_disp = b_arr
 
         def formula_text():
+            if transformed_names is not None:
+                return (
+                    r"$\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z),\;\;z=\boldsymbol{\theta}^{\top}\mathbf{u}+\theta_0,\;\;"
+                    + feature_map_latex(transformed_names)
+                    + "$"
+                )
             return r"$\hat{p}(Y=c_1\mid\mathbf{x})=\sigma(z),\;\;z=\boldsymbol{\theta}^{\top}\mathbf{x}+\theta_0$"
 
         def eq_text(t):
+            if transformed_names is not None and w_disp is not None:
+                score = numeric_sum_latex(w_disp[t], b_disp[t], transformed_names, dec)
+                return rf"$\sigma(z)=\dfrac{{1}}{{1+e^{{-z}}}},\;\; z={score}$"
             if w_disp is None:
                 return r"$\hat{p}(Y=c_1\mid\mathbf{x})=f(x_1,x_2)$"
             w1 = float(w_disp[t, 0])

@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..._internal.common import _first_not_none
+from ..feature_terms import rename_features_in_figure
 from .binary_1d import build_binary_simple_logistic_figure
 from .binary_2d import build_binary_plane_logistic_figure
 from .binary_nd import build_binary_multivar_logistic_figure
@@ -51,8 +52,16 @@ def build_logistic_figure(
     size="default",
     probability_link="softmax",
     theme=None,
+    feature_names=None,
+    transformed_X=None,
 ):
-    """Build logistic figure based on data dimensionality."""
+    """Build logistic figure based on data dimensionality.
+
+    ``feature_names`` (canonical transformed names) and ``transformed_X``
+    (``u = φ(X)``) describe a model linear in transformed features. One- and
+    two-input views keep plotting raw ``x`` and write their equations in ``u``;
+    the coefficient-based N-D views run on ``u`` and rename their features.
+    """
     if not isinstance(show_class_labels, bool):
         raise TypeError("show_class_labels must be a boolean value.")
     X = np.asarray(X)
@@ -123,6 +132,7 @@ def build_logistic_figure(
                 dec=dec,
                 frame_duration=frame_duration,
                 theme=theme,
+                feature_names=feature_names,
             )
             return _attach_class_display_metadata(fig, classes, show_class_labels)
 
@@ -151,13 +161,14 @@ def build_logistic_figure(
                 dec=dec,
                 frame_duration=frame_duration,
                 theme=theme,
+                feature_names=feature_names,
             )
             return _attach_class_display_metadata(fig, classes, show_class_labels)
 
         if title is None:
             title = f"Binary Logistic Regression ({d} variables)"
         fig = build_binary_multivar_logistic_figure(
-            X,
+            X if transformed_X is None else np.asarray(transformed_X, dtype=float),
             y,
             w_hist,
             b_hist,
@@ -173,6 +184,8 @@ def build_logistic_figure(
             frame_duration=frame_duration,
             theme=theme,
         )
+        if transformed_X is not None and feature_names is not None:
+            rename_features_in_figure(fig, feature_names)
         return _attach_class_display_metadata(fig, classes, show_class_labels)
 
     # multiclass
@@ -199,6 +212,7 @@ def build_logistic_figure(
             max_theta_cols=max_theta_cols,
             probability_link=probability_link,
             theme=theme,
+            feature_names=feature_names,
         )
         return _attach_class_display_metadata(fig, classes, show_class_labels)
 
@@ -227,6 +241,7 @@ def build_logistic_figure(
             max_theta_cols=max_theta_cols,
             probability_link=probability_link,
             theme=theme,
+            feature_names=feature_names,
             size=size,
         )
         return _attach_class_display_metadata(fig, classes, show_class_labels)
@@ -234,7 +249,7 @@ def build_logistic_figure(
     if title is None:
         title = f"Multiclass Logistic Regression (K={K}, d={d})"
     fig = build_multiclass_multivar_logistic_figure(
-        X,
+        X if transformed_X is None else np.asarray(transformed_X, dtype=float),
         y,
         w_hist,
         b_hist,
@@ -253,6 +268,8 @@ def build_logistic_figure(
         probability_link=probability_link,
         theme=theme,
     )
+    if transformed_X is not None and feature_names is not None:
+        rename_features_in_figure(fig, feature_names)
     return _attach_class_display_metadata(fig, classes, show_class_labels)
 
 

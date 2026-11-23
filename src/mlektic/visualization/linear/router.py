@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..._internal.common import _first_not_none
+from ..feature_terms import rename_features_in_figure
 from .multivar import build_multivar_lr_figure
 from .plane import build_plane_lr_figure
 from .simple import build_simple_lr_figure
@@ -37,6 +38,7 @@ def build_lr_figure(
     equation_b_hist=None,
     equation_feature_names=None,
     theme=None,
+    transformed_X=None,
 ):
     """
     Route to the appropriate visualization figure based on feature dimensions.
@@ -75,6 +77,9 @@ def build_lr_figure(
         equation_feature_names (Sequence[str] | None, optional): Canonical feature
             symbols used in the evolving equation.
         theme (str | None, optional): Visualization theme name. Defaults to None.
+        transformed_X (np.ndarray | None, optional): ``u = φ(X)`` for a model
+            linear in transformed features. With ``d > 2`` the coefficient view
+            runs on it and names each coordinate by ``equation_feature_names``.
 
     Returns:
         plotly.graph_objects.Figure: The fully constructed Plotly figure.
@@ -175,7 +180,35 @@ def build_lr_figure(
             dec=dec,
             frame_duration=frame_duration,
             theme=theme,
+            equation_w_hist=equation_w_hist,
+            equation_b_hist=equation_b_hist,
+            equation_feature_names=equation_feature_names,
         )
+
+    if d > 2 and transformed_X is not None and equation_feature_names is not None:
+        # The model is linear in u = φ(x): the coefficient view runs on u and
+        # names each coordinate by its transformed feature (x_1^2, x_1 x_2, ...).
+        if equation_w_hist is None or equation_b_hist is None:
+            raise ValueError("A transformed-feature view needs equation_w_hist and equation_b_hist.")
+        if title is None:
+            title = f"Multivariable Linear Regression Model ({d} variables)"
+        figure = build_multivar_lr_figure(
+            np.asarray(transformed_X, dtype=float),
+            y,
+            np.asarray(equation_w_hist, dtype=float),
+            b_hist=np.asarray(equation_b_hist, dtype=float).ravel(),
+            loss_hist=loss_hist,
+            metrics_hist=metrics_hist,
+            show_loss=show_loss,
+            history_kind=history_kind,
+            title=title,
+            strict_loss=strict_loss,
+            dec=dec,
+            frame_duration=frame_duration,
+            theme=theme,
+        )
+        rename_features_in_figure(figure, equation_feature_names)
+        return figure
 
     if d > 2:
         # For d > 2 this view is coefficient-based; there is no equivalent prediction grid.

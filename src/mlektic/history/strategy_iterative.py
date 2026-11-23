@@ -211,17 +211,20 @@ class IterativeCapture(HistoryCaptureStrategy):
 
         loss_hist = np.zeros(steps, dtype=float)
         w_hist = b_hist = None
+        # Coefficients live in the model's own feature space: u = φ(x) for a
+        # pipeline that expands features (for example PolynomialFeatures).
+        coefficient_dimension = int(np.asarray(replay_adapter.transform_X(X[:1])).reshape(1, -1).shape[1])
 
         # Initialize history stores based on multiclass or binary
-        theta0 = replay_adapter.extract_logistic_theta(d_expected=d)
+        theta0 = replay_adapter.extract_logistic_theta(d_expected=coefficient_dimension)
         if theta0:
             if theta0["task"] == "binary":
-                w_hist = np.zeros((steps, d), dtype=float)
+                w_hist = np.zeros((steps, coefficient_dimension), dtype=float)
                 b_hist = np.zeros(steps, dtype=float)
                 w_hist[0] = theta0["w"]
                 b_hist[0] = theta0["b"]
             else:
-                w_hist = np.zeros((steps, d, K), dtype=float)
+                w_hist = np.zeros((steps, coefficient_dimension, K), dtype=float)
                 b_hist = np.zeros((steps, K), dtype=float)
                 w_hist[0] = theta0["W"]
                 b_hist[0] = theta0["b"]
@@ -245,7 +248,7 @@ class IterativeCapture(HistoryCaptureStrategy):
                 elif d == 2 and is_multiclass:
                     p_surfaces_hist[t] = gt.reshape(X1g.shape[0], X1g.shape[1], K)
 
-            thetat = adapter_inst.extract_logistic_theta(d_expected=d)
+            thetat = adapter_inst.extract_logistic_theta(d_expected=coefficient_dimension)
             if thetat and w_hist is not None:
                 if thetat["task"] == "binary":
                     w_hist[t] = thetat["w"]

@@ -80,7 +80,7 @@ def test_explicit_notebook_widths_are_deterministic(linear_case, width):
 
 def test_classic_dashboard_keeps_existing_visual_contract(linear_case):
     model, X, y = linear_case
-    figure = visualize_lr(model, X, y, steps=5, animation_mode="native")
+    figure = visualize_lr(model, X, y, steps=5, animation_mode="native", theme="classic")
 
     assert figure.layout.template.layout.paper_bgcolor == "rgb(17,17,17)"
     assert figure.layout.width == 1100
@@ -261,9 +261,9 @@ def test_wide_tabular_layout_keeps_borderless_math_panel_composition(linear_case
 def test_static_alternatives_use_the_exact_final_frame(linear_case, option):
     model, X, y = linear_case
     kwargs = {"format": "report"} if option == "report" else {"reduced_motion": True}
-    animated = visualize_lr(model, X, y, steps=5, animation_mode="native")
+    animated = visualize_lr(model, X, y, steps=5, animation_mode="native", theme="classic")
     final_model_y = np.asarray(animated.frames[-1].data[0].y, dtype=float)
-    static = visualize_lr(model, X, y, steps=5, animation_mode="native", **kwargs)
+    static = visualize_lr(model, X, y, steps=5, animation_mode="native", theme="classic", **kwargs)
 
     assert len(static.frames) == 0
     assert len(static.layout.updatemenus or ()) == 0

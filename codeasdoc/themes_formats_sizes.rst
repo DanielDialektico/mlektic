@@ -1,8 +1,11 @@
 Themes, formats, and sizes
 ============================================================
 
-The classic dashboard remains the compatibility default. Independent opt-in
-axes control presentation without changing estimator mathematics:
+Every figure is painted with the ``dusk`` skin unless another theme is
+requested. The classic dashboard remains the geometric baseline: every theme
+lays a figure out exactly like it, and ``theme="classic"`` gives the original
+unskinned colours. Independent axes control presentation without changing
+estimator mathematics:
 
 .. list-table:: Visual options
    :header-rows: 1
@@ -42,6 +45,10 @@ only how a figure is painted. The figure is laid out exactly as ``classic`` lays
 it out, so every title, equation, control, legend, and panel keeps its position,
 size, and font. Pass them like any other theme, for example
 ``visualize_lr(model, X, y, theme="aurora")``.
+
+``dusk`` is the default: omitting ``theme`` (or passing ``theme=None``) gives
+exactly the same figure as ``theme="dusk"``. The default is exposed as
+``mlektic.visualization.design.DEFAULT_THEME``.
 
 ``aurora``
    Night-blue gradient with luminous lines. It also adds motion cues: a fading

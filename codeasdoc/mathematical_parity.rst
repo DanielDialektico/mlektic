@@ -147,12 +147,18 @@ and converts final coefficients back to original units:
 The reconstructed raw-space prediction must equal the pipeline prediction.
 This covers recognized standard scaling and other numerically verified affine
 maps. Prediction explainers apply the same verified per-feature map
-(StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler, or a chain of them)
-and refuse, with an explicit message, pipelines whose preprocessing mixes
-features or is nonlinear. If preprocessing is non-affine, such as polynomial feature expansion,
-Mlektic uses transformed-feature names from ``get_feature_names_out`` when
-available for auditable metadata and explicitly refuses to claim a raw-space
-coefficient vector. Descriptive ``feature_names`` label input axes only;
+(StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler, or a chain of them).
+If preprocessing is non-affine, such as polynomial feature expansion,
+Mlektic uses transformed-feature names from ``get_feature_names_out`` and
+writes every equation in the transformed features
+:math:`\mathbf u=\phi(\mathbf x)\in\mathbb R^{D_\phi}`, never claiming a
+raw-space coefficient vector: linear and binary views list every transformed
+term (long sums keep the first and last terms around :math:`\cdots`),
+multiclass views show :math:`\Theta\in\mathbb R^{D_\phi\times K}`, and views
+with many inputs run on :math:`\mathbf u` with each coordinate named. Curves,
+surfaces, and decision boundaries are still drawn over the raw inputs from the
+estimator itself. Titles name the expansion, for example
+"Polynomial Regression (degree 2, 1 variable → 2 features)". Descriptive ``feature_names`` label input axes only;
 equations retain canonical algebraic symbols such as :math:`x_1`,
 :math:`x_1^2`, and :math:`x_1x_2`.
 
