@@ -64,8 +64,9 @@ exactly the same figure as ``theme="dusk"``. The default is exposed as
    Drafting-table blue with a fine grid, open data markers, and a dotted loss.
 
 ``dusk``
-   Aurora's motion cues in muted slate, dusty rose, and sand: the same trail,
-   glow, loss progress, and equation colours, with less saturation.
+   Aurora's colours muted to slate, dusty rose, and sand, with its glow, loss
+   progress, and equation colours, but no trail: as the default theme it draws
+   only the current state of every curve, line, and surface.
 
 ``chalkboard``
    A framed school slate: green with chalk dust, half-erased smudges, a wooden

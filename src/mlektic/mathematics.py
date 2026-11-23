@@ -524,23 +524,36 @@ def _replace_threshold_tick(fig: Any, *, dimensions: int, threshold: float) -> N
     axis.update(tickvals=[0.0, threshold, 1.0], ticktext=[previous[0], middle, previous[-1]])
 
 
+def threshold_label(threshold: float) -> str:
+    """Plain-text label of the decision threshold, for example ``τ = 0.8``."""
+    return f"<i>τ</i> = {threshold:g}"
+
+
 def _add_threshold_geometry_label(fig: Any, *, dimensions: int, threshold: float) -> None:
-    """Place a short threshold label inside the geometry, away from axis titles."""
-    text = rf"$\tau={threshold:g}$"
+    """Place a short threshold label inside the geometry, away from axis titles.
+
+    The label is plain text, not LaTeX. Plotly adds a figure's frames, and runs
+    its post-scripts (the fluid controller), only once every MathJax job of the
+    first draw has finished, and it positions a MathJax annotation only when
+    that job finishes. A one-symbol label must not tie the whole animation to
+    the page's MathJax queue: in a notebook page shared by many figures the
+    queue can be long, and the label would wait at the top-left corner.
+    """
+    text = threshold_label(threshold)
     color = getattr(getattr(fig.layout, "font", None), "color", None) or "white"
     if dimensions == 1:
-        x_range = list(fig.layout.xaxis.range or (0.0, 1.0))
         annotation = {
-            "x": float(x_range[1]),
+            # The plot's right edge, whatever range later passes settle on.
+            "x": 1.0,
             "y": threshold,
-            "xref": "x",
+            "xref": "x domain",
             "yref": "y",
             "text": text,
             "showarrow": False,
             "xanchor": "right",
             "yanchor": "bottom",
             "yshift": 6,
-            "font": {"size": 11, "color": color},
+            "font": {"size": 12, "color": color},
         }
         fig.layout.annotations = [*(fig.layout.annotations or ()), annotation]
         for frame in fig.frames or ():
@@ -558,7 +571,7 @@ def _add_threshold_geometry_label(fig: Any, *, dimensions: int, threshold: float
             "showarrow": False,
             "xanchor": "right",
             "yanchor": "bottom",
-            "font": {"size": 11, "color": color},
+            "font": {"size": 12, "color": color},
         }
         scene.annotations = [*(scene.annotations or ()), annotation]
         for frame in fig.frames or ():
@@ -1184,6 +1197,7 @@ def _python_scalar(value: Any) -> Any:
 
 __all__ = [
     "apply_logistic_focus_and_threshold",
+    "threshold_label",
     "attach_math_contract",
     "build_linear_math_contract",
     "build_logistic_math_contract",

@@ -6,7 +6,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 
 from mlektic import visualize_logistic, visualize_lr
-from mlektic.mathematics import attach_math_contract
+from mlektic.mathematics import attach_math_contract, threshold_label
 from mlektic.services.linear_history import fit_history_logistic
 from mlektic.utils.math import _sigmoid
 from mlektic.utils.probability import multiclass_probabilities
@@ -247,9 +247,9 @@ def test_binary_contract_uses_fitted_class_order_and_custom_threshold_without_la
     assert tuple(figure.layout.scene.zaxis.tickvals) == (0.0, threshold, 1.0)
     assert tuple(figure.layout.scene.zaxis.ticktext) == ("0", "0.7", "1")
     assert figure.layout.scene.zaxis.title.text == "P(class 1 | x)"
-    assert [annotation.text for annotation in figure.layout.scene.annotations] == [r"$\tau=0.7$"]
+    assert [annotation.text for annotation in figure.layout.scene.annotations] == [threshold_label(0.7)]
     assert all(
-        [annotation.text for annotation in frame.layout.scene.annotations] == [r"$\tau=0.7$"]
+        [annotation.text for annotation in frame.layout.scene.annotations] == [threshold_label(0.7)]
         for frame in figure.frames
     )
     assert "admitted" not in figure.layout.annotations[-1].text
@@ -271,16 +271,32 @@ def test_binary_1d_threshold_label_is_inside_geometry_not_in_probability_ticks()
 
     assert tuple(figure.layout.yaxis.ticktext) == ("0", "0.65", "1")
     assert figure.layout.yaxis.title.text == "P(class 1 | x)"
-    threshold_annotations = [
-        annotation for annotation in figure.layout.annotations if annotation.text == r"$\tau=0.65$"
-    ]
+    label = threshold_label(0.65)
+    assert label == "<i>τ</i> = 0.65"
+    threshold_annotations = [annotation for annotation in figure.layout.annotations if annotation.text == label]
     assert len(threshold_annotations) == 1
-    assert threshold_annotations[0].xref == "x"
+    # At the plot's right edge, at the threshold height.
+    assert threshold_annotations[0].xref == "x domain"
+    assert threshold_annotations[0].x == 1.0
     assert threshold_annotations[0].yref == "y"
-    assert all(
-        any(annotation.text == r"$\tau=0.65$" for annotation in frame.layout.annotations)
-        for frame in figure.frames
-    )
+    assert threshold_annotations[0].y == pytest.approx(0.65)
+    assert all(any(annotation.text == label for annotation in frame.layout.annotations) for frame in figure.frames)
+
+
+@pytest.mark.parametrize("dimensions", [1, 2])
+def test_threshold_figures_send_no_extra_equation_to_mathjax(dimensions):
+    # Plotly adds the frames, and runs the fluid controller, only after every
+    # MathJax job of the first draw finishes; the threshold must not add one.
+    X, y = _binary_data(dimensions)
+    model = LogisticRegression(max_iter=1000).fit(X, y)
+    plain = visualize_logistic(model, X, y, steps=4)
+    figure = visualize_logistic(model, X, y, steps=4, threshold=0.65)
+
+    def equations(fig):
+        annotations = [*fig.layout.annotations, *(fig.layout.scene.annotations or ())]
+        return sum("$" in str(a.text or "") for a in annotations)
+
+    assert equations(figure) == equations(plain)
 
 
 @pytest.mark.parametrize(
