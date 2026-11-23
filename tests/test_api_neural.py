@@ -578,6 +578,7 @@ def test_graph_updates_mode_can_use_initial_and_frame_normalized_references(
         update_reference="initial",
         update_scale="frame",
         max_frames=4,
+        theme="classic",
     )
     metadata = figure.layout.meta["mlektic_neural_evolution"]
     base_edges = [trace for trace in figure.frames[-1].data if trace.name == "absolute parameter or signal"]
@@ -634,7 +635,7 @@ def test_graph_distinguishes_exact_relu_zero_from_rounded_values():
 
 def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_network):
     _model, _X, history = trained_small_network
-    figure = visualize_nn_training(history, max_frames=3)
+    figure = visualize_nn_training(history, max_frames=3, theme="classic")
 
     assert isinstance(figure, go.Figure)
     assert len(figure.frames) == 3
@@ -649,6 +650,15 @@ def test_training_separates_loss_and_metrics_and_decimates_frames(trained_small_
     assert figure.layout.yaxis.domain != figure.layout.yaxis3.domain
     summary = max(figure.layout.annotations, key=lambda annotation: annotation.y)
     assert summary.y >= 1.15
+
+
+def test_neural_figures_default_to_the_dusk_theme(trained_small_network):
+    _model, _X, history = trained_small_network
+    default = visualize_nn_training(history, max_frames=3)
+    dusk = visualize_nn_training(history, max_frames=3, theme="dusk")
+
+    assert default.layout.meta["mlektic_visual"]["theme"] == "dusk"
+    assert default.to_json() == dusk.to_json()
 
 
 def test_neural_dashboard_exposes_only_training_controls(trained_small_network):

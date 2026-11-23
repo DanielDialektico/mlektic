@@ -1,8 +1,9 @@
 """Additive visual-system contracts for Mlektic figures.
 
-The classic dashboard remains the compatibility baseline.  Every other theme,
-format, size, and responsive behavior is opt-in and is applied after a figure
-has been built from its mathematical state.  This keeps visual composition
+The classic dashboard remains the geometric baseline: every figure is laid out
+like it.  Figures are painted with the ``dusk`` skin unless another theme is
+requested, and every format, size, and responsive behavior is opt-in and is
+applied after a figure has been built from its mathematical state.  This keeps visual composition
 independent from history capture and model semantics.
 """
 
@@ -13,7 +14,8 @@ from dataclasses import asdict, dataclass
 from numbers import Real
 from typing import Any
 
-from .skins import apply_skin, available_skins, get_skin, is_skin
+from .legend_layout import place_legends
+from .skins import apply_skin, available_skins, get_skin, is_skin, skin_hover_colors
 
 
 @dataclass(frozen=True)
@@ -219,6 +221,20 @@ _SIZE_PRESETS: dict[str, tuple[int | None, float]] = {
 }
 
 
+DEFAULT_THEME = "dusk"
+"""Theme used when a figure function receives ``theme=None``."""
+
+
+def default_theme(theme: Any) -> Any:
+    """Return ``theme``, or :data:`DEFAULT_THEME` when it is ``None``.
+
+    Public figure functions resolve the default once, on entry, so an omitted
+    theme produces exactly the same figure as ``theme=DEFAULT_THEME``.  Pass
+    ``theme="classic"`` for the original unskinned dashboard.
+    """
+    return DEFAULT_THEME if theme is None else theme
+
+
 def available_themes() -> tuple[str, ...]:
     """Return registered visual theme names: layout themes, then skins."""
     return (*_THEMES, *available_skins())
@@ -318,7 +334,8 @@ def resolve_visual_spec(
         raise TypeError("responsive must be a boolean value.")
     if not isinstance(reduced_motion, bool):
         raise TypeError("reduced_motion must be a boolean value.")
-    theme_key = (theme or "classic").lower() if isinstance(theme, str) or theme is None else theme
+    theme = default_theme(theme)
+    theme_key = theme.lower() if isinstance(theme, str) else theme
     tokens = get_theme_tokens(theme)
     return VisualSpec(
         theme=theme_key,
@@ -351,6 +368,8 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
         _freeze_to_final_state(fig)
 
     _apply_size(fig, spec)
+    _fit_title(fig)
+    legend_placement = place_legends(fig)
     tabular_fit = _apply_tabular_narrow_layout(fig, spec, family=family)
     annotation_fit = _remove_annotation_boxes(fig, spec.tokens)
     _drop_negative_zero(fig)
@@ -360,6 +379,13 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
             fig.layout.width = None
     # Skins paint last, over the final composition, and never change its geometry.
     skin = apply_skin(fig, get_skin(spec.theme), family=family) if skinned else None
+    if skinned:
+        _harmonize_hover(fig, *skin_hover_colors(get_skin(spec.theme).palette))
+        _color_threshold_lines(fig, get_skin(spec.theme).palette.text)
+    elif spec.theme != "classic":
+        _harmonize_hover(fig, spec.tokens.panel, spec.tokens.text, spec.tokens.grid)
+        _color_threshold_lines(fig, spec.tokens.text)
+    _keep_active_button_readable(fig)
 
     metadata = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
     visual = spec.metadata()
@@ -372,6 +398,7 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
             "motion_preserved": bool(fig.frames) and not spec.reduced_motion and spec.format != "report",
             "responsive_config": {"responsive": spec.responsive},
             "narrow_layout_fit": tabular_fit,
+            "legend_placement": legend_placement,
             "annotation_boxes": annotation_fit,
             "skin": skin,
             "reflow_strategy": (
@@ -386,6 +413,98 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
     metadata["mlektic_visual"] = visual
     fig.update_layout(meta=metadata, uirevision=f"mlektic-{spec.theme}-{spec.format}")
     return fig
+
+
+_TAG = re.compile(r"<[^>]+>")
+# Average glyph width of the title fonts as a fraction of the font size.
+_TITLE_GLYPH_WIDTH = 0.54
+_MIN_TITLE_SIZE = 14
+
+
+def _fit_title(fig: Any) -> None:
+    """Shrink a title whose first line would not fit the canvas width.
+
+    Titles never wrap in Plotly. Descriptive default titles (for example a
+    polynomial multiclass model) can be longer than a compact canvas, so the
+    font is reduced just enough to fit, never below 14 px. Figures without an
+    explicit width are measured against 1000 px, a typical notebook output.
+    """
+    title = fig.layout.title
+    if title is None or not title.text:
+        return
+    first_line = _TAG.sub("", str(title.text).split("<br>")[0])
+    if "$" in first_line:
+        return
+    size = float(title.font.size or 24)
+    width = float(fig.layout.width or 1000)
+    available = width * 0.94
+    centered = title.x is None or abs(float(title.x) - 0.5) < 1e-9
+    top_controls = any(
+        menu.y is not None and float(menu.y) >= 0.95 and float(menu.x or 0) <= 0.2
+        for menu in fig.layout.updatemenus or ()
+    )
+    if centered and top_controls:
+        # Play/Pause sit at the top left; a centred title must clear them on both sides.
+        available = width - 2 * 185
+    needed = len(first_line) * _TITLE_GLYPH_WIDTH * size
+    if needed > available:
+        title.font.size = max(_MIN_TITLE_SIZE, int(size * available / needed))
+
+
+def _light_color(color: Any) -> bool:
+    text = str(color or "").strip().lower()
+    match = re.match(r"rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)", text)
+    if match:
+        channels = [float(match.group(i)) for i in (1, 2, 3)]
+    elif re.fullmatch(r"#[0-9a-f]{6}", text):
+        channels = [int(text[i : i + 2], 16) for i in (1, 3, 5)]
+    elif re.fullmatch(r"#[0-9a-f]{3}", text):
+        channels = [int(c * 2, 16) for c in text[1:]]
+    elif text == "white":
+        channels = [255.0, 255.0, 255.0]
+    else:
+        return False
+    return sum(channels) / 765 > 0.6
+
+
+def _keep_active_button_readable(fig: Any) -> None:
+    """Drop Plotly's active-button highlight where it would hide a light label.
+
+    Plotly fills the active button with a fixed near-white colour. With a light
+    label (dark themes and skins) that button became unreadable wherever the
+    figure's stylesheet is not installed. The stylesheet still restyles every
+    button where it runs; this only removes the near-white fill.
+    """
+    for menu in fig.layout.updatemenus or ():
+        if menu.font is not None and _light_color(menu.font.color):
+            menu.showactive = False
+
+
+def _color_threshold_lines(fig: Any, color: str) -> None:
+    """Draw decision-threshold lines in the theme's text colour, readable on any paper."""
+    for shape in fig.layout.shapes or ():
+        if shape.name == "mlektic-threshold" and shape.line is not None:
+            shape.line.color = color
+            shape.opacity = 0.8
+
+
+def _harmonize_hover(fig: Any, background: str, text: str, border: str) -> None:
+    """Give every hover label one solid theme background and a contrasting text.
+
+    Without this, Plotly fills a label with the colour of its trace. A light
+    data marker then produced a light box with light text (dark themes), and a
+    dark marker a dark box with dark text (light skins).
+    """
+    style = {"bgcolor": background, "bordercolor": border, "font": {"color": text}}
+    fig.layout.hoverlabel.update(style)
+    for trace in fig.data:
+        if hasattr(trace, "hoverlabel"):
+            trace.hoverlabel.update(style)
+    for frame in fig.frames or ():
+        for trace in frame.data or ():
+            # Frames merge into their trace; only override labels a frame sets itself.
+            if getattr(trace, "hoverlabel", None) is not None and trace.hoverlabel.to_plotly_json():
+                trace.hoverlabel.update(style)
 
 
 # A value that rounds to zero is shown as 0, never as "-0.0000".
@@ -899,10 +1018,12 @@ def _apply_size(fig: Any, spec: VisualSpec) -> None:
 
 
 __all__ = [
+    "DEFAULT_THEME",
     "VisualSpec",
     "VisualTokens",
     "apply_visual_system",
     "available_themes",
+    "default_theme",
     "get_theme_tokens",
     "resolve_visual_spec",
     "theme_palette",

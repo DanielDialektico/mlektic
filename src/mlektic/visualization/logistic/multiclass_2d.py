@@ -20,6 +20,11 @@ from ._math_layout import (
     MULTICLASS_PROBABILITY_FONT_SIZE,
     _with_fixed_height,
     compact_probability_fraction_latex,
+    transformed_parameters_latex,
+    transformed_probability_latex,
+    transformed_row1_latex,
+    transformed_row3_latex,
+    transformed_scores_latex,
 )
 
 
@@ -152,8 +157,19 @@ def build_multiclass_2d_logistic_figure(
     probability_link="softmax",
     theme=None,
     size="default",
+    feature_names=None,
 ):
-    """Build the 2D multiclass logistic-regression probability surfaces."""
+    """Build the 2D multiclass logistic-regression probability surfaces.
+
+    ``feature_names`` are the canonical transformed features when the model is
+    linear in ``u = φ(x)``; surfaces stay in raw ``(x_1, x_2)`` and every score,
+    matrix, and probability is written in ``u`` with ``Θ ∈ ℝ^{D×K}``.
+    """
+    transformed_names = (
+        list(feature_names)
+        if feature_names is not None and [str(n) for n in feature_names] != ["x_1", "x_2"]
+        else None
+    )
     # On the 820 px compact canvas the one-line score row would reach the 3D
     # scene; a slightly smaller type keeps it inside the math column.
     score_font_size = 11 if size == "compact" else MULTICLASS_PROBABILITY_FONT_SIZE
@@ -264,14 +280,39 @@ def build_multiclass_2d_logistic_figure(
         # used by the softmax view.  This keeps estimator history from changing
         # the visual hierarchy or spilling into the loss subplot.
         compact_fractions = probability_link == "ovr" or (show_loss and K > 3)
+        if transformed_names is not None:
+            definition = multiclass_link_latex(probability_link, K)
+            if probability_link == "ovr":
+                link, probability = definition.split(r",\qquad ", 1)
+                definition = rf"{probability},\quad {link}"
+            W_t, b_t = np.asarray(w_hist[t], dtype=float), np.asarray(b_hist[t], dtype=float)
+            texts = {
+                "row1": transformed_row1_latex(transformed_names, K),
+                "parameters": transformed_parameters_latex(W_t, b_t, max_theta_cols, dec),
+                "row3": transformed_row3_latex(transformed_names, K, definition),
+                "scores": transformed_scores_latex(W_t, b_t, transformed_names, dec),
+                "first": transformed_probability_latex(0, K, probability_link),
+                "last": transformed_probability_latex(K - 1, K, probability_link),
+            }
+        else:
+            texts = {
+                "row1": _row1_formula_latex_2d(K),
+                "parameters": parameters,
+                "row3": _row3_formula_latex_2d(K, probability_link),
+                "scores": _score_examples_latex_2d(w_hist, b_hist, t, dec, probability_link),
+                "first": _probability_latex_2d(w_hist, b_hist, t, 0, dec, probability_link, compact=compact_fractions),
+                "last": _probability_latex_2d(
+                    w_hist, b_hist, t, K - 1, dec, probability_link, compact=compact_fractions
+                ),
+            }
         base_ann = [
-            dict(x=0.31, y=1.05, xref="paper", yref="paper", text=_row1_formula_latex_2d(K), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=parameters, showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
-            dict(x=generic_equation_x, y=0.62, xref="paper", yref="paper", text=_row3_formula_latex_2d(K, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
-            dict(x=equation_x, y=0.44, xref="paper", yref="paper", text=_score_examples_latex_2d(w_hist, b_hist, t, dec, probability_link), showarrow=False, xanchor="center", yanchor="top", font=dict(size=score_font_size, color="white")),
-            dict(x=equation_x, y=0.35, xref="paper", yref="paper", text=_probability_latex_2d(w_hist, b_hist, t, 0, dec, probability_link, compact=compact_fractions), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=0.31, y=1.05, xref="paper", yref="paper", text=texts["row1"], showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=X_TEXT, y=0.82, xref="paper", yref="paper", text=texts["parameters"], showarrow=False, xanchor="center", yanchor="middle", font=dict(size=16, color="white")),
+            dict(x=generic_equation_x, y=0.62, xref="paper", yref="paper", text=texts["row3"], showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color="white")),
+            dict(x=equation_x, y=0.44, xref="paper", yref="paper", text=texts["scores"], showarrow=False, xanchor="center", yanchor="top", font=dict(size=score_font_size, color="white")),
+            dict(x=equation_x, y=0.35, xref="paper", yref="paper", text=texts["first"], showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
             dict(x=dots_x, y=0.22, xref="paper", yref="paper", text=_vertical_dots_latex_2d(), showarrow=False, xanchor="center", yanchor="middle", font=dict(size=MULTICLASS_ELLIPSIS_FONT_SIZE, color="white")),
-            dict(x=equation_x, y=0.14, xref="paper", yref="paper", text=_probability_latex_2d(w_hist, b_hist, t, K - 1, dec, probability_link, compact=compact_fractions), showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
+            dict(x=equation_x, y=0.14, xref="paper", yref="paper", text=texts["last"], showarrow=False, xanchor="center", yanchor="top", font=dict(size=MULTICLASS_PROBABILITY_FONT_SIZE, color="white")),
         ]
 
         base_ann.append(

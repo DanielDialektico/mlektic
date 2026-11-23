@@ -17,6 +17,7 @@ from mlektic import (
 )
 from mlektic.visualization.controls import button_style, button_style_script, figure_style_script
 from mlektic.visualization.design import _CLASSIC as CLASSIC_TOKENS
+from mlektic.visualization.design import DEFAULT_THEME
 from mlektic.visualization.skins import (
     SkinEffects,
     apply_skin,
@@ -128,7 +129,7 @@ def test_skin_definitions_are_frozen_data():
 @pytest.mark.parametrize("name", SKIN_NAMES)
 def test_linear_animation_keeps_classic_geometry(sgd_linear, name):
     model, X, y = sgd_linear
-    classic = visualize_lr(model, X, y, steps=12, max_frames=12)
+    classic = visualize_lr(model, X, y, steps=12, max_frames=12, theme="classic")
     skinned = visualize_lr(model, X, y, steps=12, max_frames=12, theme=name)
     _assert_same_geometry(classic, skinned)
 
@@ -136,7 +137,7 @@ def test_linear_animation_keeps_classic_geometry(sgd_linear, name):
 @pytest.mark.parametrize("name", SKIN_NAMES)
 def test_multiclass_animation_keeps_classic_geometry(multiclass, name):
     model, X, y = multiclass
-    classic = visualize_logistic(model, X, y, steps=10, max_frames=10)
+    classic = visualize_logistic(model, X, y, steps=10, max_frames=10, theme="classic")
     skinned = visualize_logistic(model, X, y, steps=10, max_frames=10, theme=name)
     _assert_same_geometry(classic, skinned)
 
@@ -190,7 +191,7 @@ def test_effects_never_touch_neural_figures():
 
 def test_effects_are_switchable_in_the_definition(sgd_linear):
     model, X, y = sgd_linear
-    figure = visualize_lr(model, X, y, steps=8, max_frames=8)
+    figure = visualize_lr(model, X, y, steps=8, max_frames=8, theme="classic")
     quiet = get_skin("aurora").__class__(
         name="quiet", description="", palette=get_skin("aurora").palette, effects=SkinEffects()
     )
@@ -240,7 +241,7 @@ def test_buttons_keep_readable_colours_on_hover(sgd_linear, name):
 
 def test_layout_themes_derive_a_hover_colour(sgd_linear):
     model, X, y = sgd_linear
-    style = button_style(visualize_lr(model, X, y, steps=4, max_frames=4))
+    style = button_style(visualize_lr(model, X, y, steps=4, max_frames=4, theme="classic"))
     assert style["hover"].startswith("color-mix(") and style["hover_text"] == style["text"]
 
 
@@ -318,3 +319,62 @@ def test_lumen_keeps_classic_colours_with_ember_effects(sgd_linear):
     applied = figure.layout.meta["mlektic_visual"]["skin"]["effects"]["applied"]
     assert {"trail", "glow", "residuals", "loss_progress"} <= set(applied)
     assert get_skin("lumen").palette.model == "#ef553b"
+
+
+def test_dusk_is_the_default_theme():
+    assert DEFAULT_THEME == "dusk"
+    assert DEFAULT_THEME in available_themes()
+
+
+def test_an_omitted_theme_paints_every_figure_with_dusk(sgd_linear, multiclass):
+    model, X, y = sgd_linear
+    log_model, log_X, log_y = multiclass
+    pairs = [
+        (
+            visualize_lr(model, X, y, steps=6, max_frames=6),
+            visualize_lr(model, X, y, steps=6, max_frames=6, theme="dusk"),
+        ),
+        (
+            visualize_logistic(log_model, log_X, log_y, steps=6, max_frames=6),
+            visualize_logistic(log_model, log_X, log_y, steps=6, max_frames=6, theme="dusk"),
+        ),
+        (
+            explain_lr_prediction(model, X, y, x_query=X[:1]),
+            explain_lr_prediction(model, X, y, x_query=X[:1], theme="dusk"),
+        ),
+    ]
+    for default, dusk in pairs:
+        assert default.layout.meta["mlektic_visual"]["theme"] == "dusk"
+        assert default.layout.meta["mlektic_visual"]["skin"]["name"] == "dusk"
+        assert default.to_json() == dusk.to_json()
+
+
+def test_classic_remains_available_as_an_explicit_theme(sgd_linear):
+    model, X, y = sgd_linear
+    figure = visualize_lr(model, X, y, steps=4, max_frames=4, theme="classic")
+    assert figure.layout.meta["mlektic_visual"]["theme"] == "classic"
+    assert figure.layout.meta["mlektic_visual"]["skin"] is None
+    assert not any(str(trace.uid or "").startswith(EFFECT_UID_PREFIX) for trace in figure.data)
+
+
+def _lightness(color):
+    color = color.lstrip("#")
+    return sum(int(color[i : i + 2], 16) for i in (0, 2, 4)) / 765
+
+
+@pytest.mark.parametrize("theme", ["academic", "accessible", *available_skins()])
+def test_hover_labels_contrast_with_their_text_in_every_theme(theme):
+    """A hover box must not take a trace colour that matches its own text."""
+    X = np.linspace(-2.0, 3.0, 30).reshape(-1, 1)
+    y = 1.2 + 2.0 * X[:, 0]
+    figure = visualize_lr(LinearRegression().fit(X, y), X, y, steps=3, theme=theme)
+    label = figure.layout.hoverlabel
+    assert abs(_lightness(label.bgcolor) - _lightness(label.font.color)) >= 0.5
+    for trace in figure.data:
+        if hasattr(trace, "hoverlabel"):
+            assert trace.hoverlabel.bgcolor == label.bgcolor
+            assert trace.hoverlabel.font.color == label.font.color
+    for frame in figure.frames:
+        for trace in frame.data:
+            if trace.hoverlabel is not None and trace.hoverlabel.to_plotly_json():
+                assert trace.hoverlabel.bgcolor == label.bgcolor

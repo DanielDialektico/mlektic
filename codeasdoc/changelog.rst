@@ -71,6 +71,42 @@ Added
 Fixed
 -----
 
+- legends no longer sit on the data or on the labels beside them: each legend
+  placed inside a plot is checked against every point and line it draws in
+  every frame, the plot's line shapes, and its annotations (metric cards, the
+  threshold label), and moves to the first free corner or edge midpoint, or to
+  free space inside the plot; ``layout.meta["mlektic_visual"]["legend_placement"]``
+  records the decision (see :doc:`visual_design`);
+- the decision-threshold line is drawn in the theme's text colour; it was
+  white and invisible on ``editorial`` and ``davinci``;
+- fluid playback no longer stops when a frame's Plotly or MathJax promise never
+  settles (possible in VS Code, where notebook outputs share one page); Play
+  and the slider move on after a bounded wait, equations typeset ahead of time
+  render off-screen, and the controller is version 4;
+- pipelines that expand features (for example ``PolynomialFeatures``) are
+  written in their transformed features :math:`\mathbf u=\phi(\mathbf x)` in
+  every linear and logistic view: every transformed term appears, multiclass
+  matrices are :math:`\Theta\in\mathbb R^{D_\phi\times K}`, and N-D views
+  run on :math:`\mathbf u`; views that dropped coefficients or raised errors
+  for two or three inputs are fixed (see :doc:`mathematical_parity`);
+- ``explain_lr_prediction`` and ``explain_logistic_prediction`` accept such
+  pipelines: Input shows :math:`\mathbf x` and :math:`\mathbf u`, Substitution
+  uses the transformed terms, and the substituted value is checked against
+  ``predict``/``predict_proba`` before drawing (see :doc:`prediction_explanations`);
+- the binary logistic explainer with three or more inputs no longer drops
+  :math:`x_3, x_4, \dots` from the substitution of :math:`z`;
+- the active stage button of prediction explainers is readable in dark themes
+  and skins;
+- notebook cases no longer pin ``theme='academic'`` or ``'classroom'``, so they
+  show the default theme;
+- skin equation colouring keeps a negative number's sign at the start of a
+  matrix row;
+- default titles describe the fitted model (polynomial degree, transformed
+  dimension, regularized family, number of classes), for example
+  "Polynomial Regression (degree 2, 1 variable → 2 features)", and long titles
+  shrink to clear the Play/Pause buttons;
+- hover labels use one solid theme background with the theme's text colour in
+  every theme and skin, instead of each trace's colour;
 - the slider and Play/Pause no longer freeze on notebook pages with several
   figures (VS Code, classic Jupyter): when the last loaded copy of Plotly.js
   redrew a 3-D, heatmap, or contour frame of a figure drawn by another copy, it
@@ -105,6 +141,11 @@ Fixed
 Changed
 -------
 
+- ``dusk`` is the default theme of every figure: linear, logistic, prediction,
+  and neural figures paint with ``dusk`` when ``theme`` is omitted, exactly as
+  with ``theme="dusk"``; geometry is unchanged, and ``theme="classic"`` keeps
+  the previous unskinned colours (``DEFAULT_THEME`` and ``default_theme`` in
+  ``mlektic.visualization.design``);
 - neural figures follow every skin: their dark-canvas encodings are translated
   to the skin background, and on light skins saturated hues are darkened to a
   readable lightness, so prediction cards, metric curves, and captions no

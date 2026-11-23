@@ -122,7 +122,7 @@ def test_non_affine_pipeline_uses_transformed_feature_mathematics_honestly():
     y = 1.0 - 0.5 * X[:, 0] + 2.0 * X[:, 0] ** 2
     model = make_pipeline(PolynomialFeatures(2, include_bias=False), LinearRegression()).fit(X, y)
 
-    figure = visualize_lr(model, X, y, steps=5, detail="complete", sample_index=9)
+    figure = visualize_lr(model, X, y, steps=5, detail="complete", sample_index=9, theme="classic")
     contract = figure.layout.meta["mlektic_math"]
 
     assert contract["equation_space"] == "transformed"
@@ -397,7 +397,7 @@ def test_closed_form_nd_shows_default_empirical_path_curve_without_calling_it_op
     X, y = _linear_data(6)
     model = LinearRegression().fit(X, y)
 
-    figure = visualize_lr(model, X, y, steps=8, max_frames=5)
+    figure = visualize_lr(model, X, y, steps=8, max_frames=5, theme="classic")
     semantics = figure.layout.meta["mlektic_history"]["loss_display_semantics"]
 
     assert figure.data[0].uid == "LOSS_LINE"
@@ -533,9 +533,9 @@ def test_all_detail_levels_share_the_hybrid_latex_math_band_and_smooth_motion():
     X, y = _linear_data(1)
     model = SGDRegressor(max_iter=12, random_state=5).fit(X, y)
 
-    classic = visualize_lr(model, X, y, steps=5)
-    academic = visualize_lr(model, X, y, steps=5, detail="academic")
-    complete = visualize_lr(model, X, y, steps=5, detail="complete")
+    classic = visualize_lr(model, X, y, steps=5, theme="classic")
+    academic = visualize_lr(model, X, y, steps=5, detail="academic", theme="classic")
+    complete = visualize_lr(model, X, y, steps=5, detail="complete", theme="classic")
 
     assert len(classic.frames) == len(academic.frames)
     assert len(classic.data) == len(academic.data)

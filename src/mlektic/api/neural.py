@@ -9,7 +9,7 @@ from ..neural.graph_ir import NeuralGraph
 from ..neural.recorder import TorchTrainingRecorder
 from ..neural.report import build_nn_math_report, display_nn_math_report, export_nn_math_report
 from ..neural.semantics import register_neural_descriptor
-from ..visualization.design import apply_visual_system, resolve_visual_spec
+from ..visualization.design import apply_visual_system, default_theme, resolve_visual_spec
 from ..visualization.neural.architecture import build_nn_architecture_figure
 from ..visualization.neural.backpropagation import build_nn_backpropagation_figure
 from ..visualization.neural.blocks import build_nn_block_figure
@@ -129,6 +129,7 @@ def _apply_nn_visual_system(
     math_font_scale: float = 1.0,
 ) -> Any:
     """Apply the shared additive visual contract to a neural figure."""
+    theme = default_theme(theme)
     spec = resolve_visual_spec(
         detail=density,
         theme=theme,
@@ -292,7 +293,7 @@ def visualize_nn(
         max_nodes: Maximum semantic blocks rendered before a collapsed summary.
         show_formulas: Show alternating above/below formulas when the captured
             execution graph is small.
-        theme: Additive visual theme; ``None`` preserves the classic default.
+        theme: Additive visual theme or skin; ``None`` uses the ``"dusk"`` skin.
         format: ``"dashboard"``, ``"compact"``, or ``"report"``.
         density: Mathematical information density recorded in visual metadata.
         size: Named canvas size preset.
@@ -477,7 +478,7 @@ def visualize_nn_architecture(
         input_kwargs: Optional keyword inputs passed to the model.
         max_nodes: Maximum blocks before a collapsed summary node.
         show_formulas: Show formulas below nodes for small block graphs.
-        theme: Additive visual theme; ``None`` preserves the classic default.
+        theme: Additive visual theme or skin; ``None`` uses the ``"dusk"`` skin.
         format: Composition preset.
         density: Mathematical information density.
         size: Named canvas size preset.
@@ -652,7 +653,7 @@ def visualize_nn_graph(
         input_kwargs: Optional keyword inputs forwarded during graph capture.
         max_nodes: Maximum execution blocks before a disclosed summary.
         show_formulas: Show alternating inline formulas when they fit safely.
-        theme: Additive visual theme; ``None`` preserves the classic default.
+        theme: Additive visual theme or skin; ``None`` uses the ``"dusk"`` skin.
         format: Composition preset.
         density: Mathematical information density.
         size: Named canvas size preset.
@@ -1034,7 +1035,7 @@ def visualize_nn_decision(
         max_frames: Maximum recorded checkpoints retained.
         frame_duration: Milliseconds per checkpoint during playback.
         title: Optional figure title.
-        theme: Additive visual theme or skin; ``None`` keeps the classic default.
+        theme: Additive visual theme or skin; ``None`` uses the ``"dusk"`` skin.
         format: ``"dashboard"``, ``"compact"``, or ``"report"``.
         density: Mathematical information density recorded in visual metadata.
         size: Named canvas size preset.
@@ -1122,7 +1123,7 @@ def visualize_nn_representation(
         stage_duration: Milliseconds each stage stays on screen during playback.
         transition: Milliseconds of the visual interpolation between stages.
         title: Optional figure title.
-        theme: Additive visual theme or skin; ``None`` keeps the classic default.
+        theme: Additive visual theme or skin; ``None`` uses the ``"dusk"`` skin.
         format: ``"dashboard"``, ``"compact"``, or ``"report"``.
         density: Mathematical information density recorded in visual metadata.
         size: Named canvas size preset.

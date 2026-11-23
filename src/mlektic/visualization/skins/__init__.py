@@ -22,7 +22,7 @@ from .backdrop import backdrop_image
 from .definitions import SKINS, Backdrop, Skin, SkinEffects, SkinPalette
 from .effects import apply_effects
 from .neural import adapt_neural_colors
-from .styling import restyle
+from .styling import restyle, skin_hover_colors
 
 
 def available_skins() -> tuple[str, ...]:
@@ -91,4 +91,5 @@ __all__ = [
     "button_colors",
     "get_skin",
     "is_skin",
+    "skin_hover_colors",
 ]

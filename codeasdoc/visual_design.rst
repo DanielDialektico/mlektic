@@ -158,6 +158,29 @@ Responsive export
 Pass ``responsive=True`` or ``False`` to ``export_figure`` to override it. A
 figure without Phase 3 metadata remains fixed-size, preserving compatibility.
 
+Titles, legends, and labels
+---------------------------
+
+Default titles describe the fitted model: the polynomial degree, other
+non-affine preprocessing ("on Transformed Features"), the transformed
+dimension, the regularized family (Ridge, Lasso, Elastic-Net), and :math:`K` for
+multiclass models. A title longer than its canvas shrinks, to 14 px at least,
+and clears the Play/Pause buttons.
+
+Legends never hide data or labels. After sizing, every legend placed inside a
+plot is compared with every point and line that plot draws in any frame, its
+line shapes, and its annotations (metric cards, the threshold label). A legend
+that covers any of them moves to the first free corner, then edge midpoint,
+then free space inside the plot. Legends placed outside the plots and legends
+of 3-D scenes are left alone. The decision is recorded in
+``layout.meta["mlektic_visual"]["legend_placement"]`` as the position chosen
+and the marks and labels still covered.
+
+Hover labels use one solid background derived from the theme with the theme's
+text colour, so they are readable over light and dark data alike. The
+decision-threshold line uses the theme's text colour, and active control
+buttons keep a readable label in every theme.
+
 Audit metadata
 --------------
 
@@ -171,7 +194,8 @@ Every public Phase 3 figure includes
 - responsive and reduced-motion choices;
 - whether animation frames remain;
 - the responsive export configuration;
-- accessibility and scaling-versus-reflow declarations.
+- accessibility and scaling-versus-reflow declarations;
+- where each legend was placed (``legend_placement``).
 
 This entry is merged with the existing history, mathematics, and prediction
 contracts. It is intentionally JSON serializable.

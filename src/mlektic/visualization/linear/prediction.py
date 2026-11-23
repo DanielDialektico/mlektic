@@ -5,9 +5,17 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from ...utils.preprocessing import affine_preprocessing
-from ..design import apply_visual_system, resolve_visual_spec
+from ..design import apply_visual_system, default_theme, resolve_visual_spec
+from ..feature_terms import (
+    rename_features_in_staged_figure,
+    substitution_rows_latex,
+    symbolic_sum_latex,
+    transformed_feature_names,
+    transformed_input_latex,
+)
 from ..theme import (
     _resolve,
+    attach_highlight,
     data_3d_marker_style,
     data_marker_style,
     get_base_layout,
@@ -15,6 +23,7 @@ from ..theme import (
     prediction_label_box,
     surface_style,
 )
+from ..titles import describe_model, linear_prediction_title
 
 
 def _fmt(val, dec=4):
@@ -156,14 +165,15 @@ def _custom_sliders(steps, slider_font_color):
         steps=steps,
     )]
 
-def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color):
+def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color, *, predict=None, texts=None):
     x1_train = X_train[:, 0].ravel()
     xq1_disp = float(x_disp[0])
 
     x_min = min(float(x1_train.min()), xq1_disp)
     x_max = max(float(x1_train.max()), xq1_disp)
     x_grid = np.linspace(x_min, x_max, int(grid_points))
-    y_grid = x_grid * w_disp[0] + b_disp
+    # A model linear in u = φ(x) draws the estimator's own curve over raw x.
+    y_grid = predict(x_grid.reshape(-1, 1)) if predict is not None else x_grid * w_disp[0] + b_disp
 
     y_all = np.concatenate([y_train, y_grid, np.array([yhat], dtype=float)])
     y_min, y_max = float(y_all.min()), float(y_all.max())
@@ -190,6 +200,9 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         rf"(x_1, \hat{{y}}) &= ({_fmt(xq1_disp, dec)}, {_fmt(yhat, dec)})"
         r"\end{aligned}$"
     )
+
+    if texts is not None:
+        vars_tex, subst_tex = texts["vars"], texts["subst"]
 
     fig = make_subplots(
         rows=1, cols=2,
@@ -306,7 +319,7 @@ def _explain_lr_1d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     fig.update_yaxes(title="ŷ", range=y_range, row=1, col=2)
     return fig
 
-def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_2d_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color):
+def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, grid_2d_points, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color, *, predict=None, texts=None):
     x1, x2 = X_train[:, 0].ravel(), X_train[:, 1].ravel()
     xq1_disp, xq2_disp = float(x_disp[0]), float(x_disp[1])
 
@@ -317,7 +330,11 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
         np.linspace(x1_min, x1_max, int(grid_2d_points)),
         np.linspace(x2_min, x2_max, int(grid_2d_points))
     )
-    Zg = X1g * w_disp[0] + X2g * w_disp[1] + b_disp
+    Zg = (
+        predict(np.column_stack([X1g.ravel(), X2g.ravel()])).reshape(X1g.shape)
+        if predict is not None
+        else X1g * w_disp[0] + X2g * w_disp[1] + b_disp
+    )
 
     z_all = np.concatenate([y_train, Zg.ravel(), [yhat]])
     z_min, z_max = float(z_all.min()), float(z_all.max())
@@ -341,6 +358,9 @@ def _explain_lr_2d(X_train, y_train, x_disp, w_disp, b_disp, yhat, title, dec, g
     res_tex, result_font_size, _result_wrapped = _linear_2d_result_layout(
         xq1_disp, xq2_disp, yhat, dec
     )
+
+    if texts is not None:
+        vars_tex, subst_tex = texts["vars"], texts["subst"]
 
     fig = make_subplots(
         rows=1, cols=2, column_widths=[0.40, 0.60],
@@ -679,6 +699,109 @@ def _explain_lr_nd(d, x_disp, w_disp, b_disp, yhat, title, dec, theme, p, text_c
     return fig
 
 
+def _explain_lr_transformed(
+    estimator,
+    X_train,
+    y_train,
+    xq,
+    *,
+    yhat,
+    model_yhat,
+    weights,
+    bias,
+    title,
+    dec,
+    grid_points,
+    grid_2d_points,
+    prediction_source,
+    outside_features,
+    display_space,
+    theme,
+    visual_spec,
+    validation_rtol,
+    validation_atol,
+):
+    r"""Explain a prediction of a model linear in ``u = φ(x)``.
+
+    Input shows the query and its transformed features, Substitution writes
+    :math:`\hat y=\theta_0+\sum_j\theta_ju_j` with the fitted numbers, and the
+    plot keeps the estimator's own curve or surface over the raw inputs. The
+    substituted value is verified against ``estimator.predict`` first.
+    """
+    d = int(X_train.shape[1])
+    names = transformed_feature_names(estimator, d)
+    u_query = np.asarray(estimator[:-1].transform(xq.reshape(1, -1)), dtype=float).ravel()
+    if weights.size != u_query.size:
+        raise ValueError(
+            f"coef_ dimension mismatch: got {weights.size} coefficients for {u_query.size} transformed features."
+        )
+    substituted = bias + float(weights @ u_query)
+    if not np.isclose(substituted, model_yhat, rtol=validation_rtol, atol=max(validation_atol, 1e-9)):
+        raise ValueError(
+            "theta_0 + theta·u does not reproduce estimator.predict for this pipeline, "
+            "so the substitution cannot be shown exactly."
+        )
+
+    vars_tex = transformed_input_latex(xq, names, u_query, dec, maximum=3 if d > 1 else 4, fmt=lambda v: _fmt(v, dec))
+    lines = substitution_rows_latex(weights, bias, u_query, dec, maximum=3 if len(names) <= 3 else 2, fmt=lambda v: _fmt(v, dec))
+    symbolic = symbolic_sum_latex(names, lambda j: rf"\theta_{{{j}}}", r"\theta_0", maximum=3)
+    subst_tex = r"$\begin{aligned}" + rf"\hat{{y}} &= {symbolic}\\" + r"\\".join(lines) + r"\end{aligned}$"
+
+    scope = (
+        f"Extrapolation outside training range in feature(s): {', '.join(str(index + 1) for index in outside_features)}"
+        if outside_features
+        else "Query lies within every observed training feature range"
+    )
+    source_label = "model-verified" if prediction_source == "model" else "user-provided counterfactual"
+    title = f'{title}<br><sup><span style="color:#B8C1CC">Prediction source: {source_label} · {scope}</span></sup>'
+
+    p = _resolve(theme)
+    ann_color = p.get("annotation_color", "white")
+    text_color = p.get("text", "white")
+    btn_bg = p.get("btn_bg", "white")
+    btn_border = p.get("btn_border", "black")
+    btn_font_color = p.get("btn_font_color", "black")
+
+    def predict(points):
+        return np.asarray(estimator.predict(points), dtype=float).ravel()
+
+    texts = {"vars": vars_tex, "subst": subst_tex}
+    if d == 1:
+        fig = _explain_lr_1d(
+            X_train, y_train, xq, weights, bias, yhat, title, dec, grid_points, theme, p,
+            text_color, ann_color, btn_bg, btn_border, btn_font_color, predict=predict, texts=texts,
+        )
+    elif d == 2:
+        fig = _explain_lr_2d(
+            X_train, y_train, xq, weights, bias, yhat, title, dec, grid_2d_points, theme, p,
+            text_color, ann_color, btn_bg, btn_border, btn_font_color, predict=predict, texts=texts,
+        )
+    else:
+        fig = _explain_lr_nd(
+            len(names), u_query, weights, bias, yhat, title, dec, theme, p,
+            text_color, ann_color, btn_bg, btn_border, btn_font_color,
+        )
+        rename_features_in_staged_figure(fig, names)
+    fig.update_layout(
+        meta={
+            "mlektic_prediction": {
+                "source": prediction_source,
+                "model_value": model_yhat,
+                "displayed_value": yhat,
+                "outside_training_feature_indices": outside_features,
+                "equation_space": "transformed",
+                "transformed_feature_names": names,
+                "transformed_query": [float(value) for value in u_query],
+                "substitution_matches_predict": True,
+                "display_space_ignored": display_space != "original",
+            }
+        }
+    )
+    apply_visual_system(fig, visual_spec, family="linear-prediction")
+    # Button colours (including the active stage) travel with the figure.
+    return attach_highlight(fig)
+
+
 def explain_lr_prediction(
     trained_estimator,
     X_train, y_train,
@@ -709,6 +832,7 @@ def explain_lr_prediction(
     counterfactual demonstration. Queries outside the observed feature ranges
     are explicitly marked as extrapolations and remain visible in the plot.
     """
+    theme = default_theme(theme)
     visual_spec = resolve_visual_spec(
         detail="essential",
         theme=theme,
@@ -746,13 +870,12 @@ def explain_lr_prediction(
         raise ValueError("display_space must be 'original' or 'scaled'.")
 
     if title is None:
-        if d == 1:
-            title = "Prediction (Linear Regression)"
-        elif d == 2:
-            title = "Prediction (Linear Regression, 2 variables)"
-        else:
-            title = f"Prediction (Linear Regression, {d} variables)"
+        title = linear_prediction_title(trained_estimator, X_train)
 
+    model = describe_model(trained_estimator, X_train)
+    # A pipeline that expands features is linear in u = φ(x), not in x: the
+    # substitution is done in u, while the plot keeps the estimator over raw x.
+    transformed = model.polynomial_degree is not None or model.transformed_dimension != model.input_dimension
     if x_query is None:
         raise ValueError("You must provide x_query, e.g. x_query=np.array([[...]]).")
 
@@ -777,6 +900,29 @@ def explain_lr_prediction(
     outside_features = _outside_training_range(X_train, xq)
 
     w_scaled, b_scaled = _extract_linear_theta(trained_estimator)
+
+    if transformed:
+        return _explain_lr_transformed(
+            trained_estimator,
+            X_train,
+            y_train,
+            xq,
+            yhat=yhat,
+            model_yhat=float(np.asarray(model_yhat).ravel()[0]),
+            weights=np.asarray(w_scaled, dtype=float).ravel(),
+            bias=float(np.asarray(b_scaled).ravel()[0]),
+            title=title,
+            dec=dec,
+            grid_points=grid_points,
+            grid_2d_points=grid_2d_points,
+            prediction_source=prediction_source,
+            outside_features=outside_features,
+            display_space=display_space,
+            theme=theme,
+            visual_spec=visual_spec,
+            validation_rtol=validation_rtol,
+            validation_atol=validation_atol,
+        )
 
     if w_scaled.size != d:
         raise ValueError(
@@ -829,6 +975,7 @@ def explain_lr_prediction(
         }
     )
     apply_visual_system(fig, visual_spec, family="linear-prediction")
-    return fig
+    # Button colours (including the active stage) travel with the figure.
+    return attach_highlight(fig)
 
 __all__ = ["explain_lr_prediction"]

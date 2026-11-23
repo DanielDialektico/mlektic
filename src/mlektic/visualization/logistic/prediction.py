@@ -9,7 +9,16 @@ from plotly.subplots import make_subplots
 from ...adapters.sklearn import SklearnAdapter
 from ...utils.math import _sigmoid
 from ...utils.probability import multiclass_probabilities
-from ..design import apply_visual_system, resolve_visual_spec
+from ..design import apply_visual_system, default_theme, resolve_visual_spec
+from ..feature_terms import (
+    feature_map_latex,
+    rename_features_in_staged_figure,
+    substitution_rows_latex,
+    symbolic_sum_latex,
+    transformed_feature_names,
+    transformed_input_latex,
+    value_rows_latex,
+)
 from ..linear.prediction import (
     _custom_updatemenus,
     _extract_linear_theta,
@@ -24,11 +33,13 @@ from ..linear.prediction import (
 )
 from ..theme import (
     _resolve,
+    attach_highlight,
     data_marker_style,
     get_base_layout,
     model_line_style,
     prediction_label_box,
 )
+from ..titles import describe_model, logistic_prediction_title
 
 
 def _wrapped_class_label(value, *, width):
@@ -116,7 +127,8 @@ def _explain_log_1d(
     x_disp, w_disp, b_disp,
     p_hat, y_hat, classes, show_class_labels,
     title, dec, grid_points, theme,
-    p, text_color, ann_color, btn_bg, btn_border, btn_font_color
+    p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+    *, predict=None, texts=None,
 ):
     classes, y_targets = _binary_class_context(classes, y_train)
     x1_train = X_train[:, 0].ravel()
@@ -132,8 +144,8 @@ def _explain_log_1d(
     x_max_plot = max(x_max_plot, xq1_disp + pad_x)
 
     x_grid = np.linspace(x_min_plot, x_max_plot, int(grid_points))
-    z_grid = x_grid * w_disp[0] + b_disp
-    y_grid = _sigmoid(z_grid)
+    # A model linear in u = φ(x) draws the estimator's own probability curve.
+    y_grid = predict(x_grid.reshape(-1, 1)) if predict is not None else _sigmoid(x_grid * w_disp[0] + b_disp)
 
     y_min, y_max = 0.0, 1.0
     y_pad = 0.08
@@ -152,6 +164,9 @@ def _explain_log_1d(
     )
 
     res_tex = _binary_result_tex(p_hat, y_hat, classes, dec)
+
+    if texts is not None:
+        vars_tex, subst_tex = texts["vars"], texts["subst"]
 
     fig = make_subplots(
         rows=1, cols=2,
@@ -174,9 +189,26 @@ def _explain_log_1d(
     ), row=1, col=2)
 
     # 2. Decision boundary
+    if predict is not None:
+        # Every crossing of p1 = 0.5 on the estimator's curve (a curve can cross more than once).
+        gap = y_grid - 0.5
+        crossings = [
+            float(x_grid[j] + gap[j] / (gap[j] - gap[j + 1]) * (x_grid[j + 1] - x_grid[j]))
+            for j in np.where(np.signbit(gap[:-1]) != np.signbit(gap[1:]))[0]
+        ]
+        if crossings:
+            fig.add_trace(go.Scatter(
+                x=[v for x in crossings for v in (x, x, None)],
+                y=[v for _ in crossings for v in (y_range[0], y_range[1], None)],
+                mode="lines",
+                name="Decision boundary: p1 = 0.5",
+                line=dict(color="gray", dash="dash", width=1.5),
+                legendgroup="fit",
+                showlegend=True,
+            ), row=1, col=2)
     w1 = float(w_disp[0])
     b = float(b_disp)
-    if abs(w1) > 1e-12:
+    if predict is None and abs(w1) > 1e-12:
         x_decision = -b / w1
         if x_min_plot <= x_decision <= x_max_plot:
             fig.add_trace(go.Scatter(
@@ -224,9 +256,11 @@ def _explain_log_1d(
 
     # One input needs little height; give the three-line sigmoid substitution
     # the released space. Semantic class labels still need the taller input.
-    input_bottom = 0.63 if show_class_labels else 0.78
-    substitution_top = 0.61 if show_class_labels else 0.76
-    substitution_body_y = 0.55 if show_class_labels else 0.68
+    # The three-line u = φ(x) input needs the same height as class labels.
+    tall_input = show_class_labels or texts is not None
+    input_bottom = 0.63 if tall_input else 0.78
+    substitution_top = 0.61 if tall_input else 0.76
+    substitution_body_y = 0.55 if tall_input else 0.68
     shapes = [
         block_rect(input_bottom, 0.98),
         block_rect(0.29, substitution_top),
@@ -337,7 +371,8 @@ def _explain_log_2d(
     x_disp, w_disp, b_disp,
     p_hat, y_hat, classes, show_class_labels,
     title, dec, grid_2d_points, theme,
-    p, text_color, ann_color, btn_bg, btn_border, btn_font_color
+    p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+    *, predict=None, texts=None,
 ):
     from ..theme import data_3d_marker_style, surface_style
 
@@ -352,8 +387,10 @@ def _explain_log_2d(
         np.linspace(x1_min, x1_max, int(grid_2d_points)),
         np.linspace(x2_min, x2_max, int(grid_2d_points))
     )
-    Zg = X1g * w_disp[0] + X2g * w_disp[1] + b_disp
-    Pg = _sigmoid(Zg)
+    if predict is not None:
+        Pg = predict(np.column_stack([X1g.ravel(), X2g.ravel()])).reshape(X1g.shape)
+    else:
+        Pg = _sigmoid(X1g * w_disp[0] + X2g * w_disp[1] + b_disp)
 
     def _pad(lo, hi, frac=0.10):
         span = (hi - lo) + 1e-9
@@ -378,6 +415,9 @@ def _explain_log_2d(
     )
 
     res_tex = _binary_result_tex(p_hat, y_hat, classes, dec)
+
+    if texts is not None:
+        vars_tex, subst_tex = texts["vars"], texts["subst"]
 
     fig = make_subplots(
         rows=1, cols=2, column_widths=[0.64, 0.36],
@@ -409,7 +449,25 @@ def _explain_log_2d(
     # not a horizontal plane spanning every feature coordinate.
     boundary_x1 = np.array([], dtype=float)
     boundary_x2 = np.array([], dtype=float)
-    if abs(w_disp[1]) >= abs(w_disp[0]) and abs(w_disp[1]) > 1e-12:
+    boundary_mode = "lines"
+    if predict is not None:
+        # The boundary of a model linear in u = φ(x) is a curve: sample where p1 crosses 0.5.
+        fine = 120
+        f1, f2 = np.linspace(x1_min, x1_max, fine), np.linspace(x2_min, x2_max, fine)
+        F1, F2 = np.meshgrid(f1, f2)
+        gap = predict(np.column_stack([F1.ravel(), F2.ravel()])).reshape(F1.shape) - 0.5
+        points = []
+        for r in range(fine):
+            row = gap[r]
+            for j in np.where(np.signbit(row[:-1]) != np.signbit(row[1:]))[0]:
+                points.append((f1[j] + row[j] / (row[j] - row[j + 1]) * (f1[j + 1] - f1[j]), f2[r]))
+            col = gap[:, r]
+            for j in np.where(np.signbit(col[:-1]) != np.signbit(col[1:]))[0]:
+                points.append((f1[r], f2[j] + col[j] / (col[j] - col[j + 1]) * (f2[j + 1] - f2[j])))
+        if points:
+            boundary_x1, boundary_x2 = np.asarray(points, dtype=float).T
+        boundary_mode = "markers"
+    elif abs(w_disp[1]) >= abs(w_disp[0]) and abs(w_disp[1]) > 1e-12:
         candidate_x1 = np.linspace(x1_min, x1_max, 160)
         candidate_x2 = -(w_disp[0] * candidate_x1 + b_disp) / w_disp[1]
         inside = (candidate_x2 >= x2_min) & (candidate_x2 <= x2_max)
@@ -424,9 +482,10 @@ def _explain_log_2d(
         x=boundary_x1,
         y=boundary_x2,
         z=np.full(boundary_x1.shape, 0.5),
-        mode="lines",
+        mode=boundary_mode,
         name="Decision boundary: p1 = 0.5",
         line=dict(color="gray", dash="dash", width=6),
+        marker=dict(color="gray", size=2.5),
         showlegend=True,
         legendgroup="fit",
         hovertemplate="<b>Decision boundary</b><br>P(class 1 | x) = 0.5<extra></extra>",
@@ -951,6 +1010,122 @@ def _explain_log_multiclass_nd(
     )
     return fig
 
+def _add_feature_map(fig, names):
+    """Name the coordinates of ``u = φ(x)`` under the input vector, in every stage."""
+    note = dict(
+        x=0.15, y=0.52, xref="paper", yref="paper", showarrow=False, xanchor="center", yanchor="top",
+        text="$" + feature_map_latex(names, maximum=3) + "$", font=dict(size=13),
+    )
+    fig.add_annotation(note)
+    for menu in fig.layout.updatemenus or ():
+        for button in menu.buttons or ():
+            arguments = list(button.args or ())
+            for argument in arguments:
+                if isinstance(argument, dict) and isinstance(argument.get("annotations"), list):
+                    argument["annotations"] = [*argument["annotations"], dict(note)]
+            button.args = arguments
+
+
+def _explain_log_binary_nd(
+    names, values, weights, bias, p_hat, y_hat, classes, show_class_labels,
+    title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+    *, raw_x=None,
+):
+    r"""Binary prediction with many coefficients: input, substitution, output.
+
+    ``values`` are the coordinates the model is linear in: the raw ``x`` (then
+    ``names`` are ``x_1, …, x_d``) or ``u = φ(x)`` (then ``raw_x`` is the query
+    and ``names`` the canonical transformed terms). Every coefficient enters
+    :math:`z`; long sums are cut around ``\cdots`` but the value is exact.
+    """
+    classes = np.asarray(classes).ravel()
+    values = np.asarray(values, dtype=float).ravel()
+    weights = np.asarray(weights, dtype=float).ravel()
+    D = values.size
+    z_value = float(bias + weights @ values)
+    transformed = raw_x is not None
+    symbol = r"\mathbf u" if transformed else r"\mathbf x"
+    coordinate = "u" if transformed else "x"
+    model_formula_tex = (
+        rf"$\hat{{p}}_1=\sigma(z)=\frac{{1}}{{1+e^{{-z}}}},\quad "
+        rf"z=\theta_0+\sum_{{j=1}}^{{{D}}}\theta_j {coordinate}_j"
+        + (r",\quad \mathbf u=\phi(\mathbf x)" if transformed else "")
+        + "$"
+    )
+    if transformed:
+        vars_tex = transformed_input_latex(raw_x, names, values, dec, maximum=3, fmt=lambda v: _fmt(v, dec))
+        vars_rows = None
+    else:
+        vars_rows = value_rows_latex(names, values, dec, maximum=8)
+        vars_tex = r"$\begin{aligned}" + r"\\".join(vars_rows) + r"\end{aligned}$"
+    lines = substitution_rows_latex(weights, bias, values, dec, maximum=6, fmt=lambda v: _fmt(v, dec))
+    subst_tex = r"$\begin{aligned}" + rf"z {lines[0]}\\" + r"\\".join(lines[1:]) + r"\end{aligned}$"
+    sigma_tex = (
+        r"$\begin{aligned}"
+        rf"z &= {_fmt(z_value, dec)}\\"
+        rf"\hat{{p}}_1 &= \sigma({_fmt(z_value, dec)}) = {_fmt(p_hat, dec)}"
+        r"\end{aligned}$"
+    )
+    res_tex = _binary_result_tex(p_hat, y_hat, classes, dec)
+    dim_tex = rf"${symbol}\in\mathbb{{R}}^{{{D}}}$"
+
+    fig = make_subplots(
+        rows=1, cols=3, column_widths=[0.30, 0.40, 0.30],
+        horizontal_spacing=0.03, specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
+    )
+    for c in (1, 2, 3):
+        fig.update_xaxes(visible=False, range=[0, 1], row=1, col=c)
+        fig.update_yaxes(visible=False, range=[0, 1], row=1, col=c)
+        fig.add_trace(go.Scatter(x=[], y=[], showlegend=False, hoverinfo="skip"), row=1, col=c)
+
+    DY = -0.05
+
+    def title_annot(col, tex_title, y):
+        return dict(x=0.5, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=rf"$\bf{{{tex_title}}}$",
+                    showarrow=False, xanchor="center", yanchor="top", font=dict(size=16, color=text_color))
+
+    def body_annot(col, tex_body, y, size=15, x=0.08, anchor="left"):
+        return dict(x=x, y=y + DY, xref=f"x{col}", yref=f"y{col}", text=tex_body, showarrow=False,
+                    xanchor=anchor, yanchor="top", align="left", font=dict(size=size, color=text_color))
+
+    def block_rect(col):
+        return dict(type="rect", xref=f"x{col}", yref=f"y{col}", x0=0.02, x1=0.98, y0=0.02, y1=0.98 + DY,
+                    line=dict(width=1), fillcolor="rgba(220,220,220,0.10)", layer="below")
+
+    shapes = [block_rect(1), block_rect(2), block_rect(3)]
+    T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
+
+    def ann_slots(stage: int):
+        # Right-aligned so it never runs under the stage buttons at the top left.
+        ann = [dict(x=1.0, y=1.0, xref="paper", yref="paper", text=model_formula_tex, showarrow=False,
+                    xanchor="right", yanchor="bottom", font=dict(size=17, color=text_color))]
+        ann.append(title_annot(1, T1, 0.96))
+        ann.append(body_annot(1, dim_tex, 0.89, size=14, x=0.5, anchor="center"))
+        ann.append(body_annot(1, "" if stage < 1 else vars_tex, 0.80, size=13, x=0.5, anchor="center"))
+        ann.append(title_annot(2, T2, 0.96))
+        ann.append(body_annot(2, "" if stage < 2 else subst_tex, 0.88, size=14))
+        ann.append(body_annot(2, "" if stage < 2 else sigma_tex, 0.40, size=15))
+        ann.append(title_annot(3, T3, 0.96))
+        ann.append(body_annot(3, "" if stage < 3 else res_tex, 0.86, size=15, x=0.5, anchor="center"))
+        if show_class_labels and stage >= 3:
+            ann.append(body_annot(3, f"Predicted class: {_wrapped_class_label(y_hat, width=26)}", 0.62, size=12,
+                                  x=0.5, anchor="center"))
+        return ann
+
+    def make_btn(label, s):
+        return dict(label=label, method="update", args=[{"visible": [True, True, True]}, {"annotations": ann_slots(s)}])
+
+    buttons = [make_btn("Input", 1), make_btn("Substitution", 2), make_btn("Output", 3), make_btn("Reset", 0)]
+    layout_kwargs = _prediction_layout(title, theme, right=50, bottom=60, show_class_labels=show_class_labels)
+    fig.update_layout(
+        **layout_kwargs,
+        shapes=shapes,
+        annotations=ann_slots(0),
+        updatemenus=_custom_updatemenus(buttons, btn_bg, btn_border, btn_font_color, x=0.02, xanchor="left"),
+    )
+    return fig
+
+
 def explain_logistic_prediction(
     trained_estimator,
     X_train, y_train,
@@ -994,6 +1169,7 @@ def explain_logistic_prediction(
     Supplied probabilities and labels are verified against the estimator unless
     ``prediction_source="provided"`` explicitly requests a counterfactual.
     """
+    theme = default_theme(theme)
     visual_spec = resolve_visual_spec(
         detail="essential",
         theme=theme,
@@ -1062,7 +1238,11 @@ def explain_logistic_prediction(
         raise ValueError("display_space must be 'original' or 'scaled'.")
     _validate_prediction_source(prediction_source)
 
-    scaler = _find_standard_scaler(trained_estimator)
+    model = describe_model(trained_estimator, X_train)
+    # A pipeline that expands features is linear in u = φ(x): substitute u, plot raw x.
+    transformed = model.polynomial_degree is not None or model.transformed_dimension != model.input_dimension
+    # Affine rescaling is undone for raw-space coefficients; a feature expansion keeps them in u.
+    scaler = None if transformed else _find_standard_scaler(trained_estimator)
     adapter = SklearnAdapter(trained_estimator)
     classes = adapter.classes if adapter.classes is not None else np.unique(y_train)
     is_multiclass = len(classes) > 2
@@ -1128,13 +1308,34 @@ def explain_logistic_prediction(
 
     outside_features = _outside_training_range(X_train, x_query)
 
-    if display_space == "scaled":
+    if transformed:
+        names = transformed_feature_names(trained_estimator, d)
+        u_query = np.asarray(trained_estimator[:-1].transform(x_query.reshape(1, -1)), dtype=float).ravel()
+        weights = np.asarray(w_s, dtype=float)
+        biases = np.asarray(b_s, dtype=float).ravel()
+        scores = weights @ u_query + biases if is_multiclass else float(weights.ravel() @ u_query + biases[0])
+        substituted = (
+            multiclass_probabilities(np.atleast_2d(scores), probability_link).ravel()
+            if is_multiclass
+            else float(_sigmoid(scores))
+        )
+        if not np.allclose(substituted, model_p_hat, rtol=validation_rtol, atol=max(validation_atol, 1e-9)):
+            raise ValueError(
+                "The substitution in u = phi(x) does not reproduce estimator.predict_proba for this pipeline, "
+                "so it cannot be shown exactly."
+            )
+        if title is None:
+            title = logistic_prediction_title(trained_estimator, X_train, space="original")
+        X_disp, x_disp = X_train.copy(), x_query
+        w_disp = weights if is_multiclass else weights.ravel()
+        b_disp = biases if is_multiclass else float(biases[0])
+    elif display_space == "scaled":
         X_disp = np.array([_to_scaled_x(x, scaler) for x in X_train])
         w_disp = w_s
         b_disp = b_s
         x_disp = x_query_scaled
         if title is None:
-            title = f"Logistic Regression Prediction ({'Multiclass' if is_multiclass else 'Binary'}) - Scaled Space"
+            title = logistic_prediction_title(trained_estimator, X_train, space="scaled")
     else:
         X_disp = X_train.copy()
         if is_multiclass:
@@ -1143,7 +1344,7 @@ def explain_logistic_prediction(
             w_disp, b_disp = _theta_to_original(w_s, b_s, scaler)
         x_disp = x_query
         if title is None:
-            title = f"Logistic Regression Prediction ({'Multiclass' if is_multiclass else 'Binary'}) - Original Space"
+            title = logistic_prediction_title(trained_estimator, X_train, space="original")
 
     scope = (
         f"Extrapolation outside training range in feature(s): {', '.join(str(index + 1) for index in outside_features)}"
@@ -1160,7 +1361,55 @@ def explain_logistic_prediction(
     btn_border = p.get("button_border", "#cccccc")
     btn_font_color = p.get("button_text", "#333333")
 
-    if is_multiclass:
+    def predict_p1(points):
+        return adapter.predict_proba(points, classes)[:, 1]
+
+    if transformed:
+        if is_multiclass:
+            fig = _explain_log_multiclass_nd(
+                len(names), len(classes), u_query, w_disp, b_disp, p_hat, y_hat,
+                classes, show_class_labels,
+                title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+                probability_link,
+            )
+            rename_features_in_staged_figure(fig, names)
+            _add_feature_map(fig, names)
+        elif d <= 2 and len(names) <= 5:
+            z_query = float(b_disp + w_disp @ u_query)
+            lines = substitution_rows_latex(w_disp, b_disp, u_query, dec, maximum=3 if len(names) <= 3 else 2, fmt=lambda v: _fmt(v, dec))
+            symbolic = symbolic_sum_latex(names, lambda j: rf"\theta_{{{j}}}", r"\theta_0", maximum=3)
+            texts = {
+                "vars": transformed_input_latex(x_query, names, u_query, dec, maximum=3 if d > 1 else 4, fmt=lambda v: _fmt(v, dec)),
+                "subst": (
+                    r"$\begin{aligned}"
+                    + rf"&\hat{{p}}_1=\sigma(z),\quad z={symbolic}\\"
+                    + r"\\".join(rf"z {line}" if index == 0 else line for index, line in enumerate(lines))
+                    + rf"\\&\sigma({_fmt(z_query, dec)}) = {_fmt(p_hat, dec)}"
+                    + r"\end{aligned}$"
+                ),
+            }
+            builder = _explain_log_1d if d == 1 else _explain_log_2d
+            fig = builder(
+                X_disp, y_train, x_disp, w_disp, b_disp, p_hat, y_hat,
+                classes, show_class_labels,
+                title, dec, grid_points if d == 1 else 40, theme,
+                p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+                predict=predict_p1, texts=texts,
+            )
+        else:
+            fig = _explain_log_binary_nd(
+                names, u_query, w_disp, b_disp, p_hat, y_hat, classes, show_class_labels,
+                title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+                raw_x=x_query,
+            )
+    elif not is_multiclass and d > 2:
+        # Every coefficient enters z; the 2-D surface view would drop x_3, x_4, ...
+        fig = _explain_log_binary_nd(
+            [f"x_{index + 1}" for index in range(d)], x_disp, w_disp, b_disp, p_hat, y_hat,
+            classes, show_class_labels,
+            title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
+        )
+    elif is_multiclass:
         K = len(classes)
         if d == 1:
             fig = _explain_log_multiclass_1d(
@@ -1223,6 +1472,7 @@ def explain_logistic_prediction(
         }
     )
     apply_visual_system(fig, visual_spec, family="logistic-prediction")
-    return fig
+    # Button colours (including the active stage) travel with the figure.
+    return attach_highlight(fig)
 
 __all__ = ["explain_logistic_prediction"]

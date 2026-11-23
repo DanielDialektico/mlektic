@@ -434,6 +434,9 @@ def attach_math_contract(fig: Any, contract: dict[str, Any], *, theme: str | Non
     return fig
 
 
+THRESHOLD_SHAPE_NAME = "mlektic-threshold"
+
+
 def apply_logistic_focus_and_threshold(
     fig: Any,
     *,
@@ -475,6 +478,8 @@ def apply_logistic_focus_and_threshold(
             y0=threshold,
             y1=threshold,
             line={"color": "rgba(255,255,255,0.75)", "width": 1.5, "dash": "dash"},
+            # The theme pass recolours this line with the theme's text colour.
+            name=THRESHOLD_SHAPE_NAME,
         )
         _add_threshold_geometry_label(fig, dimensions=dimensions, threshold=threshold)
     elif dimensions == 2:

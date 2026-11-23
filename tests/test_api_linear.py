@@ -98,7 +98,7 @@ class TestVisualizeLR:
 
     def test_visualize_lr_nd(self, trained_sgd_5d):
         model, X, y = trained_sgd_5d
-        fig = visualize_lr(model, X, y, steps=5, show_loss=True)
+        fig = visualize_lr(model, X, y, steps=5, show_loss=True, theme="classic")
         assert isinstance(fig, go.Figure)
         assert len(fig.frames) == 5
         annotations = " ".join(str(item.text) for item in fig.layout.annotations)
@@ -131,7 +131,7 @@ class TestVisualizeLR:
 
     def test_default_transition_finishes_before_next_frame(self, trained_sgd_1d):
         model, X, y = trained_sgd_1d
-        fig = visualize_lr(model, X, y, steps=5, frame_duration=80)
+        fig = visualize_lr(model, X, y, steps=5, frame_duration=80, theme="classic")
         options = fig.layout.updatemenus[0].buttons[0].args[1]
 
         assert options["frame"]["duration"] == 27
@@ -210,7 +210,7 @@ class TestVisualizeLR:
 
     def test_visualize_lr_no_loss(self, trained_sgd_1d):
         model, X, y = trained_sgd_1d
-        fig = visualize_lr(model, X, y, steps=5, show_loss=False)
+        fig = visualize_lr(model, X, y, steps=5, show_loss=False, theme="classic")
         assert isinstance(fig, go.Figure)
         assert len(fig.frames) == 13
         assert fig.data[2].uid == "NUMERIC_EQUATION"
