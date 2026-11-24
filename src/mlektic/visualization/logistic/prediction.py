@@ -860,6 +860,24 @@ def _explain_log_multiclass_1d(
     return fig
 
 
+# The narrowest canvas a size preset gives a prediction explainer (``compact``).
+_NARROWEST_CANVAS = 820
+
+
+def _input_vector_fits_centered(entries, *, column_width, right_margin, left_margin=60, font_size=14):
+    """Whether the input vector ``x = [...]`` fits centred in its panel with room to spare.
+
+    The check uses the narrowest canvas a size preset can give, so a vector
+    centred here never runs into the panel edge after resizing. Long entries
+    (wide numbers) keep the left-aligned layout.
+    """
+    longest = max((len(str(entry)) for entry in entries), default=1)
+    # "x =", the brackets and padding, then the widest entry at ~0.6 em per character.
+    vector_px = 46 + 0.6 * font_size * longest
+    panel_px = column_width * (_NARROWEST_CANVAS - left_margin - right_margin)
+    return vector_px <= 0.8 * panel_px
+
+
 def _explain_log_multiclass_nd(
     d, K, x_disp, w_disp, b_disp, p_hat, y_hat, classes, show_class_labels,
     title, dec, theme, p, text_color, ann_color, btn_bg, btn_border, btn_font_color,
@@ -947,6 +965,7 @@ def _explain_log_multiclass_nd(
 
     shapes = [block_rect(1, 0.02, 0.98), block_rect(2, 0.02, 0.98), block_rect(3, 0.02, 0.98)]
     T1, T2, T3 = r"Variables\ (Input)", r"Substitution", r"Result\ (Output)"
+    input_centered = _input_vector_fits_centered(x_items, column_width=0.28, right_margin=50)
 
     def ann_slots(stage: int):
         ann = [paper_top_center(model_formula_tex, y=1.02, size=18)]
@@ -954,7 +973,14 @@ def _explain_log_multiclass_nd(
         ann.append(top_center_annot(3, y_dim_tex, 1.02))
 
         ann.append(title_annot(1, T1, 0.96))
-        ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.89, size=14, x=0.03))
+        if input_centered:
+            ann.append(dict(
+                x=0.5, y=0.89 + DY, xref="x1", yref="y1", text="" if stage < 1 else x_mat_tex,
+                showarrow=False, xanchor="center", yanchor="top", align="center",
+                font=dict(size=14, color=text_color),
+            ))
+        else:
+            ann.append(body_annot(1, "" if stage < 1 else x_mat_tex, 0.89, size=14, x=0.03))
         if show_class_labels and stage >= 1:
             shown = list(range(K)) if K <= 3 else [0, K - 1]
             for position, index in enumerate(shown):

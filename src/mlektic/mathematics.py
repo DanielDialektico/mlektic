@@ -341,6 +341,26 @@ def build_logistic_math_contract(
     }
 
 
+_ALIGNED_ROW_BREAK = re.compile(r"\\\\(?:\[[^\]]*\])?")
+
+
+def _panel_line_height(text: str, visual_lines: int) -> float:
+    r"""Pixel height a panel line takes, so the next line starts below it.
+
+    In an aligned derivation each row is measured on its own: a row with
+    ``\underbrace`` carries its feature labels as a second row (about 46 px),
+    a plain row about 28 px, with 4 px between rows. Counting every extra row
+    as plain text made long derivations end against the next line.
+    """
+    if r"\begin{aligned}" in text:
+        body = text.split(r"\begin{aligned}", 1)[1].split(r"\end{aligned}", 1)[0]
+        rows = [row for row in _ALIGNED_ROW_BREAK.split(body) if row.strip()]
+        if rows:
+            return sum(46.0 if r"\underbrace" in row else 28.0 for row in rows) + 4.0 * (len(rows) - 1)
+    base_height = 52.0 if r"\underbrace" in text else 32.0
+    return base_height + 24.0 * (visual_lines - 1)
+
+
 def attach_math_contract(fig: Any, contract: dict[str, Any], *, theme: str | None = None) -> Any:
     """Attach mathematical metadata and an optional fitted-model reference panel."""
     metadata = dict(fig.layout.meta or {}) if isinstance(fig.layout.meta, dict) else {}
@@ -392,8 +412,7 @@ def attach_math_contract(fig: Any, contract: dict[str, Any], *, theme: str | Non
         # MathJax underbraces extend well below the equation baseline because
         # their labels are rendered as an additional row.  Treat those lines
         # as tall content so the next equation cannot enter that descender.
-        base_height = 52.0 if r"\underbrace" in text else 32.0
-        estimated_height = base_height + 24.0 * (visual_lines - 1)
+        estimated_height = _panel_line_height(text, visual_lines)
         if line_index:
             center_offset += (
                 previous_height / 2.0

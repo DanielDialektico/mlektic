@@ -22,7 +22,9 @@ mathematics. Fully self-contained MathJax is not currently guaranteed.
 
 ``fluid_playback`` (default ``True``) embeds the controller described in
 :doc:`animation_performance`, which steps and plays animated figures without
-re-typesetting their equations. The exported picture is identical either way.
+re-typesetting their equations. The exported picture is identical either way,
+except that ``fluid_playback=False`` leaves out the **Next step** button, which
+only the controller can drive.
 
 For static publication use ``format="report"`` or ``reduced_motion=True`` to
 select the exact final displayed state, then use Plotly's supported image export

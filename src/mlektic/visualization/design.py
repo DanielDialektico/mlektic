@@ -16,6 +16,7 @@ from typing import Any
 
 from .legend_layout import place_legends
 from .skins import apply_skin, available_skins, get_skin, is_skin, skin_hover_colors
+from .step_control import add_step_control
 
 
 @dataclass(frozen=True)
@@ -368,10 +369,12 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
         _freeze_to_final_state(fig)
 
     _apply_size(fig, spec)
-    _fit_title(fig)
     legend_placement = place_legends(fig)
     tabular_fit = _apply_tabular_narrow_layout(fig, spec, family=family)
     annotation_fit = _remove_annotation_boxes(fig, spec.tokens)
+    # Controls are placed in pixels, so only once height and margins are final.
+    step_control = add_step_control(fig)
+    _fit_title(fig, controls_right_px=step_control.get("controls_right_px"))
     _drop_negative_zero(fig)
     if spec.responsive:
         fig.layout.autosize = True
@@ -399,6 +402,7 @@ def apply_visual_system(fig: Any, spec: VisualSpec, *, family: str) -> Any:
             "responsive_config": {"responsive": spec.responsive},
             "narrow_layout_fit": tabular_fit,
             "legend_placement": legend_placement,
+            "step_control": step_control,
             "annotation_boxes": annotation_fit,
             "skin": skin,
             "reflow_strategy": (
@@ -421,7 +425,7 @@ _TITLE_GLYPH_WIDTH = 0.54
 _MIN_TITLE_SIZE = 14
 
 
-def _fit_title(fig: Any) -> None:
+def _fit_title(fig: Any, *, controls_right_px: float | None = None) -> None:
     """Shrink a title whose first line would not fit the canvas width.
 
     Titles never wrap in Plotly. Descriptive default titles (for example a
@@ -444,8 +448,10 @@ def _fit_title(fig: Any) -> None:
         for menu in fig.layout.updatemenus or ()
     )
     if centered and top_controls:
-        # Play/Pause sit at the top left; a centred title must clear them on both sides.
-        available = width - 2 * 185
+        # Play/Pause (and the step button) sit at the top left; a centred title
+        # must clear them on both sides.
+        reserved = max(185.0, float(controls_right_px or 0.0) + 10.0)
+        available = width - 2 * reserved
     needed = len(first_line) * _TITLE_GLYPH_WIDTH * size
     if needed > available:
         title.font.size = max(_MIN_TITLE_SIZE, int(size * available / needed))

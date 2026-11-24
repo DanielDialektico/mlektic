@@ -56,6 +56,36 @@ mimetype renderers, keep Plotly's own playback; ``show_optimized(fig)`` gives
 them the fluid path. Pass ``fluid_playback=False`` to ``show_optimized`` or
 ``export_figure`` to opt out.
 
+Step by step
+============
+
+Every animated figure has a **Next step** button beside Play/Pause. A click
+stops playback and shows the next frame, so a student can read each change
+before moving on; after the last frame it returns to the first. The slider
+follows every step.
+
+Where each frame carries many equations (multiclass models with several
+classes and inputs, whose frames hold at least
+``HEAVY_FRAME_TEX_CHARS`` LaTeX characters), continuous playback is slow and
+hard to follow, so **Next step** leads: it takes Play's place and Play/Pause
+sit below it (or after it, when the margin holds one row only). In every other
+figure Play leads, and below it a **Step** button mirrors Play: the same label
+style (``⏭  Step`` under ``▶  Play``), font, height, and left edge. Where the
+controls must share Play's row, a slightly smaller **Next step** follows
+Pause instead.
+
+The controls share one left edge in the top margin, just above the plotting
+area, and never cover an annotation: when an equation sits there they share
+one row, or keep the place the figure gave Play (beside its slider, for
+example). ``layout.meta["mlektic_visual"]["step_control"]`` records whether the
+button leads, where it went, and the frame's LaTeX size.
+
+Plotly has no command for "the next frame", so the button uses Plotly's
+``"skip"`` method and the fluid controller acts on the click. Where the
+controller cannot run (``fluid_playback=False``, or a mimetype renderer such
+as JupyterLab's or VS Code's Plotly renderer) the button is left out rather
+than shown without effect.
+
 Raster frames and payload size
 ==============================
 
