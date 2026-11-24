@@ -266,7 +266,7 @@
     return gd._transitionData._frameHash[name] ? name : null;
   }
   function isPlay(args) { return !!args && args[0] === null; }
-  // The "Next step" button (step_control.py): Plotly's no-op "skip" method
+  // The "Step" button (step_control.py): Plotly's no-op "skip" method
   // tagged with this command, so only this controller acts on it.
   var STEP = "mlektic-step";
   function isStep(b) { return !!b && b.method === "skip" && Array.isArray(b.args) && b.args[0] === STEP; }

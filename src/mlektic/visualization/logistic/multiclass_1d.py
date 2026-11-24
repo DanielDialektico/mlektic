@@ -108,6 +108,10 @@ def _probability_latex(w_hist, b_hist, t, class_index, dec, probability_link):
 def _vertical_dots_latex():
     return r"$$\vdots$$"
 
+_LEGEND_SYMBOL_PX = 64  # line sample, padding, and border of a legend entry
+_LEGEND_CHAR_PX = 7.2  # per character of a 12 px legend label
+
+
 def build_multiclass_1d_logistic_figure(
     x1,
     y,
@@ -231,7 +235,8 @@ def build_multiclass_1d_logistic_figure(
                 x=x1_grid,
                 y=Pg0[:, k],
                 mode="lines",
-                name=(f"p(class {k} - {classes[k]})" if show_class_labels else f"p(class {k})"),
+                # A class label goes on its own line, so the legend beside the panel stays narrow.
+                name=(f"p(class {k})<br>{classes[k]}" if show_class_labels else f"p(class {k})"),
                 line=dict(width=4),
                 legendgroup="curves" if show_loss else None,
             ),
@@ -346,10 +351,23 @@ def build_multiclass_1d_logistic_figure(
         loss_pad = 0.08 * ((loss_max - loss_min) + 1e-9)
 
     layout_kwargs = get_base_layout(title=title, margin_t=110, theme=theme)
+    # Across the frames the probability curves sweep the whole panel, so no
+    # spot inside it stays free: the class legend sits outside, to the right of
+    # the panel and level with its top, in a right margin wide enough for it.
+    longest = max(len(line) for trace in fig.data[:K] for line in str(trace.name or "").split("<br>"))
+    layout_kwargs["margin"] = {
+        **layout_kwargs["margin"],
+        "r": max(int(layout_kwargs["margin"].get("r", 30)), int(_LEGEND_SYMBOL_PX + _LEGEND_CHAR_PX * longest)),
+    }
+    # Level with the top of the probability panel (set below, once its domain is final).
+    class_legend = dict(
+        orientation="v",
+        **get_legend_props(x=1.01, y=1.0, yanchor="top", xanchor="left", theme=theme),
+    )
     if show_loss:
         fig.update_layout(
             **layout_kwargs,
-            legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
+            legend=class_legend,
             legend2=dict(orientation="v", **get_legend_props(x=1.05, y=0.30, yanchor="top", xanchor="right", theme=theme)),
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
@@ -359,7 +377,7 @@ def build_multiclass_1d_logistic_figure(
     else:
         fig.update_layout(
             **layout_kwargs,
-            legend=dict(orientation="v", **get_legend_props(x=1.05, y=0.85, yanchor="top", xanchor="right", theme=theme)),
+            legend=class_legend,
             sliders=get_sliders(steps_n, theme=theme),
             updatemenus=get_updatemenus(frame_duration, y=MULTICLASS_MENU_Y, theme=theme),
             annotations=make_annotations(0),
@@ -379,6 +397,7 @@ def build_multiclass_1d_logistic_figure(
         fig.update_yaxes(range=[loss_min - loss_pad, loss_max + loss_pad], row=2, col=2)
     else:
         fig.update_yaxes(range=[-0.02, 1.02], domain=[0.15, 0.85], row=1, col=2)
+    fig.layout.legend.y = float(fig.layout.yaxis2.domain[1])
 
     return _with_fixed_height(fig)
 

@@ -437,7 +437,7 @@ academic_dashboard = visualize_lr(
   playback controls.
 
 `dashboard` and `compact` retain every selected animation frame, Play/Pause,
-and fluid motion. Every animated figure also has a **Next step** button that
+and fluid motion. Every animated figure also has a **Step** button that
 shows one frame at a time; where frames carry many equations (multiclass
 models) it leads and Play/Pause sit below it; elsewhere a **Step** button in
 Play's own style and size sits right below Play. Prediction explanations keep their distinct Input,

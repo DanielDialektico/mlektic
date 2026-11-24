@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- A **Next step** button on every animated figure: a click stops playback and
+- A **Step** button on every animated figure: a click stops playback and
   shows the next frame (after the last, the first), with the slider following.
   Where frames carry many equations (at least ``HEAVY_FRAME_TEX_CHARS`` LaTeX
   characters per frame, as in multiclass models with several classes and
@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
   Play/Pause sit below it. Elsewhere Play leads and, right below it, a
   **Step** button mirrors Play (``⏭  Step`` under ``▶  Play``: same font,
   height, and left edge); where both must share one row, a slightly smaller
-  **Next step** follows Pause. The controls share one left edge just above the plot and never cover an
+  **Step** follows Pause. The controls share one left edge just above the plot and never cover an
   annotation; figures that place Play beside their slider keep that place.
   The button uses Plotly's ``"skip"`` method and the fluid controller (version
   6) advances the frame; ``export_figure(fluid_playback=False)``,
@@ -93,6 +93,12 @@ All notable changes to this project will be documented in this file.
   colours travel with each figure (see Fixed).
 
 ### Fixed
+- The class legend of one-input multiclass ``visualize_logistic`` figures sat
+  inside the probability panel, where the curves sweep every position across
+  the frames, so it covered them. It now sits outside, to the right of the
+  panel and level with its top, in a right margin sized for its labels;
+  semantic class labels (``show_class_labels=True``) go on their own line
+  (``p(class 0)`` / ``group-0``) so the legend stays narrow.
 - The fitted-model derivation reserves the real height of each aligned row:
   rows whose terms carry feature labels (underbraces) are about twice as tall
   as plain rows, and were counted as plain, so the line after a long

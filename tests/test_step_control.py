@@ -1,4 +1,4 @@
-"""The "Next step" button: on every animated figure, leading where playback is heavy."""
+"""The "Step" button: on every animated figure, leading where playback is heavy."""
 
 import numpy as np
 import pytest
@@ -63,7 +63,7 @@ def test_play_leads_and_a_step_button_mirrors_it_below(linear_figure):
     assert play.buttons[0].label == "▶  Play" and step.buttons[0].label == "⏭  Step"
 
 
-def test_a_step_button_beside_pause_keeps_the_long_label():
+def test_a_step_button_beside_pause_is_the_smaller_button():
     import plotly.graph_objects as go
 
     from mlektic.visualization.step_control import add_step_control

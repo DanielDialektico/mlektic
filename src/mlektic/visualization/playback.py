@@ -8,7 +8,7 @@ smooth while every element keeps its exact authored appearance and position.
 The script travels with the figure's HTML as a Plotly ``post_script``, which
 works in Colab, classic Jupyter, exported files and any other HTML renderer.
 Renderers that do not emit HTML (for example the JupyterLab mimetype
-extension) simply ignore it and keep Plotly's own playback; the "Next step"
+extension) simply ignore it and keep Plotly's own playback; the "Step"
 button, which only the controller can drive, is left out there.
 """
 

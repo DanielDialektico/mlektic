@@ -74,3 +74,18 @@ def test_threshold_line_reads_on_every_paper(theme):
     expected = get_skin(theme).palette.text if is_skin(theme) else get_theme_tokens(theme).text
     assert line.line.color == expected
     assert line.opacity == pytest.approx(0.8)
+
+
+@pytest.mark.parametrize("show_loss", [True, False])
+def test_multiclass_one_input_legend_sits_beside_the_probability_panel(show_loss):
+    X = np.linspace(-3.0, 3.0, 90).reshape(-1, 1)
+    y = np.digitize(X[:, 0], [-1.0, 1.0])
+    fig = visualize_logistic(
+        LogisticRegression(max_iter=500).fit(X, y), X, y, steps=5, show_loss=show_loss, show_class_labels=True
+    )
+    legend = fig.layout.legend
+    # Outside the panel, to its right, level with its top: the curves sweep the whole panel.
+    assert legend.x > 1.0 and legend.xanchor == "left" and legend.yanchor == "top"
+    assert legend.y == pytest.approx(fig.layout.yaxis2.domain[1])
+    names = [trace.name for trace in fig.data if str(trace.name).startswith("p(class")]
+    assert names and all("<br>" in name for name in names)  # labels on their own line keep it narrow

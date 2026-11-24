@@ -1,4 +1,4 @@
-"""A "Next step" button beside Play/Pause.
+"""A "Step" button beside Play/Pause.
 
 Every animated figure gets a button that shows the next state and stops
 there, so a student can read each change before moving on. Where every frame
@@ -7,7 +7,7 @@ typesetting makes continuous playback slow; there the step button takes
 Play's place and Play/Pause move below it, suggesting step-by-step reading
 without removing playback. Elsewhere Play stays first: under it, a "Step"
 button mirrors Play's label, style, and size; where it has to share Play's row,
-a slightly smaller "Next step" follows Pause.
+a slightly smaller "Step" follows Pause.
 
 Plotly has no command that shows "the next frame", so the button uses
 Plotly's ``"skip"`` method (a click does nothing by itself) and the fluid
@@ -31,7 +31,7 @@ import plotly.graph_objects as go
 from .legend_layout import _annotation_boxes, _figure_size, _overlaps
 
 STEP_COMMAND = "mlektic-step"
-STEP_LABEL = "⏭ Next step"
+STEP_LABEL = "⏭ Step"
 SHORT_STEP_LABEL = "Step"  # under Play, mirroring Play's own label
 # LaTeX characters a single frame may carry before playback counts as heavy:
 # multiclass views of several classes and inputs carry more than this.
