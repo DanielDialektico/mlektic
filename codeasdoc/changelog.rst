@@ -8,6 +8,12 @@ Unreleased — neural execution-graph foundation
 Added
 -----
 
+- a **Next step** button on every animated figure that shows one frame at a
+  time; where frames carry many equations (multiclass models) it leads and
+  Play/Pause sit below it; elsewhere a **Step** button in Play's own style and
+  size sits right below Play. It needs the fluid
+  controller, so exports without it and mimetype renderers leave it out (see
+  :doc:`animation_performance`);
 - four geometric neural lessons whose values are exact forward passes or
   autograd computations with the recorded parameters, in the course notation:
   ``visualize_nn_decision`` (decision surface built from the last hidden units
@@ -71,6 +77,10 @@ Added
 Fixed
 -----
 
+- the fitted-model derivation reserves the real height of rows with feature
+  labels, so the line after a long derivation (``Log-loss``) no longer ends
+  against its last row;
+- the multiclass prediction explainer centres its input vector when it fits;
 - the default theme, ``dusk``, no longer leaves a trail of earlier model states
   behind animated curves and lines; the other motion skins keep theirs;
 - legends no longer sit on the data or on the labels beside them: each legend

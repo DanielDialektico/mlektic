@@ -195,7 +195,9 @@ Every public Phase 3 figure includes
 - whether animation frames remain;
 - the responsive export configuration;
 - accessibility and scaling-versus-reflow declarations;
-- where each legend was placed (``legend_placement``).
+- where each legend was placed (``legend_placement``);
+- the step control: whether **Next step** leads Play, and where it went
+  (``step_control``).
 
 This entry is merged with the existing history, mathematics, and prediction
 contracts. It is intentionally JSON serializable.

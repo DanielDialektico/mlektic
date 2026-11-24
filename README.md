@@ -437,7 +437,10 @@ academic_dashboard = visualize_lr(
   playback controls.
 
 `dashboard` and `compact` retain every selected animation frame, Play/Pause,
-and fluid motion. Prediction explanations keep their distinct Input,
+and fluid motion. Every animated figure also has a **Next step** button that
+shows one frame at a time; where frames carry many equations (multiclass
+models) it leads and Play/Pause sit below it; elsewhere a **Step** button in
+Play's own style and size sits right below Play. Prediction explanations keep their distinct Input,
 Substitution, Output, and Reset controls. Only `report` and `reduced_motion`
 intentionally create a static view. The `accessible` theme uses marker symbols
 and line dashes in addition to color.

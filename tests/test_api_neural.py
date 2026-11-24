@@ -19,6 +19,7 @@ from mlektic import (
     visualize_nn_weights,
 )
 from mlektic.neural.introspection import describe_torch_model
+from mlektic.visualization.step_control import SHORT_STEP_LABEL
 
 torch = pytest.importorskip("torch")
 
@@ -666,7 +667,7 @@ def test_neural_dashboard_exposes_only_training_controls(trained_small_network):
     figure = visualize_nn_training(history, max_frames=3)
 
     labels = [button.label for menu in figure.layout.updatemenus for button in menu.buttons]
-    assert labels == ["Play", "Pause"]
+    assert labels == ["Play", "Pause", SHORT_STEP_LABEL]  # "Step" under Play, in its style
     assert not {"1 Data", "2 Model", "3 Objective", "4 Complete"}.intersection(labels)
 
 

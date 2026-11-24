@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- A **Next step** button on every animated figure: a click stops playback and
+  shows the next frame (after the last, the first), with the slider following.
+  Where frames carry many equations (at least ``HEAVY_FRAME_TEX_CHARS`` LaTeX
+  characters per frame, as in multiclass models with several classes and
+  inputs) playback is slow, so the button leads: it takes Play's place and
+  Play/Pause sit below it. Elsewhere Play leads and, right below it, a
+  **Step** button mirrors Play (``⏭  Step`` under ``▶  Play``: same font,
+  height, and left edge); where both must share one row, a slightly smaller
+  **Next step** follows Pause. The controls share one left edge just above the plot and never cover an
+  annotation; figures that place Play beside their slider keep that place.
+  The button uses Plotly's ``"skip"`` method and the fluid controller (version
+  6) advances the frame; ``export_figure(fluid_playback=False)``,
+  ``show_optimized(fluid_playback=False)``, and mimetype renderers leave it
+  out. ``layout.meta["mlektic_visual"]["step_control"]`` records the decision
+  (``mlektic.visualization.step_control``).
 - Four geometric neural lessons, every value an exact forward pass or autograd
   computation with recorded parameters, in the course notation:
   ``visualize_nn_decision`` (decision surface as a combination of the last
@@ -78,6 +93,14 @@ All notable changes to this project will be documented in this file.
   colours travel with each figure (see Fixed).
 
 ### Fixed
+- The fitted-model derivation reserves the real height of each aligned row:
+  rows whose terms carry feature labels (underbraces) are about twice as tall
+  as plain rows, and were counted as plain, so the line after a long
+  derivation (``Log-loss``) ended against its last row (``= 2.2869``). That line
+  now sits midway between the derivation and the regularization line.
+- The multiclass prediction explainer centres the input vector in its Input
+  panel when it fits there with room to spare (checked on the narrowest size
+  preset); wide entries keep the left-aligned layout.
 - The default theme, ``dusk``, no longer leaves a trail of earlier model states
   behind animated curves and lines: only the current model is drawn. Aurora,
   ember, lumen, and the other motion skins keep their trails.

@@ -219,6 +219,62 @@ def test_typesetting_ahead_never_queues_in_front_of_other_figures(tmp_path):
     assert result["afterAnswer"] == 1  # stalled once: typesetting ahead stays off
 
 
+_STEP_HARNESS = r"""
+const fs = require("fs");
+const { EventEmitter } = require("events");
+global.window = global;
+global.MathJax = { Hub: { Queue() {}, Typeset() {} } };
+global.document = { body: { contains: () => true }, createElementNS: () => ({ innerHTML: "", firstChild: null }) };
+const frames = ["a", "b", "c", "d"].map((name) => ({ name, data: [{ x: [1] }] }));
+const buttons = [
+  { method: "animate", args: [null, { frame: { duration: 1 } }] },
+  { method: "animate", args: [[null], {}] },
+];
+const gd = {
+  data: [{ type: "scatter" }], layout: { updatemenus: [{ buttons }] }, _context: {},
+  _transitionData: { _frames: frames, _frameHash: Object.fromEntries(frames.map((f) => [f.name, f])), _frameQueue: [] },
+  addEventListener() {},
+};
+gd._fullLayout = {
+  updatemenus: [{ buttons: JSON.parse(JSON.stringify(buttons)) }], annotations: [], width: 600, height: 400,
+  _infolayer: { node: () => ({ querySelector: () => null }) },
+};
+const ev = new EventEmitter();
+gd._ev = ev; gd._internalEv = ev; gd.on = ev.on.bind(ev); gd.emit = ev.emit.bind(ev);
+global.Plotly = {
+  animate: (_gd, target) => {
+    const name = Array.isArray(target) ? target[0] : null;
+    if (name) gd._fullLayout._currentFrame = name;
+    return Promise.resolve();
+  },
+};
+eval(fs.readFileSync(process.argv[2], "utf8"));
+window.__mlekticFluid.mount(gd, { prewarm: false });
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+(async () => {
+  const seen = [];
+  const step = { method: "skip", args: ["mlektic-step"], label: "Next step" };
+  for (let i = 0; i < 5; i++) {
+    gd.emit("plotly_buttonclicked", { button: step });
+    await settle();
+    seen.push(gd._fullLayout._currentFrame);
+  }
+  console.log(JSON.stringify(seen));
+})();
+"""
+
+
+def test_step_button_advances_one_frame_and_wraps(tmp_path):
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node is not installed")
+    harness = tmp_path / "step.js"
+    harness.write_text(_STEP_HARNESS, encoding="utf-8")
+    run = subprocess.run([node, str(harness), str(_ASSET)], check=True, capture_output=True, text=True)
+    # The figure opens on its first frame; each click shows the next, then wraps.
+    assert json.loads(run.stdout.strip().splitlines()[-1]) == ["b", "c", "d", "a", "b"]
+
+
 def test_script_mounts_on_the_plot_placeholder():
     assert fluid_playback_script().endswith(
         "window.__mlekticFluid && window.__mlekticFluid.mount(document.getElementById('{plot_id}'), {autoplay: false});"

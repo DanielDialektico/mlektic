@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..visualization.playback import figure_scripts, has_frames
+from ..visualization.step_control import without_step_control
 
 
 def _resolved_responsive(fig, responsive):
@@ -47,6 +48,9 @@ def show_optimized(fig, *, fluid_playback=True):
     """
     from IPython.display import HTML
 
+    if fluid_playback is False:
+        # The step button needs the fluid controller; without it it would do nothing.
+        fig = without_step_control(fig)
     fig_height = fig.layout.height if fig.layout.height else 600
     wrapper_height = fig_height + 40
     responsive = _resolved_responsive(fig, None)
@@ -119,6 +123,9 @@ def export_figure(
     if not isinstance(auto_play, bool):
         raise TypeError("auto_play must be a boolean value.")
     fluid = _fluid_kwargs(fig, fluid_playback, auto_play)
+    if fluid_playback is False:
+        # The step button needs the fluid controller; without it it would do nothing.
+        fig = without_step_control(fig)
 
     if not isinstance(path, (str, Path)):
         raise TypeError("path must be a string or pathlib.Path.")

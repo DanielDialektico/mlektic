@@ -19,7 +19,7 @@
  */
 (function () {
   "use strict";
-  var VERSION = 5;
+  var VERSION = 6;
   if (window.__mlekticFluid && window.__mlekticFluid.version >= VERSION) return;
 
   // Traces a redraw-free animate cannot move: WebGL traces, and raster traces
@@ -266,6 +266,10 @@
     return gd._transitionData._frameHash[name] ? name : null;
   }
   function isPlay(args) { return !!args && args[0] === null; }
+  // The "Next step" button (step_control.py): Plotly's no-op "skip" method
+  // tagged with this command, so only this controller acts on it.
+  var STEP = "mlektic-step";
+  function isStep(b) { return !!b && b.method === "skip" && Array.isArray(b.args) && b.args[0] === STEP; }
   function isPause(args) { return !!args && Array.isArray(args[0]) && args[0].length === 1 && args[0][0] === null; }
   function handOverControls(gd) {
     var touched = 0;
@@ -306,7 +310,7 @@
     var frames = gd._transitionData._frames;
     var names = frames.map(function (f) { return String(f.name); });
     var play = playSettings(gd);
-    var token = 0, busy = false, pendingName = null, playing = false;
+    var token = 0, busy = false, pendingName = null, playing = false, lastTarget = null;
     var generation = 0;
     var size = sizeKey();
     var lastInput = -Infinity;
@@ -380,6 +384,7 @@
     // Coalesce slider drags: only the newest requested frame is drawn.
     function request(name) {
       pendingName = name;
+      lastTarget = name;
       if (busy) return;
       busy = true;
       (function drain() {
@@ -437,8 +442,19 @@
       var name = frameTarget(gd, e.step.args);
       if (name !== null && e.step.execute === false) { stop(); request(name); }
     }
+    // One frame forward from where the figure stands (or from the frame
+    // already requested, so quick clicks keep advancing), wrapping to the
+    // first frame after the last.
+    function stepForward() {
+      stop();
+      var from = busy && lastTarget !== null ? lastTarget : String(gd._fullLayout._currentFrame);
+      var index = names.indexOf(from);
+      var next = index < 0 ? Math.min(1, names.length - 1) : (index + 1) % names.length;
+      request(names[next]);
+    }
     function onButton(e) {
       var b = e && e.button;
+      if (isStep(b)) { stepForward(); return; }
       if (!b || b.method !== "animate" || b.execute !== false) return;
       if (isPlay(b.args)) startPlayback();
       else if (isPause(b.args)) stop();

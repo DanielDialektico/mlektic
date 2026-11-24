@@ -8,7 +8,8 @@ smooth while every element keeps its exact authored appearance and position.
 The script travels with the figure's HTML as a Plotly ``post_script``, which
 works in Colab, classic Jupyter, exported files and any other HTML renderer.
 Renderers that do not emit HTML (for example the JupyterLab mimetype
-extension) simply ignore it and keep Plotly's own playback.
+extension) simply ignore it and keep Plotly's own playback; the "Next step"
+button, which only the controller can drive, is left out there.
 """
 
 from __future__ import annotations
@@ -68,6 +69,29 @@ def figure_scripts(fig, *, fluid: bool = True, autoplay: bool = False) -> list[s
     return [script for script in scripts if script]
 
 
+def renderer_runs_scripts(renderer=None) -> bool:
+    """Whether Plotly's renderer (default: the active one) runs a figure's post-scripts.
+
+    HTML renderers (Colab, classic Jupyter, the browser, iframes) accept a
+    ``post_script``; mimetype renderers (JupyterLab, VS Code's Plotly renderer)
+    draw the figure JSON themselves and run none.
+    """
+    import plotly.io as pio
+
+    names = [name.strip() for name in str(renderer or pio.renderers.default or "").split("+") if name.strip()]
+    try:
+        return bool(names) and all(hasattr(pio.renderers[name], "post_script") for name in names)
+    except (KeyError, ValueError):
+        return False
+
+
+def _displayable(fig, renderer=None):
+    """The figure to hand to a renderer: without the step button where no controller runs."""
+    from .step_control import without_step_control
+
+    return fig if renderer_runs_scripts(renderer) else without_step_control(fig)
+
+
 def attach_fluid_playback(fig):
     """Patch *fig* so notebook display mounts the fluid controller.
 
@@ -83,10 +107,18 @@ def attach_fluid_playback(fig):
     _original_bundle = fig._repr_mimebundle_
 
     def _patched_bundle(include=None, exclude=None, validate=True, **kwargs):
+        target = _displayable(fig)
+        if target is not fig:
+            return target._repr_mimebundle_(include, exclude, validate, **kwargs)
         kwargs = _with_post_script(kwargs, *figure_scripts(fig))
         return _original_bundle(include, exclude, validate, **kwargs)
 
     def _patched_show(*args, **kwargs):
+        import plotly.io as pio
+
+        target = _displayable(fig, kwargs.get("renderer") or (args[0] if args else None))
+        if target is not fig:
+            return pio.show(target, *args, **kwargs)
         kwargs = _with_post_script(kwargs, *figure_scripts(fig))
         return _original_show(*args, **kwargs)
 
@@ -94,7 +126,8 @@ def attach_fluid_playback(fig):
         import plotly.io as pio
 
         if pio.renderers.render_on_display and pio.renderers.default:
-            pio.show(fig, **_with_post_script({}, *figure_scripts(fig)))
+            target = _displayable(fig)
+            pio.show(target, **_with_post_script({}, *figure_scripts(target)))
         else:
             print(repr(fig))
 
@@ -104,4 +137,4 @@ def attach_fluid_playback(fig):
     return fig
 
 
-__all__ = ["attach_fluid_playback", "figure_scripts", "fluid_playback_script", "has_frames"]
+__all__ = ["attach_fluid_playback", "figure_scripts", "fluid_playback_script", "has_frames", "renderer_runs_scripts"]
