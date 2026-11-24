@@ -8,7 +8,7 @@ Unreleased — neural execution-graph foundation
 Added
 -----
 
-- a **Next step** button on every animated figure that shows one frame at a
+- a **Step** button on every animated figure that shows one frame at a
   time; where frames carry many equations (multiclass models) it leads and
   Play/Pause sit below it; elsewhere a **Step** button in Play's own style and
   size sits right below Play. It needs the fluid
@@ -77,6 +77,9 @@ Added
 Fixed
 -----
 
+- the class legend of one-input multiclass figures sits outside the
+  probability panel, to its right and level with its top, instead of covering
+  the curves;
 - the fitted-model derivation reserves the real height of rows with feature
   labels, so the line after a long derivation (``Log-loss``) no longer ends
   against its last row;

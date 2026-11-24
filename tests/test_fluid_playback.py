@@ -253,7 +253,7 @@ window.__mlekticFluid.mount(gd, { prewarm: false });
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 (async () => {
   const seen = [];
-  const step = { method: "skip", args: ["mlektic-step"], label: "Next step" };
+  const step = { method: "skip", args: ["mlektic-step"], label: "Step" };
   for (let i = 0; i < 5; i++) {
     gd.emit("plotly_buttonclicked", { button: step });
     await settle();

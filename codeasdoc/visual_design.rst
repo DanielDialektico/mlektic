@@ -196,7 +196,7 @@ Every public Phase 3 figure includes
 - the responsive export configuration;
 - accessibility and scaling-versus-reflow declarations;
 - where each legend was placed (``legend_placement``);
-- the step control: whether **Next step** leads Play, and where it went
+- the step control: whether **Step** leads Play, and where it went
   (``step_control``).
 
 This entry is merged with the existing history, mathematics, and prediction
